@@ -174,6 +174,40 @@ p{font-size:.95rem}
 .bounce{animation:bounce .9s ease}
 @keyframes bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-9px)}55%{transform:translateY(2px)}75%{transform:translateY(-4px)}}
 
+/* lightweight Toro reactions: transparent, consistent, and video-free */
+.toro-reaction-wrap{
+  display:flex;justify-content:center;align-items:center;min-height:78px;
+  margin:-4px 0 5px;overflow:visible;pointer-events:none
+}
+.toro-reaction{transform-origin:50% 68%;will-change:transform,opacity,filter}
+.toro-float{animation:toroFloat 2.15s ease-in-out infinite}
+.toro-approve{animation:toroApprove 1.25s cubic-bezier(.2,.82,.24,1) both}
+.toro-think{animation:toroThink 1.8s ease-in-out infinite}
+.toro-dance{animation:toroDance 1.35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes toroFloat{
+  0%,100%{transform:translateY(2px) rotate(-1deg)}
+  50%{transform:translateY(-8px) rotate(1.5deg)}
+}
+@keyframes toroApprove{
+  0%{opacity:0;transform:translateY(16px) scale(.84) rotate(-5deg)}
+  36%{opacity:1;transform:translateY(-9px) scale(1.06) rotate(4deg)}
+  58%{transform:translateY(1px) scale(.98) rotate(-2deg)}
+  78%{transform:translateY(-4px) scale(1.02) rotate(1deg)}
+  100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}
+}
+@keyframes toroThink{
+  0%,100%{transform:translateY(1px) rotate(-2deg)}
+  50%{transform:translateY(-5px) rotate(3deg)}
+}
+@keyframes toroDance{
+  0%{opacity:0;transform:translateY(18px) scale(.82) rotate(-7deg)}
+  24%{opacity:1;transform:translateY(-12px) scale(1.06) rotate(7deg)}
+  46%{transform:translateY(0) scale(.98) rotate(-6deg)}
+  68%{transform:translateY(-8px) scale(1.04) rotate(5deg)}
+  84%{transform:translateY(1px) scale(.99) rotate(-2deg)}
+  100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}
+}
+
 /* ---------- learn path ---------- */
 .unit-banner{
   background:linear-gradient(180deg,#3E9BBE,var(--brand));
@@ -523,6 +557,15 @@ function saga(pose,size,extra){
 }
 function fishImg(color,size,extra){
   return '<img class="saga-img'+(extra?' '+extra:'')+'" src="'+(FISH_IMG[color]||FISH_IMG.classic)+'" style="width:'+size+'px;height:'+size+'px" alt="Toro">';
+}
+function toroReaction(kind,size){
+  const cfg={
+    approve:{pose:'proud',cls:'toro-approve'},
+    think:{pose:'thinking',cls:'toro-think'},
+    float:{pose:'thinking',cls:'toro-float'},
+    dance:{pose:'proud',cls:'toro-dance'}
+  }[kind]||{pose:'neutral',cls:'toro-float'};
+  return '<div class="toro-reaction-wrap" aria-hidden="true">'+saga(cfg.pose,size||78,{cls:'toro-reaction '+cfg.cls})+'</div>';
 }
 
 /* ---------- storage: window.storage -> localStorage -> memory ---------- */
@@ -1276,7 +1319,8 @@ function showSheet(kind,title,bodyHTML,btnLabel,btnClass,onNext){
   closeSheet();
   const d=document.createElement('div');
   d.className='sheet '+kind; d.id='sheet';
-  d.innerHTML='<div class="shead">'+(kind==='good'?ic('check',22):kind==='bad'?ic('x',22):ic('spark',20))+title+'</div>'
+  const reaction=kind==='good'?toroReaction('approve',76):kind==='bad'?toroReaction('think',70):toroReaction('think',72);
+  d.innerHTML=reaction+'<div class="shead">'+(kind==='good'?ic('check',22):kind==='bad'?ic('x',22):ic('spark',20))+title+'</div>'
     +bodyHTML
     +'<button class="btn '+btnClass+'" id="sheetGo">'+btnLabel+'</button>';
   document.getElementById('app').appendChild(d);
@@ -1334,6 +1378,9 @@ function renderLessonStep(){
       const btn=$('#tellCheck');
       const wasLabel=btn.textContent;
       btn.disabled=true; btn.textContent='Toro is reading...';
+      const reading=document.createElement('div');
+      reading.id='tellReading'; reading.innerHTML=toroReaction('float',72);
+      btn.before(reading);
 
       // Ground the read in this exact lesson, earlier completed lessons, and prior revisions.
       let verdict=null;
@@ -1361,6 +1408,7 @@ function renderLessonStep(){
         verdict={pass:res.pass, working:tellWorking(txt), fix:(res.notes&&res.notes[0])||'Tighten it around the one technique this lesson is teaching.'};
       }
       LS.tellAttempts=(LS.tellAttempts||[]).concat(txt).slice(-3);
+      const readingEl=$('#tellReading'); if(readingEl) readingEl.remove();
       btn.disabled=false; btn.textContent=wasLabel;
 
       if(verdict.pass){
@@ -1405,7 +1453,7 @@ function renderUnitComplete(){
    +'<h1>Unit complete</h1>'
    +'<p class="muted fw-bold max-sm">This skill is now in the toolkit. The next story should already feel easier to shape.</p>'
    +'<button class="btn btn-reward max-sm mt-2" id="claimXP" style="width:100%">Claim XP</button></div>';
-  $('#doneSaga').classList.add('bounce');
+  $('#doneSaga').classList.add('toro-reaction','toro-dance');
   $('#claimXP').onclick=()=>{ addXP(10); toast('+10 XP unit bonus'); renderLessonDone(true); };
 }
 function renderLessonDone(firstTime){
@@ -1419,7 +1467,7 @@ function renderLessonDone(firstTime){
    +(allDone?'<p class="fw-bold">That was the last lesson. Your certificate is on the home screen.</p>':'')
    +'<button class="btn btn-reward max-sm mt-2" id="doneArena" style="width:100%">Test it in the Arena</button>'
    +'<button class="btn btn-quiet max-sm" id="doneTree" style="width:100%">Back to the path</button></div>';
-  $('#doneSaga2').classList.add('bounce');
+  $('#doneSaga2').classList.add('toro-reaction','toro-dance');
   $('#doneArena').onclick=()=>go('practice');
   $('#doneTree').onclick=()=>go('learn');
 }
@@ -1826,7 +1874,7 @@ function renderScoring(title,copy){
    +'<h2>'+esc(title||'Toro is listening back...')+'</h2>'
    +'<p class="muted fw-bold max-sm">'+esc(copy||'Reading your hook, your climax, and your landing.')+'</p>'
    +'<div class="pbar" style="width:180px;height:10px;overflow:hidden"><i style="width:40%;animation:scanbar 1.1s ease-in-out infinite"></i></div></div>';
-  const sg=$('#scoringSaga');if(sg)sg.classList.add('bounce');
+  const sg=$('#scoringSaga');if(sg)sg.classList.add('toro-reaction','toro-float');
 }
 function renderTranscriptFallback(){
   page.innerHTML='<div class="slidein"><div style="display:flex;justify-content:center">'+saga('thinking',105)+'</div>'
@@ -1852,8 +1900,9 @@ function renderScore(rec){
   const praise=rec.praise||PRAISE[st][(rec.dur)%PRAISE[st].length];
   const names={hook:'Hook',climax:'Climax',landing:'Landing'};
   const readLabel=rec.ai?'Toro\'s read':'Toro\'s first read';
+  const scoreToro=total>=72?saga('proud',84,{cls:'toro-reaction toro-approve'}):saga('thinking',84,{cls:'toro-reaction toro-think'});
   page.innerHTML='<div class="slidein">'
-   +'<div style="display:flex;align-items:center;gap:16px" class="mb-3">'+saga('thinking',84)
+   +'<div style="display:flex;align-items:center;gap:16px" class="mb-3">'+scoreToro
    +'<div><div class="score-num">'+total+'</div><div class="tiny">'+readLabel+(better?(beat?' · beat your last take by '+(total-AR.prevTotal):' · last take: '+AR.prevTotal):'')+'</div></div></div>'
    +'<div class="card">'
    +Object.keys(names).map(k=>'<div class="meter'+(k===wk?' weak':'')+'"><div class="spread"><span class="meter-name">'+names[k]+'</span><span class="meter-val">'+sc[k]+'</span></div><div class="pbar'+(k===wk?' amber':'')+'" style="height:11px;margin-top:5px"><i style="width:'+sc[k]+'%"></i></div></div>').join('')
