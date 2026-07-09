@@ -1,0 +1,12 @@
+{
+  "name": "storytuner",
+  "version": "5.0.0",
+  "private": true,
+  "description": "StoryTuner - storytelling training PWA with Toro the tuna. Real AI feedback via a serverless OpenAI proxy.",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  }
+}
