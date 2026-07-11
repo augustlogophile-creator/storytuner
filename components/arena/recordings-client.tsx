@@ -9,14 +9,14 @@ import { useApp } from "@/lib/app-state"
 export function RecordingsClient() {
   const { state, deleteRecording, shareRecording } = useApp()
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <header>
         <Link href="/arena" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Arena</Link>
         <div className="mt-4 flex items-start justify-between gap-4">
           <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
           <Link href="/arena" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Replay past stories, revisit the grade, ask Weaver a follow-up, or share a transcript with Community. Nothing is public by default.</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Replay past stories, revisit the grade, or ask Weaver a follow-up. Community sharing is available with Membership, and nothing is public by default.</p>
       </header>
 
       {state.recordings.length === 0 ? (
@@ -65,10 +65,12 @@ export function RecordingsClient() {
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Weaver</Link>
                   <Link href="/arena" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
-                  {recording.shared ? (
+                  {recording.shared && state.premium ? (
                     <Link href={`/community#post-${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
-                  ) : (
+                  ) : state.premium ? (
                     <button type="button" onClick={() => shareRecording(recording.id)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share transcript</button>
+                  ) : (
+                    <Link href="/membership" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
                   )}
                   <button type="button" onClick={() => { if (window.confirm("Delete this recording permanently?")) void deleteRecording(recording.id) }} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive"><Trash2 className="h-3.5 w-3.5" />Delete</button>
                 </div>

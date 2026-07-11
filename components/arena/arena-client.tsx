@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ScoreRing } from "@/components/arena/score-ring"
-import { arenaUsesToday, canRecordInArena, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
+import { canRecordInArena, FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
 import { cn } from "@/lib/utils"
 
@@ -119,7 +119,7 @@ export function ArenaClient() {
   const [promptIndex, setPromptIndex] = useState(0)
   const prompt = storyMode === "free" ? "Tell a story of your choice." : scenario.prompts[promptIndex % scenario.prompts.length]
   const contextName = storyMode === "free" ? "Open story" : scenario.name
-  const usedToday = arenaUsesToday(state)
+  const remainingFreeStories = freeArenaRemaining(state)
   const canRecord = canRecordInArena(state)
   const [cameraOn, setCameraOn] = useState(true)
   const [targetSeconds, setTargetSeconds] = useState(90)
@@ -219,7 +219,7 @@ export function ArenaClient() {
   async function startRecording() {
     setError("")
     if (!canRecord) {
-      setError("You have used today's free Arena take. StoryTuner Plus removes the daily limit.")
+      setError("You have used both free spoken story reviews. Membership unlocks unlimited practice.")
       return
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -428,19 +428,19 @@ export function ArenaClient() {
 
   if (phase === "setup" && !canRecord) {
     return (
-      <div className="flex flex-col gap-6">
-        <header>
+      <div className="flex min-w-0 flex-col gap-6">
+        <header className="min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <div><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Today&apos;s free take is complete.</h1></div>
+            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight">Your two free story reviews are complete.</h1></div>
             <Link href="/arena/recordings" className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold">Recordings · {state.recordings.length}</Link>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. The free Arena allowance resets tomorrow.</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. Membership unlocks unlimited spoken story reviews.</p>
         </header>
         <section className="rounded-3xl border border-border bg-card p-6 text-center">
           <Clock3 className="mx-auto h-8 w-8 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-semibold">One free story per day</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Plus includes unlimited recordings. Every scenario is available whenever you have a take.</p>
-          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">Review StoryTuner Plus<ArrowRight className="h-4 w-4" /></Link>
+          <h2 className="mt-4 text-lg font-semibold">Two free spoken stories total</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Each free story includes recording, transcription, a full grade, and a revised version. Membership removes the limit.</p>
+          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding membership<ArrowRight className="h-4 w-4" /></Link>
           <Link href="/arena/recordings" className="mt-2 flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium text-muted-foreground">View past recordings</Link>
         </section>
       </div>
@@ -448,14 +448,14 @@ export function ArenaClient() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
+    <div className="flex min-w-0 flex-col gap-6">
+      <header className="min-w-0">
         <div className="flex items-center justify-between gap-3">
           <div><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
           <Link href="/arena/recordings" className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground">Recordings · {state.recordings.length}</Link>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
-        <span className="mt-3 inline-flex rounded-full bg-brand-soft px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent-foreground">{state.premium ? "Unlimited with Plus" : `${Math.max(0, 1 - usedToday)} of 1 free today`}</span>
+        <span className="mt-3 inline-flex rounded-full bg-brand-soft px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
       </header>
 
       {phase === "setup" && (
@@ -573,7 +573,7 @@ export function ArenaClient() {
       {phase === "scoring" && <div className="flex min-h-96 flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center"><Loader2 className="h-8 w-8 animate-spin text-brand" /><h2 className="mt-5 text-lg font-semibold">Weaver is grading your story</h2><p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">Reviewing the hook, development, landing, and the clearest next revision.</p></div>}
 
       {phase === "result" && feedback && savedId && (
-        <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onShare={() => shareRecording(savedId)} onAgain={reset} shared={Boolean(state.recordings.find((item) => item.id === savedId)?.shared)} />
+        <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onShare={() => shareRecording(savedId)} onAgain={reset} shared={Boolean(state.recordings.find((item) => item.id === savedId)?.shared)} premium={state.premium} />
       )}
     </div>
   )
@@ -583,7 +583,7 @@ function Control({ label, onClick, icon: Icon, large, danger }: { label: string;
   return <button type="button" onClick={onClick} className="flex flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md", large ? "h-16 w-16" : "h-14 w-14", danger && "bg-destructive")}><Icon className="h-5 w-5" fill={danger ? "currentColor" : "none"} /></span><span className="text-[0.68rem] font-semibold">{label}</span></button>
 }
 
-function Result({ feedback, recording, onShare, onAgain, shared }: { feedback: Feedback; recording?: Recording; onShare: () => void; onAgain: () => void; shared: boolean }) {
+function Result({ feedback, recording, onShare, onAgain, shared, premium }: { feedback: Feedback; recording?: Recording; onShare: () => void; onAgain: () => void; shared: boolean; premium: boolean }) {
   const [justShared, setJustShared] = useState(false)
   if (!recording) return null
   const isShared = shared || justShared
@@ -601,8 +601,10 @@ function Result({ feedback, recording, onShare, onAgain, shared }: { feedback: F
       <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
       {isShared ? (
         <Link href={`/community#post-${recording.id}`} className="flex items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-5 py-3.5 text-sm font-semibold text-accent-foreground"><Share2 className="h-4 w-4" />View shared story</Link>
-      ) : (
+      ) : premium ? (
         <button type="button" onClick={() => { onShare(); setJustShared(true) }} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Share transcript to Community</button>
+      ) : (
+        <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
       )}
       <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
       <p className="text-center text-xs leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>

@@ -71,12 +71,13 @@ export const weaverColors: WeaverColor[] = [
 export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }
 
 export type AppState = {
-  version: 4
+  version: 5
   profile: { name: string; joinedAt: string }
   sessions: number
   lastOpen: string | null
   activityDates: string[]
   arenaUses: Record<string, number>
+  arenaTotal: number
   completed: string[]
   responses: Record<string, string>
   quizScores: Record<string, number>
@@ -99,7 +100,7 @@ export type AppState = {
   onboardingComplete: boolean
 }
 
-const STORAGE_KEY = "storytuner-state-v4"
+const STORAGE_KEY = "storytuner-state-v5"
 
 function seedCommunityPosts(): CommunityPost[] {
   return [
@@ -124,12 +125,13 @@ function daysBetween(a: string, b: string) {
 
 function freshState(): AppState {
   return {
-    version: 4,
+    version: 5,
     profile: { name: "Storyteller", joinedAt: new Date().toISOString() },
     sessions: 0,
     lastOpen: null,
     activityDates: [],
     arenaUses: {},
+    arenaTotal: 0,
     completed: [],
     responses: {},
     quizScores: {},
@@ -156,12 +158,13 @@ function normalize(raw: unknown): AppState {
   return {
     ...base,
     ...value,
-    version: 4,
+    version: 5,
     profile: { ...base.profile, ...(value.profile ?? {}) },
     settings: { ...base.settings, ...(value.settings ?? {}) },
     completed: Array.isArray(value.completed) ? value.completed : [],
     activityDates: Array.isArray(value.activityDates) ? value.activityDates : [],
     arenaUses: value.arenaUses && typeof value.arenaUses === "object" ? value.arenaUses : {},
+    arenaTotal: typeof value.arenaTotal === "number" ? value.arenaTotal : Object.values(value.arenaUses ?? {}).reduce((sum, count) => sum + (typeof count === "number" ? count : 0), 0),
     ownedWeavers: Array.isArray(value.ownedWeavers) && value.ownedWeavers.length ? value.ownedWeavers : ["classic"],
     recordings: Array.isArray(value.recordings) ? value.recordings : [],
     community: Array.isArray(value.community) ? [...seedCommunityPosts().filter((seed) => !value.community?.some((post) => post.id === seed.id)), ...value.community] : seedCommunityPosts(),
@@ -229,7 +232,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loaded.current = true
     let next = freshState()
     try {
-      const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("storytuner-state-v3")
+      const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("storytuner-state-v4") ?? localStorage.getItem("storytuner-state-v3")
       if (raw) next = normalize(JSON.parse(raw))
     } catch {}
     const sessionSeen = sessionStorage.getItem("storytuner-session")
@@ -252,6 +255,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const completeStage = useCallback((unitId: string, stage: LessonStage, response?: string, quizScore?: number) => {
     const key = lessonId(unitId, stage)
     setState((current) => {
+      const unit = curriculum.find((item) => item.id === unitId)
+      if (unit && !hasUnitPlanAccess(current, unit.index)) return current
       const alreadyDone = current.completed.includes(key)
       let next = { ...current }
       if (response !== undefined) next.responses = { ...next.responses, [key]: response }
@@ -278,6 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...current,
         recordings: [recording, ...current.recordings.filter((item) => item.id !== recording.id)],
         arenaUses: isNew ? { ...current.arenaUses, [today]: (current.arenaUses[today] ?? 0) + 1 } : current.arenaUses,
+        arenaTotal: current.arenaTotal + (isNew ? 1 : 0),
         xpLifetime: current.xpLifetime + (isNew ? 15 : 0),
         xpBalance: current.xpBalance + (isNew ? 15 : 0),
       })
@@ -297,7 +303,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const shareRecording = useCallback((id: string) => {
     setState((current) => {
       const recording = current.recordings.find((item) => item.id === id)
-      if (!recording || recording.shared) return current
+      if (!current.premium || !recording || recording.shared) return current
       const post: CommunityPost = {
         id: `post-${id}`,
         recordingId: id,
@@ -333,6 +339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const toggleHeart = useCallback((id: string) => {
     setState((current) => {
+      if (!current.premium) return current
       const liked = current.likedPosts.includes(id)
       return {
         ...current,
@@ -347,7 +354,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addComment = useCallback((id: string, text: string) => {
     const clean = text.trim()
     if (!clean) return
-    setState((current) => ({
+    setState((current) => {
+      if (!current.premium) return current
+      return {
       ...current,
       community: current.community.map((post) =>
         post.id === id
@@ -360,7 +369,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
           : post,
       ),
-    }))
+      }
+    })
   }, [])
 
   const purchaseWeaver = useCallback((id: string) => {
@@ -434,6 +444,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await clearMedia().catch(() => undefined)
     try {
       localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem("storytuner-state-v4")
       localStorage.removeItem("storytuner-state-v3")
     } catch {}
     setState(freshState())
@@ -444,13 +455,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString()
     const today = todayKey()
     setState((current) => {
-      const sent = current.coach.date === today ? current.coach.sent : 0
       const priorMessages = current.coach.messages
       return {
         ...current,
         coach: {
           date: today,
-          sent: sent + 1,
+          sent: current.coach.sent + 1,
           messages: [
             ...priorMessages,
             { id: crypto.randomUUID(), role: "user" as const, content: user, createdAt: now },
@@ -536,7 +546,18 @@ export function courseProgress(state: AppState) {
   return { done, total, percent: Math.round((done / total) * 100) }
 }
 
+export const FREE_UNIT_LIMIT = 5
+export const FREE_ARENA_LIMIT = 2
+export const FREE_COACH_LIMIT = 5
+export const FOUNDING_PRICE = "$11.99"
+export const FUTURE_PRICE = "$24.99"
+
+export function hasUnitPlanAccess(state: AppState, index: number) {
+  return state.premium || index <= FREE_UNIT_LIMIT
+}
+
 export function isUnitUnlocked(state: AppState, index: number) {
+  if (!hasUnitPlanAccess(state, index)) return false
   if (index <= 1) return true
   const previous = curriculum.find((unit) => unit.index === index - 1)
   return previous ? unitProgress(state, previous.id).done === 3 : false
@@ -544,6 +565,7 @@ export function isUnitUnlocked(state: AppState, index: number) {
 
 export function nextLesson(state: AppState) {
   for (const unit of curriculum) {
+    if (!hasUnitPlanAccess(state, unit.index)) break
     if (!isUnitUnlocked(state, unit.index)) break
     for (const stage of ["read", "drill", "quiz"] as LessonStage[]) {
       if (!state.completed.includes(lessonId(unit.id, stage))) return { unit, stage, id: lessonId(unit.id, stage) }
@@ -552,12 +574,23 @@ export function nextLesson(state: AppState) {
   return null
 }
 
+export function freeLessonLimitReached(state: AppState) {
+  if (state.premium) return false
+  return curriculum
+    .filter((unit) => unit.index <= FREE_UNIT_LIMIT)
+    .every((unit) => unitProgress(state, unit.id).done === 3)
+}
+
 export function arenaUsesToday(state: AppState) {
   return state.arenaUses[todayKey()] ?? 0
 }
 
+export function freeArenaRemaining(state: AppState) {
+  return state.premium ? Number.POSITIVE_INFINITY : Math.max(0, FREE_ARENA_LIMIT - state.arenaTotal)
+}
+
 export function canRecordInArena(state: AppState) {
-  return state.premium || arenaUsesToday(state) < 1
+  return state.premium || state.arenaTotal < FREE_ARENA_LIMIT
 }
 
 export function levelForXp(xp: number) {

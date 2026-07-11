@@ -11,5 +11,5 @@ export default async function LessonPage({ params }: { params: Promise<{ lessonI
   const { lessonId } = await params
   const found = parseLessonId(lessonId)
   if (!found) notFound()
-  return <MobileShell nav={false} wide><CourseLesson unit={found.unit} stage={found.stage} /></MobileShell>
+  return <MobileShell nav={false}><CourseLesson unit={found.unit} stage={found.stage} /></MobileShell>
 }

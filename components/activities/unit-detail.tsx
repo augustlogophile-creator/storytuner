@@ -4,7 +4,7 @@ import Link from "next/link"
 import { BookOpen, Check, ChevronRight, FilePenLine, Lock, ListChecks } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
-import { isUnitUnlocked, unitProgress, useApp } from "@/lib/app-state"
+import { hasUnitPlanAccess, isUnitUnlocked, unitProgress, useApp } from "@/lib/app-state"
 import { lessonId, stageLabels, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
 import { cn } from "@/lib/utils"
 
@@ -17,15 +17,30 @@ const stageMeta: Record<LessonStage, { detail: string; icon: typeof BookOpen }> 
 export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
   const { state } = useApp()
   const progress = unitProgress(state, unit.id)
+  const planAccess = hasUnitPlanAccess(state, unit.index)
   const unitUnlocked = isUnitUnlocked(state, unit.index)
   const stages: LessonStage[] = ["read", "drill", "quiz"]
 
+  if (!planAccess) {
+    return (
+      <div className="flex min-w-0 flex-col gap-5">
+        <BackLink href="/activities" label="Curriculum" />
+        <section className="rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
+          <Lock className="mx-auto h-8 w-8 text-accent-foreground" />
+          <h1 className="mt-4 text-xl font-semibold">This lesson is part of Membership.</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">The free plan includes the first five complete lessons. Membership unlocks all fifteen.</p>
+          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding offer<ChevronRight className="h-4 w-4" /></Link>
+        </section>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <BackLink href="/activities" label="Curriculum" />
-      <header>
+      <header className="min-w-0">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : `Unit ${unit.index} · ${unit.skill}`}</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{unit.title}</h1>
+        <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-balance">{unit.title}</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">{unit.description}</p>
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground"><span>{progress.done} / 3 steps complete</span><span>{progress.percent}%</span></div>

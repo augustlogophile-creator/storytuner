@@ -18,7 +18,7 @@ const pages = [
   },
   {
     title: "Your recordings stay private by default.",
-    copy: "A story only appears in Community when you deliberately share it. You can remove your recordings and posts at any time.",
+    copy: "Community is included with Membership, and a story only appears there when you deliberately share it. You can remove your recordings and posts at any time.",
     icon: LockKeyhole,
   },
 ]

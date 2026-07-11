@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, type ChangeEvent, type KeyboardEvent } from "react"
-import { Heart, MessageCircle, Send, Trash2 } from "lucide-react"
+import { Heart, LockKeyhole, MessageCircle, Send, Trash2 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { MediaPlayer } from "@/components/arena/media-player"
 import { useApp, type CommunityPost } from "@/lib/app-state"
@@ -10,8 +10,27 @@ import { cn } from "@/lib/utils"
 
 export function CommunityClient() {
   const { state, toggleHeart, addComment, removePost } = useApp()
+
+  if (!state.premium) {
+    return (
+      <div className="flex min-w-0 flex-col gap-6">
+        <header>
+          <Eyebrow>Community</Eyebrow>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">A member space for stories shared on purpose.</h1>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">Share selected stories, hear what landed, and respond thoughtfully to other storytellers.</p>
+        </header>
+        <section className="rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
+          <LockKeyhole className="mx-auto h-8 w-8 text-accent-foreground" />
+          <h2 className="mt-4 text-lg font-semibold">Community is included with Membership.</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your recordings stay private. Once you become a member, you can choose exactly which stories to share.</p>
+          <Link href="/membership" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See the founding offer</Link>
+        </section>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <header>
         <Eyebrow>Community</Eyebrow>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Stories shared on purpose.</h1>
@@ -25,7 +44,7 @@ export function CommunityClient() {
       </section>
       <div className="flex flex-col gap-4">
         {state.community.map((post) => (
-          <PostCard key={post.id} post={post} liked={state.likedPosts.includes(post.id)} onHeart={() => toggleHeart(post.id)} onComment={(text) => addComment(post.id, text)} onRemove={post.mine ? () => removePost(post.id) : undefined} canComment={state.premium} />
+          <PostCard key={post.id} post={post} liked={state.likedPosts.includes(post.id)} onHeart={() => toggleHeart(post.id)} onComment={(text) => addComment(post.id, text)} onRemove={post.mine ? () => removePost(post.id) : undefined} canComment />
         ))}
       </div>
     </div>
@@ -62,10 +81,9 @@ function PostCard({ post, liked, onHeart, onComment, onRemove, canComment }: { p
         </div>
       )}
       <div className="mt-3 flex gap-2">
-        <input value={comment} disabled={!canComment} onChange={(event: ChangeEvent<HTMLInputElement>) => setComment(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === "Enter") submit() }} placeholder={canComment ? "Share what landed…" : "Commenting is part of Plus"} className="min-w-0 flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60" />
+        <input value={comment} disabled={!canComment} onChange={(event: ChangeEvent<HTMLInputElement>) => setComment(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === "Enter") submit() }} placeholder={canComment ? "Share what landed…" : "Commenting requires Membership"} className="min-w-0 flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60" />
         <button type="button" onClick={submit} disabled={!canComment || !comment.trim()} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40" aria-label="Post comment"><Send className="h-4 w-4" /></button>
       </div>
-      {!canComment && <Link href="/membership" className="mt-2 inline-flex text-xs font-semibold text-muted-foreground hover:text-foreground">Review Plus features</Link>}
     </article>
   )
 }

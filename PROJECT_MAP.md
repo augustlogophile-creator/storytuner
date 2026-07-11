@@ -16,7 +16,7 @@ This repository is a Next.js App Router project. Preserve the folder structure w
 - `app/progress/page.tsx`: detailed progress and illustrated unit icons
 - `app/shop/page.tsx`: XP-based Weaver color shop
 - `app/settings/page.tsx`: settings and privacy controls
-- `app/membership/page.tsx`: free and Plus comparison
+- `app/membership/page.tsx`: founding offer and free-versus-Membership comparison
 
 ## OpenAI routes
 
@@ -29,11 +29,11 @@ This repository is a Next.js App Router project. Preserve the folder structure w
 
 - `lib/curriculum.json`: all 14 units, the capstone, reading sections, drills, and 75 quiz questions
 - `lib/curriculum.ts`: curriculum types and routing helpers
-- `lib/app-state.tsx`: persistent progress, XP, streaks, recordings, coach quota, Community, settings, and membership state
+- `lib/app-state.tsx`: persistent progress, XP, streaks, recordings, lifetime free quotas, Community, settings, and membership state
 - `lib/media-store.ts`: private recording storage in IndexedDB
 - `components/arena/arena-client.tsx`: two-path Arena, scenario prompts, duration targets, pause-safe recording, automatic transcription, and scoring
 - `components/arena/recordings-client.tsx`: recordings archive
-- `components/coach/coach-client.tsx`: contextual Weaver chat with formatted responses and daily free-message tracking
+- `components/coach/coach-client.tsx`: contextual Weaver chat with formatted responses and a five-message lifetime free limit
 - `components/lesson/course-lesson.tsx`: repeatable lesson experience
 - `components/profile/progress-client.tsx`: detailed unit completion with custom icons
 - `components/bottom-nav.tsx`: primary app navigation

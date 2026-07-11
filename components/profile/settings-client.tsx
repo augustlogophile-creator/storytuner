@@ -79,7 +79,7 @@ export function SettingsClient() {
       <Section title="Privacy">
         <div className="flex gap-3 rounded-2xl bg-brand-soft/45 p-4">
           <LockKeyhole className="h-5 w-5 shrink-0 text-accent-foreground" />
-          <p className="text-sm leading-relaxed">Recordings are private by default. Community sharing is a separate action for each story.</p>
+          <p className="text-sm leading-relaxed">Recordings are private by default. Membership unlocks Community, and sharing remains a separate action for each story.</p>
         </div>
         <Row title="Use recordings to improve AI" detail="Off by default. This setting records your preference only. A production backend must enforce it.">
           <label className="relative inline-flex cursor-pointer items-center">
@@ -118,8 +118,8 @@ export function SettingsClient() {
 
       <Link href="/membership" className="flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{state.premium ? "StoryTuner Plus is active" : "Free plan"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Review membership features and demo status.</p>
+          <p className="text-sm font-semibold">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Review the $11.99/year founding offer and demo status.</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>

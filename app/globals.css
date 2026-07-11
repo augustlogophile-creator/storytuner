@@ -184,3 +184,28 @@
     display: none;
   }
 }
+
+/* Keep every route on the same mobile canvas, even when lesson content is long. */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+}
+
+img,
+video,
+canvas {
+  max-width: 100%;
+}
+
+main,
+section,
+article,
+header {
+  min-width: 0;
+}

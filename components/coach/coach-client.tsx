@@ -5,12 +5,8 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEv
 import { ArrowLeft, ArrowUp, Loader2, Lock, Trash2 } from "lucide-react"
 import { Weaver } from "@/components/weaver"
 import { RichText } from "@/components/rich-text"
-import { useApp, type CoachMessage, type Recording } from "@/lib/app-state"
+import { FREE_COACH_LIMIT, useApp, type CoachMessage, type Recording } from "@/lib/app-state"
 
-function todayKey() {
-  const date = new Date()
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-}
 
 export function CoachClient() {
   const { state, addCoachExchange, clearCoach } = useApp()
@@ -19,8 +15,7 @@ export function CoachClient() {
   const [error, setError] = useState("")
   const [recordingId, setRecordingId] = useState("")
   const endRef = useRef<HTMLDivElement | null>(null)
-  const sentToday = state.coach.date === todayKey() ? state.coach.sent : 0
-  const remaining = Math.max(0, 5 - sentToday)
+  const remaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
   const blocked = !state.premium && remaining === 0
   const recording = useMemo(
     () => state.recordings.find((item) => item.id === recordingId) ?? state.recordings[0],
@@ -63,7 +58,7 @@ export function CoachClient() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-4">
+    <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col gap-4">
       <header>
         <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Home
@@ -81,7 +76,7 @@ export function CoachClient() {
       </header>
 
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
-        <span>{state.premium ? "Unlimited messages with Plus" : `${remaining}/5 free messages left today`}</span>
+        <span>{state.premium ? "Unlimited messages with Membership" : `${remaining}/${FREE_COACH_LIMIT} free messages remaining`}</span>
         {state.coach.messages.length > 0 && (
           <button type="button" onClick={clearCoach} className="inline-flex items-center gap-1 font-semibold hover:text-foreground">
             <Trash2 className="h-3.5 w-3.5" /> Clear
@@ -131,9 +126,9 @@ export function CoachClient() {
         {blocked ? (
           <div className="border-t border-border p-5 text-center">
             <Lock className="mx-auto h-5 w-5 text-muted-foreground" />
-            <p className="mt-2 text-sm font-semibold">Today&apos;s five free messages are used.</p>
-            <p className="mt-1 text-xs text-muted-foreground">Your allowance resets tomorrow. Plus includes unlimited coaching.</p>
-            <Link href="/membership" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Review Plus</Link>
+            <p className="mt-2 text-sm font-semibold">Your five free messages are used.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Membership includes unlimited coaching whenever you need it.</p>
+            <Link href="/membership" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link>
           </div>
         ) : (
           <div className="border-t border-border p-3">

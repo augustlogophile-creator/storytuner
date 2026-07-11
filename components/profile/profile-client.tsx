@@ -5,7 +5,7 @@ import { ArrowRight, BarChart3, ChevronRight, LockKeyhole, MessageCircle, Settin
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { Weaver } from "@/components/weaver"
-import { courseProgress, levelForXp, nextLesson, useApp } from "@/lib/app-state"
+import { courseProgress, freeLessonLimitReached, levelForXp, nextLesson, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
 export function ProfileClient() {
@@ -13,6 +13,7 @@ export function ProfileClient() {
   const course = courseProgress(state)
   const level = levelForXp(state.xpLifetime)
   const next = nextLesson(state)
+  const freeLimitReached = freeLessonLimitReached(state) && course.done < course.total
   return (
     <div className="flex flex-col gap-6">
       <section className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-5">
@@ -34,8 +35,8 @@ export function ProfileClient() {
       <section className="rounded-3xl border border-border bg-card p-5">
         <div className="flex items-start justify-between gap-3"><div><Eyebrow>Learning path</Eyebrow><h2 className="mt-1 text-base font-semibold">{course.percent === 100 ? "Course complete" : `${course.percent}% complete`}</h2></div><span className="text-xs text-muted-foreground">{course.done}/{course.total}</span></div>
         <div className="mt-4"><ProgressBar value={course.percent} /></div>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{next ? `Next: ${stageLabels[next.stage]} in “${next.unit.title}.”` : "Every unit and the capstone are complete."}</p>
-        <Link href={next ? `/lesson/${next.id}` : "/activities"} className="mt-4 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">{next ? "Continue learning" : "Review the course"}<ArrowRight className="h-4 w-4" /></Link>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{next ? `Next: ${stageLabels[next.stage]} in “${next.unit.title}.”` : freeLimitReached ? "You completed the five free lessons. Membership unlocks the remaining ten." : "Every unit and the capstone are complete."}</p>
+        <Link href={next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"} className="mt-4 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">{next ? "Continue learning" : freeLimitReached ? "Unlock full course" : "Review the course"}<ArrowRight className="h-4 w-4" /></Link>
       </section>
 
       <section>
@@ -44,14 +45,14 @@ export function ProfileClient() {
           <Menu href="/progress" icon={BarChart3} title="Progress" detail="Activity, streaks, and unit completion" />
           <Menu href="/coach" icon={MessageCircle} title="Ask Weaver" detail="AI coaching for your stories and scores" />
           <Menu href="/settings" icon={Settings} title="Settings and privacy" detail="Notifications, recordings, and data controls" />
-          <Menu href="/membership" icon={Star} title={state.premium ? "StoryTuner Plus" : "Membership"} detail={state.premium ? "Plus is active on this device" : "Compare the free and Plus plans"} />
+          <Menu href="/membership" icon={Star} title={state.premium ? "StoryTuner Membership" : "Membership"} detail={state.premium ? "Membership is active on this device" : "Founding waitlist offer · $11.99/year"} />
           <Menu href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance} XP available to spend`} last />
         </div>
       </section>
 
       <div className="flex gap-3 rounded-3xl bg-brand-soft/45 p-5">
         <LockKeyhole className="h-5 w-5 shrink-0 text-accent-foreground" />
-        <p className="text-sm leading-relaxed text-foreground/85">Your recordings remain private unless you choose to share a specific story with Community.</p>
+        <p className="text-sm leading-relaxed text-foreground/85">Your recordings remain private. Membership unlocks Community, and sharing is always a separate choice for each story.</p>
       </div>
     </div>
   )

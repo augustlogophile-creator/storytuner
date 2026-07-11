@@ -5,6 +5,8 @@ StoryTuner is a mobile-first storytelling course and practice app. The full prod
 ## Included
 
 - The complete 14-unit **Craft of True Storytelling** curriculum and capstone
+- A launch free plan with five full lessons, two total spoken story reviews, five total Ask Weaver messages, and member-only Community access
+- A founding waitlist membership offer of $11.99/year, with a later public price shown as $24.99/year
 - Three clear steps per unit: Learn, Practice, and Check
 - A three-part reading navigator inside Learn: Concept, Breakdown, and Example
 - Repeatable readings, activities, and quizzes, with XP awarded only on first completion
@@ -62,7 +64,7 @@ This version is intentionally account-free:
 - Progress, settings, and AI chat history are stored in `localStorage`.
 - Recorded audio and video blobs are stored in IndexedDB.
 - Data remains on the same browser and does not sync across devices.
-- Recordings are private unless the user explicitly shares one to Community.
+- Recordings are private unless a member explicitly shares one to Community.
 - The configured AI service receives a story only when the user requests transcription, grading, or coaching.
 
 A production multi-user release should add authentication, a database, private object storage, authorization rules, moderation, and a real billing provider.

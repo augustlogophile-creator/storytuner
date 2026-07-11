@@ -6,7 +6,7 @@ import { ArrowRight, Check, ChevronLeft, Loader2, Lock, Sparkles } from "lucide-
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
 import { RichText } from "@/components/rich-text"
-import { courseProgress, isUnitUnlocked, useApp } from "@/lib/app-state"
+import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isUnitUnlocked, useApp } from "@/lib/app-state"
 import { curriculum, lessonId, stageLabels, stageXp, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +24,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const stages: LessonStage[] = ["read", "drill", "quiz"]
   const stageIndex = stages.indexOf(stage)
   const priorStage = stages[stageIndex - 1]
+  const planAccess = hasUnitPlanAccess(state, unit.index)
   const unlocked = isUnitUnlocked(state, unit.index) && (!priorStage || state.completed.includes(lessonId(unit.id, priorStage)))
 
   useEffect(() => { if (!reviewing) setCompleted(alreadyDone) }, [alreadyDone, reviewing])
@@ -42,6 +43,20 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
 
   if (!ready) return <div className="h-72 animate-pulse rounded-3xl bg-secondary" />
 
+  if (!planAccess) {
+    return (
+      <div className="flex min-w-0 flex-col gap-5">
+        <BackLink href="/activities" label="Curriculum" />
+        <section className="rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
+          <Lock className="mx-auto h-8 w-8 text-accent-foreground" />
+          <h1 className="mt-4 text-xl font-semibold">Unlock the rest of the course.</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">The free plan includes five complete lessons. Founding Membership unlocks all fifteen.</p>
+          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See Membership<ArrowRight className="h-4 w-4" /></Link>
+        </section>
+      </div>
+    )
+  }
+
   if (!unlocked && !completed) {
     return (
       <div className="flex flex-col gap-5">
@@ -56,10 +71,10 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     )
   }
 
-  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} earnedThisVisit={earnedThisVisit} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
+  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-6">
       <BackLink href={`/activities/${unit.id}`} label={unit.title} />
       <header>
         <div className="flex items-center justify-between gap-3">
@@ -278,13 +293,14 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
   )
 }
 
-function Completed({ unit, stage, coursePercent, earnedThisVisit, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; earnedThisVisit: boolean; onReview: () => void }) {
+function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; premium: boolean; earnedThisVisit: boolean; onReview: () => void }) {
   const stageIndex = (["read", "drill", "quiz"] as LessonStage[]).indexOf(stage)
   const nextStage = (["read", "drill", "quiz"] as LessonStage[])[stageIndex + 1]
   const unitIndex = curriculum.findIndex((item) => item.id === unit.id)
   const nextUnit = curriculum[unitIndex + 1]
-  const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
-  const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
+  const nextUnitNeedsMembership = Boolean(nextUnit && !premium && nextUnit.index > FREE_UNIT_LIMIT)
+  const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
+  const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
     <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>

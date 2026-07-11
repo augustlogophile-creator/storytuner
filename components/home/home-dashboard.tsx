@@ -5,13 +5,14 @@ import { ArrowRight, Check, Flame, MessageCircle, Mic2, Play, Shuffle } from "lu
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { Weaver } from "@/components/weaver"
-import { courseProgress, nextLesson, useApp, weaverColors } from "@/lib/app-state"
+import { courseProgress, freeLessonLimitReached, nextLesson, useApp, weaverColors } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard() {
   const { state, ready } = useApp()
   const progress = courseProgress(state)
   const next = nextLesson(state)
+  const freeLimitReached = freeLessonLimitReached(state) && progress.done < progress.total
   const activeColor = weaverColors.find((item) => item.id === state.activeWeaver) ?? weaverColors[0]
   const week = getCurrentWeek(state.activityDates)
   const latest = state.recordings[0]
@@ -40,24 +41,24 @@ export function HomeDashboard() {
       <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
         <div className="flex items-center justify-between gap-3">
           <Eyebrow className="text-primary-foreground/60">
-            {next ? `${progress.percent}% through the course` : "Course complete"}
+            {next ? `${progress.percent}% through the course` : freeLimitReached ? "Free lessons complete" : "Course complete"}
           </Eyebrow>
           <span className="font-mono text-[0.7rem] text-primary-foreground/60">
-            {next ? `Unit ${next.unit.index}` : "15 of 15"}
+            {next ? `Unit ${next.unit.index}` : freeLimitReached ? "5 of 15" : "15 of 15"}
           </span>
         </div>
         <h2 className="mt-3 text-xl font-semibold tracking-tight text-balance">
-          {next ? next.unit.title : "Your full storytelling path is complete"}
+          {next ? next.unit.title : freeLimitReached ? "You finished your five free lessons" : "Your full storytelling path is complete"}
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-primary-foreground/70 text-pretty">
-          {next ? `${stageLabels[next.stage]} · ${next.unit.skill}` : "Review any lesson, or record a complete story in the Arena."}
+          {next ? `${stageLabels[next.stage]} · ${next.unit.skill}` : freeLimitReached ? "Founding Membership unlocks the remaining ten lessons." : "Review any lesson, or record a complete story in the Arena."}
         </p>
         <div className="mt-4">
           <ProgressBar value={progress.percent} className="bg-primary-foreground/15" barClassName="bg-brand" />
         </div>
-        <Link href={next ? `/lesson/${next.id}` : "/activities"} className="mt-5 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground transition-transform active:scale-[0.98]">
+        <Link href={next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"} className="mt-5 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground transition-transform active:scale-[0.98]">
           <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-          {next ? "Continue learning" : "Review the course"}
+          {next ? "Continue learning" : freeLimitReached ? "Unlock all 15 lessons" : "Review the course"}
           <ArrowRight className="h-4 w-4" />
         </Link>
       </section>
