@@ -450,8 +450,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           sent: sent + 1,
           messages: [
             ...priorMessages,
-            { id: crypto.randomUUID(), role: "user", content: user, createdAt: now },
-            { id: crypto.randomUUID(), role: "assistant", content: assistant, createdAt: now },
+            { id: crypto.randomUUID(), role: "user" as const, content: user, createdAt: now },
+            { id: crypto.randomUUID(), role: "assistant" as const, content: assistant, createdAt: now },
           ].slice(-30),
         },
       }
