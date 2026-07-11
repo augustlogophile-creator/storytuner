@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState, type ChangeEvent } from "react"
+import { useEffect, useMemo, useState, type ChangeEvent } from "react"
 import { ArrowRight, Check, ChevronLeft, Loader2, Lock, Sparkles } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
@@ -17,6 +17,8 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const key = lessonId(unit.id, stage)
   const alreadyDone = state.completed.includes(key)
   const [completed, setCompleted] = useState(alreadyDone)
+  const [reviewing, setReviewing] = useState(false)
+  const [earnedThisVisit, setEarnedThisVisit] = useState(false)
   const [response, setResponse] = useState(state.responses[key] ?? "")
   const course = courseProgress(state)
   const stages: LessonStage[] = ["read", "drill", "quiz"]
@@ -24,15 +26,17 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const priorStage = stages[stageIndex - 1]
   const unlocked = isUnitUnlocked(state, unit.index) && (!priorStage || state.completed.includes(lessonId(unit.id, priorStage)))
 
-  useEffect(() => setCompleted(alreadyDone), [alreadyDone])
+  useEffect(() => { if (!reviewing) setCompleted(alreadyDone) }, [alreadyDone, reviewing])
   useEffect(() => {
     const timeout = window.setTimeout(() => saveResponse(key, response), 350)
     return () => window.clearTimeout(timeout)
   }, [key, response, saveResponse])
 
   function finish(responseText?: string, quizScore?: number) {
+    if (!alreadyDone) setEarnedThisVisit(true)
     completeStage(unit.id, stage, responseText, quizScore)
     setCompleted(true)
+    setReviewing(false)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -52,7 +56,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     )
   }
 
-  if (completed) return <Completed unit={unit} stage={stage} coursePercent={course.percent} />
+  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} earnedThisVisit={earnedThisVisit} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,7 +64,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
       <header>
         <div className="flex items-center justify-between gap-3">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">
-            {stageLabels[stage]} · +{stageXp[stage]} XP
+            {stageLabels[stage]} · {alreadyDone ? "Review anytime" : `+${stageXp[stage]} XP`}
           </p>
           <span className="font-mono text-[0.62rem] text-muted-foreground">{course.percent}% course</span>
         </div>
@@ -76,22 +80,84 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
 }
 
 function ReadStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: () => void }) {
+  const groups = useMemo(() => groupReadingSections(unit), [unit])
+  const [active, setActive] = useState(0)
+  const group = groups[active]
+  const last = active === groups.length - 1
+
   return (
     <>
+      <div className="sticky top-2 z-10 rounded-2xl border border-border bg-background/95 p-1.5 shadow-sm backdrop-blur">
+        <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}>
+          {groups.map((item, index) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => setActive(index)}
+              className={cn(
+                "rounded-xl px-2 py-2.5 text-xs font-semibold transition-colors",
+                active === index ? "bg-brand text-brand-foreground" : "text-muted-foreground hover:bg-secondary",
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-5">
-        {unit.readSections.map((section, index) => (
-          <section key={section.heading} className={cn("rounded-3xl border p-5", index === 0 ? "border-brand/40 bg-brand-soft/35" : "border-border bg-card")}>
-            <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">{String(index + 1).padStart(2, "0")}</p>
+        {group.sections.map((section, index) => (
+          <section key={section.heading} className={cn("rounded-3xl border p-5", active === 0 && index === 0 ? "border-brand/40 bg-brand-soft/35" : "border-border bg-card")}>
+            <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">{group.label}</p>
             <h2 className="mt-2 text-lg font-semibold tracking-tight">{section.heading}</h2>
             <div className="mt-4"><RichText markdown={section.body} /></div>
           </section>
         ))}
       </div>
-      <button type="button" onClick={onFinish} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
-        Complete the reading <ArrowRight className="h-4 w-4" />
-      </button>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          disabled={active === 0}
+          onClick={() => { setActive((value) => Math.max(0, value - 1)); window.scrollTo({ top: 0, behavior: "smooth" }) }}
+          className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold disabled:opacity-35"
+        >
+          <ChevronLeft className="h-4 w-4" /> Previous
+        </button>
+        {!last ? (
+          <button
+            type="button"
+            onClick={() => { setActive((value) => Math.min(groups.length - 1, value + 1)); window.scrollTo({ top: 0, behavior: "smooth" }) }}
+            className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground"
+          >
+            Next <ArrowRight className="h-4 w-4" />
+          </button>
+        ) : (
+          <button type="button" onClick={onFinish} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
+            Complete <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </>
   )
+}
+
+function groupReadingSections(unit: CurriculumUnit) {
+  const sections = unit.readSections
+  if (sections.length <= 2) {
+    return sections.map((section, index) => ({ label: index === 0 ? "Concept" : "Breakdown", sections: [section] }))
+  }
+  const exampleIndex = sections.findIndex((section) => /example|worked|before|after|case study/i.test(section.heading))
+  const finalIndex = exampleIndex > 0 ? exampleIndex : sections.length - 1
+  const concept = [sections[0]]
+  const middle = sections.slice(1, finalIndex)
+  const finalSections = sections.slice(finalIndex)
+  const finalLabel = exampleIndex > 0 ? "Example" : unit.kind === "capstone" ? "Finish" : "Takeaway"
+  return [
+    { label: "Concept", sections: concept },
+    { label: "Breakdown", sections: middle.length ? middle : [sections[1]] },
+    { label: finalLabel, sections: finalSections },
+  ]
 }
 
 function DrillStage({ unit, response, setResponse, onFinish }: { unit: CurriculumUnit; response: string; setResponse: (value: string) => void; onFinish: (value: string) => void }) {
@@ -113,8 +179,8 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
       if (!res.ok) throw new Error(data.error || "The coach could not respond.")
       setFeedback(data as LessonFeedback)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The coach could not respond.")
-      setFeedback({ pass: true, working: "You gave the exercise a specific, usable attempt.", fix: `Revise once more with the unit's central technique, ${unit.skill.toLowerCase()}, made more visible.` })
+      setError(caught instanceof Error ? caught.message : "Weaver could not reach OpenAI.")
+      setFeedback(null)
     } finally {
       setLoading(false)
     }
@@ -138,7 +204,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
           <span>Your response saves on this device.</span>
         </div>
       </section>
-      {error && <p className="rounded-2xl bg-streak-soft px-4 py-3 text-sm text-foreground">{error} A focused fallback review is shown below.</p>}
+      {error && <p className="rounded-2xl bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</p>}
       {feedback && (
         <section className="flex flex-col gap-3 rounded-3xl border border-brand/40 bg-brand-soft/35 p-5">
           <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent-foreground" /><h2 className="text-sm font-semibold">Coach's read</h2></div>
@@ -212,7 +278,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
   )
 }
 
-function Completed({ unit, stage, coursePercent }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number }) {
+function Completed({ unit, stage, coursePercent, earnedThisVisit, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; earnedThisVisit: boolean; onReview: () => void }) {
   const stageIndex = (["read", "drill", "quiz"] as LessonStage[]).indexOf(stage)
   const nextStage = (["read", "drill", "quiz"] as LessonStage[])[stageIndex + 1]
   const unitIndex = curriculum.findIndex((item) => item.id === unit.id)
@@ -223,10 +289,11 @@ function Completed({ unit, stage, coursePercent }: { unit: CurriculumUnit; stage
     <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
-      <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-accent-foreground"><Sparkles className="h-4 w-4" />+{stageXp[stage]} XP earned</div>
+      <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-accent-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? `+${stageXp[stage]} XP earned` : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is {coursePercent}% complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
         <Link href={primaryHref} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>
+        <button type="button" onClick={onReview} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold"><Sparkles className="h-4 w-4" />Review or try again</button>
         <Link href={`/activities/${unit.id}`} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" />Back to the unit</Link>
       </div>
     </div>

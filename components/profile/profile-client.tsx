@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, BarChart3, ChevronRight, LockKeyhole, Settings, Sparkles, Star } from "lucide-react"
+import { ArrowRight, BarChart3, ChevronRight, LockKeyhole, MessageCircle, Settings, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { Weaver } from "@/components/weaver"
@@ -42,6 +42,7 @@ export function ProfileClient() {
         <Eyebrow className="mb-3">Account</Eyebrow>
         <div className="overflow-hidden rounded-3xl border border-border bg-card">
           <Menu href="/progress" icon={BarChart3} title="Progress" detail="Activity, streaks, and unit completion" />
+          <Menu href="/coach" icon={MessageCircle} title="Ask Weaver" detail="AI coaching for your stories and scores" />
           <Menu href="/settings" icon={Settings} title="Settings and privacy" detail="Notifications, recordings, and data controls" />
           <Menu href="/membership" icon={Star} title={state.premium ? "StoryTuner Plus" : "Membership"} detail={state.premium ? "Plus is active on this device" : "Compare the free and Plus plans"} />
           <Menu href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance} XP available to spend`} last />

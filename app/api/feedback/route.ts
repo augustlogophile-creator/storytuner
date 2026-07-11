@@ -1,32 +1,68 @@
-import { generateObject } from "ai"
-import { z } from "zod"
+import { openAIJson } from "@/lib/openai-server"
+
+export const runtime = "nodejs"
 
 export const maxDuration = 30
 
-const lessonSchema = z.object({
-  pass: z.boolean().describe("Whether the response meaningfully attempts the exercise."),
-  working: z.string().describe("One specific strength in the response, in one or two concise sentences."),
-  fix: z.string().describe("One concrete revision tied directly to the unit's technique."),
-})
+const lessonSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    pass: { type: "boolean" },
+    working: { type: "string" },
+    fix: { type: "string" },
+  },
+  required: ["pass", "working", "fix"],
+}
 
-const arenaSchema = z.object({
-  hook: z.number().min(0).max(100),
-  development: z.number().min(0).max(100),
-  landing: z.number().min(0).max(100),
-  strongest: z.enum(["hook", "development", "landing"]),
-  praise: z.string().describe("A specific observation about what worked in the submitted story."),
-  fix: z.string().describe("One concrete, prioritized revision for the next take."),
-  nextTake: z.string().describe("A brief instruction for the storyteller's next recording."),
-})
+const arenaSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    hook: { type: "integer", minimum: 0, maximum: 100 },
+    development: { type: "integer", minimum: 0, maximum: 100 },
+    landing: { type: "integer", minimum: 0, maximum: 100 },
+    strongest: { type: "string", enum: ["hook", "development", "landing"] },
+    weakest: { type: "string", enum: ["hook", "development", "landing"] },
+    praise: { type: "string" },
+    weakness: { type: "string" },
+    levelUp: { type: "string" },
+  },
+  required: ["hook", "development", "landing", "strongest", "weakest", "praise", "weakness", "levelUp"],
+}
 
-const writtenStorySchema = z.object({
-  score: z.number().min(0).max(100),
-  headline: z.string(),
-  scores: z.object({ structure: z.number().min(0).max(100), detail: z.number().min(0).max(100), emotion: z.number().min(0).max(100) }),
-  strengths: z.array(z.string()).min(2).max(3),
-  improvements: z.array(z.object({ title: z.string(), tip: z.string() })).min(2).max(3),
-  nextStep: z.string(),
-})
+const writtenStorySchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    score: { type: "integer", minimum: 0, maximum: 100 },
+    headline: { type: "string" },
+    scores: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        structure: { type: "integer", minimum: 0, maximum: 100 },
+        detail: { type: "integer", minimum: 0, maximum: 100 },
+        emotion: { type: "integer", minimum: 0, maximum: 100 },
+      },
+      required: ["structure", "detail", "emotion"],
+    },
+    strengths: { type: "array", minItems: 2, maxItems: 3, items: { type: "string" } },
+    improvements: {
+      type: "array",
+      minItems: 2,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: { title: { type: "string" }, tip: { type: "string" } },
+        required: ["title", "tip"],
+      },
+    },
+    nextStep: { type: "string" },
+  },
+  required: ["score", "headline", "scores", "strengths", "improvements", "nextStep"],
+}
 
 export async function POST(req: Request) {
   try {
@@ -35,16 +71,20 @@ export async function POST(req: Request) {
 
     if (mode === "lesson") {
       const answer = typeof body.answer === "string" ? body.answer.trim() : ""
-      if (answer.length < 20) return Response.json({ error: "Write a little more so the coach can respond usefully." }, { status: 400 })
-      const { object } = await generateObject({
-        model: "openai/gpt-4o-mini",
+      if (answer.length < 20) return Response.json({ error: "Write a little more so Weaver can respond usefully." }, { status: 400 })
+      const object = await openAIJson<{ pass: boolean; working: string; fix: string }>({
+        name: "lesson_feedback",
         schema: lessonSchema,
-        system: "You are StoryTuner, a precise, warm storytelling teacher. Be encouraging without empty praise. Evaluate only the technique named for this exercise. Refer to the student's actual wording, then give one useful revision. Keep the total response under 110 words.",
-        prompt: `Unit: ${String(body.unitTitle || "Storytelling")}
-Technique: ${String(body.technique || "story craft")}
-Exercise: ${String(body.prompt || "")}
-Student response:
-${answer}`,
+        messages: [
+          {
+            role: "system",
+            content: "You are Weaver, StoryTuner's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Refer to the student's actual wording. Give one genuine strength and one concrete revision. Never invent details. Keep the full answer under 100 words.",
+          },
+          {
+            role: "user",
+            content: `Unit: ${String(body.unitTitle || "Storytelling")}\nTechnique: ${String(body.technique || "story craft")}\nExercise: ${String(body.prompt || "")}\n\nStudent response:\n${answer}`,
+          },
+        ],
       })
       return Response.json(object)
     }
@@ -52,33 +92,48 @@ ${answer}`,
     if (mode === "arena") {
       const transcript = typeof body.transcript === "string" ? body.transcript.trim() : ""
       if (transcript.length < 20) return Response.json({ error: "The transcript is too short for useful feedback." }, { status: 400 })
-      const { object } = await generateObject({
-        model: "openai/gpt-4o-mini",
+      const object = await openAIJson<{
+        hook: number
+        development: number
+        landing: number
+        strongest: "hook" | "development" | "landing"
+        weakest: "hook" | "development" | "landing"
+        praise: string
+        weakness: string
+        levelUp: string
+      }>({
+        name: "arena_feedback",
         schema: arenaSchema,
-        system: `You are StoryTuner, a sophisticated but friendly coach for spoken true stories. Score three areas: hook, development, and landing. Reward clarity and emotional honesty more than dramatic subject matter. Give one specific strength and one prioritized fix. Never invent details that are not in the transcript.${body.premium ? " For this Plus review, pay additional attention to pacing and word economy when choosing the single most useful fix." : ""}`,
-        prompt: `Context: ${String(body.context || "Personal story")}
-Prompt: ${String(body.prompt || "Tell a true story")}
-Duration: ${Number(body.seconds || 0)} seconds
-Transcript:
-${transcript}`,
+        messages: [
+          {
+            role: "system",
+            content: "You are Weaver, a sophisticated but friendly coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, movement, emotional honesty, and a satisfying ending, not dramatic subject matter. Identify the strongest and weakest category. Praise one exact thing. Explain the main weakness without being harsh. Give one immediately usable revision under 22 words. Never invent details. Keep each feedback field concise.",
+          },
+          {
+            role: "user",
+            content: `Mode: ${String(body.context || "Open story")}\nPrompt: ${String(body.prompt || "Tell any story you choose")}\nDuration: ${Number(body.seconds || 0)} seconds\n\nTranscript:\n${transcript}`,
+          },
+        ],
       })
       return Response.json(object)
     }
 
     const story = typeof body.story === "string" ? body.story.trim() : ""
     if (story.length < 20) return Response.json({ error: "Please share a little more of the story." }, { status: 400 })
-    const { object } = await generateObject({
-      model: "openai/gpt-4o-mini",
+    const object = await openAIJson({
+      name: "written_story_feedback",
       schema: writtenStorySchema,
-      system: "You are StoryTuner, a warm, specific storytelling coach. Focus on structure, vivid detail, emotional truth, and a clean landing. Avoid generic praise.",
-      prompt: `Title: ${String(body.title || "Untitled")}
-
-Story:
-${story}`,
+      messages: [
+        { role: "system", content: "You are Weaver, a warm, specific storytelling coach. Focus on structure, vivid detail, emotional truth, and a clean landing. Avoid generic praise and never invent details." },
+        { role: "user", content: `Title: ${String(body.title || "Untitled")}\n\nStory:\n${story}` },
+      ],
     })
     return Response.json(object)
   } catch (error) {
-    console.error("StoryTuner feedback error", error)
-    return Response.json({ error: "The coach is unavailable right now. Your work is still saved on this device." }, { status: 500 })
+    console.error("StoryTuner OpenAI feedback error", error)
+    const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
+      ? "OpenAI is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
+      : "Weaver could not reach OpenAI right now. Your work is still saved on this device."
+    return Response.json({ error: message }, { status: 500 })
   }
 }

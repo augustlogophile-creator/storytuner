@@ -26,6 +26,9 @@ export type Recording = {
   scores: ArenaScores
   overall: number
   praise: string
+  weakest?: "hook" | "development" | "landing"
+  weakness?: string
+  levelUp?: string
   fix: string
   nextTake: string
   mediaKind: "video" | "audio" | "none"
@@ -62,8 +65,10 @@ export const weaverColors: WeaverColor[] = [
   { id: "amber", name: "Amber", cost: 800, overlay: "#ad6e1f", description: "Warm and uncommon." },
 ]
 
+export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }
+
 export type AppState = {
-  version: 3
+  version: 4
   profile: { name: string; joinedAt: string }
   sessions: number
   lastOpen: string | null
@@ -81,6 +86,7 @@ export type AppState = {
   recordings: Recording[]
   community: CommunityPost[]
   likedPosts: string[]
+  coach: { date: string; sent: number; messages: CoachMessage[] }
   settings: {
     tone: "warm" | "minimal"
     frequency: "daily" | "weekdays" | "off"
@@ -90,7 +96,7 @@ export type AppState = {
   onboardingComplete: boolean
 }
 
-const STORAGE_KEY = "storytuner-state-v3"
+const STORAGE_KEY = "storytuner-state-v4"
 
 function seedCommunityPosts(): CommunityPost[] {
   return [
@@ -115,7 +121,7 @@ function daysBetween(a: string, b: string) {
 
 function freshState(): AppState {
   return {
-    version: 3,
+    version: 4,
     profile: { name: "Storyteller", joinedAt: new Date().toISOString() },
     sessions: 0,
     lastOpen: null,
@@ -133,6 +139,7 @@ function freshState(): AppState {
     recordings: [],
     community: seedCommunityPosts(),
     likedPosts: [],
+    coach: { date: todayKey(), sent: 0, messages: [] },
     settings: { tone: "warm", frequency: "daily", aiOptIn: false },
     premium: false,
     onboardingComplete: false,
@@ -146,7 +153,7 @@ function normalize(raw: unknown): AppState {
   return {
     ...base,
     ...value,
-    version: 3,
+    version: 4,
     profile: { ...base.profile, ...(value.profile ?? {}) },
     settings: { ...base.settings, ...(value.settings ?? {}) },
     completed: Array.isArray(value.completed) ? value.completed : [],
@@ -156,6 +163,13 @@ function normalize(raw: unknown): AppState {
     recordings: Array.isArray(value.recordings) ? value.recordings : [],
     community: Array.isArray(value.community) ? [...seedCommunityPosts().filter((seed) => !value.community?.some((post) => post.id === seed.id)), ...value.community] : seedCommunityPosts(),
     likedPosts: Array.isArray(value.likedPosts) ? value.likedPosts : [],
+    coach: value.coach && typeof value.coach === "object"
+      ? {
+          date: typeof value.coach.date === "string" ? value.coach.date : todayKey(),
+          sent: typeof value.coach.sent === "number" ? value.coach.sent : 0,
+          messages: Array.isArray(value.coach.messages) ? value.coach.messages : [],
+        }
+      : base.coach,
     responses: value.responses ?? {},
     quizScores: value.quizScores ?? {},
   }
@@ -196,6 +210,8 @@ type AppContextValue = {
   repairStreak: () => boolean
   deleteAllRecordings: () => Promise<void>
   resetAll: () => Promise<void>
+  addCoachExchange: (user: string, assistant: string) => void
+  clearCoach: () => void
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -210,7 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loaded.current = true
     let next = freshState()
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
+      const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("storytuner-state-v3")
       if (raw) next = normalize(JSON.parse(raw))
     } catch {}
     const sessionSeen = sessionStorage.getItem("storytuner-session")
@@ -415,8 +431,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await clearMedia().catch(() => undefined)
     try {
       localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem("storytuner-state-v3")
     } catch {}
     setState(freshState())
+  }, [])
+
+
+  const addCoachExchange = useCallback((user: string, assistant: string) => {
+    const now = new Date().toISOString()
+    const today = todayKey()
+    setState((current) => {
+      const sent = current.coach.date === today ? current.coach.sent : 0
+      const priorMessages = current.coach.messages
+      return {
+        ...current,
+        coach: {
+          date: today,
+          sent: sent + 1,
+          messages: [
+            ...priorMessages,
+            { id: crypto.randomUUID(), role: "user", content: user, createdAt: now },
+            { id: crypto.randomUUID(), role: "assistant", content: assistant, createdAt: now },
+          ].slice(-30),
+        },
+      }
+    })
+  }, [])
+
+  const clearCoach = useCallback(() => {
+    setState((current) => ({ ...current, coach: { ...current.coach, messages: [] } }))
   }, [])
 
   const value = useMemo<AppContextValue>(
@@ -440,6 +483,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       repairStreak,
       deleteAllRecordings,
       resetAll,
+      addCoachExchange,
+      clearCoach,
     }),
     [
       state,
@@ -461,6 +506,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       repairStreak,
       deleteAllRecordings,
       resetAll,
+      addCoachExchange,
+      clearCoach,
     ],
   )
 

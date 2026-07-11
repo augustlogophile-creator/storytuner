@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { Check, Lock, Sparkles } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { Weaver } from "@/components/weaver"
@@ -51,10 +50,7 @@ export function ShopClient() {
           const affordable = state.xpBalance >= color.cost
           return (
             <article key={color.id} className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4">
-              <span className="relative isolate flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-white">
-                <Image src="/weaver.png" alt="" width={52} height={42} className="h-full w-full object-contain p-1" />
-                {color.overlay && <span className="pointer-events-none absolute inset-0 mix-blend-screen" style={{ backgroundColor: color.overlay }} />}
-              </span>
+              <Weaver size={50} colorId={color.id} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{color.name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{color.description}</p>
