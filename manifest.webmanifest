@@ -1,0 +1,11 @@
+{
+  "name": "StoryTuner",
+  "short_name": "StoryTuner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f2",
+  "theme_color": "#f8f7f2",
+  "icons": [
+    { "src": "/apple-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
