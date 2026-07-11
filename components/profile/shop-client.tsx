@@ -25,9 +25,9 @@ export function ShopClient() {
       <BackLink href="/" label="Today" />
       <header>
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Weaver shop</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Choose a quieter kind of reward.</h1>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Choose a new look for Weaver.</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Spend XP on a different color for Weaver. Lifetime XP stays intact, only your spendable balance changes.
+          Spend XP on a vivid new color for Weaver. Lifetime XP stays intact, only your spendable balance changes.
         </p>
       </header>
 

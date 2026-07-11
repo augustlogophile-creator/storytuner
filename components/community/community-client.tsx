@@ -40,7 +40,7 @@ function PostCard({ post, liked, onHeart, onComment, onRemove, canComment }: { p
     setComment("")
   }
   return (
-    <article className="rounded-3xl border border-border bg-card p-5">
+    <article id={post.id} className="scroll-mt-24 rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold">{post.author}</p>

@@ -9,7 +9,7 @@ const rows = [
   ["Private Story Reel", "Included", "Included"],
   ["Ask Weaver AI coaching", "5 messages daily", "Unlimited"],
   ["Arena recordings per day", "1", "Unlimited"],
-  ["Prompt tracks", "Personal story", "All tracks"],
+  ["Storytelling scenario library", "Included", "Included"],
   ["Community browsing and reactions", "Included", "Included"],
   ["Community sharing", "Transcript", "Video, audio, or transcript"],
   ["Community comments", "Read only", "Included"],
@@ -55,7 +55,7 @@ export function MembershipClient() {
       <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
         <h2 className="text-lg font-semibold">StoryTuner Plus</h2>
         <div className="mt-4 space-y-2">
-          {["Unlimited Arena takes", "Unlimited Ask Weaver coaching", "Every specialized prompt track", "Video and audio Community posts", "Community commenting"].map((item) => (
+          {["Unlimited Arena takes", "Unlimited Ask Weaver coaching", "Video and audio Community posts", "Community commenting"].map((item) => (
             <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80">
               <Check className="h-4 w-4 text-brand" />
               {item}

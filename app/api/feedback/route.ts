@@ -1,8 +1,7 @@
 import { openAIJson } from "@/lib/openai-server"
 
 export const runtime = "nodejs"
-
-export const maxDuration = 30
+export const maxDuration = 60
 
 const lessonSchema = {
   type: "object",
@@ -24,11 +23,22 @@ const arenaSchema = {
     landing: { type: "integer", minimum: 0, maximum: 100 },
     strongest: { type: "string", enum: ["hook", "development", "landing"] },
     weakest: { type: "string", enum: ["hook", "development", "landing"] },
-    praise: { type: "string" },
-    weakness: { type: "string" },
+    strengths: {
+      type: "array",
+      minItems: 3,
+      maxItems: 3,
+      items: { type: "string" },
+    },
+    improvements: {
+      type: "array",
+      minItems: 3,
+      maxItems: 3,
+      items: { type: "string" },
+    },
     levelUp: { type: "string" },
+    revisedStory: { type: "string" },
   },
-  required: ["hook", "development", "landing", "strongest", "weakest", "praise", "weakness", "levelUp"],
+  required: ["hook", "development", "landing", "strongest", "weakest", "strengths", "improvements", "levelUp", "revisedStory"],
 }
 
 const writtenStorySchema = {
@@ -98,20 +108,25 @@ export async function POST(req: Request) {
         landing: number
         strongest: "hook" | "development" | "landing"
         weakest: "hook" | "development" | "landing"
-        praise: string
-        weakness: string
+        strengths: string[]
+        improvements: string[]
         levelUp: string
+        revisedStory: string
       }>({
         name: "arena_feedback",
         schema: arenaSchema,
         messages: [
           {
             role: "system",
-            content: "You are Weaver, a sophisticated but friendly coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, movement, emotional honesty, and a satisfying ending, not dramatic subject matter. Identify the strongest and weakest category. Praise one exact thing. Explain the main weakness without being harsh. Give one immediately usable revision under 22 words. Never invent details. Keep each feedback field concise.",
+            content: `You are Weaver, a friendly and sophisticated coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, forward movement, stakes, emotional honesty, and a satisfying ending, not dramatic subject matter.
+
+Return exactly three strengths and exactly three improvements. Each bullet must point to something specific in the transcript, use plain language, and avoid repeating another bullet. The level-up instruction must be one concrete change the storyteller can make immediately.
+
+Then write a revised version of the full story. Preserve every real event, the speaker's personality, meaning, and recognizable voice. Remove filler, tighten repetition, improve the opening, clarify the central turn, and strengthen the landing. Do not invent details, dialogue, feelings, or lessons. Do not make the speaker sound formal or unlike themselves.`,
           },
           {
             role: "user",
-            content: `Mode: ${String(body.context || "Open story")}\nPrompt: ${String(body.prompt || "Tell any story you choose")}\nDuration: ${Number(body.seconds || 0)} seconds\n\nTranscript:\n${transcript}`,
+            content: `Practice mode: ${String(body.context || "Open story")}\nInstruction or prompt: ${String(body.prompt || "Tell a story of your choice")}\nTarget length: ${Number(body.targetSeconds || body.seconds || 0)} seconds\nActual length: ${Number(body.seconds || 0)} seconds\n\nClean transcript:\n${transcript}`,
           },
         ],
       })
@@ -130,10 +145,10 @@ export async function POST(req: Request) {
     })
     return Response.json(object)
   } catch (error) {
-    console.error("StoryTuner OpenAI feedback error", error)
+    console.error("StoryTuner feedback error", error)
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
-      ? "OpenAI is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
-      : "Weaver could not reach OpenAI right now. Your work is still saved on this device."
+      ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
+      : "Weaver could not review this right now. Your work is still saved on this device."
     return Response.json({ error: message }, { status: 500 })
   }
 }

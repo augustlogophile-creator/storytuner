@@ -9,10 +9,12 @@ StoryTuner is a mobile-first storytelling course and practice app. The full prod
 - A three-part reading navigator inside Learn: Concept, Breakdown, and Example
 - Repeatable readings, activities, and quizzes, with XP awarded only on first completion
 - Persistent lesson progress, responses, quiz scores, XP, streaks, and session counts
-- An Arena with an open, prompt-free story mode plus guided scenario collections
-- OpenAI transcription and structured scoring for recorded stories
-- A dedicated private recordings page with playback, review, deletion, AI coaching, and opt-in Community sharing
-- Ask Weaver, an OpenAI-powered story chat with story and score context
+- An Arena with two clear paths: tell any story or choose a real-life storytelling scenario
+- Selectable 1:00, 1:30, 2:00, and 5:00 targets, with an optional 45-second extension near the end
+- Automatic Weaver transcription that removes empty filler, adds punctuation, creates a title, and preserves the speaker's voice
+- Structured scoring with three strengths, three improvements, one immediate revision, and a voice-preserving revised story
+- A dedicated private recordings page with playback, review, deletion, Weaver coaching, and opt-in Community sharing
+- Ask Weaver, a story-aware coaching chat with formatted answers and story and score context
 - Profile, detailed progress, settings, privacy controls, membership demo, and Weaver XP shop
 - Blue interface accents, with green and red reserved for feedback meaning
 - A transparent Weaver mascot asset with no baked-in square background
@@ -61,7 +63,7 @@ This version is intentionally account-free:
 - Recorded audio and video blobs are stored in IndexedDB.
 - Data remains on the same browser and does not sync across devices.
 - Recordings are private unless the user explicitly shares one to Community.
-- OpenAI receives a story only when the user requests transcription, grading, or coaching.
+- The configured AI service receives a story only when the user requests transcription, grading, or coaching.
 
 A production multi-user release should add authentication, a database, private object storage, authorization rules, moderation, and a real billing provider.
 

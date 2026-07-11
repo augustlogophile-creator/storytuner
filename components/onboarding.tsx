@@ -66,8 +66,9 @@ export function Onboarding() {
         </div>
         <button
           type="button"
+          disabled={page === 0 && !name.trim()}
           onClick={() => (page === pages.length - 1 ? completeOnboarding(name) : setPage((value) => value + 1))}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35"
         >
           {page === pages.length - 1 ? "Begin" : "Continue"}
           <ArrowRight className="h-4 w-4" />

@@ -31,9 +31,9 @@ This repository is a Next.js App Router project. Preserve the folder structure w
 - `lib/curriculum.ts`: curriculum types and routing helpers
 - `lib/app-state.tsx`: persistent progress, XP, streaks, recordings, coach quota, Community, settings, and membership state
 - `lib/media-store.ts`: private recording storage in IndexedDB
-- `components/arena/arena-client.tsx`: recording and scoring flow
+- `components/arena/arena-client.tsx`: two-path Arena, scenario prompts, duration targets, pause-safe recording, automatic transcription, and scoring
 - `components/arena/recordings-client.tsx`: recordings archive
-- `components/coach/coach-client.tsx`: contextual AI chat
+- `components/coach/coach-client.tsx`: contextual Weaver chat with formatted responses and daily free-message tracking
 - `components/lesson/course-lesson.tsx`: repeatable lesson experience
 - `components/profile/progress-client.tsx`: detailed unit completion with custom icons
 - `components/bottom-nav.tsx`: primary app navigation

@@ -14,9 +14,9 @@ export function RecordingsClient() {
         <Link href="/arena" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Arena</Link>
         <div className="mt-4 flex items-start justify-between gap-4">
           <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
-          <Link href="/arena" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New take</Link>
+          <Link href="/arena" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Review past takes, ask Weaver about the feedback, or choose a recording to share. Nothing is public by default.</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Replay past stories, revisit the grade, ask Weaver a follow-up, or share a transcript with Community. Nothing is public by default.</p>
       </header>
 
       {state.recordings.length === 0 ? (
@@ -28,38 +28,53 @@ export function RecordingsClient() {
         </section>
       ) : (
         <div className="flex flex-col gap-4">
-          {state.recordings.map((recording) => (
-            <article key={recording.id} className="rounded-3xl border border-border bg-card p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold leading-snug">{recording.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{recording.context} · {new Date(recording.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {formatTime(recording.duration)}</p>
+          {state.recordings.map((recording) => {
+            const strengths = recording.strengths?.length ? recording.strengths : [recording.praise]
+            const improvements = recording.improvements?.length ? recording.improvements : [recording.weakness || recording.fix]
+            return (
+              <article key={recording.id} className="rounded-3xl border border-border bg-card p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-semibold leading-snug">{recording.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{recording.context} · {new Date(recording.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {formatTime(recording.duration)}</p>
+                  </div>
+                  <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{recording.overall}</span>
                 </div>
-                <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{recording.overall}</span>
-              </div>
-              <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} />
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <Score label="Hook" value={recording.scores.hook} />
-                <Score label="Development" value={recording.scores.development} />
-                <Score label="Landing" value={recording.scores.landing} />
-              </div>
-              <details className="mt-4">
-                <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">Transcript and feedback</summary>
-                <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-secondary p-4 text-sm leading-7">{recording.transcript}</p>
-                <div className="mt-3 space-y-2 text-sm leading-relaxed">
-                  <p><strong>Strongest:</strong> {recording.praise}</p>
-                  <p><strong>Needs work:</strong> {recording.weakness || recording.fix}</p>
-                  <p><strong>Level up now:</strong> {recording.levelUp || recording.nextTake}</p>
+                <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} />
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <Score label="Hook" value={recording.scores.hook} />
+                  <Score label="Development" value={recording.scores.development} />
+                  <Score label="Landing" value={recording.scores.landing} />
                 </div>
-              </details>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Weaver</Link>
-                <Link href="/arena" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
-                <button type="button" disabled={recording.shared} onClick={() => shareRecording(recording.id)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold disabled:opacity-60"><Share2 className="h-3.5 w-3.5" />{recording.shared ? "Shared" : state.premium || recording.mediaKind === "none" ? "Share" : "Share transcript"}</button>
-                <button type="button" onClick={() => { if (window.confirm("Delete this recording permanently?")) void deleteRecording(recording.id) }} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive"><Trash2 className="h-3.5 w-3.5" />Delete</button>
-              </div>
-            </article>
-          ))}
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">Grade and revised story</summary>
+                  <div className="mt-3 rounded-2xl bg-emerald-50 p-4 text-sm leading-relaxed">
+                    <p className="font-semibold text-emerald-800">What worked</p>
+                    <ul className="mt-2 space-y-1.5 pl-5">{strengths.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-red-50 p-4 text-sm leading-relaxed">
+                    <p className="font-semibold text-red-800">What to improve</p>
+                    <ul className="mt-2 space-y-1.5 pl-5">{improvements.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-brand-soft p-4 text-sm leading-relaxed"><strong>Level up now:</strong> {recording.levelUp || recording.nextTake}</div>
+                  <div className="mt-3 rounded-2xl bg-secondary p-4">
+                    <p className="text-sm font-semibold">Revised story</p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{recording.revisedStory || recording.transcript}</p>
+                  </div>
+                </details>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Weaver</Link>
+                  <Link href="/arena" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
+                  {recording.shared ? (
+                    <Link href={`/community#post-${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
+                  ) : (
+                    <button type="button" onClick={() => shareRecording(recording.id)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share transcript</button>
+                  )}
+                  <button type="button" onClick={() => { if (window.confirm("Delete this recording permanently?")) void deleteRecording(recording.id) }} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive"><Trash2 className="h-3.5 w-3.5" />Delete</button>
+                </div>
+              </article>
+            )
+          })}
         </div>
       )}
     </div>

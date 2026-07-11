@@ -26,9 +26,12 @@ export type Recording = {
   scores: ArenaScores
   overall: number
   praise: string
+  strengths?: string[]
   weakest?: "hook" | "development" | "landing"
   weakness?: string
+  improvements?: string[]
   levelUp?: string
+  revisedStory?: string
   fix: string
   nextTake: string
   mediaKind: "video" | "audio" | "none"
@@ -59,10 +62,10 @@ export type WeaverColor = {
 
 export const weaverColors: WeaverColor[] = [
   { id: "classic", name: "Classic Black", cost: 0, overlay: null, description: "Weaver's original look." },
-  { id: "slate", name: "Slate", cost: 180, overlay: "#526d7a", description: "A quiet blue-gray finish." },
-  { id: "moss", name: "Moss", cost: 320, overlay: "#567252", description: "Soft green with an earthy cast." },
-  { id: "plum", name: "Plum", cost: 520, overlay: "#745778", description: "A restrained violet tint." },
-  { id: "amber", name: "Amber", cost: 800, overlay: "#ad6e1f", description: "Warm and uncommon." },
+  { id: "slate", name: "Cobalt", cost: 180, overlay: "linear-gradient(145deg,#77d8ff 0%,#246bff 50%,#123a9c 100%)", description: "A vivid electric blue." },
+  { id: "moss", name: "Emerald", cost: 320, overlay: "linear-gradient(145deg,#8dffc1 0%,#18c875 52%,#087044 100%)", description: "Bright green with deep jewel tones." },
+  { id: "plum", name: "Violet", cost: 520, overlay: "linear-gradient(145deg,#f0afff 0%,#a855f7 52%,#5b21b6 100%)", description: "A rich, unmistakable purple." },
+  { id: "amber", name: "Sunset", cost: 800, overlay: "linear-gradient(145deg,#ffe27a 0%,#ff8a1f 50%,#c2410c 100%)", description: "A bold amber-orange finish." },
 ]
 
 export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }

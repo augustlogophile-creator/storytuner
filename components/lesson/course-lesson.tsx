@@ -179,7 +179,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
       if (!res.ok) throw new Error(data.error || "The coach could not respond.")
       setFeedback(data as LessonFeedback)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Weaver could not reach OpenAI.")
+      setError(caught instanceof Error ? caught.message : "Weaver could not respond right now.")
       setFeedback(null)
     } finally {
       setLoading(false)
