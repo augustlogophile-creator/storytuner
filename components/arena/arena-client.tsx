@@ -8,6 +8,7 @@ import {
   CameraOff,
   Check,
   Clock3,
+  FileText,
   Loader2,
   MessageCircle,
   Mic2,
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils"
 
 type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
 type StoryMode = "free" | "scenario"
+type TranscriptionOutcome = "idle" | "success" | "no-speech" | "error"
 type ScoreArea = "hook" | "development" | "landing"
 type Feedback = {
   hook: number
@@ -47,6 +49,7 @@ type Scenario = {
 }
 
 const durationOptions = [60, 90, 120, 300]
+const MIN_STORY_WORDS = 50
 
 const scenarios: Scenario[] = [
   {
@@ -137,9 +140,11 @@ export function ArenaClient() {
   const [mimeType, setMimeType] = useState("")
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [transcribing, setTranscribing] = useState(false)
+  const [transcriptionOutcome, setTranscriptionOutcome] = useState<TranscriptionOutcome>("idle")
   const [savedId, setSavedId] = useState<string | null>(null)
   const [error, setError] = useState("")
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const transcriptRef = useRef<HTMLTextAreaElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const audioRecorderRef = useRef<MediaRecorder | null>(null)
@@ -150,6 +155,7 @@ export function ArenaClient() {
   const autoTranscriptionStartedRef = useRef(false)
   const preparingRoomRef = useRef(false)
   const captureVersionRef = useRef(0)
+  const transcriptWordCount = meaningfulWordCount(transcript)
 
   useEffect(() => {
     const mode = new URLSearchParams(window.location.search).get("mode")
@@ -232,6 +238,7 @@ export function ArenaClient() {
     setPaused(false)
     setTranscript("")
     setTitle("")
+    setTranscriptionOutcome("idle")
     setMediaBlob(null)
     setMediaUrl(null)
     setMediaKind("none")
@@ -380,6 +387,7 @@ export function ArenaClient() {
       setExtraSeconds(0)
       setTranscript("")
       setTitle("")
+      setTranscriptionOutcome("idle")
       setPaused(false)
       setPhase("recording")
     } catch {
@@ -406,12 +414,41 @@ export function ArenaClient() {
     setSeconds(0)
     setExtraSeconds(0)
     setPaused(false)
+    setTranscript("")
+    setTitle("")
+    setTranscriptionOutcome("idle")
     setMediaBlob(null)
     setMediaUrl(null)
     setMediaKind("none")
     setMimeType("")
     preparingRoomRef.current = false
     setPhase("ready")
+    void prepareRecordingRoom()
+  }
+
+  function retakeFromReview() {
+    if (!window.confirm("Retake this story? Your current take will be discarded.")) return
+    captureVersionRef.current += 1
+    if (mediaUrl) URL.revokeObjectURL(mediaUrl)
+    setSeconds(0)
+    setExtraSeconds(0)
+    setPaused(false)
+    setTranscript("")
+    setTitle("")
+    setTranscriptionOutcome("idle")
+    setMediaBlob(null)
+    setMediaUrl(null)
+    setMediaKind("none")
+    setMimeType("")
+    setFeedback(null)
+    setSavedId(null)
+    setError("")
+    chunksRef.current = []
+    audioChunksRef.current = []
+    transcriptionBlobRef.current = null
+    stoppingRef.current = false
+    autoTranscriptionStartedRef.current = false
+    preparingRoomRef.current = false
     void prepareRecordingRoom()
   }
 
@@ -452,15 +489,20 @@ export function ArenaClient() {
     if (!source) return transcript.trim()
     if (source.size > 4_000_000) throw new Error("This recording is too large for automatic transcription. Type or paste the story below, then get graded.")
     setTranscribing(true)
+    setTranscriptionOutcome("idle")
     setError("")
     try {
       const form = new FormData()
       form.set("file", new File([source], "storytuner-recording.webm", { type: source.type || "audio/webm" }))
       const response = await fetch("/api/transcribe", { method: "POST", body: form })
-      const data = (await response.json()) as { text?: string; title?: string; error?: string }
-      if (!response.ok || !data.text) throw new Error(data.error || "Weaver could not transcribe this recording.")
+      const data = (await response.json()) as { text?: string; title?: string; wordCount?: number; code?: string; error?: string }
+      if (!response.ok || !data.text) {
+        setTranscriptionOutcome(data.code === "NO_SPEECH" ? "no-speech" : "error")
+        throw new Error(data.error || "Weaver could not transcribe this recording.")
+      }
       setTranscript(data.text)
       setTitle((current) => current.trim() || data.title?.trim() || "")
+      setTranscriptionOutcome("success")
       return data.text.trim()
     } finally {
       setTranscribing(false)
@@ -472,8 +514,14 @@ export function ArenaClient() {
     setError("")
     try {
       let clean = transcript.trim()
-      if (clean.length < 20 && mediaBlob) clean = await transcribeRecording()
-      if (clean.length < 20) throw new Error("Add a fuller story so Weaver can give specific feedback.")
+      if (meaningfulWordCount(clean) < MIN_STORY_WORDS && mediaBlob) clean = await transcribeRecording()
+      const wordCount = meaningfulWordCount(clean)
+      if (wordCount < MIN_STORY_WORDS) {
+        setTranscriptionOutcome(wordCount === 0 ? "no-speech" : "success")
+        throw new Error(wordCount === 0
+          ? "Weaver could not hear a story. Check your microphone and try another take."
+          : `Weaver caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again.`)
+      }
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -531,7 +579,7 @@ export function ArenaClient() {
         <header className="min-w-0">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight">Your two free story reviews are complete.</h1></div>
-            <Link href="/arena/recordings" className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold">Recordings · {state.recordings.length}</Link>
+            <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold">{recordingCountLabel(state.recordings.length)}</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. Membership unlocks unlimited spoken story reviews.</p>
         </header>
@@ -550,8 +598,8 @@ export function ArenaClient() {
     <div className="flex min-w-0 flex-col gap-6">
       <header className="min-w-0">
         <div className="flex items-center justify-between gap-3">
-          <div><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
-          <Link href="/arena/recordings" className="rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground">Recordings · {state.recordings.length}</Link>
+          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
+          <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
         <span className="mt-3 inline-flex rounded-full bg-brand-soft px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
@@ -619,7 +667,7 @@ export function ArenaClient() {
               <button type="button" onClick={() => setCameraOn((value) => !value)} className={cn("flex h-10 w-16 items-center rounded-full p-1 transition-colors", cameraOn ? "justify-end bg-brand" : "justify-start bg-secondary")}><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">{cameraOn ? <Camera className="h-4 w-4 text-accent-foreground" /> : <CameraOff className="h-4 w-4 text-muted-foreground" />}</span></button>
             </div>
           </section>
-          {error && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
+          {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
           <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
           <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
@@ -686,11 +734,24 @@ export function ArenaClient() {
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Weaver removes empty filler and fixes punctuation while preserving your voice, wording, and events. Edit anything before grading.</p>
             <label className="mt-5 block text-sm font-semibold" htmlFor="arena-title">Title</label>
             <input id="arena-title" value={title} onChange={(event: ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} placeholder={transcribing ? "Weaver is creating a title…" : "Give this story a title"} className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand" />
-            <label className="mt-5 block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
-            <textarea id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setTranscript(event.target.value)} rows={10} placeholder={transcribing ? "Weaver is transcribing and cleaning your story…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <label className="block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
+              <span className={cn("text-xs font-medium tabular-nums", transcriptWordCount >= MIN_STORY_WORDS ? "text-emerald-600" : "text-muted-foreground")}>{transcriptWordCount} / {MIN_STORY_WORDS} words</span>
+            </div>
+            <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} rows={10} placeholder={transcribing ? "Weaver is transcribing and cleaning your story…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
           </section>
-          {error && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" disabled={transcribing || transcript.trim().length < 20} onClick={() => void scoreTake()} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
+          {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
+            <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
+              <p className="text-sm font-semibold text-amber-950">{transcriptWordCount === 0 ? "Weaver could not hear a story." : "Your story needs a little more before grading."}</p>
+              <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `Weaver caught ${transcriptWordCount} ${transcriptWordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again. This will not use one of your free stories.`}</p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
+                <button type="button" onClick={() => transcriptRef.current?.focus()} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-semibold"><FileText className="h-4 w-4" />Review transcript</button>
+              </div>
+            </section>
+          )}
+          {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
+          <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
           <button type="button" onClick={() => { if (window.confirm("Discard this take and start again?")) reset() }} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground"><RotateCcw className="h-4 w-4" />Discard and start again</button>
         </>
       )}
@@ -828,6 +889,12 @@ function FeedbackList({ tone, title, items }: { tone: "good" | "bad"; title: str
 }
 
 function SubScore({ label, value }: { label: string; value: number }) { return <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card px-2 py-4"><span className="text-lg font-semibold">{value}</span><span className="font-mono text-[0.54rem] uppercase tracking-wider text-muted-foreground">{label}</span></div> }
+function meaningfulWordCount(text: string) {
+  const fillerWords = new Set(["um", "uh", "erm", "hmm", "mhm", "ah", "eh"])
+  const words = text.toLowerCase().match(/[a-z0-9]+(?:['’][a-z0-9]+)*/g) ?? []
+  return words.filter((word) => !fillerWords.has(word)).length
+}
+function recordingCountLabel(count: number) { return `${count} ${count === 1 ? "recording" : "recordings"}` }
 function formatTime(seconds: number) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` }
 function firstSentence(text: string) { const sentence = text.split(/(?<=[.!?])\s/)[0] || "Untitled story"; return sentence.length > 70 ? `${sentence.slice(0, 67)}…` : sentence }
 function labelArea(area: ScoreArea) { return area === "development" ? "Development" : area[0].toUpperCase() + area.slice(1) }

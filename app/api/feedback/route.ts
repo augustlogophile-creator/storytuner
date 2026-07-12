@@ -101,7 +101,16 @@ export async function POST(req: Request) {
 
     if (mode === "arena") {
       const transcript = typeof body.transcript === "string" ? body.transcript.trim() : ""
-      if (transcript.length < 20) return Response.json({ error: "The transcript is too short for useful feedback." }, { status: 400 })
+      const wordCount = meaningfulWordCount(transcript)
+      if (wordCount < 50) {
+        return Response.json({
+          code: wordCount === 0 ? "NO_SPEECH" : "STORY_TOO_SHORT",
+          wordCount,
+          error: wordCount === 0
+            ? "Weaver could not hear a story. Check your microphone and try another take."
+            : `Weaver caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least 50 words, then try again.`,
+        }, { status: 400 })
+      }
       const object = await openAIJson<{
         hook: number
         development: number
@@ -151,4 +160,11 @@ Then write a revised version of the full story. Preserve every real event, the s
       : "Weaver could not review this right now. Your work is still saved on this device."
     return Response.json({ error: message }, { status: 500 })
   }
+}
+
+
+function meaningfulWordCount(text: string) {
+  const fillerWords = new Set(["um", "uh", "erm", "hmm", "mhm", "ah", "eh"])
+  const words = text.toLowerCase().match(/[a-z0-9]+(?:['’][a-z0-9]+)*/g) ?? []
+  return words.filter((word) => !fillerWords.has(word)).length
 }

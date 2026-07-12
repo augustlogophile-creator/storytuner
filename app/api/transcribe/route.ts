@@ -3,6 +3,8 @@ import { openAIJson, transcribeWithOpenAI } from "@/lib/openai-server"
 export const runtime = "nodejs"
 export const maxDuration = 60
 
+const MIN_STORY_WORDS = 50
+
 const cleanupSchema = {
   type: "object",
   additionalProperties: false,
@@ -21,6 +23,14 @@ export async function POST(req: Request) {
     if (file.size > 4 * 1024 * 1024) return Response.json({ error: "This recording is too large to transcribe." }, { status: 413 })
 
     const raw = await transcribeWithOpenAI(file)
+    const rawWordCount = meaningfulWordCount(raw)
+    if (rawWordCount < 3) {
+      return Response.json({
+        code: "NO_SPEECH",
+        wordCount: rawWordCount,
+        error: "Weaver could not hear a story. Check your microphone and try another take.",
+      }, { status: 422 })
+    }
     try {
       const cleaned = await openAIJson<{ title: string; transcript: string }>({
         name: "clean_story_transcript",
@@ -34,10 +44,12 @@ export async function POST(req: Request) {
           { role: "user", content: `Raw transcript:\n${raw}` },
         ],
       })
-      return Response.json({ text: cleaned.transcript.trim(), title: cleaned.title.trim() })
+      const text = cleaned.transcript.trim()
+      const wordCount = meaningfulWordCount(text)
+      return Response.json({ text, title: cleaned.title.trim(), wordCount, minimumWords: MIN_STORY_WORDS })
     } catch (cleanupError) {
       console.error("StoryTuner transcript cleanup error", cleanupError)
-      return Response.json({ text: raw, title: titleFrom(raw) })
+      return Response.json({ text: raw, title: titleFrom(raw), wordCount: rawWordCount, minimumWords: MIN_STORY_WORDS })
     }
   } catch (error) {
     console.error("StoryTuner transcription error", error)
@@ -46,6 +58,12 @@ export async function POST(req: Request) {
       : "Weaver could not transcribe this recording right now."
     return Response.json({ error: message }, { status: 500 })
   }
+}
+
+function meaningfulWordCount(text: string) {
+  const fillerWords = new Set(["um", "uh", "erm", "hmm", "mhm", "ah", "eh"])
+  const words = text.toLowerCase().match(/[a-z0-9]+(?:['’][a-z0-9]+)*/g) ?? []
+  return words.filter((word) => !fillerWords.has(word)).length
 }
 
 function titleFrom(text: string) {
