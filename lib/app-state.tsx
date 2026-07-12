@@ -56,16 +56,21 @@ export type WeaverColor = {
   id: string
   name: string
   cost: number
-  overlay: string | null
+  image: string
   description: string
+  featured?: "gold" | "goat"
 }
 
 export const weaverColors: WeaverColor[] = [
-  { id: "classic", name: "Classic Black", cost: 0, overlay: null, description: "Weaver's original look." },
-  { id: "slate", name: "Cobalt", cost: 180, overlay: "linear-gradient(145deg,#77d8ff 0%,#246bff 50%,#123a9c 100%)", description: "A vivid electric blue." },
-  { id: "moss", name: "Emerald", cost: 320, overlay: "linear-gradient(145deg,#8dffc1 0%,#18c875 52%,#087044 100%)", description: "Bright green with deep jewel tones." },
-  { id: "plum", name: "Violet", cost: 520, overlay: "linear-gradient(145deg,#f0afff 0%,#a855f7 52%,#5b21b6 100%)", description: "A rich, unmistakable purple." },
-  { id: "amber", name: "Sunset", cost: 800, overlay: "linear-gradient(145deg,#ffe27a 0%,#ff8a1f 50%,#c2410c 100%)", description: "A bold amber-orange finish." },
+  { id: "classic", name: "Classic Black", cost: 0, image: "/weaver.png", description: "Weaver's original look." },
+  { id: "brown", name: "Walnut", cost: 50, image: "/weaver-brown.png", description: "Warm cocoa brown with bronze highlights." },
+  { id: "slate", name: "Cobalt", cost: 180, image: "/weaver-cobalt.png", description: "Electric blue with deep sapphire shading." },
+  { id: "red", name: "Crimson", cost: 260, image: "/weaver-red.png", description: "A bold ruby red with darker edges." },
+  { id: "moss", name: "Emerald", cost: 320, image: "/weaver-emerald.png", description: "Bright jewel green with rich depth." },
+  { id: "plum", name: "Violet", cost: 520, image: "/weaver-violet.png", description: "A vivid royal purple with glossy highlights." },
+  { id: "amber", name: "Sunset", cost: 800, image: "/weaver-sunset.png", description: "Burnished orange with a warm golden glow." },
+  { id: "gold", name: "Crowned Gold", cost: 1000, image: "/weaver-gold.png", description: "Polished gold, finished with a crown.", featured: "gold" },
+  { id: "goat", name: "G.O.A.T. Weaver", cost: 2000, image: "/weaver-goat.png", description: "The rarest Weaver, with horns, ears, and a beard.", featured: "goat" },
 ]
 
 export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }

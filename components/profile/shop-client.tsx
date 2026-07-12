@@ -49,7 +49,16 @@ export function ShopClient() {
           const equipped = state.activeWeaver === color.id
           const affordable = state.xpBalance >= color.cost
           return (
-            <article key={color.id} className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4">
+            <article
+              key={color.id}
+              className={
+                color.featured === "gold"
+                  ? "flex items-center gap-4 rounded-3xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-card p-4"
+                  : color.featured === "goat"
+                    ? "flex items-center gap-4 rounded-3xl border border-stone-400/60 bg-gradient-to-r from-stone-100 to-card p-4"
+                    : "flex items-center gap-4 rounded-3xl border border-border bg-card p-4"
+              }
+            >
               <Weaver size={50} colorId={color.id} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{color.name}</p>
