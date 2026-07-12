@@ -1,19 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, BarChart3, ChevronRight, LockKeyhole, MessageCircle, Settings, Sparkles, Star } from "lucide-react"
+import { BarChart3, ChevronRight, LockKeyhole, Mail, MessageCircle, Settings, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
-import { ProgressBar } from "@/components/progress-bar"
 import { Weaver } from "@/components/weaver"
-import { courseProgress, freeLessonLimitReached, levelForXp, nextLesson, useApp } from "@/lib/app-state"
-import { stageLabels } from "@/lib/curriculum"
+import { levelForXp, useApp } from "@/lib/app-state"
 
 export function ProfileClient() {
   const { state } = useApp()
-  const course = courseProgress(state)
   const level = levelForXp(state.xpLifetime)
-  const next = nextLesson(state)
-  const freeLimitReached = freeLessonLimitReached(state) && course.done < course.total
   return (
     <div className="flex flex-col gap-6">
       <section className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-5">
@@ -33,10 +28,18 @@ export function ProfileClient() {
       </section>
 
       <section className="rounded-3xl border border-border bg-card p-5">
-        <div className="flex items-start justify-between gap-3"><div><Eyebrow>Learning path</Eyebrow><h2 className="mt-1 text-base font-semibold">{course.percent === 100 ? "Course complete" : `${course.percent}% complete`}</h2></div><span className="text-xs text-muted-foreground">{course.done}/{course.total}</span></div>
-        <div className="mt-4"><ProgressBar value={course.percent} /></div>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{next ? `Next: ${stageLabels[next.stage]} in “${next.unit.title}.”` : freeLimitReached ? "You completed the five free lessons. Membership unlocks the remaining ten." : "Every unit and the capstone are complete."}</p>
-        <Link href={next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"} className="mt-4 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">{next ? "Continue learning" : freeLimitReached ? "Unlock full course" : "Review the course"}<ArrowRight className="h-4 w-4" /></Link>
+        <Eyebrow>Support</Eyebrow>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">Questions, issues, or concerns?</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Reach out anytime. We will help with technical problems, feedback, account questions, or anything else involving StoryTuner.
+        </p>
+        <a
+          href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support"
+          className="mt-4 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+        >
+          <Mail className="h-4 w-4" />
+          Contact StoryTuner
+        </a>
       </section>
 
       <section>
