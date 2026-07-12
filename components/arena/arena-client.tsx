@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState, type ChangeEvent } from "react"
+import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react"
 import {
   ArrowRight,
   Camera,
@@ -24,7 +24,7 @@ import { canRecordInArena, FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type Ar
 import { saveMedia } from "@/lib/media-store"
 import { cn } from "@/lib/utils"
 
-type Phase = "setup" | "countdown" | "ready" | "recording" | "review" | "scoring" | "result"
+type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
 type StoryMode = "free" | "scenario"
 type ScoreArea = "hook" | "development" | "landing"
 type Feedback = {
@@ -129,7 +129,6 @@ export function ArenaClient() {
   const limitSeconds = targetSeconds + extraSeconds
   const [seconds, setSeconds] = useState(0)
   const [paused, setPaused] = useState(false)
-  const [countdown, setCountdown] = useState(5)
   const [transcript, setTranscript] = useState("")
   const [title, setTitle] = useState("")
   const [mediaBlob, setMediaBlob] = useState<Blob | null>(null)
@@ -165,19 +164,35 @@ export function ArenaClient() {
   }, [phase, paused])
 
   useEffect(() => {
-    if (phase !== "countdown") return
-    if (countdown <= 0) {
-      if (!preparingRoomRef.current) void prepareRecordingRoom()
-      return
-    }
-    const timer = window.setTimeout(() => setCountdown((value) => value - 1), 1000)
-    return () => window.clearTimeout(timer)
-  }, [phase, countdown])
-
-  useEffect(() => {
-    if (["countdown", "ready", "recording"].includes(phase)) document.documentElement.dataset.recordingRoom = "true"
+    if (["ready", "recording"].includes(phase)) document.documentElement.dataset.recordingRoom = "true"
     else delete document.documentElement.dataset.recordingRoom
     return () => { delete document.documentElement.dataset.recordingRoom }
+  }, [phase])
+
+  useEffect(() => {
+    if (phase !== "recording") return
+    const warning = "Leave this recording? Your current video progress will not be saved."
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    const handleLinkClick = (event: MouseEvent) => {
+      const element = event.target instanceof Element ? event.target.closest("a[href]") : null
+      if (!element) return
+      const href = element.getAttribute("href")
+      if (!href || href.startsWith("#")) return
+      if (!window.confirm(warning)) {
+        event.preventDefault()
+        event.stopPropagation()
+        event.stopImmediatePropagation()
+      }
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    document.addEventListener("click", handleLinkClick, true)
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      document.removeEventListener("click", handleLinkClick, true)
+    }
   }, [phase])
 
   useEffect(() => {
@@ -212,7 +227,6 @@ export function ArenaClient() {
     if (recorder && recorder.state !== "inactive") recorder.stop()
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setPhase("setup")
-    setCountdown(5)
     setSeconds(0)
     setExtraSeconds(0)
     setPaused(false)
@@ -250,9 +264,8 @@ export function ArenaClient() {
       return
     }
 
-    setCountdown(5)
     preparingRoomRef.current = false
-    setPhase("countdown")
+    void prepareRecordingRoom()
   }
 
   async function prepareRecordingRoom() {
@@ -397,8 +410,9 @@ export function ArenaClient() {
     setMediaUrl(null)
     setMediaKind("none")
     setMimeType("")
-    setCountdown(5)
-    setPhase("countdown")
+    preparingRoomRef.current = false
+    setPhase("ready")
+    void prepareRecordingRoom()
   }
 
   function togglePause() {
@@ -611,32 +625,6 @@ export function ArenaClient() {
         </>
       )}
 
-      {phase === "countdown" && (
-        <section className="relative flex min-h-[610px] overflow-hidden rounded-[2rem] bg-foreground shadow-xl">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#16243a] via-[#101827] to-black" />
-          <div className="relative z-10 flex w-full flex-col items-center justify-between p-7 text-center text-white">
-            <div className="w-full">
-              <p className="mx-auto max-w-sm text-sm font-semibold leading-relaxed">{prompt}</p>
-              {isOpenResponse && <p className="mt-1 text-xs text-white/60">Unprompted. Choose what you want to talk about.</p>}
-            </div>
-            <div className="flex flex-1 flex-col items-center justify-center">
-              {countdown > 0 ? (
-                <>
-                  <p className="font-mono text-7xl font-semibold tabular-nums tracking-tight">{countdown}</p>
-                  <p className="mt-4 text-sm font-medium text-white/65">Get ready. Your camera stays hidden during the countdown.</p>
-                </>
-              ) : (
-                <>
-                  <Loader2 className="h-9 w-9 animate-spin text-white" />
-                  <p className="mt-4 text-sm font-medium text-white/65">Opening the recording room…</p>
-                </>
-              )}
-            </div>
-            <button type="button" onClick={reset} className="rounded-full px-4 py-2 text-xs font-semibold text-white/60">Back to setup</button>
-          </div>
-        </section>
-      )}
-
       {phase === "ready" && (
         <section className="relative min-h-[610px] overflow-hidden rounded-[2rem] bg-foreground shadow-xl">
           <video ref={videoRef} muted playsInline className={cn("absolute inset-0 h-full w-full scale-x-[-1] object-cover", !cameraOn && "opacity-0")} />
@@ -650,7 +638,7 @@ export function ArenaClient() {
           </div>
           <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-7 p-7 text-white">
             <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
-            <Control label="Start" onClick={startRecording} icon={Play} large />
+            <Control label="Start" onClick={startRecording} icon={Play} large tone="brand" />
             <Control label="Setup" onClick={reset} icon={RotateCcw} />
           </div>
         </section>
@@ -672,11 +660,13 @@ export function ArenaClient() {
               <button type="button" onClick={() => setExtraSeconds(45)} className="mt-4 rounded-full bg-white/18 px-4 py-2 text-xs font-semibold backdrop-blur-md">Add 45 seconds</button>
             )}
           </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-4 p-5 text-white">
-            <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
-            <Control label={paused ? "Resume" : "Pause"} onClick={togglePause} icon={paused ? Play : Pause} large />
-            <Control label="Retake" onClick={retakeRecording} icon={Rewind} />
-            <Control label="Done" onClick={stopRecording} icon={Check} tone="success" />
+          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 p-5 text-white">
+            <div className="flex items-end gap-2.5">
+              <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
+              <Control label={paused ? "Resume" : "Pause"} onClick={togglePause} icon={paused ? Play : Pause} />
+              <Control label="Retake" onClick={retakeRecording} icon={Rewind} />
+            </div>
+            <Control label="Done" onClick={stopRecording} icon={Check} large tone="success" />
           </div>
         </section>
       )}
@@ -685,8 +675,7 @@ export function ArenaClient() {
         <>
           <section className="rounded-3xl border border-border bg-card p-5">
             <Eyebrow>Review your take</Eyebrow>
-            {mediaUrl && mediaKind === "video" && <video src={mediaUrl} controls playsInline className="mt-4 max-h-80 w-full rounded-2xl bg-foreground" />}
-            {mediaUrl && mediaKind === "audio" && <audio src={mediaUrl} controls className="mt-4 w-full" />}
+            {mediaUrl && mediaKind !== "none" && <ReviewMediaPlayer src={mediaUrl} kind={mediaKind} duration={Math.max(1, seconds)} />}
             {!mediaUrl && <div className="mt-4 flex h-28 items-center justify-center rounded-2xl bg-secondary text-sm text-muted-foreground">Text-only review</div>}
           </section>
           <section className="rounded-3xl border border-border bg-card p-5">
@@ -715,8 +704,87 @@ export function ArenaClient() {
   )
 }
 
-function Control({ label, onClick, icon: Icon, large, tone = "default" }: { label: string; onClick: () => void; icon: typeof Camera; large?: boolean; tone?: "default" | "success" }) {
-  return <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform active:scale-95", large ? "h-16 w-16" : "h-14 w-14", tone === "success" && "bg-emerald-500")}><Icon className="h-5 w-5" /></span><span className="max-w-16 truncate text-[0.66rem] font-semibold">{label}</span></button>
+function Control({ label, onClick, icon: Icon, large, tone = "default" }: { label: string; onClick: () => void; icon: typeof Camera; large?: boolean; tone?: "default" | "success" | "brand" }) {
+  return <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform active:scale-95", large ? "h-16 w-16" : "h-14 w-14", tone === "success" && "bg-emerald-500", tone === "brand" && "bg-blue-500")}><Icon className="h-5 w-5" /></span><span className="max-w-16 truncate text-[0.66rem] font-semibold">{label}</span></button>
+}
+
+function ReviewMediaPlayer({ src, kind, duration }: { src: string; kind: "video" | "audio"; duration: number }) {
+  const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const safeDuration = Math.max(1, duration)
+  const progress = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100))
+
+  useEffect(() => {
+    setPlaying(false)
+    setCurrentTime(0)
+    const media = mediaRef.current
+    if (media) {
+      media.pause()
+      try { media.currentTime = 0 } catch {}
+    }
+  }, [src])
+
+  function togglePlayback() {
+    const media = mediaRef.current
+    if (!media) return
+    if (media.paused) {
+      if (currentTime >= safeDuration - 0.1) media.currentTime = 0
+      void media.play()
+      setPlaying(true)
+    } else {
+      media.pause()
+      setPlaying(false)
+    }
+  }
+
+  function seek(event: ReactPointerEvent<HTMLDivElement>) {
+    const media = mediaRef.current
+    if (!media) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
+    const next = ratio * safeDuration
+    try { media.currentTime = next } catch {}
+    setCurrentTime(next)
+  }
+
+  const sharedProps = {
+    src,
+    preload: "metadata" as const,
+    onLoadedMetadata: () => {
+      const media = mediaRef.current
+      if (!media) return
+      media.pause()
+      try { media.currentTime = 0 } catch {}
+      setCurrentTime(0)
+      setPlaying(false)
+    },
+    onTimeUpdate: () => setCurrentTime(Math.min(safeDuration, mediaRef.current?.currentTime ?? 0)),
+    onPlay: () => setPlaying(true),
+    onPause: () => setPlaying(false),
+    onEnded: () => { setPlaying(false); setCurrentTime(safeDuration) },
+  }
+
+  return (
+    <div className="relative mt-4 overflow-hidden rounded-2xl bg-foreground text-white">
+      {kind === "video" ? (
+        <video ref={(node) => { mediaRef.current = node }} playsInline className="max-h-80 w-full bg-foreground object-contain" {...sharedProps} />
+      ) : (
+        <div className="flex h-36 items-center justify-center bg-gradient-to-br from-slate-800 to-black"><Mic2 className="h-9 w-9 text-white/70" /></div>
+      )}
+      {kind === "audio" && <audio ref={(node) => { mediaRef.current = node }} className="hidden" {...sharedProps} />}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-4 pt-10">
+        <div role="slider" aria-label="Recording progress" aria-valuemin={0} aria-valuemax={safeDuration} aria-valuenow={currentTime} tabIndex={0} onPointerDown={seek} className="h-5 cursor-pointer py-2">
+          <div className="h-1 overflow-hidden rounded-full bg-white/30"><span className="block h-full rounded-full bg-white transition-[width] duration-100" style={{ width: `${progress}%` }} /></div>
+        </div>
+        <div className="mt-1 flex items-center gap-3">
+          <button type="button" onClick={togglePlayback} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/18 backdrop-blur-md" aria-label={playing ? "Pause recording" : "Play recording"}>{playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}</button>
+          <span className="text-xs font-semibold tabular-nums">{formatTime(Math.floor(currentTime))}</span>
+          <span className="text-xs text-white/60">/ {formatTime(safeDuration)}</span>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function Result({ feedback, recording, onShare, onAgain, shared, premium }: { feedback: Feedback; recording?: Recording; onShare: () => void; onAgain: () => void; shared: boolean; premium: boolean }) {

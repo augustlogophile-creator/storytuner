@@ -31,11 +31,11 @@ export function Onboarding() {
   const item = pages[page]
   const Icon = item.icon
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/20 p-3 backdrop-blur-sm sm:items-center">
-      <section className="w-full max-w-md rounded-[2rem] border border-border bg-background p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/20 px-5 py-4 backdrop-blur-sm sm:items-center">
+      <section className="w-full max-w-sm rounded-[1.75rem] border border-border bg-background p-5 shadow-2xl sm:p-6">
         {page === 0 ? (
           <div className="mb-5 flex justify-center">
-            <Weaver size={106} />
+            <Weaver size={88} />
           </div>
         ) : (
           <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground">
@@ -45,7 +45,7 @@ export function Onboarding() {
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">
           Welcome to StoryTuner
         </p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{item.title}</h1>
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-balance sm:text-2xl">{item.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground text-pretty">{item.copy}</p>
         {page === 0 && (
           <label className="mt-5 block">
