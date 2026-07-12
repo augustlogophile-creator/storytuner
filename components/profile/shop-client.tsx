@@ -31,8 +31,8 @@ export function ShopClient() {
         </p>
       </header>
 
-      <section className="flex items-center gap-5 rounded-3xl border border-border bg-card p-5">
-        <Weaver size={104} />
+      <section className="flex items-center gap-6 rounded-3xl border border-border bg-card p-6">
+        <Weaver size={156} />
         <div>
           <p className="text-sm font-semibold">{active.name}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{active.description}</p>
@@ -59,7 +59,7 @@ export function ShopClient() {
                     : "flex items-center gap-4 rounded-3xl border border-border bg-card p-4"
               }
             >
-              <Weaver size={50} colorId={color.id} />
+              <Weaver size={75} colorId={color.id} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{color.name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{color.description}</p>
