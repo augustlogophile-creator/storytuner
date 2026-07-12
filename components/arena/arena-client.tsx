@@ -6,15 +6,16 @@ import {
   ArrowRight,
   Camera,
   CameraOff,
+  Check,
   Clock3,
   Loader2,
   MessageCircle,
   Mic2,
   Pause,
   Play,
+  Rewind,
   RotateCcw,
   Share2,
-  Square,
   Video,
 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
@@ -23,7 +24,7 @@ import { canRecordInArena, FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type Ar
 import { saveMedia } from "@/lib/media-store"
 import { cn } from "@/lib/utils"
 
-type Phase = "setup" | "recording" | "review" | "scoring" | "result"
+type Phase = "setup" | "countdown" | "ready" | "recording" | "review" | "scoring" | "result"
 type StoryMode = "free" | "scenario"
 type ScoreArea = "hook" | "development" | "landing"
 type Feedback = {
@@ -55,7 +56,7 @@ const scenarios: Scenario[] = [
     prompts: [
       "Tell me about a time you changed your mind about someone.",
       "Tell me about a small moment you still remember clearly.",
-      "Tell me about a time something did not go as planned.",
+      "Tell your own story or response.",
     ],
   },
   {
@@ -65,7 +66,7 @@ const scenarios: Scenario[] = [
     prompts: [
       "Tell me about a time you made a mistake and what you did next.",
       "Tell me about a time you worked through a difficult problem.",
-      "Tell me about a time you helped a group succeed.",
+      "Tell your own story or response.",
     ],
   },
   {
@@ -75,7 +76,7 @@ const scenarios: Scenario[] = [
     prompts: [
       "Tell a story that shows why preparation matters.",
       "Tell a story that supports the idea that first impressions can be wrong.",
-      "Tell a story that proves a small choice can have a large effect.",
+      "Tell your own story or response.",
     ],
   },
   {
@@ -85,7 +86,7 @@ const scenarios: Scenario[] = [
     prompts: [
       "Open a presentation with a story that makes your topic matter.",
       "Tell a short story that helps explain a difficult idea.",
-      "Tell a story that gives your audience a reason to care about your point.",
+      "Tell your own story or response.",
     ],
   },
   {
@@ -95,7 +96,7 @@ const scenarios: Scenario[] = [
     prompts: [
       "Tell someone about a specific moment when their actions affected you.",
       "Explain a misunderstanding by telling the moment it first began.",
-      "Tell a story that leads naturally to an apology or a clear request.",
+      "Tell your own story or response.",
     ],
   },
   {
@@ -105,7 +106,7 @@ const scenarios: Scenario[] = [
     prompts: [
       "What is the most interesting thing that happened to you this week?",
       "Tell me about a recent moment that made you laugh.",
-      "Tell me about a place you visited that surprised you.",
+      "Tell your own story or response.",
     ],
   },
 ]
@@ -118,6 +119,7 @@ export function ArenaClient() {
   const scenario = scenarios.find((item) => item.id === scenarioId) ?? scenarios[0]
   const [promptIndex, setPromptIndex] = useState(0)
   const prompt = storyMode === "free" ? "Tell a story of your choice." : scenario.prompts[promptIndex % scenario.prompts.length]
+  const isOpenResponse = storyMode === "scenario" && promptIndex % scenario.prompts.length === scenario.prompts.length - 1
   const contextName = storyMode === "free" ? "Open story" : scenario.name
   const remainingFreeStories = freeArenaRemaining(state)
   const canRecord = canRecordInArena(state)
@@ -127,6 +129,7 @@ export function ArenaClient() {
   const limitSeconds = targetSeconds + extraSeconds
   const [seconds, setSeconds] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [countdown, setCountdown] = useState(5)
   const [transcript, setTranscript] = useState("")
   const [title, setTitle] = useState("")
   const [mediaBlob, setMediaBlob] = useState<Blob | null>(null)
@@ -146,6 +149,8 @@ export function ArenaClient() {
   const audioChunksRef = useRef<Blob[]>([])
   const stoppingRef = useRef(false)
   const autoTranscriptionStartedRef = useRef(false)
+  const preparingRoomRef = useRef(false)
+  const captureVersionRef = useRef(0)
 
   useEffect(() => {
     const mode = new URLSearchParams(window.location.search).get("mode")
@@ -160,7 +165,17 @@ export function ArenaClient() {
   }, [phase, paused])
 
   useEffect(() => {
-    if (phase === "recording") document.documentElement.dataset.recordingRoom = "true"
+    if (phase !== "countdown") return
+    if (countdown <= 0) {
+      if (!preparingRoomRef.current) void prepareRecordingRoom()
+      return
+    }
+    const timer = window.setTimeout(() => setCountdown((value) => value - 1), 1000)
+    return () => window.clearTimeout(timer)
+  }, [phase, countdown])
+
+  useEffect(() => {
+    if (["countdown", "ready", "recording"].includes(phase)) document.documentElement.dataset.recordingRoom = "true"
     else delete document.documentElement.dataset.recordingRoom
     return () => { delete document.documentElement.dataset.recordingRoom }
   }, [phase])
@@ -170,7 +185,7 @@ export function ArenaClient() {
   }, [phase, seconds, limitSeconds])
 
   useEffect(() => {
-    if (phase !== "recording" || !videoRef.current || !streamRef.current) return
+    if (!["ready", "recording"].includes(phase) || !videoRef.current || !streamRef.current) return
     videoRef.current.srcObject = streamRef.current
     void videoRef.current.play().catch(() => undefined)
   }, [phase])
@@ -189,6 +204,7 @@ export function ArenaClient() {
   }, [mediaUrl])
 
   function reset() {
+    captureVersionRef.current += 1
     streamRef.current?.getTracks().forEach((track) => track.stop())
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
@@ -196,6 +212,7 @@ export function ArenaClient() {
     if (recorder && recorder.state !== "inactive") recorder.stop()
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setPhase("setup")
+    setCountdown(5)
     setSeconds(0)
     setExtraSeconds(0)
     setPaused(false)
@@ -214,9 +231,13 @@ export function ArenaClient() {
     transcriptionBlobRef.current = null
     stoppingRef.current = false
     autoTranscriptionStartedRef.current = false
+    preparingRoomRef.current = false
+    streamRef.current = null
+    recorderRef.current = null
+    audioRecorderRef.current = null
   }
 
-  async function startRecording() {
+  function enterRecordingRoom() {
     setError("")
     if (!canRecord) {
       setError("You have used both free spoken story reviews. Membership unlocks unlimited practice.")
@@ -229,6 +250,16 @@ export function ArenaClient() {
       return
     }
 
+    setCountdown(5)
+    preparingRoomRef.current = false
+    setPhase("countdown")
+  }
+
+  async function prepareRecordingRoom() {
+    if (preparingRoomRef.current) return
+    preparingRoomRef.current = true
+    setError("")
+
     try {
       let stream: MediaStream
       try {
@@ -237,7 +268,31 @@ export function ArenaClient() {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         setCameraOn(false)
       }
+      streamRef.current?.getTracks().forEach((track) => track.stop())
       streamRef.current = stream
+      setCameraOn(stream.getVideoTracks().length > 0)
+      setSeconds(0)
+      setExtraSeconds(0)
+      setPaused(false)
+      setPhase("ready")
+    } catch {
+      setError("Microphone access was not available. Check your browser permissions, then try again.")
+      setPhase("setup")
+    } finally {
+      preparingRoomRef.current = false
+    }
+  }
+
+  function startRecording() {
+    setError("")
+    const stream = streamRef.current
+    if (!stream) {
+      setError("The recording room is not ready yet. Try entering again.")
+      setPhase("setup")
+      return
+    }
+
+    try {
       const hasVideo = stream.getVideoTracks().length > 0
       const candidates = hasVideo
         ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"]
@@ -248,6 +303,7 @@ export function ArenaClient() {
         : new MediaRecorder(stream, hasVideo ? undefined : { audioBitsPerSecond: 48000 })
 
       recorderRef.current = recorder
+      const captureVersion = ++captureVersionRef.current
       chunksRef.current = []
       audioChunksRef.current = []
       transcriptionBlobRef.current = null
@@ -260,6 +316,7 @@ export function ArenaClient() {
       let audioStopped = !hasVideo
 
       const finish = () => {
+        if (captureVersion !== captureVersionRef.current) return
         if (!mainStopped || !audioStopped || !mainBlob) return
         const kind = hasVideo ? "video" : "audio"
         transcriptionBlobRef.current = audioBlob ?? mainBlob
@@ -269,6 +326,9 @@ export function ArenaClient() {
         setMediaKind(kind)
         setMimeType(mainBlob.type || (kind === "video" ? "video/webm" : "audio/webm"))
         stream.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+        recorderRef.current = null
+        audioRecorderRef.current = null
         setPaused(false)
         setPhase("review")
       }
@@ -310,10 +370,35 @@ export function ArenaClient() {
       setPaused(false)
       setPhase("recording")
     } catch {
-      setError("Microphone access was not available. You can type your story and still ask Weaver to grade it.")
-      setCameraOn(false)
-      setPhase("review")
+      setError("The recording could not start. Check your microphone permissions and try again.")
+      setPhase("ready")
     }
+  }
+
+  function retakeRecording() {
+    if (!window.confirm("Retake this story? Your current take will be discarded.")) return
+    captureVersionRef.current += 1
+    const audioRecorder = audioRecorderRef.current
+    if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
+    const recorder = recorderRef.current
+    if (recorder && recorder.state !== "inactive") recorder.stop()
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    streamRef.current = null
+    recorderRef.current = null
+    audioRecorderRef.current = null
+    chunksRef.current = []
+    audioChunksRef.current = []
+    transcriptionBlobRef.current = null
+    stoppingRef.current = false
+    setSeconds(0)
+    setExtraSeconds(0)
+    setPaused(false)
+    setMediaBlob(null)
+    setMediaUrl(null)
+    setMediaKind("none")
+    setMimeType("")
+    setCountdown(5)
+    setPhase("countdown")
   }
 
   function togglePause() {
@@ -501,6 +586,7 @@ export function ArenaClient() {
               <section className="rounded-3xl border border-border bg-card p-5">
                 <div className="flex items-center justify-between gap-3"><Eyebrow>Your prompt</Eyebrow><button type="button" onClick={() => setPromptIndex((value) => (value + 1) % scenario.prompts.length)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground"><RotateCcw className="h-3.5 w-3.5" />New prompt</button></div>
                 <p className="mt-3 text-base font-semibold leading-relaxed text-balance">{prompt}</p>
+                {isOpenResponse && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Unprompted. Choose what you want to talk about.</p>}
               </section>
             </>
           )}
@@ -520,9 +606,54 @@ export function ArenaClient() {
             </div>
           </section>
           {error && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" onClick={startRecording} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+          <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
           <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
+      )}
+
+      {phase === "countdown" && (
+        <section className="relative flex min-h-[610px] overflow-hidden rounded-[2rem] bg-foreground shadow-xl">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#16243a] via-[#101827] to-black" />
+          <div className="relative z-10 flex w-full flex-col items-center justify-between p-7 text-center text-white">
+            <div className="w-full">
+              <p className="mx-auto max-w-sm text-sm font-semibold leading-relaxed">{prompt}</p>
+              {isOpenResponse && <p className="mt-1 text-xs text-white/60">Unprompted. Choose what you want to talk about.</p>}
+            </div>
+            <div className="flex flex-1 flex-col items-center justify-center">
+              {countdown > 0 ? (
+                <>
+                  <p className="font-mono text-7xl font-semibold tabular-nums tracking-tight">{countdown}</p>
+                  <p className="mt-4 text-sm font-medium text-white/65">Get ready. Your camera stays hidden during the countdown.</p>
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-9 w-9 animate-spin text-white" />
+                  <p className="mt-4 text-sm font-medium text-white/65">Opening the recording room…</p>
+                </>
+              )}
+            </div>
+            <button type="button" onClick={reset} className="rounded-full px-4 py-2 text-xs font-semibold text-white/60">Back to setup</button>
+          </div>
+        </section>
+      )}
+
+      {phase === "ready" && (
+        <section className="relative min-h-[610px] overflow-hidden rounded-[2rem] bg-foreground shadow-xl">
+          <video ref={videoRef} muted playsInline className={cn("absolute inset-0 h-full w-full scale-x-[-1] object-cover", !cameraOn && "opacity-0")} />
+          {!cameraOn && <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-foreground to-primary p-8 text-center text-primary-foreground"><Mic2 className="h-12 w-12" /><p className="mt-4 text-lg font-semibold">Camera off</p><p className="mt-1 text-sm text-primary-foreground/60">Your microphone is ready.</p></div>}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80" />
+          <div className="relative z-10 flex flex-col items-center p-6 text-center text-white">
+            <p className="max-w-sm text-sm font-semibold leading-relaxed">{prompt}</p>
+            {isOpenResponse && <p className="mt-1 text-xs text-white/60">Unprompted. Choose what you want to talk about.</p>}
+            <p className="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-white/65">Ready when you are</p>
+            <p className="mt-2 text-sm font-semibold tabular-nums">Target · {formatTime(limitSeconds)}</p>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-7 p-7 text-white">
+            <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
+            <Control label="Start" onClick={startRecording} icon={Play} large />
+            <Control label="Setup" onClick={reset} icon={RotateCcw} />
+          </div>
+        </section>
       )}
 
       {phase === "recording" && (
@@ -541,7 +672,12 @@ export function ArenaClient() {
               <button type="button" onClick={() => setExtraSeconds(45)} className="mt-4 rounded-full bg-white/18 px-4 py-2 text-xs font-semibold backdrop-blur-md">Add 45 seconds</button>
             )}
           </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-7 p-7 text-white"><Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} /><Control label={paused ? "Resume" : "Pause"} onClick={togglePause} icon={paused ? Play : Pause} large /><Control label="End" onClick={stopRecording} icon={Square} danger /></div>
+          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-4 p-5 text-white">
+            <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
+            <Control label={paused ? "Resume" : "Pause"} onClick={togglePause} icon={paused ? Play : Pause} large />
+            <Control label="Retake" onClick={retakeRecording} icon={Rewind} />
+            <Control label="Done" onClick={stopRecording} icon={Check} tone="success" />
+          </div>
         </section>
       )}
 
@@ -579,8 +715,8 @@ export function ArenaClient() {
   )
 }
 
-function Control({ label, onClick, icon: Icon, large, danger }: { label: string; onClick: () => void; icon: typeof Camera; large?: boolean; danger?: boolean }) {
-  return <button type="button" onClick={onClick} className="flex flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md", large ? "h-16 w-16" : "h-14 w-14", danger && "bg-destructive")}><Icon className="h-5 w-5" fill={danger ? "currentColor" : "none"} /></span><span className="text-[0.68rem] font-semibold">{label}</span></button>
+function Control({ label, onClick, icon: Icon, large, tone = "default" }: { label: string; onClick: () => void; icon: typeof Camera; large?: boolean; tone?: "default" | "success" }) {
+  return <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform active:scale-95", large ? "h-16 w-16" : "h-14 w-14", tone === "success" && "bg-emerald-500")}><Icon className="h-5 w-5" /></span><span className="max-w-16 truncate text-[0.66rem] font-semibold">{label}</span></button>
 }
 
 function Result({ feedback, recording, onShare, onAgain, shared, premium }: { feedback: Feedback; recording?: Recording; onShare: () => void; onAgain: () => void; shared: boolean; premium: boolean }) {
