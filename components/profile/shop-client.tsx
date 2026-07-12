@@ -32,7 +32,7 @@ export function ShopClient() {
       </header>
 
       <section className="flex items-center gap-6 rounded-3xl border border-border bg-card p-6">
-        <Weaver size={156} />
+        <Weaver size={104} />
         <div>
           <p className="text-sm font-semibold">{active.name}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{active.description}</p>
