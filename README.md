@@ -10,7 +10,8 @@ StoryTuner is a mobile-first storytelling course and practice app. The full prod
 - Three clear steps per unit: Learn, Practice, and Check
 - A three-part reading navigator inside Learn: Concept, Breakdown, and Example
 - Repeatable readings, activities, and quizzes, with XP awarded only on first completion
-- Persistent lesson progress, responses, quiz scores, XP, streaks, and session counts
+- Clerk authentication with Google and email/password sign-up, verification, recovery, secure sessions, account management, and logout
+- Persistent lesson progress, responses, quiz scores, XP, streaks, and session counts on the current device
 - An Arena with two clear paths: tell any story or choose a real-life storytelling scenario
 - Selectable 1:00, 1:30, 2:00, and 5:00 targets, with an optional 45-second extension near the end
 - Automatic Weaver transcription that removes empty filler, adds punctuation, creates a title, and preserves the speaker's voice
@@ -59,23 +60,23 @@ When OpenAI is unavailable, the app preserves the user’s work and displays an 
 
 ## Storage and privacy
 
-This version is intentionally account-free:
+Clerk now provides secure user authentication and session management. StoryTuner progress, settings, chat history, and media are still stored locally in the current browser until a database and private object storage are added in a later phase.
 
-- Progress, settings, and AI chat history are stored in `localStorage`.
-- Recorded audio and video blobs are stored in IndexedDB.
-- Data remains on the same browser and does not sync across devices.
+- Clerk stores account credentials and sessions. StoryTuner never stores passwords.
+- Progress, settings, and AI chat history remain in `localStorage`.
+- Recorded audio and video blobs remain in IndexedDB.
 - Recordings are private unless a member explicitly shares one to Community.
 - The configured AI service receives a story only when the user requests transcription, grading, or coaching.
-
-A production multi-user release should add authentication, a database, private object storage, authorization rules, moderation, and a real billing provider.
+- Signing into the same Clerk account on another device does not yet sync local StoryTuner progress.
 
 ## Deploy to Vercel
 
 1. Upload this folder to a GitHub repository.
 2. Import the repository into Vercel.
-3. Add `OPENAI_API_KEY` in **Project Settings → Environment Variables**.
+3. Add the Clerk and OpenAI environment variables listed below in **Project Settings → Environment Variables**.
 4. Leave the Framework Preset as **Next.js** and keep Build, Install, and Output Directory overrides off.
-5. Deploy.
+5. In Clerk, enable Google and email/password authentication.
+6. Deploy.
 
 ## Important files
 
@@ -86,4 +87,24 @@ A production multi-user release should add authentication, a database, private o
 - `components/arena/recordings-client.tsx`: dedicated recordings archive
 - `components/coach/coach-client.tsx`: Ask Weaver chat interface
 - `public/weaver.png`: transparent Weaver mascot asset
+- `proxy.ts`: Clerk middleware integration for Next.js 16
+- `app/sign-in/[[...sign-in]]/page.tsx`: styled Clerk login
+- `app/sign-up/[[...sign-up]]/page.tsx`: styled Clerk signup
 - `PROJECT_MAP.md`: route and file guide
+
+## Clerk authentication
+
+StoryTuner uses Clerk for Google and email/password authentication, verification, password recovery, sessions, account management, and logout.
+
+Required Vercel environment variables:
+
+```text
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+CLERK_SECRET_KEY
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/home
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/onboarding
+```
+
+In the Clerk Dashboard, enable Google and email/password sign-in methods. Authentication is connected, but StoryTuner progress is still stored locally on the device until a database layer is added later.

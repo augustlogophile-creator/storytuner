@@ -60,7 +60,7 @@ export function CoachClient() {
   return (
     <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col gap-4">
       <header>
-        <Link href="/" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <Link href="/home" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Home
         </Link>
         <div className="mt-4 flex items-center gap-3">

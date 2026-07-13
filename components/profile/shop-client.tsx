@@ -22,7 +22,7 @@ export function ShopClient() {
 
   return (
     <div className="flex flex-col gap-6">
-      <BackLink href="/" label="Today" />
+      <BackLink href="/home" label="Today" />
       <header>
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Weaver shop</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Choose a new look for Weaver.</h1>

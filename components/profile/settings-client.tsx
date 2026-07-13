@@ -1,13 +1,15 @@
 "use client"
 
 import Link from "next/link"
+import { useClerk } from "@clerk/nextjs"
 import { useEffect, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react"
-import { ChevronRight, LockKeyhole } from "lucide-react"
+import { ChevronRight, LogOut, LockKeyhole, UserRoundCog } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { useApp } from "@/lib/app-state"
 
 export function SettingsClient() {
   const { state, updateSettings, updateProfileName, repairStreak, deleteAllRecordings, resetAll } = useApp()
+  const { openUserProfile, signOut } = useClerk()
   const [displayName, setDisplayName] = useState(state.profile.name)
 
   useEffect(() => setDisplayName(state.profile.name), [state.profile.name])
@@ -25,6 +27,21 @@ export function SettingsClient() {
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Clear controls, no hidden defaults.</h1>
       </header>
 
+
+      <Section title="Account">
+        <Row title="Manage account" detail="Update your email, password, verification methods, and active sessions through Clerk.">
+          <button type="button" onClick={() => openUserProfile()} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold">
+            <UserRoundCog className="h-3.5 w-3.5" />
+            Manage
+          </button>
+        </Row>
+        <Row title="Log out" detail="Sign out securely on this device.">
+          <button type="button" onClick={() => signOut({ redirectUrl: "/" })} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold">
+            <LogOut className="h-3.5 w-3.5" />
+            Log out
+          </button>
+        </Row>
+      </Section>
 
       <Section title="Profile">
         <Row title="Display name" detail="Used on your profile and on Community posts you choose to share.">

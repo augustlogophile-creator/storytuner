@@ -2,9 +2,17 @@
 
 This repository is a Next.js App Router project. Preserve the folder structure when uploading it to GitHub.
 
-## Main routes
+## Public and authentication routes
 
-- `app/page.tsx`: Home dashboard
+- `app/page.tsx`: public StoryTuner introduction
+- `app/sign-in/[[...sign-in]]/page.tsx`: Clerk login
+- `app/sign-up/[[...sign-up]]/page.tsx`: Clerk signup
+- `app/onboarding/page.tsx`: signed-in account setup after signup
+- `lib/require-auth.ts`: resource-level Clerk protection used by each private page
+
+## Protected application routes
+
+- `app/home/page.tsx`: Home dashboard
 - `app/activities/page.tsx`: full curriculum
 - `app/activities/[unitId]/page.tsx`: unit overview
 - `app/lesson/[lessonId]/page.tsx`: Learn, Practice, and Check player
@@ -15,11 +23,12 @@ This repository is a Next.js App Router project. Preserve the folder structure w
 - `app/profile/page.tsx`: profile dashboard
 - `app/progress/page.tsx`: detailed progress and illustrated unit icons
 - `app/shop/page.tsx`: XP-based Weaver color shop
-- `app/settings/page.tsx`: settings and privacy controls
+- `app/settings/page.tsx`: settings, Clerk account management, and logout
 - `app/membership/page.tsx`: founding offer and free-versus-Membership comparison
 
-## OpenAI routes
+## Authentication and OpenAI routes
 
+- `proxy.ts`: Clerk middleware integration and recommended route matcher
 - `app/api/feedback/route.ts`: lesson grading and Arena scoring
 - `app/api/transcribe/route.ts`: audio and video transcription
 - `app/api/coach/route.ts`: contextual Ask Weaver responses
