@@ -1,16 +1,20 @@
-# StoryTuner interface and Weaver update
+# StoryTuner interface, settings, and Arena update
 
 ## Included
 
-- Rebuilt the public introduction as a full-height Weaver-led flow inspired by the clarity and pacing of top mobile onboarding experiences while preserving StoryTuner's existing visual system.
-- Added five isolated, transparent Weaver emotion assets for the introduction.
+- Restored the original StoryTuner introduction content, sequence, controls, and classic Weaver artwork.
+- Removed the alternate Weaver emotion artwork from the introduction.
+- Rebuilt the original introduction as a polished full-screen flow on phones, with a refined centered canvas on larger screens.
+- Updated sign-in, sign-up, and profile setup containers to use the same full-screen mobile entry experience.
 - Expanded Weaver's positioning across the app from recording follow-up only to complete storytelling craft coaching.
 - Added real private long-term coaching personalization from prior recording transcripts, scores, strengths, and revisions when the user explicitly opts in.
 - Moved Account controls to the bottom of Settings, removed Change password, made Log out red, and added a designed confirmation dialog.
 - Added a blue confirmation check for display-name changes plus a confirmation dialog before saving to Supabase.
 - Removed streak repair from the interface and app-state API.
 - Redesigned notification selects.
-- Added red destructive actions and irreversible-action confirmation dialogs for deleting recordings and local app data.
+- Changed the two data-deletion controls to lightly filled red-outline buttons, with irreversible-action confirmation dialogs.
+- Added Membership-only 10-minute and 20-minute Arena targets.
+- Added a Membership-only custom Arena target from 1:00 through 30:00.
 
 ## Required Supabase step
 

@@ -7,9 +7,11 @@ import {
   Camera,
   CameraOff,
   Check,
+  ChevronRight,
   Clock3,
   FileText,
   Loader2,
+  LockKeyhole,
   MessageCircle,
   Mic2,
   Pause,
@@ -18,6 +20,7 @@ import {
   RotateCcw,
   Share2,
   Video,
+  X,
 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ScoreRing } from "@/components/arena/score-ring"
@@ -128,6 +131,7 @@ export function ArenaClient() {
   const canRecord = canRecordInArena(state)
   const [cameraOn, setCameraOn] = useState(true)
   const [targetSeconds, setTargetSeconds] = useState(90)
+  const [showDurationOptions, setShowDurationOptions] = useState(false)
   const [extraSeconds, setExtraSeconds] = useState(0)
   const limitSeconds = targetSeconds + extraSeconds
   const [seconds, setSeconds] = useState(0)
@@ -657,11 +661,38 @@ export function ArenaClient() {
             <p className="text-sm font-semibold">Choose your target length</p>
             <div className="mt-3 grid grid-cols-4 gap-2">
               {durationOptions.map((duration) => (
-                <button key={duration} type="button" onClick={() => setTargetSeconds(duration)} className={cn("rounded-2xl border px-2 py-3 text-sm font-semibold tabular-nums", targetSeconds === duration ? "border-brand bg-brand-soft text-accent-foreground" : "border-border bg-background text-muted-foreground")}>
+                <button
+                  key={duration}
+                  type="button"
+                  onClick={() => { setTargetSeconds(duration); setExtraSeconds(0) }}
+                  className={cn(
+                    "rounded-2xl border px-2 py-3 text-sm font-semibold tabular-nums transition",
+                    targetSeconds === duration ? "border-brand bg-brand-soft text-accent-foreground" : "border-border bg-background text-muted-foreground hover:border-brand/45",
+                  )}
+                >
                   {formatTime(duration)}
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => setShowDurationOptions(true)}
+              className={cn(
+                "mt-3 flex w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition",
+                !durationOptions.includes(targetSeconds) ? "border-brand bg-brand-soft/55" : "border-border bg-background hover:border-brand/45",
+              )}
+            >
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">See other options</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "10 minutes, 20 minutes, or a custom target"}
+                </span>
+              </span>
+              <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
+                {!state.premium && <LockKeyhole className="h-4 w-4" />}
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            </button>
             <div className="mt-5 flex items-center justify-between gap-4 border-t border-border pt-5">
               <div><p className="text-sm font-semibold">Camera</p><p className="mt-0.5 text-xs text-muted-foreground">Turn it off for an audio-only take.</p></div>
               <button type="button" onClick={() => setCameraOn((value) => !value)} className={cn("flex h-10 w-16 items-center rounded-full p-1 transition-colors", cameraOn ? "justify-end bg-brand" : "justify-start bg-secondary")}><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">{cameraOn ? <Camera className="h-4 w-4 text-accent-foreground" /> : <CameraOff className="h-4 w-4 text-muted-foreground" />}</span></button>
@@ -761,6 +792,177 @@ export function ArenaClient() {
       {phase === "result" && feedback && savedId && (
         <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onShare={() => shareRecording(savedId)} onAgain={reset} shared={Boolean(state.recordings.find((item) => item.id === savedId)?.shared)} premium={state.premium} />
       )}
+
+      <DurationOptionsDialog
+        open={showDurationOptions}
+        premium={state.premium}
+        current={targetSeconds}
+        onClose={() => setShowDurationOptions(false)}
+        onSelect={(duration) => {
+          setTargetSeconds(duration)
+          setExtraSeconds(0)
+          setShowDurationOptions(false)
+        }}
+      />
+    </div>
+  )
+}
+
+function DurationOptionsDialog({
+  open,
+  premium,
+  current,
+  onClose,
+  onSelect,
+}: {
+  open: boolean
+  premium: boolean
+  current: number
+  onClose: () => void
+  onSelect: (duration: number) => void
+}) {
+  const [minutes, setMinutes] = useState("8")
+  const [seconds, setSeconds] = useState("0")
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose()
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    window.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener("keydown", onKeyDown)
+    }
+  }, [onClose, open])
+
+  useEffect(() => {
+    if (!open || current <= 0) return
+    if (![600, 1200].includes(current) && !durationOptions.includes(current)) {
+      setMinutes(String(Math.floor(current / 60)))
+      setSeconds(String(current % 60))
+    }
+    setError("")
+  }, [current, open])
+
+  if (!open) return null
+
+  function applyCustomTime() {
+    if (!premium) return
+    const minuteValue = Number.parseInt(minutes || "0", 10)
+    const secondValue = Number.parseInt(seconds || "0", 10)
+    if (!Number.isFinite(minuteValue) || !Number.isFinite(secondValue) || minuteValue < 0 || secondValue < 0 || secondValue > 59) {
+      return setError("Enter valid minutes and seconds.")
+    }
+    const total = minuteValue * 60 + secondValue
+    if (total < 60 || total > 1800) return setError("Choose a target between 1:00 and 30:00.")
+    onSelect(total)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-5">
+      <button type="button" onClick={onClose} className="absolute inset-0 bg-black/35 backdrop-blur-[2px]" aria-label="Close target length options" />
+      <section role="dialog" aria-modal="true" aria-labelledby="duration-options-title" className="relative z-10 max-h-[92svh] w-full overflow-y-auto rounded-t-[2rem] border border-border bg-card p-5 shadow-2xl sm:max-w-md sm:rounded-[2rem] sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-[0.61rem] uppercase tracking-[0.16em] text-muted-foreground">Target length</p>
+            <h2 id="duration-options-title" className="mt-2 text-xl font-semibold tracking-tight">More storytelling times</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Choose a longer practice target or set your own time up to 30 minutes.</p>
+          </div>
+          <button type="button" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition hover:text-foreground" aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {[600, 1200].map((duration) => {
+            const selected = current === duration
+            return (
+              <button
+                key={duration}
+                type="button"
+                disabled={!premium}
+                onClick={() => onSelect(duration)}
+                className={cn(
+                  "relative rounded-2xl border px-4 py-4 text-left transition",
+                  selected ? "border-brand bg-brand-soft" : "border-border bg-background",
+                  premium ? "hover:border-brand/50" : "cursor-not-allowed",
+                )}
+              >
+                <span className="text-base font-semibold tabular-nums">{formatTime(duration)}</span>
+                <span className="mt-1 block text-xs text-muted-foreground">Long-form practice</span>
+                {!premium && <LockKeyhole className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className={cn("mt-3 rounded-2xl border p-4", current !== 600 && current !== 1200 && !durationOptions.includes(current) ? "border-brand bg-brand-soft/45" : "border-border bg-background")}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">Choose your own time</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Set a precise target from 1:00 to 30:00.</p>
+            </div>
+            {!premium && <LockKeyhole className="h-4 w-4 shrink-0 text-muted-foreground" />}
+          </div>
+
+          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+            <label>
+              <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted-foreground">Minutes</span>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                inputMode="numeric"
+                value={minutes}
+                disabled={!premium}
+                onChange={(event) => { setMinutes(event.target.value.slice(0, 2)); setError("") }}
+                className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-3 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </label>
+            <span className="pb-3 text-sm font-semibold text-muted-foreground">:</span>
+            <label>
+              <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted-foreground">Seconds</span>
+              <input
+                type="number"
+                min={0}
+                max={59}
+                inputMode="numeric"
+                value={seconds}
+                disabled={!premium}
+                onChange={(event) => { setSeconds(event.target.value.slice(0, 2)); setError("") }}
+                className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-3 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </label>
+          </div>
+
+          {error && <p role="alert" className="mt-3 text-xs font-medium text-destructive">{error}</p>}
+
+          {premium && (
+            <button type="button" onClick={applyCustomTime} className="mt-4 flex w-full items-center justify-center rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]">
+              Use custom time
+            </button>
+          )}
+        </div>
+
+        {!premium && (
+          <div className="mt-5 rounded-2xl border border-brand/25 bg-brand-soft/55 p-4">
+            <div className="flex gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card text-accent-foreground"><LockKeyhole className="h-4 w-4" /></span>
+              <div>
+                <p className="text-sm font-semibold">Long and custom timers require Membership</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">The existing 1:00, 1:30, 2:00, and 5:00 targets remain available on the free plan.</p>
+              </div>
+            </div>
+            <Link href="/membership" className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
+              See Membership <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

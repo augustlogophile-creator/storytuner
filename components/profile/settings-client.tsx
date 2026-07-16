@@ -211,12 +211,12 @@ export function SettingsClient() {
           </label>
         </Row>
         <Row title="Delete all recordings" detail="Remove every saved recording, transcript, grade, revision, and linked shared post.">
-          <button type="button" onClick={() => setDialog("delete-recordings")} className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-destructive/90">
+          <button type="button" onClick={() => setDialog("delete-recordings")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
         </Row>
         <Row title="Delete all app data" detail="Erase all StoryTuner data stored on this device while keeping your login account.">
-          <button type="button" onClick={() => setDialog("delete-all")} className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-destructive/90">
+          <button type="button" onClick={() => setDialog("delete-all")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete all
           </button>
         </Row>

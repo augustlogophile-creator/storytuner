@@ -217,32 +217,72 @@ header {
 }
 
 @layer components {
-  .intro-shell {
-    @apply min-h-screen bg-background sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-8;
+  .entry-shell {
+    min-height: 100svh;
+    background:
+      radial-gradient(circle at 50% -10%, color-mix(in oklch, var(--brand-soft) 38%, transparent) 0%, transparent 36%),
+      var(--background);
+  }
+
+  .intro-canvas,
+  .auth-canvas {
+    min-height: 100svh;
+    width: 100%;
+    background: var(--card);
   }
 
   .intro-canvas {
-    @apply mx-auto flex min-h-screen w-full max-w-md flex-col overflow-hidden bg-background sm:min-h-[760px] sm:rounded-[2.25rem] sm:border sm:border-border sm:bg-card;
+    display: flex;
+    flex-direction: column;
   }
 
-  .intro-landing {
-    @apply bg-card;
+  .auth-canvas {
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+    padding-top: max(1.35rem, env(safe-area-inset-top));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
 
   .intro-primary-button {
-    @apply flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-brand-foreground transition active:translate-y-[2px];
-    box-shadow: 0 4px 0 rgba(21, 93, 183, 0.28);
+    @apply flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition duration-200 active:scale-[0.985];
+    box-shadow: 0 10px 24px rgba(38, 34, 29, 0.12);
   }
 
-  .intro-secondary-button {
-    @apply flex w-full items-center justify-center rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.07em] text-brand transition active:translate-y-[1px];
-    box-shadow: 0 3px 0 var(--border);
+  .intro-primary-button:hover {
+    filter: brightness(1.04);
   }
-  .intro-primary-button:active { box-shadow: 0 2px 0 rgba(21, 93, 183, 0.28); }
-  .intro-secondary-button:active { box-shadow: 0 2px 0 var(--border); }
+
+  .intro-primary-button:focus-visible {
+    outline: 3px solid color-mix(in oklch, var(--brand) 22%, transparent);
+    outline-offset: 3px;
+  }
 
   @media (min-width: 640px) {
-    .intro-canvas { box-shadow: 0 28px 80px rgba(37, 32, 27, 0.12); }
-  }
+    .entry-shell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
 
+    .intro-canvas {
+      min-height: min(820px, calc(100svh - 3rem));
+      max-width: 46rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 2.5rem;
+      box-shadow: 0 32px 90px rgba(37, 32, 27, 0.13);
+    }
+
+    .auth-canvas {
+      min-height: auto;
+      max-height: calc(100svh - 3rem);
+      max-width: 34rem;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 2.5rem;
+      padding: 2rem 2.25rem 2.25rem;
+      box-shadow: 0 32px 90px rgba(37, 32, 27, 0.13);
+    }
+  }
 }
