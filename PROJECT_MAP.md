@@ -41,3 +41,12 @@
 - `lib/media-store.ts`: browser media storage.
 
 Authentication and the minimal profile are stored in Supabase. Other StoryTuner data remains local until a separate database migration is designed.
+
+## July 16 interface refinements
+
+- `components/onboarding.tsx`: StoryTuner introduction rebuilt as a focused, full-height guided flow with Weaver emotion artwork.
+- `components/weaver-emotion.tsx`: isolated transparent Weaver emotion assets used by the introduction.
+- `components/confirm-dialog.tsx`: reusable accessible confirmation dialog for logout and destructive actions.
+- `components/profile/settings-client.tsx`: confirmed profile-name saves, improved notification controls, private Weaver personalization opt-in, destructive-action confirmations, and account controls at the bottom.
+- `supabase/migrations/202607160001_add_ai_personalization.sql`: private opt-in field used to authorize long-term Weaver coaching context.
+- `app/api/coach/route.ts`: verifies the Supabase opt-in before using private summaries from past recordings.

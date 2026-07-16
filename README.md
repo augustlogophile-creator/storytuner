@@ -71,3 +71,7 @@ Those features keep their existing local browser behavior. Authentication and pu
 - No service-role key is used.
 - Return paths are restricted to safe internal routes.
 - OpenAI API endpoints validate the signed-in Supabase session.
+
+## Latest interface and coaching update
+
+The introduction now uses a guided Weaver-led layout with transparent emotion artwork. Settings includes confirmed display-name changes, designed logout and deletion confirmations, improved notification controls, and a real opt-in for private long-term Weaver coaching context. Run `supabase/migrations/202607160001_add_ai_personalization.sql` on projects that already applied the original profile migration.

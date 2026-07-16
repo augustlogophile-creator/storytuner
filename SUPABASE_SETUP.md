@@ -144,3 +144,13 @@ Test the Production domain and one Preview deployment separately. Confirm each o
 ## Current storage limitation
 
 Supabase now stores authentication and the minimal public profile. Curriculum progress, XP, recordings, Weaver purchases, chat history, and Community activity still use the existing local browser storage. Logging into another device does not yet move those items. No unrelated database tables were added in this migration.
+
+## Weaver personalization preference migration
+
+If the original profiles migration was already run, also run this file in the Supabase SQL Editor:
+
+```text
+supabase/migrations/202607160001_add_ai_personalization.sql
+```
+
+This adds a private opt-in field to the existing `profiles` table. It does not make recordings public and it does not send raw video to the coaching route.

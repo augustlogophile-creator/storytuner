@@ -54,3 +54,7 @@ StoryTuner now uses Supabase Auth with cookie-based server-side rendering. The e
 Supabase currently stores authentication and the minimal user profile. Curriculum progress, XP, recordings, Weaver purchases, coach history, and Community activity continue to use the existing browser storage. No unrelated database tables were added.
 
 See `SUPABASE_SETUP.md` for the required dashboard, redirect, Google OAuth, migration, and testing steps.
+
+## Follow-up: private Weaver personalization
+
+The settings page now contains an explicit opt-in for using private text summaries from past recordings as coaching context. Existing Supabase projects must run `supabase/migrations/202607160001_add_ai_personalization.sql`. The coach API checks this profile flag server-side before including the supplied history context.
