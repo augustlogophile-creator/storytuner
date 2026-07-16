@@ -215,3 +215,34 @@ header {
     @apply w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/15;
   }
 }
+
+@layer components {
+  .intro-shell {
+    @apply min-h-screen bg-background sm:flex sm:items-center sm:justify-center sm:px-6 sm:py-8;
+  }
+
+  .intro-canvas {
+    @apply mx-auto flex min-h-screen w-full max-w-md flex-col overflow-hidden bg-background sm:min-h-[760px] sm:rounded-[2.25rem] sm:border sm:border-border sm:bg-card;
+  }
+
+  .intro-landing {
+    @apply bg-card;
+  }
+
+  .intro-primary-button {
+    @apply flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-5 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-brand-foreground transition active:translate-y-[2px];
+    box-shadow: 0 4px 0 rgba(21, 93, 183, 0.28);
+  }
+
+  .intro-secondary-button {
+    @apply flex w-full items-center justify-center rounded-2xl border border-border bg-card px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.07em] text-brand transition active:translate-y-[1px];
+    box-shadow: 0 3px 0 var(--border);
+  }
+  .intro-primary-button:active { box-shadow: 0 2px 0 rgba(21, 93, 183, 0.28); }
+  .intro-secondary-button:active { box-shadow: 0 2px 0 var(--border); }
+
+  @media (min-width: 640px) {
+    .intro-canvas { box-shadow: 0 28px 80px rgba(37, 32, 27, 0.12); }
+  }
+
+}

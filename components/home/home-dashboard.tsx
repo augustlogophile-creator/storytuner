@@ -126,7 +126,7 @@ export function HomeDashboard() {
         <div className="min-w-0 flex-1">
           <Eyebrow>AI story coach</Eyebrow>
           <p className="mt-1 text-sm font-semibold text-foreground">Ask Weaver</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">Question a score, rephrase a line, or improve a full story.</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">Find material, shape a story, strengthen your delivery, or understand what to practice next.</p>
         </div>
         <Chevron />
       </Link>

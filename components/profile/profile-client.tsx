@@ -46,7 +46,7 @@ export function ProfileClient() {
         <Eyebrow className="mb-3">Account</Eyebrow>
         <div className="overflow-hidden rounded-3xl border border-border bg-card">
           <Menu href="/progress" icon={BarChart3} title="Progress" detail="Activity, streaks, and unit completion" />
-          <Menu href="/coach" icon={MessageCircle} title="Ask Weaver" detail="AI coaching for your stories and scores" />
+          <Menu href="/coach" icon={MessageCircle} title="Ask Weaver" detail="Story coaching for ideas, structure, language, delivery, and long-term growth" />
           <Menu href="/settings" icon={Settings} title="Settings and privacy" detail="Notifications, recordings, and data controls" />
           <Menu href="/membership" icon={Star} title={state.premium ? "StoryTuner Membership" : "Membership"} detail={state.premium ? "Membership is active on this device" : "Founding waitlist offer · $11.99/year"} />
           <Menu href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance} XP available to spend`} last />

@@ -18,14 +18,14 @@ export function CoachClient() {
   const remaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
   const blocked = !state.premium && remaining === 0
   const recording = useMemo(
-    () => state.recordings.find((item) => item.id === recordingId) ?? state.recordings[0],
+    () => state.recordings.find((item) => item.id === recordingId),
     [recordingId, state.recordings],
   )
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("recording")
     if (id && state.recordings.some((item) => item.id === id)) setRecordingId(id)
-    else if (!recordingId && state.recordings[0]) setRecordingId(state.recordings[0].id)
+    else if (recordingId && !state.recordings.some((item) => item.id === recordingId)) setRecordingId("")
   }, [state.recordings, recordingId])
 
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [state.coach.messages, loading])
@@ -44,6 +44,7 @@ export function CoachClient() {
           messages: [...history, { role: "user", content: clean }],
           storyContext: recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.",
           scoreContext: recording ? scoreContext(recording) : "No prior score selected.",
+          personalizationContext: state.settings.aiOptIn ? personalizationContext(state.recordings) : "",
         }),
       })
       const data = (await response.json()) as { reply?: string; error?: string }
@@ -71,7 +72,7 @@ export function CoachClient() {
           </div>
         </div>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Ask why a score changed, strengthen a section, rephrase a line, or work through a storytelling problem.
+          Improve a specific story or ask a broader craft question. Weaver can help you find material, shape structure, sharpen language, strengthen delivery, and decide what to practice next.
         </p>
       </header>
 
@@ -88,9 +89,9 @@ export function CoachClient() {
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-5">
           {state.coach.messages.length === 0 ? (
             <div className="m-auto max-w-xs text-center">
-              <p className="text-sm font-semibold">Ask a direct question about storytelling.</p>
+              <p className="text-sm font-semibold">Bring Weaver any storytelling question.</p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Try “Why was my hook score lower?” or “Give me three ways to make this ending land.”
+                Ask about a score, a story you are shaping, a line you want to rephrase, or what skill would most improve your craft right now.
               </p>
             </div>
           ) : (
@@ -165,4 +166,15 @@ function scoreContext(recording: Recording) {
   const strengths = recording.strengths?.join(" | ") || recording.praise
   const improvements = recording.improvements?.join(" | ") || recording.weakness || recording.fix
   return `Hook ${recording.scores.hook}/100, Development ${recording.scores.development}/100, Landing ${recording.scores.landing}/100. Strengths: ${strengths}. Improvements: ${improvements}. Immediate revision: ${recording.levelUp || recording.nextTake}.`
+}
+
+
+function personalizationContext(recordings: Recording[]) {
+  if (!recordings.length) return "No past recordings are available yet."
+  return recordings.slice(0, 5).map((recording, index) => {
+    const strengths = recording.strengths?.slice(0, 3).join(" | ") || recording.praise
+    const improvements = recording.improvements?.slice(0, 3).join(" | ") || recording.weakness || recording.fix
+    const transcript = recording.transcript.trim().slice(0, 1200)
+    return `PAST STORY ${index + 1}: ${recording.title}\nScores: hook ${recording.scores.hook}, development ${recording.scores.development}, landing ${recording.scores.landing}.\nStrengths: ${strengths}.\nImprovements: ${improvements}.\nTranscript excerpt: ${transcript}`
+  }).join("\n\n")
 }

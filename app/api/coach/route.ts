@@ -14,7 +14,17 @@ export async function POST(req: Request) {
       messages?: IncomingMessage[]
       storyContext?: string
       scoreContext?: string
+      personalizationContext?: string
     }
+    const { data: profile } = await user.supabase
+      .from("profiles")
+      .select("ai_personalization_enabled")
+      .eq("id", user.id)
+      .maybeSingle<{ ai_personalization_enabled: boolean }>()
+    const personalizedHistory = profile?.ai_personalization_enabled ? body.personalizationContext?.trim().slice(0, 8000) : ""
+    const attachedStory = typeof body.storyContext === "string" ? body.storyContext.slice(0, 7000) : ""
+    const attachedScore = typeof body.scoreContext === "string" ? body.scoreContext.slice(0, 2500) : ""
+
     const messages = Array.isArray(body.messages)
       ? body.messages.filter((item) => item && (item.role === "user" || item.role === "assistant") && typeof item.content === "string").slice(-12)
       : []
@@ -28,13 +38,16 @@ export async function POST(req: Request) {
 
 When helpful, format your answer with short **bold headings**, bullets, and clear paragraph breaks. Never output raw markdown symbols without using them intentionally. If the user asks why a score was low, explain the score using exact moments from the story and acknowledge what still worked. If the user asks for strengths, give the requested number. If the user asks for a rewrite, preserve their meaning, events, personality, and voice. Do not invent details, dialogue, motivations, or emotions.
 
-You may discuss hooks, pacing, stakes, scenes, development, phrasing, interviews, presentations, arguments, difficult conversations, and endings. Treat scores as useful coaching estimates, not mathematical facts. Never claim to remember material that is not supplied below.
+You can coach the full craft of storytelling, including finding material, choosing a point, structure, hooks, stakes, scenes, pacing, clarity, emotional honesty, language, delivery, interviews, presentations, arguments, difficult conversations, and endings. When no story is attached, act as a general craft coach rather than forcing the conversation back to a prior recording. Treat scores as useful coaching estimates, not mathematical facts. Never claim to remember material that is not supplied below.
 
 STORY CONTEXT:
-${body.storyContext || "No story is attached to this conversation."}
+${attachedStory || "No story is attached to this conversation."}
 
 PRIOR SCORE CONTEXT:
-${body.scoreContext || "No prior score is attached."}`,
+${attachedScore || "No prior score is attached."}
+
+PRIVATE LONG-TERM COACHING CONTEXT:
+${personalizedHistory || "Personalization from past recordings is disabled or no history was supplied."}`,
       },
       ...messages.map((item) => ({ role: item.role, content: item.content })),
     ])
