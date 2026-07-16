@@ -1,6 +1,9 @@
-import { MobileShell } from "@/components/mobile-shell"
-import { HomeDashboard } from "@/components/home/home-dashboard"
+import { redirect } from "next/navigation"
+import { Onboarding } from "@/components/onboarding"
+import { signedInDestination } from "@/lib/require-auth"
 
-export default function HomePage() {
-  return <MobileShell><HomeDashboard /></MobileShell>
+export default async function IntroductionPage() {
+  const destination = await signedInDestination()
+  if (destination) redirect(destination)
+  return <Onboarding />
 }

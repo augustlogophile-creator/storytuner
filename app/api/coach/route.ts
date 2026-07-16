@@ -1,3 +1,4 @@
+import { getAuthenticatedUser } from "@/lib/require-auth"
 import { openAIText } from "@/lib/openai-server"
 
 export const runtime = "nodejs"
@@ -6,6 +7,8 @@ export const maxDuration = 30
 type IncomingMessage = { role: "user" | "assistant"; content: string }
 
 export async function POST(req: Request) {
+  const user = await getAuthenticatedUser()
+  if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
   try {
     const body = (await req.json()) as {
       messages?: IncomingMessage[]

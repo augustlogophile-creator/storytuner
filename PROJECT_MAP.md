@@ -1,54 +1,43 @@
-# StoryTuner project map
+# StoryTuner Project Map
 
-This repository is a Next.js App Router project. Preserve the folder structure when uploading it to GitHub.
+## Authentication
 
-## Public and authentication routes
+- `proxy.ts`: refreshes Supabase Auth cookies on Next.js 16 requests.
+- `lib/supabase/client.ts`: browser Supabase client.
+- `lib/supabase/server.ts`: cookie-aware server Supabase client.
+- `lib/supabase/proxy.ts`: secure session refresh logic.
+- `lib/require-auth.ts`: server-side protection for private pages and APIs.
+- `lib/auth/redirects.ts`: safe internal redirects and site URL helpers.
+- `app/sign-up/page.tsx`: StoryTuner-styled Supabase signup.
+- `app/sign-in/page.tsx`: StoryTuner-styled Supabase login.
+- `app/forgot-password/page.tsx`: password recovery request.
+- `app/reset-password/page.tsx`: authenticated recovery-session password update.
+- `app/auth/callback/route.ts`: exchanges Supabase PKCE codes for cookie sessions.
+- `app/onboarding/page.tsx`: public username, display name, and age confirmation after signup.
+- `supabase/migrations/202607150001_create_profiles.sql`: minimal profile table and RLS policies.
+- `SUPABASE_SETUP.md`: required dashboard, redirect, Google, and testing steps.
 
-- `app/page.tsx`: public StoryTuner introduction
-- `app/sign-in/[[...sign-in]]/page.tsx`: Clerk login
-- `app/sign-up/[[...sign-up]]/page.tsx`: Clerk signup
-- `app/onboarding/page.tsx`: signed-in account setup after signup
-- `lib/require-auth.ts`: resource-level Clerk protection used by each private page
+## Main routes
 
-## Protected application routes
+- `/`: public StoryTuner introduction.
+- `/home`: private dashboard.
+- `/activities` and `/activities/[unitId]`: private curriculum path and unit detail.
+- `/lesson/[lessonId]`: private Learn, Practice, and Check stages.
+- `/arena`: private recording studio.
+- `/arena/recordings`: private recording history.
+- `/coach`: private Ask Weaver chat.
+- `/community`: private Membership community.
+- `/profile`, `/progress`, `/settings`, `/shop`, `/membership`: private account and progress areas.
 
-- `app/home/page.tsx`: Home dashboard
-- `app/activities/page.tsx`: full curriculum
-- `app/activities/[unitId]/page.tsx`: unit overview
-- `app/lesson/[lessonId]/page.tsx`: Learn, Practice, and Check player
-- `app/arena/page.tsx`: open-story and guided-scenario recording Arena
-- `app/arena/recordings/page.tsx`: private recordings archive and sharing controls
-- `app/coach/page.tsx`: Ask Weaver AI coaching chat
-- `app/community/page.tsx`: opt-in story sharing
-- `app/profile/page.tsx`: profile dashboard
-- `app/progress/page.tsx`: detailed progress and illustrated unit icons
-- `app/shop/page.tsx`: XP-based Weaver color shop
-- `app/settings/page.tsx`: settings, Clerk account management, and logout
-- `app/membership/page.tsx`: founding offer and free-versus-Membership comparison
+## AI routes
 
-## Authentication and OpenAI routes
+- `app/api/feedback/route.ts`: signed-in lesson and Arena grading.
+- `app/api/transcribe/route.ts`: signed-in OpenAI transcription and cleanup.
+- `app/api/coach/route.ts`: signed-in Ask Weaver chat.
 
-- `proxy.ts`: Clerk middleware integration and recommended route matcher
-- `app/api/feedback/route.ts`: lesson grading and Arena scoring
-- `app/api/transcribe/route.ts`: audio and video transcription
-- `app/api/coach/route.ts`: contextual Ask Weaver responses
-- `lib/openai-server.ts`: server-only OpenAI request helpers
+## Existing local state
 
-## Core files
+- `lib/app-state.tsx`: curriculum completion, XP, settings, local recordings metadata, Community demo state, Weaver ownership, and coach limits.
+- `lib/media-store.ts`: browser media storage.
 
-- `lib/curriculum.json`: all 14 units, the capstone, reading sections, drills, and 75 quiz questions
-- `lib/curriculum.ts`: curriculum types and routing helpers
-- `lib/app-state.tsx`: persistent progress, XP, streaks, recordings, lifetime free quotas, Community, settings, and membership state
-- `lib/media-store.ts`: private recording storage in IndexedDB
-- `components/arena/arena-client.tsx`: two-path Arena, scenario prompts, duration targets, pause-safe recording, automatic transcription, and scoring
-- `components/arena/recordings-client.tsx`: recordings archive
-- `components/coach/coach-client.tsx`: contextual Weaver chat with formatted responses and a five-message lifetime free limit
-- `components/lesson/course-lesson.tsx`: repeatable lesson experience
-- `components/profile/progress-client.tsx`: detailed unit completion with custom icons
-- `components/bottom-nav.tsx`: primary app navigation
-- `app/globals.css`: visual tokens and blue accent system
-- `public/weaver.png`: transparent mascot asset
-
-## GitHub and Vercel
-
-Do not combine these files into a single `index.html`. The repository root should contain `app`, `components`, `lib`, `public`, and the project configuration files. Vercel recognizes the Next.js structure automatically.
+Authentication and the minimal profile are stored in Supabase. Other StoryTuner data remains local until a separate database migration is designed.

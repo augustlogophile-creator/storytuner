@@ -24,7 +24,7 @@ const pages = [
   },
   {
     title: "Save your progress",
-    copy: "Keep your lessons, feedback, recordings, and streak safe across devices.",
+    copy: "Create a secure account for your StoryTuner profile. Your current lessons, recordings, and XP still stay on this device for now.",
     icon: ShieldCheck,
   },
 ]

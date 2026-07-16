@@ -1,3 +1,4 @@
+import { getAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson, transcribeWithOpenAI } from "@/lib/openai-server"
 
 export const runtime = "nodejs"
@@ -16,6 +17,8 @@ const cleanupSchema = {
 }
 
 export async function POST(req: Request) {
+  const user = await getAuthenticatedUser()
+  if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
   try {
     const form = await req.formData()
     const file = form.get("file")

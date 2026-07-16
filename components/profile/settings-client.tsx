@@ -1,22 +1,42 @@
 "use client"
 
 import Link from "next/link"
-import { useClerk } from "@clerk/nextjs"
 import { useEffect, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react"
-import { ChevronRight, LogOut, LockKeyhole, UserRoundCog } from "lucide-react"
+import { ChevronRight, KeyRound, LogOut, LockKeyhole } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { useApp } from "@/lib/app-state"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export function SettingsClient() {
+  const router = useRouter()
   const { state, updateSettings, updateProfileName, repairStreak, deleteAllRecordings, resetAll } = useApp()
-  const { openUserProfile, signOut } = useClerk()
   const [displayName, setDisplayName] = useState(state.profile.name)
+  const [accountEmail, setAccountEmail] = useState("")
 
   useEffect(() => setDisplayName(state.profile.name), [state.profile.name])
 
-  function saveDisplayName() {
-    const clean = displayName.trim()
-    updateProfileName(clean || "Storyteller")
+  useEffect(() => {
+    const supabase = createClient()
+    void supabase.auth.getUser().then(({ data }) => setAccountEmail(data.user?.email ?? ""))
+  }, [])
+
+  async function saveDisplayName() {
+    const clean = displayName.trim() || "Storyteller"
+    updateProfileName(clean)
+    const supabase = createClient()
+    const { data } = await supabase.auth.getUser()
+    if (data.user) {
+      const { error } = await supabase.from("profiles").update({ display_name: clean }).eq("id", data.user.id)
+      if (error) window.alert("Your name was saved on this device, but StoryTuner could not update your account profile.")
+    }
+  }
+
+  async function logOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.replace("/")
+    router.refresh()
   }
 
   return (
@@ -29,14 +49,14 @@ export function SettingsClient() {
 
 
       <Section title="Account">
-        <Row title="Manage account" detail="Update your email, password, verification methods, and active sessions through Clerk.">
-          <button type="button" onClick={() => openUserProfile()} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold">
-            <UserRoundCog className="h-3.5 w-3.5" />
-            Manage
-          </button>
+        <Row title="Account email" detail={accountEmail || "Your private login email is never shown in Community."}>
+          <Link href="/forgot-password" className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold">
+            <KeyRound className="h-3.5 w-3.5" />
+            Change password
+          </Link>
         </Row>
         <Row title="Log out" detail="Sign out securely on this device.">
-          <button type="button" onClick={() => signOut({ redirectUrl: "/" })} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold">
+          <button type="button" onClick={() => void logOut()} className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold">
             <LogOut className="h-3.5 w-3.5" />
             Log out
           </button>
@@ -48,7 +68,7 @@ export function SettingsClient() {
           <input
             value={displayName}
             onChange={(event: ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value)}
-            onBlur={saveDisplayName}
+            onBlur={() => void saveDisplayName()}
             onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === "Enter") event.currentTarget.blur() }}
             maxLength={40}
             aria-label="Display name"
