@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react"
 import { Check, ChevronDown, ChevronRight, LogOut, LockKeyhole, Trash2 } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -260,7 +260,7 @@ export function SettingsClient() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-3xl border border-border bg-card p-5">
+    <section className="relative overflow-visible rounded-3xl border border-border bg-card p-5">
       <h2 className="text-base font-semibold">{title}</h2>
       <div className="mt-3 divide-y divide-border">{children}</div>
     </section>
@@ -269,7 +269,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Row({ title, detail, children }: { title: string; detail: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
+    <div className="relative flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{title}</p>
         <p className="mt-1 max-w-lg text-xs leading-relaxed text-muted-foreground">{detail}</p>
@@ -280,13 +280,67 @@ function Row({ title, detail, children }: { title: string; detail: string; child
 }
 
 function SelectControl({ value, onChange, options, label }: { value: string; onChange: (value: string) => void; options: { value: string; label: string }[]; label: string }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const selected = options.find((option) => option.value === value) ?? options[0]
+
+  useEffect(() => {
+    if (!open) return
+    function closeFromOutside(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    function closeFromKeyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("mousedown", closeFromOutside)
+    window.addEventListener("keydown", closeFromKeyboard)
+    return () => {
+      document.removeEventListener("mousedown", closeFromOutside)
+      window.removeEventListener("keydown", closeFromKeyboard)
+    }
+  }, [open])
+
   return (
-    <label className="relative block">
-      <span className="sr-only">{label}</span>
-      <select value={value} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)} className="min-w-32 appearance-none rounded-full border border-border bg-background py-2.5 pl-4 pr-10 text-sm font-medium outline-none transition hover:border-brand/45 focus:border-brand focus:ring-2 focus:ring-brand/15">
-        {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-    </label>
+    <div ref={rootRef} className={`relative ${open ? "z-50" : "z-0"}`}>
+      <button
+        type="button"
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="flex min-w-32 items-center justify-between gap-3 rounded-full border border-border bg-background py-2.5 pl-4 pr-3 text-sm font-medium outline-none transition hover:border-brand/45 focus:border-brand focus:ring-2 focus:ring-brand/15"
+      >
+        <span>{selected.label}</span>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label={label}
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-40 overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-[0_18px_44px_rgba(37,32,27,0.16)]"
+        >
+          {options.map((option) => {
+            const active = option.value === value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={active}
+                onClick={() => {
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${active ? "bg-brand-soft font-semibold text-accent-foreground" : "text-foreground hover:bg-secondary"}`}
+              >
+                <span>{option.label}</span>
+                {active && <Check className="h-4 w-4" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

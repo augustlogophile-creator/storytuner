@@ -1,10 +1,5 @@
-import { AuthShell } from "@/components/auth/auth-shell"
-import { ForgotPasswordForm } from "@/components/auth/forgot-password-form"
+import { redirect } from "next/navigation"
 
 export default function ForgotPasswordPage() {
-  return (
-    <AuthShell eyebrow="Account recovery" title="Reset your password" copy="Enter your email and Supabase will send a secure reset link.">
-      <ForgotPasswordForm />
-    </AuthShell>
-  )
+  redirect("/sign-up?mode=sign-in")
 }

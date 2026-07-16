@@ -8,10 +8,9 @@
 - `lib/supabase/proxy.ts`: secure session refresh logic.
 - `lib/require-auth.ts`: server-side protection for private pages and APIs.
 - `lib/auth/redirects.ts`: safe internal redirects and site URL helpers.
-- `app/sign-up/page.tsx`: StoryTuner-styled Supabase signup.
-- `app/sign-in/page.tsx`: StoryTuner-styled Supabase login.
-- `app/forgot-password/page.tsx`: password recovery request.
-- `app/reset-password/page.tsx`: authenticated recovery-session password update.
+- `app/sign-up/page.tsx`: the combined Google-only Sign up and Log in page, defaulting to Sign up.
+- `app/sign-in/page.tsx`: compatibility redirect into the combined account page.
+- `app/forgot-password/page.tsx` and `app/reset-password/page.tsx`: compatibility redirects because password authentication is no longer offered.
 - `app/auth/callback/route.ts`: exchanges Supabase PKCE codes for cookie sessions.
 - `app/onboarding/page.tsx`: public username, display name, and age confirmation after signup.
 - `supabase/migrations/202607150001_create_profiles.sql`: minimal profile table and RLS policies.
@@ -44,9 +43,9 @@ Authentication and the minimal profile are stored in Supabase. Other StoryTuner 
 
 ## July 16 interface refinements
 
-- `components/onboarding.tsx`: StoryTuner introduction rebuilt as a focused, full-height guided flow with Weaver emotion artwork.
-- `components/weaver-emotion.tsx`: isolated transparent Weaver emotion assets used by the introduction.
+- `components/onboarding.tsx`: original four-step StoryTuner introduction on the same full-height, 28rem-wide canvas used by the rest of the app.
+- `components/auth/auth-form.tsx`: combined Google-only Sign up and Log in control, defaulting to Sign up.
 - `components/confirm-dialog.tsx`: reusable accessible confirmation dialog for logout and destructive actions.
-- `components/profile/settings-client.tsx`: confirmed profile-name saves, improved notification controls, private Weaver personalization opt-in, destructive-action confirmations, and account controls at the bottom.
+- `components/profile/settings-client.tsx`: confirmed profile-name saves, below-control notification menus, private Weaver personalization opt-in, destructive-action confirmations, and account controls at the bottom.
 - `supabase/migrations/202607160001_add_ai_personalization.sql`: private opt-in field used to authorize long-term Weaver coaching context.
 - `app/api/coach/route.ts`: verifies the Supabase opt-in before using private summaries from past recordings.

@@ -56,15 +56,15 @@ export function Onboarding() {
   return (
     <main className="entry-shell">
       <section className="intro-canvas" aria-label="StoryTuner introduction">
-        <header className="flex items-center justify-between px-6 pt-[max(1.35rem,env(safe-area-inset-top))] sm:px-10 sm:pt-9">
+        <header className="flex items-center justify-between px-5 pt-[max(1.35rem,env(safe-area-inset-top))] sm:pt-7">
           <p className="text-sm font-semibold tracking-[-0.01em] text-foreground">StoryTuner</p>
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.15em] text-muted-foreground">
             {page + 1} of {pages.length}
           </p>
         </header>
 
-        <div className="flex flex-1 items-center justify-center px-6 py-8 sm:px-12 sm:py-12">
-          <div className="w-full max-w-md text-center">
+        <div className="flex flex-1 items-center justify-center px-5 py-8 sm:py-10">
+          <div className="w-full text-center">
             <div className="flex min-h-28 items-center justify-center sm:min-h-32">
               {page === 0 ? (
                 <Weaver colorId="classic" size={112} />
@@ -99,8 +99,8 @@ export function Onboarding() {
           </div>
         </div>
 
-        <footer className="px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10 sm:pb-9">
-          <div className="mx-auto w-full max-w-md">
+        <footer className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-7">
+          <div className="mx-auto w-full">
             <div className="mb-5 flex gap-1.5" aria-label={`Introduction step ${page + 1} of ${pages.length}`}>
               {pages.map((_, index) => (
                 <span
@@ -114,11 +114,10 @@ export function Onboarding() {
               <div className="space-y-3">
                 <Link href="/sign-up" className="intro-primary-button">
                   Sign up
-                  <ArrowRight className="h-4 w-4" />
                 </Link>
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{" "}
-                  <Link href="/sign-in" className="font-semibold text-accent-foreground hover:underline">Log in</Link>
+                  <Link href="/sign-up?mode=sign-in" className="font-semibold text-accent-foreground hover:underline">Log in</Link>
                 </p>
               </div>
             ) : (

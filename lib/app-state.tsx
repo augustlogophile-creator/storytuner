@@ -580,9 +580,3 @@ export function canRecordInArena(state: AppState) {
   return state.premium || state.arenaTotal < FREE_ARENA_LIMIT
 }
 
-export function levelForXp(xp: number) {
-  const level = Math.floor(xp / 250) + 1
-  const into = xp % 250
-  const titles = ["Story Starter", "Careful Observer", "Rising Narrator", "Story Builder", "Confident Teller", "Room Holder"]
-  return { level, title: titles[Math.min(level - 1, titles.length - 1)], into, needed: 250 }
-}

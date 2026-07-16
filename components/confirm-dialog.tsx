@@ -43,7 +43,7 @@ export function ConfirmDialog({
   const danger = tone === "danger"
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[2px] sm:items-center sm:p-6" role="presentation" onMouseDown={(event: MouseEvent<HTMLDivElement>) => { if (event.target === event.currentTarget && !busy) onCancel() }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" className="w-full max-w-md rounded-[1.75rem] border border-border bg-card p-5 shadow-2xl sm:p-6">
+      <section role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" className="w-full max-w-[26rem] rounded-[1.75rem] border border-border bg-card p-5 shadow-2xl sm:p-6">
         <div className="flex items-start gap-3">
           <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${danger ? "bg-destructive/10 text-destructive" : "bg-brand-soft text-accent-foreground"}`}>
             <AlertTriangle className="h-5 w-5" />

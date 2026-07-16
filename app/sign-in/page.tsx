@@ -1,15 +1,18 @@
-import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { AuthForm } from "@/components/auth/auth-form"
-import { AuthShell } from "@/components/auth/auth-shell"
-import { signedInDestination } from "@/lib/require-auth"
 
-export default async function SignInPage() {
-  const destination = await signedInDestination()
-  if (destination) redirect(destination)
-  return (
-    <AuthShell eyebrow="StoryTuner account" title="Welcome back" copy="Continue your course, recordings, and personal storytelling coaching with Weaver.">
-      <Suspense fallback={<div className="h-72 animate-pulse rounded-3xl bg-secondary/50" />}><AuthForm mode="sign-in" /></Suspense>
-    </AuthShell>
-  )
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const params = await searchParams
+  const destination = new URLSearchParams()
+  destination.set("mode", "sign-in")
+
+  const next = Array.isArray(params.next) ? params.next[0] : params.next
+  const error = Array.isArray(params.error) ? params.error[0] : params.error
+  if (next) destination.set("next", next)
+  if (error) destination.set("error", error)
+
+  redirect(`/sign-up?${destination.toString()}`)
 }

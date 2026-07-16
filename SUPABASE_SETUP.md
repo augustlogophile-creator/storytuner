@@ -54,22 +54,7 @@ https://*-augusts-projects-692eccd8.vercel.app/**
 
 The wildcard supports Vercel Preview deployments. Keep an exact production callback as well.
 
-## 4. Email and password authentication
-
-Open **Authentication → Providers → Email**.
-
-- Enable email signup.
-- Enable password authentication.
-- Keep email confirmation enabled for production.
-- Do not enable anonymous users unless you deliberately add an anonymous-user migration later.
-
-Test signup with an email you can access. The confirmation link should return to `/auth/callback`, then continue to `/onboarding`.
-
-### Email templates
-
-Open **Authentication → Email Templates**. If confirmation or recovery emails ignore the redirect supplied by StoryTuner, update the relevant template link to use `{{ .RedirectTo }}` rather than hard-coding `{{ .SiteURL }}`.
-
-## 5. Google OAuth
+## 4. Google OAuth
 
 ### Supabase
 
@@ -105,7 +90,7 @@ https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
 
 The Google secret belongs in Supabase, not Vercel and not GitHub.
 
-## 6. Local testing
+## 5. Local testing
 
 Create `.env.local` in the project root:
 
@@ -127,15 +112,14 @@ pnpm dev
 Open `http://localhost:3000` and test:
 
 1. Complete the introduction.
-2. Sign up with email and verify the email.
-3. Complete username, display name, and age confirmation.
-4. Refresh `/home` and confirm the session remains active.
-5. Log out from Settings.
-6. Confirm `/home`, `/arena`, `/profile`, and `/api/coach` reject signed-out access.
-7. Test forgot password and reset password.
-8. Test Google only after the Google provider is configured.
+2. Confirm the combined account page defaults to Sign up and toggles to Log in.
+3. Sign up with Google.
+4. Complete username, display name, and age confirmation.
+5. Refresh `/home` and confirm the session remains active.
+6. Log out from Settings and log back in with Google.
+7. Confirm `/home`, `/arena`, `/profile`, and `/api/coach` reject signed-out access.
 
-## 7. Deployment testing
+## 6. Deployment testing
 
 After changing Supabase or Vercel settings, redeploy StoryTuner. Authentication environment variables are read by the build and runtime.
 

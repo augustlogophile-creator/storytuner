@@ -8,8 +8,14 @@ export default async function SignUpPage() {
   const destination = await signedInDestination()
   if (destination) redirect(destination)
   return (
-    <AuthShell eyebrow="StoryTuner account" title="Create your StoryTuner account" copy="Create a secure account for your StoryTuner profile. Lesson progress and recordings still remain on this device for now.">
-      <Suspense fallback={<div className="h-72 animate-pulse rounded-3xl bg-secondary/50" />}><AuthForm mode="sign-up" /></Suspense>
+    <AuthShell
+      eyebrow="StoryTuner account"
+      title="Continue to StoryTuner"
+      copy="Choose sign up or log in, then continue securely with Google."
+    >
+      <Suspense fallback={<div className="h-48 animate-pulse rounded-3xl bg-secondary/50" />}>
+        <AuthForm initialMode="sign-up" />
+      </Suspense>
     </AuthShell>
   )
 }

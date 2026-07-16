@@ -25,7 +25,7 @@ export async function requireStoryTunerUser(
 ) {
   const safeReturn = safeInternalPath(returnBackUrl)
   const authenticated = await getAuthenticatedUser()
-  if (!authenticated) redirect(`/sign-in?next=${encodeURIComponent(safeReturn)}`)
+  if (!authenticated) redirect(`/sign-up?mode=sign-in&next=${encodeURIComponent(safeReturn)}`)
 
   let profile: StoryTunerProfile | null = null
   if (options.requireProfile !== false) {

@@ -15,15 +15,11 @@ StoryTuner is a Next.js 16 App Router application for learning and practicing tr
 
 Supabase handles:
 
-- Email and password signup
-- Email confirmation
-- Email and password login
-- Google OAuth
-- Forgot password and password reset
+- Google OAuth for both sign up and login
 - Secure cookie sessions and refresh
 - Logout
 
-The public introduction ends with Sign up and Log in. Authenticated users complete a minimal profile with a public username, display name, and 13-plus confirmation.
+The public introduction ends with Sign up and Log in. Both choices open one combined account page, which defaults to Sign up and lets the user toggle to Log in. Google is the only authentication method. Authenticated users then complete a minimal profile with a public username, display name, and 13-plus confirmation.
 
 Private StoryTuner pages are protected with server-side Supabase JWT validation. The OpenAI route handlers also require an authenticated Supabase user.
 
@@ -48,7 +44,7 @@ No Supabase service-role key is required.
 
 ## Setup
 
-Read `SUPABASE_SETUP.md` before deployment. Apply the SQL migration first, then configure Supabase URL settings, email authentication, and Google OAuth.
+Read `SUPABASE_SETUP.md` before deployment. Apply the SQL migration first, then configure Supabase URL settings and Google OAuth.
 
 ```bash
 pnpm install
@@ -65,7 +61,6 @@ Those features keep their existing local browser behavior. Authentication and pu
 
 ## Security
 
-- Passwords are processed only by Supabase Auth.
 - Auth tokens use Supabase SSR cookies, not application-managed localStorage.
 - The profile table has Row Level Security and self-only policies.
 - No service-role key is used.
@@ -74,4 +69,4 @@ Those features keep their existing local browser behavior. Authentication and pu
 
 ## Latest interface and coaching update
 
-The introduction now uses a guided Weaver-led layout with transparent emotion artwork. Settings includes confirmed display-name changes, designed logout and deletion confirmations, improved notification controls, and a real opt-in for private long-term Weaver coaching context. Run `supabase/migrations/202607160001_add_ai_personalization.sql` on projects that already applied the original profile migration.
+The introduction uses the original classic Weaver, the original four-step content, and the same 28rem-wide full-height canvas as the rest of the app. Settings includes confirmed display-name changes, app-width logout and deletion confirmations, notification menus that always open below their controls, and a real opt-in for private long-term Weaver coaching context. Authentication is Google-only on one combined Sign up and Log in page, and named storytelling ranks have been removed. Run `supabase/migrations/202607160001_add_ai_personalization.sql` on projects that already applied the original profile migration.

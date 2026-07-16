@@ -56,7 +56,7 @@ export function RecordingsClient() {
                     <p className="font-semibold text-red-800">What to improve</p>
                     <ul className="mt-2 space-y-1.5 pl-5">{improvements.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
                   </div>
-                  <div className="mt-3 rounded-2xl bg-brand-soft p-4 text-sm leading-relaxed"><strong>Level up now:</strong> {recording.levelUp || recording.nextTake}</div>
+                  <div className="mt-3 rounded-2xl bg-brand-soft p-4 text-sm leading-relaxed"><strong>Try this next:</strong> {recording.levelUp || recording.nextTake}</div>
                   <div className="mt-3 rounded-2xl bg-secondary p-4">
                     <p className="text-sm font-semibold">Revised story</p>
                     <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{recording.revisedStory || recording.transcript}</p>

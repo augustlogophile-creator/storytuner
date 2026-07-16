@@ -4,11 +4,10 @@ import Link from "next/link"
 import { BarChart3, ChevronRight, LockKeyhole, Mail, MessageCircle, Settings, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { Weaver } from "@/components/weaver"
-import { levelForXp, useApp } from "@/lib/app-state"
+import { useApp } from "@/lib/app-state"
 
 export function ProfileClient() {
   const { state } = useApp()
-  const level = levelForXp(state.xpLifetime)
   return (
     <div className="flex flex-col gap-6">
       <section className="relative overflow-hidden rounded-[2rem] border border-border bg-card p-5">
@@ -17,7 +16,7 @@ export function ProfileClient() {
           <div className="min-w-0">
             <Eyebrow>StoryTuner profile</Eyebrow>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight">{state.profile.name}</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">Level {level.level} · {level.title}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{state.xpLifetime.toLocaleString()} XP earned</p>
           </div>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2">
