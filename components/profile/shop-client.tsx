@@ -1,23 +1,26 @@
 "use client"
 
+import { useState } from "react"
 import { Check, Lock, Sparkles } from "lucide-react"
 import { BackLink } from "@/components/page-header"
+import { NoticeDialog } from "@/components/confirm-dialog"
 import { Weaver } from "@/components/weaver"
 import { useApp, weaverColors } from "@/lib/app-state"
 
 export function ShopClient() {
   const { state, purchaseWeaver, equipWeaver } = useApp()
+  const [notice, setNotice] = useState("")
   const active = weaverColors.find((item) => item.id === state.activeWeaver) ?? weaverColors[0]
 
   function choose(id: string) {
     const owned = state.ownedWeavers.includes(id)
     if (owned) {
       equipWeaver(id)
-      window.alert("Weaver's color has been updated.")
+      setNotice("Weaver's color has been updated.")
       return
     }
     const result = purchaseWeaver(id)
-    window.alert(result.message)
+    setNotice(result.message)
   }
 
   return (
@@ -84,6 +87,9 @@ export function ShopClient() {
           )
         })}
       </div>
+      <NoticeDialog open={Boolean(notice)} title="Weaver shop" onClose={() => setNotice("")}>
+        {notice}
+      </NoticeDialog>
     </div>
   )
 }

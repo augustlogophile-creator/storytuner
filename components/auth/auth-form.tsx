@@ -56,51 +56,42 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   }
 
   return (
-    <div>
-      <div className="account-mode-switch" role="tablist" aria-label="Choose whether to sign up or log in">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={isSignUp}
-          onClick={() => chooseMode("sign-up")}
-          className={isSignUp ? "is-active" : ""}
-        >
-          Sign up
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={!isSignUp}
-          onClick={() => chooseMode("sign-in")}
-          className={!isSignUp ? "is-active" : ""}
-        >
-          Log in
-        </button>
+    <div className="w-full">
+      <div className="text-center">
+        <p className="font-mono text-[0.62rem] uppercase tracking-[0.17em] text-muted-foreground">StoryTuner account</p>
+        <h1 className="mt-3 text-[2rem] font-semibold leading-[1.06] tracking-[-0.05em] text-balance">
+          {isSignUp ? "Create your account" : "Welcome back"}
+        </h1>
+        <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted-foreground text-pretty">
+          {isSignUp
+            ? "Save your progress and continue securely with Google."
+            : "Return to your lessons, recordings, and Weaver coaching."}
+        </p>
       </div>
 
-      <div className="mt-7 text-center">
-        <h2 className="text-xl font-semibold tracking-[-0.025em]">
-          {isSignUp ? "Create your account" : "Welcome back"}
-        </h2>
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-          {isSignUp
-            ? "Save your StoryTuner profile and continue securely with Google."
-            : "Continue your lessons, recordings, and coaching securely with Google."}
-        </p>
+      <div className="mt-6 flex justify-center">
+        <div className="account-mode-switch" role="tablist" aria-label="Choose whether to sign up or log in">
+          <button type="button" role="tab" aria-selected={isSignUp} onClick={() => chooseMode("sign-up")} className={isSignUp ? "is-active" : ""}>
+            Sign up
+          </button>
+          <button type="button" role="tab" aria-selected={!isSignUp} onClick={() => chooseMode("sign-in")} className={!isSignUp ? "is-active" : ""}>
+            Log in
+          </button>
+        </div>
       </div>
 
       <button
         type="button"
         onClick={continueWithGoogle}
         disabled={loading}
-        className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-sm font-semibold shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-7 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-sm font-semibold shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-white text-xs font-bold text-[#4285f4]">G</span>
         )}
-        {isSignUp ? "Sign up with Google" : "Log in with Google"}
+        Continue with Google
       </button>
 
       {error && (
@@ -109,9 +100,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         </p>
       )}
 
-      <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">
-        Google is the only sign-up and login method for StoryTuner.
-      </p>
+      <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">One secure sign-in method. No password to remember.</p>
     </div>
   )
 }

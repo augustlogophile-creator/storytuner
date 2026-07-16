@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
 import { canRecordInArena, FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils"
 type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
 type StoryMode = "free" | "scenario"
 type TranscriptionOutcome = "idle" | "success" | "no-speech" | "error"
+type ArenaConfirmAction = "leave" | "retake-recording" | "retake-review" | "discard" | null
 type ScoreArea = "hook" | "development" | "landing"
 type Feedback = {
   hook: number
@@ -132,6 +134,8 @@ export function ArenaClient() {
   const [cameraOn, setCameraOn] = useState(true)
   const [targetSeconds, setTargetSeconds] = useState(90)
   const [showDurationOptions, setShowDurationOptions] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<ArenaConfirmAction>(null)
+  const [pendingHref, setPendingHref] = useState("")
   const [extraSeconds, setExtraSeconds] = useState(0)
   const limitSeconds = targetSeconds + extraSeconds
   const [seconds, setSeconds] = useState(0)
@@ -181,28 +185,20 @@ export function ArenaClient() {
 
   useEffect(() => {
     if (phase !== "recording") return
-    const warning = "Leave this recording? Your current video progress will not be saved."
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
-      event.returnValue = ""
-    }
     const handleLinkClick = (event: MouseEvent) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
       const element = event.target instanceof Element ? event.target.closest("a[href]") : null
-      if (!element) return
+      if (!element || element.getAttribute("target") === "_blank") return
       const href = element.getAttribute("href")
       if (!href || href.startsWith("#")) return
-      if (!window.confirm(warning)) {
-        event.preventDefault()
-        event.stopPropagation()
-        event.stopImmediatePropagation()
-      }
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
+      setPendingHref(href)
+      setConfirmAction("leave")
     }
-    window.addEventListener("beforeunload", handleBeforeUnload)
     document.addEventListener("click", handleLinkClick, true)
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-      document.removeEventListener("click", handleLinkClick, true)
-    }
+    return () => document.removeEventListener("click", handleLinkClick, true)
   }, [phase])
 
   useEffect(() => {
@@ -401,7 +397,10 @@ export function ArenaClient() {
   }
 
   function retakeRecording() {
-    if (!window.confirm("Retake this story? Your current take will be discarded.")) return
+    setConfirmAction("retake-recording")
+  }
+
+  function performRetakeRecording() {
     captureVersionRef.current += 1
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
@@ -431,7 +430,10 @@ export function ArenaClient() {
   }
 
   function retakeFromReview() {
-    if (!window.confirm("Retake this story? Your current take will be discarded.")) return
+    setConfirmAction("retake-review")
+  }
+
+  function performRetakeFromReview() {
     captureVersionRef.current += 1
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setSeconds(0)
@@ -783,7 +785,7 @@ export function ArenaClient() {
           )}
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
           <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
-          <button type="button" onClick={() => { if (window.confirm("Discard this take and start again?")) reset() }} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground"><RotateCcw className="h-4 w-4" />Discard and start again</button>
+          <button type="button" onClick={() => setConfirmAction("discard")} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground"><RotateCcw className="h-4 w-4" />Discard and start again</button>
         </>
       )}
 
@@ -804,6 +806,28 @@ export function ArenaClient() {
           setShowDurationOptions(false)
         }}
       />
+      <ConfirmDialog
+        open={Boolean(confirmAction)}
+        title={confirmAction === "leave" ? "Leave this recording?" : confirmAction === "discard" ? "Discard this take?" : "Retake this story?"}
+        confirmLabel={confirmAction === "leave" ? "Leave recording" : confirmAction === "discard" ? "Discard take" : "Retake"}
+        onCancel={() => {
+          setConfirmAction(null)
+          setPendingHref("")
+        }}
+        onConfirm={() => {
+          const action = confirmAction
+          setConfirmAction(null)
+          if (action === "retake-recording") performRetakeRecording()
+          if (action === "retake-review") performRetakeFromReview()
+          if (action === "discard") reset()
+          if (action === "leave" && pendingHref) window.location.assign(pendingHref)
+          setPendingHref("")
+        }}
+      >
+        {confirmAction === "leave"
+          ? <>Your current recording will not be saved. <strong className="text-foreground">This cannot be undone.</strong></>
+          : <>Your current take will be permanently removed. <strong className="text-foreground">This cannot be undone.</strong></>}
+      </ConfirmDialog>
     </div>
   )
 }
@@ -862,22 +886,23 @@ function DurationOptionsDialog({
     onSelect(total)
   }
 
+  const customSelected = current !== 600 && current !== 1200 && !durationOptions.includes(current)
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center p-0 sm:items-center sm:p-5">
-      <button type="button" onClick={onClose} className="absolute inset-0 bg-black/35 backdrop-blur-[2px]" aria-label="Close target length options" />
-      <section role="dialog" aria-modal="true" aria-labelledby="duration-options-title" className="relative z-10 max-h-[92svh] w-full overflow-y-auto rounded-t-[2rem] border border-border bg-card p-5 shadow-2xl sm:max-w-md sm:rounded-[2rem] sm:p-6">
+    <div className="app-dialog-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="duration-options-title" className="app-dialog-panel max-w-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-[0.61rem] uppercase tracking-[0.16em] text-muted-foreground">Target length</p>
-            <h2 id="duration-options-title" className="mt-2 text-xl font-semibold tracking-tight">More storytelling times</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Choose a longer practice target or set your own time up to 30 minutes.</p>
+            <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Target length</p>
+            <h2 id="duration-options-title" className="mt-1.5 text-lg font-semibold tracking-[-0.025em]">Choose a longer time</h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Member targets can run up to 30 minutes.</p>
           </div>
-          <button type="button" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition hover:text-foreground" aria-label="Close">
+          <button type="button" onClick={onClose} className="app-dialog-close" aria-label="Close target length options">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-2.5">
           {[600, 1200].map((duration) => {
             const selected = current === duration
             return (
@@ -887,31 +912,31 @@ function DurationOptionsDialog({
                 disabled={!premium}
                 onClick={() => onSelect(duration)}
                 className={cn(
-                  "relative rounded-2xl border px-4 py-4 text-left transition",
+                  "relative flex min-h-20 flex-col justify-center rounded-2xl border px-4 text-left transition",
                   selected ? "border-brand bg-brand-soft" : "border-border bg-background",
-                  premium ? "hover:border-brand/50" : "cursor-not-allowed",
+                  premium ? "hover:border-brand/50" : "cursor-not-allowed opacity-80",
                 )}
               >
-                <span className="text-base font-semibold tabular-nums">{formatTime(duration)}</span>
-                <span className="mt-1 block text-xs text-muted-foreground">Long-form practice</span>
-                {!premium && <LockKeyhole className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />}
+                <span className="text-base font-semibold tabular-nums">{duration === 600 ? "10 minutes" : "20 minutes"}</span>
+                <span className="mt-0.5 text-xs text-muted-foreground">Long-form practice</span>
+                {!premium && <LockKeyhole className="absolute right-3 top-3 h-3.5 w-3.5 text-muted-foreground" />}
               </button>
             )
           })}
         </div>
 
-        <div className={cn("mt-3 rounded-2xl border p-4", current !== 600 && current !== 1200 && !durationOptions.includes(current) ? "border-brand bg-brand-soft/45" : "border-border bg-background")}>
-          <div className="flex items-start justify-between gap-3">
+        <div className={cn("mt-2.5 rounded-2xl border p-3.5", customSelected ? "border-brand bg-brand-soft/45" : "border-border bg-background", !premium && "opacity-80")}>
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold">Choose your own time</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Set a precise target from 1:00 to 30:00.</p>
+              <p className="text-sm font-semibold">Custom time</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">From 1:00 to 30:00</p>
             </div>
-            {!premium && <LockKeyhole className="h-4 w-4 shrink-0 text-muted-foreground" />}
+            {!premium && <LockKeyhole className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-end gap-2">
-            <label>
-              <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted-foreground">Minutes</span>
+          <div className="mt-3 flex items-center gap-2">
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Minutes</span>
               <input
                 type="number"
                 min={0}
@@ -920,12 +945,13 @@ function DurationOptionsDialog({
                 value={minutes}
                 disabled={!premium}
                 onChange={(event) => { setMinutes(event.target.value.slice(0, 2)); setError("") }}
-                className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-3 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed"
+                aria-label="Minutes"
               />
             </label>
-            <span className="pb-3 text-sm font-semibold text-muted-foreground">:</span>
-            <label>
-              <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted-foreground">Seconds</span>
+            <span className="text-sm font-semibold text-muted-foreground">:</span>
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Seconds</span>
               <input
                 type="number"
                 min={0}
@@ -934,31 +960,30 @@ function DurationOptionsDialog({
                 value={seconds}
                 disabled={!premium}
                 onChange={(event) => { setSeconds(event.target.value.slice(0, 2)); setError("") }}
-                className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-3 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed"
+                aria-label="Seconds"
               />
             </label>
+            {premium && (
+              <button type="button" onClick={applyCustomTime} className="shrink-0 rounded-full bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition active:scale-[0.98]">
+                Use
+              </button>
+            )}
           </div>
-
-          {error && <p role="alert" className="mt-3 text-xs font-medium text-destructive">{error}</p>}
-
-          {premium && (
-            <button type="button" onClick={applyCustomTime} className="mt-4 flex w-full items-center justify-center rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]">
-              Use custom time
-            </button>
-          )}
+          {error && <p role="alert" className="mt-2 text-xs font-medium text-destructive">{error}</p>}
         </div>
 
         {!premium && (
-          <div className="mt-5 rounded-2xl border border-brand/25 bg-brand-soft/55 p-4">
-            <div className="flex gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card text-accent-foreground"><LockKeyhole className="h-4 w-4" /></span>
-              <div>
-                <p className="text-sm font-semibold">Long and custom timers require Membership</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">The existing 1:00, 1:30, 2:00, and 5:00 targets remain available on the free plan.</p>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand-soft/45 px-3.5 py-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card text-accent-foreground"><LockKeyhole className="h-3.5 w-3.5" /></span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold">Available with Membership</p>
+                <p className="mt-0.5 text-[0.68rem] text-muted-foreground">Unlock long and custom timers.</p>
               </div>
             </div>
-            <Link href="/membership" className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
-              See Membership <ChevronRight className="h-4 w-4" />
+            <Link href="/membership" className="shrink-0 rounded-full border border-brand/25 bg-card px-3 py-2 text-xs font-semibold text-accent-foreground">
+              View
             </Link>
           </div>
         )}

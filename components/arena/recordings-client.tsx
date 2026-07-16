@@ -1,14 +1,18 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
 import { ArrowLeft, MessageCircle, Mic2, RotateCcw, Share2, Trash2 } from "lucide-react"
 import { MediaPlayer } from "@/components/arena/media-player"
 import { Eyebrow } from "@/components/eyebrow"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useApp } from "@/lib/app-state"
 
 export function RecordingsClient() {
   const { state, deleteRecording, shareRecording } = useApp()
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   return (
+    <>
     <div className="flex min-w-0 flex-col gap-6">
       <header>
         <Link href="/arena" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Arena</Link>
@@ -72,7 +76,7 @@ export function RecordingsClient() {
                   ) : (
                     <Link href="/membership" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
                   )}
-                  <button type="button" onClick={() => { if (window.confirm("Delete this recording permanently?")) void deleteRecording(recording.id) }} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive"><Trash2 className="h-3.5 w-3.5" />Delete</button>
+                  <button type="button" onClick={() => setPendingDelete(recording.id)} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive"><Trash2 className="h-3.5 w-3.5" />Delete</button>
                 </div>
               </article>
             )
@@ -80,6 +84,19 @@ export function RecordingsClient() {
         </div>
       )}
     </div>
+    <ConfirmDialog
+      open={Boolean(pendingDelete)}
+      title="Delete this recording?"
+      confirmLabel="Delete recording"
+      onCancel={() => setPendingDelete(null)}
+      onConfirm={() => {
+        if (pendingDelete) void deleteRecording(pendingDelete)
+        setPendingDelete(null)
+      }}
+    >
+      This permanently removes the recording, transcript, score, and revision. <strong className="text-foreground">This cannot be undone.</strong>
+    </ConfirmDialog>
+    </>
   )
 }
 

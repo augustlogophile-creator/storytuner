@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { Heart, LockKeyhole, MessageCircle, Send, Trash2 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { MediaPlayer } from "@/components/arena/media-player"
 import { useApp, type CommunityPost } from "@/lib/app-state"
 import { cn } from "@/lib/utils"
@@ -53,6 +54,7 @@ export function CommunityClient() {
 
 function PostCard({ post, liked, onHeart, onComment, onRemove, canComment }: { post: CommunityPost; liked: boolean; onHeart: () => void; onComment: (text: string) => void; onRemove?: () => void; canComment: boolean }) {
   const [comment, setComment] = useState("")
+  const [confirmRemove, setConfirmRemove] = useState(false)
   function submit() {
     if (!canComment || !comment.trim()) return
     onComment(comment)
@@ -65,7 +67,7 @@ function PostCard({ post, liked, onHeart, onComment, onRemove, canComment }: { p
           <p className="text-sm font-semibold">{post.author}</p>
           <p className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-muted-foreground">{post.context} · {relativeDate(post.createdAt)}</p>
         </div>
-        {onRemove && <button type="button" onClick={() => { if (window.confirm("Remove this story from Community?")) onRemove() }} className="rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label="Remove post"><Trash2 className="h-4 w-4" /></button>}
+        {onRemove && <button type="button" onClick={() => setConfirmRemove(true)} className="rounded-full p-2 text-muted-foreground hover:bg-secondary hover:text-destructive" aria-label="Remove post"><Trash2 className="h-4 w-4" /></button>}
       </div>
       <p className="mt-4 whitespace-pre-wrap text-[0.95rem] leading-7 text-foreground/90 text-pretty">{post.text}</p>
       {post.recordingId && <MediaPlayer recordingId={post.recordingId} kind={post.mediaKind} />}
@@ -84,6 +86,18 @@ function PostCard({ post, liked, onHeart, onComment, onRemove, canComment }: { p
         <input value={comment} disabled={!canComment} onChange={(event: ChangeEvent<HTMLInputElement>) => setComment(event.target.value)} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => { if (event.key === "Enter") submit() }} placeholder={canComment ? "Share what landed…" : "Commenting requires Membership"} className="min-w-0 flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-60" />
         <button type="button" onClick={submit} disabled={!canComment || !comment.trim()} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40" aria-label="Post comment"><Send className="h-4 w-4" /></button>
       </div>
+      <ConfirmDialog
+        open={confirmRemove}
+        title="Remove this shared story?"
+        confirmLabel="Remove story"
+        onCancel={() => setConfirmRemove(false)}
+        onConfirm={() => {
+          onRemove?.()
+          setConfirmRemove(false)
+        }}
+      >
+        The story will disappear from Community, but your private recording will stay in StoryTuner.
+      </ConfirmDialog>
     </article>
   )
 }
