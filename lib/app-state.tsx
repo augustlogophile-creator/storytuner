@@ -218,7 +218,6 @@ type AppContextValue = {
   updateProfileName: (name: string) => void
   setPremium: (value: boolean) => void
   completeOnboarding: (name?: string) => void
-  repairStreak: () => boolean
   deleteAllRecordings: () => Promise<void>
   resetAll: () => Promise<void>
   addCoachExchange: (user: string, assistant: string) => void
@@ -425,21 +424,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }))
   }, [])
 
-  const repairStreak = useCallback(() => {
-    const today = todayKey()
-    const latest = [...state.activityDates].sort().at(-1)
-    if (!latest || daysBetween(latest, today) !== 2) return false
-    const yesterdayDate = new Date()
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1)
-    const yesterday = todayKey(yesterdayDate)
-    setState((current) => {
-      const dates = Array.from(new Set([...current.activityDates, yesterday, today])).sort().slice(-180)
-      const streak = Math.max(1, current.streak) + 2
-      return { ...current, activityDates: dates, streak, longestStreak: Math.max(current.longestStreak, streak) }
-    })
-    return true
-  }, [state.activityDates])
-
   const deleteAllRecordings = useCallback(async () => {
     await clearMedia().catch(() => undefined)
     setState((current) => ({ ...current, recordings: [], community: current.community.filter((post) => !post.mine) }))
@@ -498,7 +482,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfileName,
       setPremium,
       completeOnboarding,
-      repairStreak,
       deleteAllRecordings,
       resetAll,
       addCoachExchange,
@@ -521,7 +504,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateProfileName,
       setPremium,
       completeOnboarding,
-      repairStreak,
       deleteAllRecordings,
       resetAll,
       addCoachExchange,

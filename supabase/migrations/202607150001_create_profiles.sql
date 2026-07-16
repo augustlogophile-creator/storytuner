@@ -5,6 +5,7 @@ create table if not exists public.profiles (
   display_name text not null,
   confirmed_age_13_plus boolean not null default false,
   onboarding_completed boolean not null default false,
+  ai_personalization_enabled boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint profiles_username_lowercase check (username = lower(username)),
