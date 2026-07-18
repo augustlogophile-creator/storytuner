@@ -4,10 +4,29 @@ import { createClient } from "@/lib/supabase/client"
 
 const RECORDINGS_BUCKET = "storytuner-recordings"
 const MAX_AUDIO_BYTES = 24 * 1024 * 1024
+const ABANDONED_RECORDING_AGE_MS = 24 * 60 * 60 * 1000
 
 export type CloudRecordingRef = {
   id: string
   storagePath: string
+}
+
+export type CloudRecordingStatus = "uploading" | "uploaded" | "transcribing" | "ready" | "failed"
+
+export type CloudRecordingRow = {
+  id: string
+  user_id: string
+  storage_path: string
+  content_type: string
+  size_bytes: number
+  duration_seconds: number
+  status: CloudRecordingStatus
+  transcript: string | null
+  title: string | null
+  word_count: number | null
+  error_message: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type CloudTranscriptionStage = "preparing" | "uploading" | "transcribing" | "saving"
@@ -106,10 +125,12 @@ export async function uploadAndTranscribeRecording({
 
     onStage?.("saving")
     const title = titleFromTranscript(transcript)
-    await supabase
+    const { error: titleError } = await supabase
       .from("recording_uploads")
       .update({ title, status: "ready", error_message: null })
       .eq("id", id)
+
+    if (titleError) throw new Error(`The transcript finished, but its title could not be saved. ${titleError.message}`)
 
     return {
       ...cloudRef,
@@ -125,7 +146,9 @@ export async function uploadAndTranscribeRecording({
         .update({ status: "failed", error_message: message.slice(0, 500) })
         .eq("id", id)
     } catch {}
-    await deleteCloudRecording(cloudRef).catch(() => undefined)
+    try {
+      await supabase.storage.from(RECORDINGS_BUCKET).remove([storagePath])
+    } catch {}
     throw error
   }
 }
@@ -150,26 +173,53 @@ export async function finalizeCloudRecording(
   if (error) throw new Error(error.message)
 }
 
-export async function deleteCloudRecording(recording: CloudRecordingRef) {
+export async function listCloudRecordingHistory() {
   const supabase = createClient()
-  try {
-    await supabase.storage.from(RECORDINGS_BUCKET).remove([recording.storagePath])
-  } catch {}
-  try {
-    await supabase.from("recording_uploads").delete().eq("id", recording.id)
-  } catch {}
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) return []
+
+  await cleanupAbandonedCloudRecordings()
+
+  const { data, error } = await supabase
+    .from("recording_uploads")
+    .select("id,user_id,storage_path,content_type,size_bytes,duration_seconds,status,transcript,title,word_count,error_message,created_at,updated_at")
+    .eq("user_id", user.id)
+    .eq("status", "ready")
+    .order("created_at", { ascending: false })
+    .limit(200)
+
+  if (error) throw new Error(`Your private recording history could not be loaded. ${error.message}`)
+  return (data ?? []) as CloudRecordingRow[]
 }
 
-export async function deleteCloudRecordings(recordings: CloudRecordingRef[]) {
-  if (!recordings.length) return
+export async function cleanupAbandonedCloudRecordings() {
   const supabase = createClient()
-  const paths = recordings.map((recording) => recording.storagePath).filter(Boolean)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return
+
+  const cutoff = new Date(Date.now() - ABANDONED_RECORDING_AGE_MS).toISOString()
+  const { data, error } = await supabase
+    .from("recording_uploads")
+    .select("id,storage_path")
+    .eq("user_id", user.id)
+    .in("status", ["uploading", "uploaded", "transcribing", "failed"])
+    .lt("updated_at", cutoff)
+
+  if (error || !data?.length) return
+
+  const paths = data.map((row) => row.storage_path).filter(Boolean)
   if (paths.length) {
-    try {
-      await supabase.storage.from(RECORDINGS_BUCKET).remove(paths)
-    } catch {}
+    const { error: storageError } = await supabase.storage.from(RECORDINGS_BUCKET).remove(paths)
+    if (storageError) return
   }
-  const ids = recordings.map((recording) => recording.id).filter(Boolean)
+
+  const ids = data.map((row) => row.id).filter(Boolean)
   if (ids.length) {
     try {
       await supabase.from("recording_uploads").delete().in("id", ids)
@@ -177,11 +227,40 @@ export async function deleteCloudRecordings(recordings: CloudRecordingRef[]) {
   }
 }
 
-export async function downloadCloudRecording(storagePath: string) {
+export async function createSignedCloudRecordingUrl(storagePath: string, expiresInSeconds = 3600) {
   const supabase = createClient()
-  const { data, error } = await supabase.storage.from(RECORDINGS_BUCKET).download(storagePath)
-  if (error || !data) throw new Error(error?.message || "The private audio file is unavailable.")
-  return data
+  const { data, error } = await supabase.storage
+    .from(RECORDINGS_BUCKET)
+    .createSignedUrl(storagePath, Math.max(60, Math.min(86400, Math.round(expiresInSeconds))))
+
+  if (error || !data?.signedUrl) throw new Error(error?.message || "The private audio file is unavailable.")
+  return data.signedUrl
+}
+
+export async function deleteCloudRecording(recording: CloudRecordingRef) {
+  const supabase = createClient()
+  const { error: storageError } = await supabase.storage.from(RECORDINGS_BUCKET).remove([recording.storagePath])
+  if (storageError) throw new Error(`The private audio could not be deleted. ${storageError.message}`)
+
+  const { error: rowError } = await supabase.from("recording_uploads").delete().eq("id", recording.id)
+  if (rowError) throw new Error(`The recording history entry could not be deleted. ${rowError.message}`)
+}
+
+export async function deleteCloudRecordings(recordings: CloudRecordingRef[]) {
+  if (!recordings.length) return
+  const supabase = createClient()
+  const paths = recordings.map((recording) => recording.storagePath).filter(Boolean)
+  const ids = recordings.map((recording) => recording.id).filter(Boolean)
+
+  if (paths.length) {
+    const { error } = await supabase.storage.from(RECORDINGS_BUCKET).remove(paths)
+    if (error) throw new Error(`Private recording audio could not be deleted. ${error.message}`)
+  }
+
+  if (ids.length) {
+    const { error } = await supabase.from("recording_uploads").delete().in("id", ids)
+    if (error) throw new Error(`Recording history entries could not be deleted. ${error.message}`)
+  }
 }
 
 function normalizeAudioContentType(type: string) {

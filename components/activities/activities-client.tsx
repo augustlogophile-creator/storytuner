@@ -30,7 +30,7 @@ export function ActivitiesClient() {
         <ProgressBar value={course.percent} />
         {!state.premium && (
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-            The free plan includes the first {FREE_UNIT_LIMIT} complete lessons. Each one includes Learn, Practice, and Check.
+            The free plan includes the first {FREE_UNIT_LIMIT} complete lessons. Each one includes Learn, Check, and Practice.
           </p>
         )}
       </section>

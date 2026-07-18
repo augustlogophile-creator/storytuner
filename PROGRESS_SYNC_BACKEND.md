@@ -2,11 +2,11 @@
 
 StoryTuner now keeps the app usable offline while syncing signed-in user progress to `public.user_app_state` in Supabase.
 
-Synced data includes lesson completion, responses, quiz scores, XP, streaks, Weaver ownership, app preferences, coaching history, free-use counters, and onboarding/profile progress.
+Synced data includes lesson completion, responses, quiz scores, XP, streaks, Weaver ownership, app preferences, coaching history, free-use counters, onboarding/profile progress, and recording metadata such as scores, feedback, revisions, and private cloud references.
 
 Membership remains controlled by the Stripe-backed `subscriptions` table and is never trusted from synced JSON.
 
-Recording media and Community posts are not part of this JSON sync. Recording audio/transcripts continue to use the dedicated private recording backend, and a shared Community backend should be implemented separately.
+Raw recording media is not stored inside this JSON. Private compressed audio and transcripts remain in the dedicated recording backend, while the metadata needed to rebuild the Recordings page follows the account. Community posts are still separate and should receive their own shared backend.
 
 Behavior:
 

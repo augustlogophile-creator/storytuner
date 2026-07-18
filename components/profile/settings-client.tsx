@@ -121,22 +121,28 @@ export function SettingsClient() {
     if (dialog === "save-name") return void saveDisplayName()
     if (dialog === "logout") return void logOut()
     setBusy(true)
-    if (dialog === "delete-recordings") {
-      await deleteAllRecordings()
-      setNotice("All recordings were deleted from this device.")
-    }
-    if (dialog === "delete-all") {
-      const supabase = createClient()
-      const { data } = await supabase.auth.getUser()
-      if (data.user) {
-        await supabase.from("profiles").update({ ai_personalization_enabled: false }).eq("id", data.user.id)
+    setNotice("")
+    try {
+      if (dialog === "delete-recordings") {
+        await deleteAllRecordings()
+        setNotice("All recordings were deleted from this device and private cloud storage.")
       }
-      await resetAll()
-      setDisplayName("Storyteller")
-      setNotice("Your StoryTuner app data was deleted across devices.")
+      if (dialog === "delete-all") {
+        const supabase = createClient()
+        const { data } = await supabase.auth.getUser()
+        if (data.user) {
+          await supabase.from("profiles").update({ ai_personalization_enabled: false }).eq("id", data.user.id)
+        }
+        await resetAll()
+        setDisplayName("Storyteller")
+        setNotice("Your StoryTuner app data was deleted across devices.")
+      }
+      setDialog(null)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "StoryTuner could not finish deleting your data. Try again.")
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
-    setDialog(null)
   }
 
   return (

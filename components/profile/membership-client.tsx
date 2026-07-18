@@ -6,7 +6,7 @@ import { BackLink } from "@/components/page-header"
 import { FOUNDING_PRICE, FUTURE_PRICE, useApp } from "@/lib/app-state"
 
 const rows = [
-  { feature: "Storytelling lessons", detail: "Each lesson includes Learn, Practice, and Check.", free: "5 full lessons", member: "All 15 lessons" },
+  { feature: "Storytelling lessons", detail: "Each lesson includes Learn, Check, and Practice.", free: "5 full lessons", member: "All 15 lessons" },
   { feature: "Spoken story reviews", detail: "A complete recording, transcript, grade, and revision.", free: "2 total", member: "Unlimited" },
   { feature: "Ask Weaver", detail: "Coaching on ideas, structure, language, delivery, scores, and long-term growth.", free: "5 total messages", member: "Unlimited" },
   { feature: "Community", detail: "Share stories, respond, and learn from other members.", free: "Locked", member: "Full access" },

@@ -5,13 +5,13 @@ import { BookOpen, Check, ChevronRight, FilePenLine, Lock, ListChecks } from "lu
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
 import { hasUnitPlanAccess, isUnitUnlocked, unitProgress, useApp } from "@/lib/app-state"
-import { lessonId, stageLabels, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
+import { lessonId, stageLabels, stageOrder, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
 import { cn } from "@/lib/utils"
 
 const stageMeta: Record<LessonStage, { detail: string; icon: typeof BookOpen }> = {
   read: { detail: "Read the complete concept, examples, and breakdown.", icon: BookOpen },
-  drill: { detail: "Apply the idea to a story of your own.", icon: FilePenLine },
-  quiz: { detail: "Check your understanding with five questions.", icon: ListChecks },
+  drill: { detail: "Apply the idea to a story of your own after the check.", icon: FilePenLine },
+  quiz: { detail: "Check your understanding before you practice.", icon: ListChecks },
 }
 
 export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
@@ -19,7 +19,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
   const progress = unitProgress(state, unit.id)
   const planAccess = hasUnitPlanAccess(state, unit.index)
   const unitUnlocked = isUnitUnlocked(state, unit.index)
-  const stages: LessonStage[] = ["read", "drill", "quiz"]
+  const stages = stageOrder
 
   if (!planAccess) {
     return (

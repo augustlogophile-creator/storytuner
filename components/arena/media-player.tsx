@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { getMedia } from "@/lib/media-store"
-import { downloadCloudRecording } from "@/lib/recording-cloud"
+import { createSignedCloudRecordingUrl } from "@/lib/recording-cloud"
 
 export function MediaPlayer({
   recordingId,
@@ -21,7 +21,7 @@ export function MediaPlayer({
 
   useEffect(() => {
     let active = true
-    let objectUrl: string | null = null
+    let localObjectUrl: string | null = null
     setUrl(null)
     setPlaybackKind(kind === "video" ? "video" : "audio")
     setLoaded(false)
@@ -31,18 +31,17 @@ export function MediaPlayer({
         const localBlob = await getMedia(recordingId)
         if (!active) return
         if (localBlob) {
-          objectUrl = URL.createObjectURL(localBlob)
+          localObjectUrl = URL.createObjectURL(localBlob)
           setPlaybackKind(kind === "video" ? "video" : "audio")
-          setUrl(objectUrl)
+          setUrl(localObjectUrl)
           return
         }
 
         if (cloudStoragePath) {
-          const cloudBlob = await downloadCloudRecording(cloudStoragePath)
+          const signedUrl = await createSignedCloudRecordingUrl(cloudStoragePath)
           if (!active) return
-          objectUrl = URL.createObjectURL(cloudBlob)
           setPlaybackKind("audio")
-          setUrl(objectUrl)
+          setUrl(signedUrl)
         }
       } catch {
         // The transcript and coaching remain available even if media playback fails.
@@ -55,11 +54,11 @@ export function MediaPlayer({
 
     return () => {
       active = false
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      if (localObjectUrl) URL.revokeObjectURL(localObjectUrl)
     }
   }, [cloudStoragePath, kind, recordingId])
 
-  if (kind === "none") return null
+  if (kind === "none" && !cloudStoragePath) return null
   if (!loaded) return <div className="mt-3 h-12 animate-pulse rounded-2xl bg-secondary" />
   if (!url) return <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-xs text-muted-foreground">The media file is unavailable, but the transcript and coaching are still saved.</p>
 

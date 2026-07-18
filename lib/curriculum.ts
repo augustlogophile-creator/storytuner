@@ -34,6 +34,8 @@ export type CurriculumUnit = {
 
 export type LessonStage = "read" | "drill" | "quiz"
 
+export const stageOrder: LessonStage[] = ["read", "quiz", "drill"]
+
 export const curriculum = curriculumData as CurriculumUnit[]
 
 export const stageLabels: Record<LessonStage, string> = {
@@ -70,6 +72,6 @@ export function parseLessonId(id: string): { unit: CurriculumUnit; stage: Lesson
 
 export function allLessonIds() {
   return curriculum.flatMap((unit) =>
-    (["read", "drill", "quiz"] as LessonStage[]).map((stage) => lessonId(unit.id, stage)),
+    stageOrder.map((stage) => lessonId(unit.id, stage)),
   )
 }

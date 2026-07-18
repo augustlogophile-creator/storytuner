@@ -10,9 +10,14 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import { curriculum, lessonId, stageXp, type LessonStage } from "@/lib/curriculum"
+import { curriculum, lessonId, stageOrder, stageXp, type LessonStage } from "@/lib/curriculum"
 import { clearMedia, deleteMedia } from "@/lib/media-store"
-import { deleteCloudRecording, deleteCloudRecordings } from "@/lib/recording-cloud"
+import {
+  deleteCloudRecording,
+  deleteCloudRecordings,
+  listCloudRecordingHistory,
+  type CloudRecordingRow,
+} from "@/lib/recording-cloud"
 import { createClient } from "@/lib/supabase/client"
 
 export type ArenaScores = { hook: number; development: number; landing: number }
@@ -208,11 +213,14 @@ function applyActivity(state: AppState) {
 
 export type SyncStatus = "local" | "syncing" | "saved" | "offline" | "error"
 
-type SyncedAppState = Omit<AppState, "premium" | "recordings" | "community" | "likedPosts">
+type SyncedAppState = Omit<AppState, "premium" | "community" | "likedPosts">
 
 function toSyncedState(state: AppState): SyncedAppState {
-  const { premium: _premium, recordings: _recordings, community: _community, likedPosts: _likedPosts, ...synced } = state
-  return synced
+  const { premium: _premium, community: _community, likedPosts: _likedPosts, ...synced } = state
+  return {
+    ...synced,
+    recordings: state.recordings.map((recording) => ({ ...recording })),
+  }
 }
 
 function hasMeaningfulLocalProgress(state: AppState) {
@@ -223,8 +231,97 @@ function hasMeaningfulLocalProgress(state: AppState) {
     state.arenaTotal ||
     state.ownedWeavers.length > 1 ||
     state.coach.messages.length ||
+    state.recordings.length ||
     state.profile.name !== "Storyteller"
   )
+}
+
+
+function recordingSyncKey(recording: Recording) {
+  return recording.cloudRecordingId || recording.id
+}
+
+function mergeRecordingMetadata(remote: Recording[], local: Recording[]) {
+  const merged = new Map<string, Recording>()
+  for (const recording of [...remote, ...local]) {
+    const key = recordingSyncKey(recording)
+    const prior = merged.get(key)
+    if (!prior) {
+      merged.set(key, { ...recording })
+      continue
+    }
+    merged.set(key, {
+      ...prior,
+      ...recording,
+      cloudRecordingId: recording.cloudRecordingId || prior.cloudRecordingId,
+      cloudStoragePath: recording.cloudStoragePath || prior.cloudStoragePath,
+      transcript: recording.transcript || prior.transcript,
+      strengths: recording.strengths?.length ? recording.strengths : prior.strengths,
+      improvements: recording.improvements?.length ? recording.improvements : prior.improvements,
+      revisedStory: recording.revisedStory || prior.revisedStory,
+      shared: recording.shared || prior.shared,
+    })
+  }
+  return [...merged.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+function recordingFromCloudRow(row: CloudRecordingRow): Recording {
+  const transcript = row.transcript?.trim() || ""
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    title: row.title?.trim() || "Untitled story",
+    context: "Saved story",
+    prompt: "",
+    duration: row.duration_seconds,
+    transcript,
+    scores: { hook: 0, development: 0, landing: 0 },
+    overall: 0,
+    praise: "Your private transcript and audio are saved.",
+    strengths: [],
+    improvements: [],
+    fix: "",
+    nextTake: "",
+    mediaKind: "audio",
+    mimeType: row.content_type || "audio/webm",
+    cloudRecordingId: row.id,
+    cloudStoragePath: row.storage_path,
+    shared: false,
+  }
+}
+
+function mergeCloudRecordingHistory(state: AppState, rows: CloudRecordingRow[]) {
+  const rowsById = new Map(rows.map((row) => [row.id, row]))
+  const matched = new Set<string>()
+  const recordings: Recording[] = []
+
+  for (const recording of state.recordings) {
+    if (!recording.cloudRecordingId) {
+      recordings.push(recording)
+      continue
+    }
+    const row = rowsById.get(recording.cloudRecordingId)
+    if (!row) continue
+    matched.add(row.id)
+    recordings.push({
+      ...recording,
+      title: row.title?.trim() || recording.title,
+      duration: row.duration_seconds || recording.duration,
+      transcript: row.transcript?.trim() || recording.transcript,
+      mimeType: row.content_type || recording.mimeType,
+      cloudStoragePath: row.storage_path,
+      cloudRecordingId: row.id,
+    })
+  }
+
+  for (const row of rows) {
+    if (!matched.has(row.id)) recordings.push(recordingFromCloudRow(row))
+  }
+
+  return {
+    ...state,
+    recordings: recordings.sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+  }
 }
 
 function mergeSyncedState(local: AppState, remoteRaw: unknown): AppState {
@@ -233,7 +330,7 @@ function mergeSyncedState(local: AppState, remoteRaw: unknown): AppState {
     return normalize({
       ...remote,
       premium: local.premium,
-      recordings: local.recordings,
+      recordings: remote.recordings,
       community: local.community,
       likedPosts: local.likedPosts,
     })
@@ -245,6 +342,7 @@ function mergeSyncedState(local: AppState, remoteRaw: unknown): AppState {
   for (const [date, count] of Object.entries(local.arenaUses)) arenaUses[date] = Math.max(arenaUses[date] ?? 0, count)
   const xpLifetime = Math.max(remote.xpLifetime, local.xpLifetime)
   const spentXp = ownedWeavers.reduce((sum, id) => sum + (weaverColors.find((item) => item.id === id)?.cost ?? 0), 0)
+  const recordings = mergeRecordingMetadata(remote.recordings, local.recordings)
   const messages = [...remote.coach.messages, ...local.coach.messages]
     .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
@@ -275,7 +373,7 @@ function mergeSyncedState(local: AppState, remoteRaw: unknown): AppState {
     settings: { ...remote.settings, ...local.settings },
     onboardingComplete: remote.onboardingComplete || local.onboardingComplete,
     premium: local.premium,
-    recordings: local.recordings,
+    recordings,
     community: local.community,
     likedPosts: local.likedPosts,
   })
@@ -388,7 +486,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSyncStatus("error")
       return
     }
-    const merged = data?.state ? mergeSyncedState(stateRef.current, data.state) : stateRef.current
+    let merged = data?.state ? mergeSyncedState(stateRef.current, data.state) : stateRef.current
+    try {
+      const cloudRecordings = await listCloudRecordingHistory()
+      merged = mergeCloudRecordingHistory(merged, cloudRecordings)
+    } catch (recordingError) {
+      console.error(
+        "StoryTuner recording history sync failed:",
+        recordingError instanceof Error ? recordingError.message : recordingError,
+      )
+    }
     stateRef.current = merged
     setState(merged)
     syncInitialized.current = true
@@ -496,13 +603,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteRecording = useCallback(async (id: string) => {
     const recording = state.recordings.find((item) => item.id === id)
-    await deleteMedia(id).catch(() => undefined)
     if (recording?.cloudRecordingId && recording.cloudStoragePath) {
       await deleteCloudRecording({
         id: recording.cloudRecordingId,
         storagePath: recording.cloudStoragePath,
-      }).catch(() => undefined)
+      })
     }
+    await deleteMedia(id).catch(() => undefined)
     setState((current) => ({
       ...current,
       recordings: current.recordings.filter((item) => item.id !== id),
@@ -634,10 +741,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const cloudRecordings = state.recordings
       .filter((recording) => recording.cloudRecordingId && recording.cloudStoragePath)
       .map((recording) => ({ id: recording.cloudRecordingId!, storagePath: recording.cloudStoragePath! }))
-    await Promise.all([
-      clearMedia().catch(() => undefined),
-      deleteCloudRecordings(cloudRecordings).catch(() => undefined),
-    ])
+    if (cloudRecordings.length) await deleteCloudRecordings(cloudRecordings)
+    await clearMedia().catch(() => undefined)
     setState((current) => ({ ...current, recordings: [], community: current.community.filter((post) => !post.mine) }))
   }, [state.recordings])
 
@@ -645,10 +750,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const cloudRecordings = state.recordings
       .filter((recording) => recording.cloudRecordingId && recording.cloudStoragePath)
       .map((recording) => ({ id: recording.cloudRecordingId!, storagePath: recording.cloudStoragePath! }))
-    await Promise.all([
-      clearMedia().catch(() => undefined),
-      deleteCloudRecordings(cloudRecordings).catch(() => undefined),
-    ])
+    if (cloudRecordings.length) await deleteCloudRecordings(cloudRecordings)
+    await clearMedia().catch(() => undefined)
     if (syncUserId.current) {
       const supabase = createClient()
       try {
@@ -752,7 +855,7 @@ export function useApp() {
 }
 
 export function unitProgress(state: AppState, unitId: string) {
-  const stages = (["read", "drill", "quiz"] as LessonStage[]).filter((stage) =>
+  const stages = stageOrder.filter((stage) =>
     state.completed.includes(lessonId(unitId, stage)),
   )
   return { done: stages.length, total: 3, percent: Math.round((stages.length / 3) * 100) }
@@ -785,7 +888,7 @@ export function nextLesson(state: AppState) {
   for (const unit of curriculum) {
     if (!hasUnitPlanAccess(state, unit.index)) break
     if (!isUnitUnlocked(state, unit.index)) break
-    for (const stage of ["read", "drill", "quiz"] as LessonStage[]) {
+    for (const stage of stageOrder) {
       if (!state.completed.includes(lessonId(unit.id, stage))) return { unit, stage, id: lessonId(unit.id, stage) }
     }
   }
@@ -810,3 +913,4 @@ export function freeArenaRemaining(state: AppState) {
 export function canRecordInArena(state: AppState) {
   return state.premium || state.arenaTotal < FREE_ARENA_LIMIT
 }
+

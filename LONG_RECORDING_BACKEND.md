@@ -16,14 +16,18 @@ StoryTuner now sends the separate low-bitrate audio track directly from the brow
 3. A self-only `recording_uploads` row tracks upload and transcription status.
 4. The Edge Function downloads the private audio and sends it to OpenAI transcription.
 5. The transcript is saved to the row and returned to the Arena.
-6. Deleting a saved recording also deletes its Supabase audio object and database row.
+6. Recording metadata, scores, feedback, and revisions sync through `user_app_state`.
+7. The Recordings page reconciles synced metadata with authoritative `recording_uploads` rows on sign-in, focus, and reconnect.
+8. Playback on another device uses a short-lived signed URL for the private audio object.
+9. Deleting a saved recording removes its Supabase audio object, database row, local media, and synced archive entry.
 
 ## Limits
 
 - Maximum target length: 30 minutes.
 - Application audio limit: 24 MB.
 - Bucket file limit: 25 MB.
-- Short recordings can fall back to the older Vercel transcription route if the cloud path is temporarily unavailable.
+- Full video stays only on the original device; compressed private audio is available across devices.
+- Failed or interrupted uploads older than 24 hours are cleaned up when the signed-in app next syncs.
 
 ## Production test
 

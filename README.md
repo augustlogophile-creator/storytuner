@@ -8,7 +8,8 @@ StoryTuner is a Next.js 16 App Router application for learning and practicing tr
 - TypeScript and Tailwind CSS 4
 - Supabase Auth using `@supabase/ssr` cookie sessions
 - OpenAI for transcription, lesson feedback, Arena grading, and Ask Weaver
-- IndexedDB and localStorage for the current device-based StoryTuner data
+- Supabase database and private Storage for synced progress, recording audio, transcripts, and membership state
+- IndexedDB for full-resolution media that remains on the recording device
 - pnpm and `pnpm-lock.yaml`
 
 ## Authentication
@@ -44,7 +45,7 @@ OPENAI_MODEL
 OPENAI_TRANSCRIPTION_MODEL
 ```
 
-No Supabase service-role key is required.
+Stripe membership routes require `SUPABASE_SERVICE_ROLE_KEY` on the server. Never expose it to browser code.
 
 ## Setup
 
@@ -59,9 +60,9 @@ pnpm dev
 
 ## Data model scope
 
-This authentication migration creates only the `profiles` table. It does not add database tables for curriculum progress, XP, streaks, recordings, media, Community, Membership, payments, or Weaver purchases.
+StoryTuner uses dedicated Supabase tables for profiles, synced app progress, private recording uploads, and Stripe-backed subscriptions. Lesson progress, XP, streaks, Weaver ownership, settings, coaching history, and recording metadata sync through `user_app_state`. Private compressed audio and transcripts live in `recording_uploads` and the `storytuner-recordings` bucket.
 
-Those features keep their existing local browser behavior. Authentication and public profile data persist across devices, but StoryTuner progress and recordings do not yet sync across devices.
+Full video remains in IndexedDB on the device where it was recorded. Community content is still browser-based and should move to its own shared backend before public launch.
 
 ## Security
 
@@ -78,4 +79,9 @@ The introduction now uses a guided Weaver-led layout with transparent emotion ar
 
 ## Long recording storage and transcription
 
-Long Arena recordings now upload their separate compressed audio track directly to a private Supabase Storage bucket and use the `transcribe-recording` Edge Function. The full video remains on the current device. See `LONG_RECORDING_BACKEND.md` and run `supabase/migrations/202607170001_recording_storage.sql` before using this flow.
+Arena recordings upload their separate compressed audio track directly to a private Supabase Storage bucket and use the `transcribe-recording` Edge Function. Recording metadata, transcripts, scores, feedback, and revisions now follow the signed-in account across devices, while full video remains on the original device. Playback uses short-lived private signed URLs. See `LONG_RECORDING_BACKEND.md`.
+
+
+## Curriculum sequence
+
+Every curriculum unit now follows **Learn → Check → Practice**. The check must be completed before the practice step unlocks. Existing completion IDs remain compatible.

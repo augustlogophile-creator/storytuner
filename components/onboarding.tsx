@@ -9,7 +9,7 @@ import { Weaver } from "@/components/weaver"
 const pages = [
   {
     title: "Learn the craft, one decision at a time.",
-    copy: "StoryTuner turns a complete storytelling course into short readings, focused drills, and checks that build on each other.",
+    copy: "StoryTuner turns a complete storytelling course into short readings, quick checks, and focused practice that build on each other.",
     icon: BookOpen,
   },
   {

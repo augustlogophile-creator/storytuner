@@ -7,7 +7,7 @@ import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
 import { RichText } from "@/components/rich-text"
 import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isUnitUnlocked, useApp } from "@/lib/app-state"
-import { curriculum, lessonId, stageLabels, stageXp, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
+import { curriculum, lessonId, stageLabels, stageOrder, stageXp, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
 import { cn } from "@/lib/utils"
 
 type LessonFeedback = { pass: boolean; working: string; fix: string }
@@ -21,7 +21,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const [earnedThisVisit, setEarnedThisVisit] = useState(false)
   const [response, setResponse] = useState(state.responses[key] ?? "")
   const course = courseProgress(state)
-  const stages: LessonStage[] = ["read", "drill", "quiz"]
+  const stages = stageOrder
   const stageIndex = stages.indexOf(stage)
   const priorStage = stages[stageIndex - 1]
   const planAccess = hasUnitPlanAccess(state, unit.index)
@@ -294,8 +294,8 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
 }
 
 function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; premium: boolean; earnedThisVisit: boolean; onReview: () => void }) {
-  const stageIndex = (["read", "drill", "quiz"] as LessonStage[]).indexOf(stage)
-  const nextStage = (["read", "drill", "quiz"] as LessonStage[])[stageIndex + 1]
+  const stageIndex = stageOrder.indexOf(stage)
+  const nextStage = stageOrder[stageIndex + 1]
   const unitIndex = curriculum.findIndex((item) => item.id === unit.id)
   const nextUnit = curriculum[unitIndex + 1]
   const nextUnitNeedsMembership = Boolean(nextUnit && !premium && nextUnit.index > FREE_UNIT_LIMIT)

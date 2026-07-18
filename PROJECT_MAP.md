@@ -22,7 +22,7 @@
 - `/`: public StoryTuner introduction.
 - `/home`: private dashboard.
 - `/activities` and `/activities/[unitId]`: private curriculum path and unit detail.
-- `/lesson/[lessonId]`: private Learn, Practice, and Check stages.
+- `/lesson/[lessonId]`: private Learn, Check, and Practice stages.
 - `/arena`: private recording studio.
 - `/arena/recordings`: private recording history.
 - `/coach`: private Ask Weaver chat.
