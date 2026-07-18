@@ -13,6 +13,7 @@ import {
 import { curriculum, lessonId, stageXp, type LessonStage } from "@/lib/curriculum"
 import { clearMedia, deleteMedia } from "@/lib/media-store"
 import { deleteCloudRecording, deleteCloudRecordings } from "@/lib/recording-cloud"
+import { createClient } from "@/lib/supabase/client"
 
 export type ArenaScores = { hook: number; development: number; landing: number }
 
@@ -205,9 +206,85 @@ function applyActivity(state: AppState) {
   }
 }
 
+export type SyncStatus = "local" | "syncing" | "saved" | "offline" | "error"
+
+type SyncedAppState = Omit<AppState, "premium" | "recordings" | "community" | "likedPosts">
+
+function toSyncedState(state: AppState): SyncedAppState {
+  const { premium: _premium, recordings: _recordings, community: _community, likedPosts: _likedPosts, ...synced } = state
+  return synced
+}
+
+function hasMeaningfulLocalProgress(state: AppState) {
+  return Boolean(
+    state.onboardingComplete ||
+    state.completed.length ||
+    state.xpLifetime ||
+    state.arenaTotal ||
+    state.ownedWeavers.length > 1 ||
+    state.coach.messages.length ||
+    state.profile.name !== "Storyteller"
+  )
+}
+
+function mergeSyncedState(local: AppState, remoteRaw: unknown): AppState {
+  const remote = normalize({ ...local, ...(remoteRaw && typeof remoteRaw === "object" ? remoteRaw : {}) })
+  if (!hasMeaningfulLocalProgress(local)) {
+    return normalize({
+      ...remote,
+      premium: local.premium,
+      recordings: local.recordings,
+      community: local.community,
+      likedPosts: local.likedPosts,
+    })
+  }
+  const activityDates = Array.from(new Set([...remote.activityDates, ...local.activityDates])).sort().slice(-180)
+  const completed = Array.from(new Set([...remote.completed, ...local.completed]))
+  const ownedWeavers = Array.from(new Set(["classic", ...remote.ownedWeavers, ...local.ownedWeavers]))
+  const arenaUses: Record<string, number> = { ...remote.arenaUses }
+  for (const [date, count] of Object.entries(local.arenaUses)) arenaUses[date] = Math.max(arenaUses[date] ?? 0, count)
+  const xpLifetime = Math.max(remote.xpLifetime, local.xpLifetime)
+  const spentXp = ownedWeavers.reduce((sum, id) => sum + (weaverColors.find((item) => item.id === id)?.cost ?? 0), 0)
+  const messages = [...remote.coach.messages, ...local.coach.messages]
+    .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .slice(-30)
+  return normalize({
+    ...remote,
+    ...local,
+    profile: local.profile.name !== "Storyteller" ? local.profile : remote.profile,
+    sessions: Math.max(remote.sessions, local.sessions),
+    lastOpen: [remote.lastOpen, local.lastOpen].filter(Boolean).sort().at(-1) ?? null,
+    activityDates,
+    arenaUses,
+    arenaTotal: Math.max(remote.arenaTotal, local.arenaTotal),
+    completed,
+    responses: { ...remote.responses, ...local.responses },
+    quizScores: { ...remote.quizScores, ...local.quizScores },
+    xpLifetime,
+    xpBalance: Math.max(0, xpLifetime - spentXp),
+    streak: Math.max(remote.streak, local.streak),
+    longestStreak: Math.max(remote.longestStreak, local.longestStreak),
+    ownedWeavers,
+    activeWeaver: ownedWeavers.includes(local.activeWeaver) ? local.activeWeaver : remote.activeWeaver,
+    coach: {
+      date: local.coach.date >= remote.coach.date ? local.coach.date : remote.coach.date,
+      sent: Math.max(remote.coach.sent, local.coach.sent),
+      messages,
+    },
+    settings: { ...remote.settings, ...local.settings },
+    onboardingComplete: remote.onboardingComplete || local.onboardingComplete,
+    premium: local.premium,
+    recordings: local.recordings,
+    community: local.community,
+    likedPosts: local.likedPosts,
+  })
+}
+
 type AppContextValue = {
   state: AppState
   ready: boolean
+  syncStatus: SyncStatus
   completeStage: (unitId: string, stage: LessonStage, response?: string, quizScore?: number) => void
   saveResponse: (key: string, value: string) => void
   addRecording: (recording: Recording) => void
@@ -233,7 +310,13 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(freshState)
   const [ready, setReady] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local")
   const loaded = useRef(false)
+  const stateRef = useRef<AppState>(freshState())
+  const syncUserId = useRef<string | null>(null)
+  const syncInitialized = useRef(false)
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastSyncedJson = useRef("")
 
   useEffect(() => {
     if (loaded.current) return
@@ -254,11 +337,123 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    stateRef.current = state
     if (!ready) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     } catch {}
   }, [ready, state])
+
+  const saveCloudState = useCallback(async (userId: string, snapshot: AppState) => {
+    const payload = toSyncedState(snapshot)
+    const serialized = JSON.stringify(payload)
+    if (serialized === lastSyncedJson.current) {
+      setSyncStatus(navigator.onLine ? "saved" : "offline")
+      return
+    }
+    if (!navigator.onLine) {
+      setSyncStatus("offline")
+      return
+    }
+    setSyncStatus("syncing")
+    const supabase = createClient()
+    const { error } = await supabase.from("user_app_state").upsert({
+      user_id: userId,
+      state: payload,
+      state_version: 1,
+    }, { onConflict: "user_id" })
+    if (error) {
+      console.error("StoryTuner progress sync failed:", error.message)
+      setSyncStatus("error")
+      return
+    }
+    lastSyncedJson.current = serialized
+    setSyncStatus("saved")
+  }, [])
+
+  const pullCloudState = useCallback(async (userId: string) => {
+    if (!navigator.onLine) {
+      setSyncStatus("offline")
+      return
+    }
+    setSyncStatus("syncing")
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("user_app_state")
+      .select("state")
+      .eq("user_id", userId)
+      .maybeSingle()
+    if (error) {
+      console.error("StoryTuner progress download failed:", error.message)
+      setSyncStatus("error")
+      return
+    }
+    const merged = data?.state ? mergeSyncedState(stateRef.current, data.state) : stateRef.current
+    stateRef.current = merged
+    setState(merged)
+    syncInitialized.current = true
+    await saveCloudState(userId, merged)
+  }, [saveCloudState])
+
+  useEffect(() => {
+    if (!ready) return
+    const supabase = createClient()
+    let active = true
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!active) return
+      const userId = data.user?.id ?? null
+      syncUserId.current = userId
+      if (!userId) {
+        syncInitialized.current = false
+        setSyncStatus("local")
+        return
+      }
+      void pullCloudState(userId)
+    })
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const userId = session?.user.id ?? null
+      syncUserId.current = userId
+      lastSyncedJson.current = ""
+      if (!userId) {
+        syncInitialized.current = false
+        setSyncStatus("local")
+      } else {
+        void pullCloudState(userId)
+      }
+    })
+    return () => {
+      active = false
+      listener.subscription.unsubscribe()
+    }
+  }, [ready, pullCloudState])
+
+  useEffect(() => {
+    if (!ready || !syncInitialized.current || !syncUserId.current) return
+    if (syncTimer.current) clearTimeout(syncTimer.current)
+    setSyncStatus(navigator.onLine ? "syncing" : "offline")
+    syncTimer.current = setTimeout(() => {
+      if (syncUserId.current) void saveCloudState(syncUserId.current, stateRef.current)
+    }, 900)
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current)
+    }
+  }, [ready, state, saveCloudState])
+
+  useEffect(() => {
+    if (!ready) return
+    const refresh = () => {
+      if (syncUserId.current) void pullCloudState(syncUserId.current)
+    }
+    const offline = () => setSyncStatus("offline")
+    window.addEventListener("online", refresh)
+    window.addEventListener("offline", offline)
+    window.addEventListener("focus", refresh)
+    return () => {
+      window.removeEventListener("online", refresh)
+      window.removeEventListener("offline", offline)
+      window.removeEventListener("focus", refresh)
+    }
+  }, [ready, pullCloudState])
 
   const completeStage = useCallback((unitId: string, stage: LessonStage, response?: string, quizScore?: number) => {
     const key = lessonId(unitId, stage)
@@ -454,12 +649,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       clearMedia().catch(() => undefined),
       deleteCloudRecordings(cloudRecordings).catch(() => undefined),
     ])
+    if (syncUserId.current) {
+      const supabase = createClient()
+      await supabase.from("user_app_state").delete().eq("user_id", syncUserId.current).catch(() => undefined)
+    }
     try {
       localStorage.removeItem(STORAGE_KEY)
       localStorage.removeItem("storytuner-state-v4")
       localStorage.removeItem("storytuner-state-v3")
     } catch {}
-    setState(freshState())
+    const next = freshState()
+    stateRef.current = next
+    lastSyncedJson.current = ""
+    setState(next)
   }, [state.recordings])
 
 
@@ -491,6 +693,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       state,
       ready,
+      syncStatus,
       completeStage,
       saveResponse,
       addRecording,
@@ -513,6 +716,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       state,
       ready,
+      syncStatus,
       completeStage,
       saveResponse,
       addRecording,

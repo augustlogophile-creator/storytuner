@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react"
-import { Check, ChevronDown, ChevronRight, LogOut, LockKeyhole, Trash2 } from "lucide-react"
+import { Check, ChevronDown, ChevronRight, Cloud, CloudOff, LoaderCircle, LogOut, LockKeyhole, Trash2 } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useApp } from "@/lib/app-state"
@@ -13,7 +13,7 @@ type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | 
 
 export function SettingsClient() {
   const router = useRouter()
-  const { state, updateSettings, updateProfileName, deleteAllRecordings, resetAll } = useApp()
+  const { state, syncStatus, updateSettings, updateProfileName, deleteAllRecordings, resetAll } = useApp()
   const [displayName, setDisplayName] = useState(state.profile.name)
   const [accountEmail, setAccountEmail] = useState("")
   const [dialog, setDialog] = useState<DialogKind>(null)
@@ -57,8 +57,8 @@ export function SettingsClient() {
       tone: "danger" as const,
     }
     if (dialog === "delete-all") return {
-      title: "Delete all StoryTuner data on this device?",
-      body: <>This erases local progress, XP, Weaver purchases, settings, recordings, and Community activity. Your login account will remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
+      title: "Delete all StoryTuner data?",
+      body: <>This erases synced progress, XP, Weaver purchases, settings, recordings, and Community activity across your devices. Your login account will remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
       confirm: "Delete all data",
       tone: "danger" as const,
     }
@@ -133,7 +133,7 @@ export function SettingsClient() {
       }
       await resetAll()
       setDisplayName("Storyteller")
-      setNotice("Local StoryTuner data was deleted.")
+      setNotice("Your StoryTuner app data was deleted across devices.")
     }
     setBusy(false)
     setDialog(null)
@@ -146,6 +146,11 @@ export function SettingsClient() {
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Settings and privacy</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Clear controls, no hidden defaults.</h1>
       </header>
+
+      <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
+        {syncStatus === "syncing" ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : syncStatus === "offline" || syncStatus === "error" ? <CloudOff className="h-3.5 w-3.5" /> : <Cloud className="h-3.5 w-3.5" />}
+        <span>{syncStatus === "syncing" ? "Syncing progress…" : syncStatus === "saved" ? "Progress saved across devices" : syncStatus === "offline" ? "Offline. Changes will sync later." : syncStatus === "error" ? "Progress sync needs attention" : "Progress is saved on this device"}</span>
+      </div>
 
       {notice && <p role="status" className="rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground">{notice}</p>}
 
@@ -215,7 +220,7 @@ export function SettingsClient() {
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
         </Row>
-        <Row title="Delete all app data" detail="Erase all StoryTuner data stored on this device while keeping your login account.">
+        <Row title="Delete all app data" detail="Erase synced StoryTuner progress and local media across your devices while keeping your login account.">
           <button type="button" onClick={() => setDialog("delete-all")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete all
           </button>
