@@ -44,7 +44,7 @@ export function RecordingsClient() {
                   </div>
                   <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{recording.overall}</span>
                 </div>
-                <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} />
+                <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} cloudStoragePath={recording.cloudStoragePath} />
                 <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                   <Score label="Hook" value={recording.scores.hook} />
                   <Score label="Development" value={recording.scores.development} />

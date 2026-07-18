@@ -12,6 +12,7 @@ import {
 } from "react"
 import { curriculum, lessonId, stageXp, type LessonStage } from "@/lib/curriculum"
 import { clearMedia, deleteMedia } from "@/lib/media-store"
+import { deleteCloudRecording, deleteCloudRecordings } from "@/lib/recording-cloud"
 
 export type ArenaScores = { hook: number; development: number; landing: number }
 
@@ -36,6 +37,8 @@ export type Recording = {
   nextTake: string
   mediaKind: "video" | "audio" | "none"
   mimeType: string
+  cloudRecordingId?: string
+  cloudStoragePath?: string
   shared: boolean
 }
 
@@ -296,13 +299,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const deleteRecording = useCallback(async (id: string) => {
+    const recording = state.recordings.find((item) => item.id === id)
     await deleteMedia(id).catch(() => undefined)
+    if (recording?.cloudRecordingId && recording.cloudStoragePath) {
+      await deleteCloudRecording({
+        id: recording.cloudRecordingId,
+        storagePath: recording.cloudStoragePath,
+      }).catch(() => undefined)
+    }
     setState((current) => ({
       ...current,
       recordings: current.recordings.filter((item) => item.id !== id),
       community: current.community.filter((post) => post.recordingId !== id),
     }))
-  }, [])
+  }, [state.recordings])
 
   const shareRecording = useCallback((id: string) => {
     setState((current) => {
@@ -425,19 +435,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const deleteAllRecordings = useCallback(async () => {
-    await clearMedia().catch(() => undefined)
+    const cloudRecordings = state.recordings
+      .filter((recording) => recording.cloudRecordingId && recording.cloudStoragePath)
+      .map((recording) => ({ id: recording.cloudRecordingId!, storagePath: recording.cloudStoragePath! }))
+    await Promise.all([
+      clearMedia().catch(() => undefined),
+      deleteCloudRecordings(cloudRecordings).catch(() => undefined),
+    ])
     setState((current) => ({ ...current, recordings: [], community: current.community.filter((post) => !post.mine) }))
-  }, [])
+  }, [state.recordings])
 
   const resetAll = useCallback(async () => {
-    await clearMedia().catch(() => undefined)
+    const cloudRecordings = state.recordings
+      .filter((recording) => recording.cloudRecordingId && recording.cloudStoragePath)
+      .map((recording) => ({ id: recording.cloudRecordingId!, storagePath: recording.cloudStoragePath! }))
+    await Promise.all([
+      clearMedia().catch(() => undefined),
+      deleteCloudRecordings(cloudRecordings).catch(() => undefined),
+    ])
     try {
       localStorage.removeItem(STORAGE_KEY)
       localStorage.removeItem("storytuner-state-v4")
       localStorage.removeItem("storytuner-state-v3")
     } catch {}
     setState(freshState())
-  }, [])
+  }, [state.recordings])
 
 
   const addCoachExchange = useCallback((user: string, assistant: string) => {

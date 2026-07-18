@@ -27,6 +27,13 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
 import { canRecordInArena, FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
+import {
+  deleteCloudRecording,
+  finalizeCloudRecording,
+  uploadAndTranscribeRecording,
+  type CloudRecordingRef,
+  type CloudTranscriptionStage,
+} from "@/lib/recording-cloud"
 import { cn } from "@/lib/utils"
 
 type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
@@ -148,6 +155,7 @@ export function ArenaClient() {
   const [mimeType, setMimeType] = useState("")
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const [transcribing, setTranscribing] = useState(false)
+  const [transcriptionStage, setTranscriptionStage] = useState<CloudTranscriptionStage | "idle">("idle")
   const [transcriptionOutcome, setTranscriptionOutcome] = useState<TranscriptionOutcome>("idle")
   const [savedId, setSavedId] = useState<string | null>(null)
   const [error, setError] = useState("")
@@ -157,6 +165,8 @@ export function ArenaClient() {
   const recorderRef = useRef<MediaRecorder | null>(null)
   const audioRecorderRef = useRef<MediaRecorder | null>(null)
   const transcriptionBlobRef = useRef<Blob | null>(null)
+  const cloudUploadRef = useRef<CloudRecordingRef | null>(null)
+  const transcriptionPromiseRef = useRef<Promise<string> | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const audioChunksRef = useRef<Blob[]>([])
   const stoppingRef = useRef(false)
@@ -224,8 +234,21 @@ export function ArenaClient() {
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
   }, [mediaUrl])
 
+  useEffect(() => () => {
+    const cloudUpload = cloudUploadRef.current
+    cloudUploadRef.current = null
+    if (cloudUpload) void deleteCloudRecording(cloudUpload).catch(() => undefined)
+  }, [])
+
+  async function cleanupDraftCloudUpload() {
+    const cloudUpload = cloudUploadRef.current
+    cloudUploadRef.current = null
+    if (cloudUpload) await deleteCloudRecording(cloudUpload).catch(() => undefined)
+  }
+
   function reset() {
     captureVersionRef.current += 1
+    void cleanupDraftCloudUpload()
     streamRef.current?.getTracks().forEach((track) => track.stop())
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
@@ -245,11 +268,13 @@ export function ArenaClient() {
     setMimeType("")
     setFeedback(null)
     setTranscribing(false)
+    setTranscriptionStage("idle")
     setSavedId(null)
     setError("")
     chunksRef.current = []
     audioChunksRef.current = []
     transcriptionBlobRef.current = null
+    transcriptionPromiseRef.current = null
     stoppingRef.current = false
     autoTranscriptionStartedRef.current = false
     preparingRoomRef.current = false
@@ -402,6 +427,7 @@ export function ArenaClient() {
 
   function performRetakeRecording() {
     captureVersionRef.current += 1
+    void cleanupDraftCloudUpload()
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
     const recorder = recorderRef.current
@@ -435,6 +461,7 @@ export function ArenaClient() {
 
   function performRetakeFromReview() {
     captureVersionRef.current += 1
+    void cleanupDraftCloudUpload()
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setSeconds(0)
     setExtraSeconds(0)
@@ -491,28 +518,84 @@ export function ArenaClient() {
   }
 
   async function transcribeRecording() {
+    if (transcriptionPromiseRef.current) return transcriptionPromiseRef.current
+
     const source = transcriptionBlobRef.current ?? mediaBlob
     if (!source) return transcript.trim()
-    if (source.size > 4_000_000) throw new Error("This recording is too large for automatic transcription. Type or paste the story below, then get graded.")
-    setTranscribing(true)
-    setTranscriptionOutcome("idle")
-    setError("")
-    try {
-      const form = new FormData()
-      form.set("file", new File([source], "storytuner-recording.webm", { type: source.type || "audio/webm" }))
-      const response = await fetch("/api/transcribe", { method: "POST", body: form })
-      const data = (await response.json()) as { text?: string; title?: string; wordCount?: number; code?: string; error?: string }
-      if (!response.ok || !data.text) {
-        setTranscriptionOutcome(data.code === "NO_SPEECH" ? "no-speech" : "error")
-        throw new Error(data.error || "Weaver could not transcribe this recording.")
+    const captureVersion = captureVersionRef.current
+
+    const task = (async () => {
+      setTranscribing(true)
+      setTranscriptionStage("preparing")
+      setTranscriptionOutcome("idle")
+      setError("")
+
+      try {
+        const result = await uploadAndTranscribeRecording({
+          blob: source,
+          durationSeconds: Math.max(1, seconds),
+          onCreated: (cloudUpload) => {
+            if (captureVersion === captureVersionRef.current) cloudUploadRef.current = cloudUpload
+            else void deleteCloudRecording(cloudUpload).catch(() => undefined)
+          },
+          onStage: (stage) => {
+            if (captureVersion === captureVersionRef.current) setTranscriptionStage(stage)
+          },
+        })
+
+        if (captureVersion !== captureVersionRef.current) {
+          await deleteCloudRecording(result).catch(() => undefined)
+          return ""
+        }
+
+        cloudUploadRef.current = { id: result.id, storagePath: result.storagePath }
+        setTranscript(result.transcript)
+        setTitle((current) => current.trim() || result.title)
+        setTranscriptionOutcome("success")
+        return result.transcript.trim()
+      } catch (cloudError) {
+        cloudUploadRef.current = null
+        if (captureVersion !== captureVersionRef.current) return ""
+
+        if (source.size <= 4_000_000) {
+          try {
+            const fallback = await transcribeThroughVercel(source)
+            setTranscript(fallback.text)
+            setTitle((current) => current.trim() || fallback.title)
+            setTranscriptionOutcome("success")
+            return fallback.text.trim()
+          } catch {
+            // Surface the more useful cloud-storage error below.
+          }
+        }
+
+        setTranscriptionOutcome("error")
+        throw cloudError
+      } finally {
+        if (captureVersion === captureVersionRef.current) {
+          setTranscribing(false)
+          setTranscriptionStage("idle")
+        }
       }
-      setTranscript(data.text)
-      setTitle((current) => current.trim() || data.title?.trim() || "")
-      setTranscriptionOutcome("success")
-      return data.text.trim()
+    })()
+
+    transcriptionPromiseRef.current = task
+    try {
+      return await task
     } finally {
-      setTranscribing(false)
+      if (transcriptionPromiseRef.current === task) transcriptionPromiseRef.current = null
     }
+  }
+
+  async function transcribeThroughVercel(source: Blob) {
+    const form = new FormData()
+    form.set("file", new File([source], "storytuner-recording.webm", { type: source.type || "audio/webm" }))
+    const response = await fetch("/api/transcribe", { method: "POST", body: form })
+    const data = (await response.json()) as { text?: string; title?: string; code?: string; error?: string }
+    if (!response.ok || !data.text) {
+      throw new Error(data.error || "Weaver could not transcribe this recording.")
+    }
+    return { text: data.text, title: data.title?.trim() || firstSentence(data.text) }
   }
 
   async function scoreTake() {
@@ -544,6 +627,13 @@ export function ArenaClient() {
       if (!response.ok) throw new Error(data.error || "Weaver could not grade this story.")
       const id = crypto.randomUUID()
       if (mediaBlob) await saveMedia(id, mediaBlob).catch(() => undefined)
+      const cloudUpload = cloudUploadRef.current
+      if (cloudUpload) {
+        await finalizeCloudRecording(cloudUpload.id, {
+          title: title.trim() || firstSentence(clean),
+          transcript: clean,
+        }).catch(() => undefined)
+      }
       const scores: ArenaScores = { hook: data.hook, development: data.development, landing: data.landing }
       const recording: Recording = {
         id,
@@ -566,9 +656,12 @@ export function ArenaClient() {
         nextTake: data.levelUp,
         mediaKind,
         mimeType,
+        cloudRecordingId: cloudUpload?.id,
+        cloudStoragePath: cloudUpload?.storagePath,
         shared: false,
       }
       addRecording(recording)
+      cloudUploadRef.current = null
       setFeedback(data)
       setSavedId(id)
       setPhase("result")
@@ -764,14 +857,14 @@ export function ArenaClient() {
               <div><Eyebrow>Prepared by Weaver</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Weaver removes empty filler and fixes punctuation while preserving your voice, wording, and events. Edit anything before grading.</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Weaver creates a readable transcript while preserving your voice and events. Edit anything before grading."}</p>
             <label className="mt-5 block text-sm font-semibold" htmlFor="arena-title">Title</label>
-            <input id="arena-title" value={title} onChange={(event: ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} placeholder={transcribing ? "Weaver is creating a title…" : "Give this story a title"} className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand" />
+            <input id="arena-title" value={title} onChange={(event: ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} placeholder={transcribing ? "Preparing your story…" : "Give this story a title"} className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand" />
             <div className="mt-5 flex items-center justify-between gap-3">
               <label className="block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
               <span className={cn("text-xs font-medium tabular-nums", transcriptWordCount >= MIN_STORY_WORDS ? "text-emerald-600" : "text-muted-foreground")}>{transcriptWordCount} / {MIN_STORY_WORDS} words</span>
             </div>
-            <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} rows={10} placeholder={transcribing ? "Weaver is transcribing and cleaning your story…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
+            <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} rows={10} placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
           </section>
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
@@ -820,7 +913,10 @@ export function ArenaClient() {
           if (action === "retake-recording") performRetakeRecording()
           if (action === "retake-review") performRetakeFromReview()
           if (action === "discard") reset()
-          if (action === "leave" && pendingHref) window.location.assign(pendingHref)
+          if (action === "leave" && pendingHref) {
+            const href = pendingHref
+            void cleanupDraftCloudUpload().finally(() => window.location.assign(href))
+          }
           setPendingHref("")
         }}
       >
@@ -830,6 +926,14 @@ export function ArenaClient() {
       </ConfirmDialog>
     </div>
   )
+}
+
+function transcriptionStageLabel(stage: CloudTranscriptionStage | "idle") {
+  if (stage === "preparing") return "Preparing a secure private upload…"
+  if (stage === "uploading") return "Uploading the audio directly to your private StoryTuner storage…"
+  if (stage === "transcribing") return "Weaver is transcribing the private audio…"
+  if (stage === "saving") return "Saving the transcript securely…"
+  return "Weaver is preparing your transcript…"
 }
 
 function DurationOptionsDialog({
