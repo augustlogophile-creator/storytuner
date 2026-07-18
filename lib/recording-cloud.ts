@@ -125,7 +125,9 @@ export async function uploadAndTranscribeRecording({
         .update({ status: "failed", error_message: message.slice(0, 500) })
         .eq("id", id)
     } catch {}
-    await deleteCloudRecording(cloudRef).catch(() => undefined)
+
+    // Keep the failed row and any uploaded audio temporarily so the exact
+    // cloud error can be inspected in Supabase instead of being erased.
     throw error
   }
 }

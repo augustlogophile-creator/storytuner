@@ -557,18 +557,9 @@ export function ArenaClient() {
         cloudUploadRef.current = null
         if (captureVersion !== captureVersionRef.current) return ""
 
-        if (source.size <= 4_000_000) {
-          try {
-            const fallback = await transcribeThroughVercel(source)
-            setTranscript(fallback.text)
-            setTitle((current) => current.trim() || fallback.title)
-            setTranscriptionOutcome("success")
-            return fallback.text.trim()
-          } catch {
-            // Surface the more useful cloud-storage error below.
-          }
-        }
-
+        // Do not silently fall back to the old Vercel upload route. Long
+        // recordings depend on the private Supabase pipeline, so surface the
+        // exact cloud error and preserve its failed database row for diagnosis.
         setTranscriptionOutcome("error")
         throw cloudError
       } finally {
@@ -585,17 +576,6 @@ export function ArenaClient() {
     } finally {
       if (transcriptionPromiseRef.current === task) transcriptionPromiseRef.current = null
     }
-  }
-
-  async function transcribeThroughVercel(source: Blob) {
-    const form = new FormData()
-    form.set("file", new File([source], "storytuner-recording.webm", { type: source.type || "audio/webm" }))
-    const response = await fetch("/api/transcribe", { method: "POST", body: form })
-    const data = (await response.json()) as { text?: string; title?: string; code?: string; error?: string }
-    if (!response.ok || !data.text) {
-      throw new Error(data.error || "Weaver could not transcribe this recording.")
-    }
-    return { text: data.text, title: data.title?.trim() || firstSentence(data.text) }
   }
 
   async function scoreTake() {
