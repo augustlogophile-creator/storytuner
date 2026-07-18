@@ -186,6 +186,7 @@ function normalize(raw: unknown): AppState {
       : base.coach,
     responses: value.responses ?? {},
     quizScores: value.quizScores ?? {},
+    premium: false,
   }
 }
 
