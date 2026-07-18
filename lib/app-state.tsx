@@ -651,7 +651,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ])
     if (syncUserId.current) {
       const supabase = createClient()
-      await supabase.from("user_app_state").delete().eq("user_id", syncUserId.current).catch(() => undefined)
+      try {
+        await supabase.from("user_app_state").delete().eq("user_id", syncUserId.current)
+      } catch {
+        // Local reset should still finish if cloud cleanup is temporarily unavailable.
+      }
     }
     try {
       localStorage.removeItem(STORAGE_KEY)
@@ -806,4 +810,3 @@ export function freeArenaRemaining(state: AppState) {
 export function canRecordInArena(state: AppState) {
   return state.premium || state.arenaTotal < FREE_ARENA_LIMIT
 }
-
