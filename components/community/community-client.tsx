@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useState, type ChangeEvent } from "react"
-import { Heart, LoaderCircle, LockKeyhole, MessageCircle, RefreshCw, Send } from "lucide-react"
+import { CheckCircle2, Heart, LoaderCircle, LockKeyhole, MessageCircle, RefreshCw, Send } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import type { CommunityFeedPost, CommunityFeedResponse } from "@/lib/community/types"
 import { cn } from "@/lib/utils"
@@ -21,15 +21,29 @@ function MembershipLock() {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <header>
-        <Eyebrow>Community</Eyebrow>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">A member space for stories shared on purpose.</h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">Share selected stories, hear what landed, and respond thoughtfully to other storytellers.</p>
+        <Eyebrow>Paid feature</Eyebrow>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Community requires a paid StoryTuner Membership.</h1>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+          Free accounts cannot read posts, publish stories, reply, or like content in Community.
+        </p>
       </header>
-      <section className="rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
-        <LockKeyhole className="mx-auto h-8 w-8 text-accent-foreground" />
-        <h2 className="mt-4 text-lg font-semibold">Community is included with Membership.</h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your recordings stay private. Once you become a member, you can choose exactly which stories to share.</p>
-        <Link href="/membership" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See the founding offer</Link>
+
+      <section className="rounded-3xl border border-brand/35 bg-brand-soft/40 px-6 py-9">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
+            <LockKeyhole className="h-6 w-6 text-accent-foreground" />
+          </div>
+          <h2 className="mt-4 text-lg font-semibold">Unlock the full Community</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Membership lets you share selected text, transcripts, and audio, then respond to other storytellers. Nothing from your private recordings is shared automatically.
+          </p>
+          <Link
+            href="/membership"
+            className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+          >
+            View Membership
+          </Link>
+        </div>
       </section>
     </div>
   )
@@ -45,6 +59,7 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
   const [draft, setDraft] = useState("")
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState("")
+  const [membershipRequired, setMembershipRequired] = useState(false)
 
   const loadPage = useCallback(async (targetPage: number, replace: boolean) => {
     replace ? setLoading(true) : setLoadingMore(true)
@@ -57,6 +72,10 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
         headers: { Accept: "application/json" },
       })
       const payload = (await response.json()) as CommunityFeedResponse & { error?: string }
+      if (response.status === 403 && payload.error?.toLowerCase().includes("membership")) {
+        setMembershipRequired(true)
+        return
+      }
       if (!response.ok) throw new Error(payload.error || "Community posts could not be loaded.")
 
       setPosts((current) => replace ? payload.posts : mergePosts(current, payload.posts))
@@ -87,6 +106,10 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
         body: JSON.stringify({ body }),
       })
       const payload = (await response.json()) as { post?: CommunityFeedPost; error?: string }
+      if (response.status === 403 && payload.error?.toLowerCase().includes("membership")) {
+        setMembershipRequired(true)
+        return
+      }
       if (!response.ok || !payload.post) throw new Error(payload.error || "Your post could not be published.")
 
       setPosts((current) => [payload.post!, ...current.filter((post) => post.id !== payload.post!.id)])
@@ -98,10 +121,18 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
     }
   }
 
+  if (membershipRequired) return <MembershipLock />
+
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <header>
-        <Eyebrow>Community</Eyebrow>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Eyebrow>Community</Eyebrow>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-[0.7rem] font-semibold text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Membership active
+          </span>
+        </div>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Stories shared on purpose.</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
           A calm space for specific, thoughtful responses. Nothing from your Story Reel appears here unless you share it.
