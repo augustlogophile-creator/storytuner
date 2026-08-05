@@ -2,7 +2,15 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useState, type ChangeEvent } from "react"
-import { CheckCircle2, Heart, LoaderCircle, LockKeyhole, MessageCircle, RefreshCw, Send } from "lucide-react"
+import {
+  CheckCircle2,
+  Heart,
+  LoaderCircle,
+  LockKeyhole,
+  MessageCircle,
+  RefreshCw,
+  Send,
+} from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import type { CommunityFeedPost, CommunityFeedResponse } from "@/lib/community/types"
 import { cn } from "@/lib/utils"
@@ -112,8 +120,14 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
       }
       if (!response.ok || !payload.post) throw new Error(payload.error || "Your post could not be published.")
 
+      setFeedError("")
+      setLoading(false)
       setPosts((current) => [payload.post!, ...current.filter((post) => post.id !== payload.post!.id)])
       setDraft("")
+
+      window.setTimeout(() => {
+        document.getElementById("community-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : "Your post could not be published.")
     } finally {
@@ -124,31 +138,33 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
   if (membershipRequired) return <MembershipLock />
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-8">
       <header>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Eyebrow>Community</Eyebrow>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-[0.7rem] font-semibold text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/70 px-3 py-1.5 text-[0.7rem] font-semibold text-muted-foreground">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Membership active
           </span>
         </div>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Stories shared on purpose.</h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-          A calm space for specific, thoughtful responses. Nothing from your Story Reel appears here unless you share it.
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Stories shared on purpose.</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
+          Share something you are shaping, then read and respond to work from other StoryTuner members. Nothing from your Story Reel is posted unless you choose to share it.
         </p>
+        <div className="mt-5 border-l-2 border-brand/50 pl-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Community principle</p>
+          <p className="mt-1 text-sm leading-relaxed text-foreground/80">
+            Respond to what landed. Lead with curiosity instead of correction.
+          </p>
+        </div>
       </header>
 
-      <section className="rounded-3xl border border-border bg-card p-5">
-        <p className="text-sm font-semibold">Community principle</p>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Respond to what landed, not what you would have done differently. Curiosity is more useful than correction.</p>
-      </section>
-
-      <section className="rounded-3xl border border-border bg-card p-5">
-        <div className="flex items-center justify-between gap-4">
+      <section aria-labelledby="share-heading" className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold">Share with Community</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Posting as {currentDisplayName}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Start a conversation</p>
+            <h2 id="share-heading" className="mt-1 text-lg font-semibold">Share with Community</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Posting as {currentDisplayName}</p>
           </div>
           <span className={cn("font-mono text-[0.65rem]", draft.length > 4500 ? "text-destructive" : "text-muted-foreground")}>{draft.length}/5000</span>
         </div>
@@ -161,12 +177,13 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
           className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand"
         />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-xs leading-relaxed text-muted-foreground">Text posts are visible to paid Community members.</p>
           <button
             type="button"
             onClick={publishPost}
             disabled={!draft.trim() || publishing}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             {publishing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             {publishing ? "Publishing…" : "Publish"}
@@ -174,19 +191,26 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
         </div>
       </section>
 
-      <section aria-live="polite">
-        {loading ? (
+      <section id="community-feed" aria-labelledby="community-feed-heading" aria-live="polite" className="scroll-mt-20 border-t border-border pt-7">
+        <div className="mb-5 flex items-end justify-between gap-4">
+          <div>
+            <Eyebrow>Community feed</Eyebrow>
+            <h2 id="community-feed-heading" className="mt-2 text-xl font-semibold tracking-tight">Latest from the Community</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Stories and reflections shared by members, newest first.</p>
+          </div>
+          {!loading && !feedError && posts.length > 0 && (
+            <span className="shrink-0 rounded-full bg-secondary px-3 py-1.5 text-[0.65rem] font-semibold text-muted-foreground">
+              {posts.length} shown
+            </span>
+          )}
+        </div>
+
+        {loading && posts.length === 0 ? (
           <div className="flex items-center justify-center rounded-3xl border border-border bg-card px-6 py-12 text-sm text-muted-foreground">
             <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Loading Community…
           </div>
-        ) : feedError ? (
-          <div className="rounded-3xl border border-destructive/30 bg-card px-6 py-8 text-center">
-            <p className="text-sm font-semibold">Community could not load.</p>
-            <p className="mt-1 text-sm text-muted-foreground">{feedError}</p>
-            <button type="button" onClick={() => void loadPage(0, true)} className="mt-4 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold">
-              <RefreshCw className="h-4 w-4" /> Try again
-            </button>
-          </div>
+        ) : feedError && posts.length === 0 ? (
+          <FeedError message={feedError} onRetry={() => void loadPage(0, true)} />
         ) : posts.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center">
             <p className="text-sm font-semibold">No stories have been shared yet.</p>
@@ -194,6 +218,14 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
           </div>
         ) : (
           <div className="flex flex-col gap-4">
+            {feedError && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/25 bg-card px-4 py-3">
+                <p className="text-xs text-muted-foreground">The latest refresh failed, but your loaded posts are still shown.</p>
+                <button type="button" onClick={() => void loadPage(0, true)} className="inline-flex items-center gap-1.5 text-xs font-semibold">
+                  <RefreshCw className="h-3.5 w-3.5" /> Retry
+                </button>
+              </div>
+            )}
             {posts.map((post) => <PostCard key={post.id} post={post} />)}
             {hasMore && (
               <button
@@ -213,16 +245,31 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
   )
 }
 
+function FeedError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="rounded-3xl border border-destructive/30 bg-card px-6 py-8 text-center">
+      <p className="text-sm font-semibold">Community feed could not load.</p>
+      <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+      <button type="button" onClick={onRetry} className="mt-4 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold">
+        <RefreshCw className="h-4 w-4" /> Try again
+      </button>
+    </div>
+  )
+}
+
 function PostCard({ post }: { post: CommunityFeedPost }) {
   return (
-    <article id={post.id} className="scroll-mt-24 rounded-3xl border border-border bg-card p-5">
-      <div>
-        <p className="text-sm font-semibold">{post.author.displayName}</p>
-        <p className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-muted-foreground">
-          Text post · {relativeDate(post.createdAt)}{post.editedAt ? " · edited" : ""}
-        </p>
+    <article id={post.id} className="scroll-mt-24 rounded-3xl border border-border bg-card p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold">{post.author.displayName}</p>
+          <p className="mt-0.5 font-mono text-[0.6rem] uppercase tracking-[0.12em] text-muted-foreground">
+            Text post · {relativeDate(post.createdAt)}{post.editedAt ? " · edited" : ""}
+          </p>
+        </div>
+        {post.mine && <span className="rounded-full bg-secondary px-2.5 py-1 text-[0.6rem] font-semibold text-muted-foreground">Your post</span>}
       </div>
-      {post.title && <h2 className="mt-4 text-base font-semibold">{post.title}</h2>}
+      {post.title && <h3 className="mt-4 text-base font-semibold">{post.title}</h3>}
       <p className="mt-4 whitespace-pre-wrap text-[0.95rem] leading-7 text-foreground/90 text-pretty">{post.body}</p>
       <div className="mt-4 flex items-center gap-3 border-t border-border pt-4">
         <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-muted-foreground">

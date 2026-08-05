@@ -29,9 +29,6 @@ export async function getCommunityApiContext() {
     }
   }
 
-  // Read the signed-in user's own profile through their authenticated session.
-  // This uses the same profile access path as the rest of StoryTuner and avoids
-  // relying on the service-role client for a user-owned profile lookup.
   const { data: profile, error: profileError } = await authenticated.supabase
     .from("profiles")
     .select("id, username, display_name, onboarding_completed")
@@ -68,6 +65,7 @@ export async function getCommunityApiContext() {
     ok: true as const,
     userId: authenticated.id,
     profile,
+    userClient: authenticated.supabase,
     admin: createAdminClient(),
   }
 }

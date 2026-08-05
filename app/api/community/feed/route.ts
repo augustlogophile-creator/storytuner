@@ -24,11 +24,6 @@ type ProfileRow = {
   display_name: string
 }
 
-type BlockRow = {
-  blocker_id: string
-  blocked_id: string
-}
-
 type PostLikeRow = {
   post_id: string
   user_id: string
@@ -45,6 +40,25 @@ function parsePage(request: Request) {
   return Math.min(parsed, MAX_PAGE)
 }
 
+function logCommunityQueryError(label: string, error: unknown) {
+  if (error && typeof error === "object") {
+    const value = error as {
+      code?: string
+      message?: string
+      details?: string
+      hint?: string
+    }
+    console.error(label, {
+      code: value.code,
+      message: value.message,
+      details: value.details,
+      hint: value.hint,
+    })
+    return
+  }
+  console.error(label, error)
+}
+
 export async function GET(request: Request) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
@@ -54,39 +68,33 @@ export async function GET(request: Request) {
     const from = page * PAGE_SIZE
     const to = from + PAGE_SIZE
 
-    const { data: blockRows, error: blockError } = await context.admin
-      .from("community_user_blocks")
-      .select("blocker_id, blocked_id")
-      .or(`blocker_id.eq.${context.userId},blocked_id.eq.${context.userId}`)
-      .returns<BlockRow[]>()
-
-    if (blockError) throw blockError
-
-    const blockedUserIds = new Set<string>()
-    for (const block of blockRows ?? []) {
-      blockedUserIds.add(block.blocker_id === context.userId ? block.blocked_id : block.blocker_id)
-    }
-
-    let postsQuery = context.admin
+    // Use the signed-in user's Supabase client for the primary feed query.
+    // This makes the database's paid-member and block RLS policies the source
+    // of truth instead of rebuilding those rules in a fragile API filter.
+    const { data: rawPosts, error: postsError } = await context.userClient
       .from("community_posts")
       .select("id, author_id, post_type, title, body, shared_transcript, created_at, edited_at")
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to)
+      .returns<PostRow[]>()
 
-    if (blockedUserIds.size > 0) {
-      postsQuery = postsQuery.not("author_id", "in", `(${Array.from(blockedUserIds).join(",")})`)
+    if (postsError) {
+      logCommunityQueryError("Community posts query failed", postsError)
+      return noStoreJson(
+        { error: "Community posts could not be loaded." },
+        { status: 500 },
+      )
     }
-
-    const { data: rawPosts, error: postsError } = await postsQuery.returns<PostRow[]>()
-    if (postsError) throw postsError
 
     const hasMore = (rawPosts?.length ?? 0) > PAGE_SIZE
     const posts = (rawPosts ?? []).slice(0, PAGE_SIZE)
     const postIds = posts.map((post) => post.id)
     const authorIds = Array.from(new Set(posts.map((post) => post.author_id)))
 
+    // Secondary metadata must never take down the actual feed. A temporary
+    // author, like-count, or reply-count query failure falls back gracefully.
     const [profilesResult, likesResult, repliesResult] = await Promise.all([
       authorIds.length > 0
         ? context.admin
@@ -112,9 +120,9 @@ export async function GET(request: Request) {
         : Promise.resolve({ data: [] as ReplyRow[], error: null }),
     ])
 
-    if (profilesResult.error) throw profilesResult.error
-    if (likesResult.error) throw likesResult.error
-    if (repliesResult.error) throw repliesResult.error
+    if (profilesResult.error) logCommunityQueryError("Community author lookup failed", profilesResult.error)
+    if (likesResult.error) logCommunityQueryError("Community like-count lookup failed", likesResult.error)
+    if (repliesResult.error) logCommunityQueryError("Community reply-count lookup failed", repliesResult.error)
 
     const profiles = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile]))
     const likeCounts = new Map<string, number>()
@@ -153,7 +161,7 @@ export async function GET(request: Request) {
 
     return noStoreJson({ posts: safePosts, page, hasMore })
   } catch (error) {
-    console.error("Community feed error", error)
+    logCommunityQueryError("Community feed error", error)
     return noStoreJson({ error: "Community posts could not be loaded." }, { status: 500 })
   }
 }
