@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAuthenticatedUser } from "@/lib/require-auth"
@@ -7,6 +8,15 @@ export type CommunityProfile = {
   username: string
   display_name: string
   onboarding_completed: boolean
+}
+
+
+export type CommunityApiContext = {
+  ok: true
+  userId: string
+  profile: CommunityProfile
+  userClient: SupabaseClient
+  admin: SupabaseClient
 }
 
 export async function getCommunityApiContext() {
