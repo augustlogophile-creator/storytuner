@@ -7,7 +7,7 @@ export const runtime = "nodejs"
 const PAGE_SIZE = 20
 const MAX_PAGE = 500
 
-type PostRow = {
+type RankedPostRow = {
   id: string
   author_id: string
   post_type: CommunityPostType
@@ -16,6 +16,8 @@ type PostRow = {
   shared_transcript: string | null
   created_at: string
   edited_at: string | null
+  like_count: number | string
+  reply_count: number | string
 }
 
 type ProfileRow = {
@@ -24,14 +26,7 @@ type ProfileRow = {
   display_name: string
 }
 
-type PostLikeRow = {
-  post_id: string
-  user_id: string
-}
-
-type ReplyRow = {
-  post_id: string
-}
+type ViewerLikeRow = { post_id: string }
 
 function parsePage(request: Request) {
   const raw = new URL(request.url).searchParams.get("page")
@@ -42,18 +37,8 @@ function parsePage(request: Request) {
 
 function logCommunityQueryError(label: string, error: unknown) {
   if (error && typeof error === "object") {
-    const value = error as {
-      code?: string
-      message?: string
-      details?: string
-      hint?: string
-    }
-    console.error(label, {
-      code: value.code,
-      message: value.message,
-      details: value.details,
-      hint: value.hint,
-    })
+    const value = error as { code?: string; message?: string; details?: string; hint?: string }
+    console.error(label, value)
     return
   }
   console.error(label, error)
@@ -65,25 +50,17 @@ export async function GET(request: Request) {
 
   try {
     const page = parsePage(request)
-    const from = page * PAGE_SIZE
-    const to = from + PAGE_SIZE
+    const offset = page * PAGE_SIZE
 
-    // Use the signed-in user's Supabase client for the primary feed query.
-    // This makes the database's paid-member and block RLS policies the source
-    // of truth instead of rebuilding those rules in a fragile API filter.
-    const { data: rawPosts, error: postsError } = await context.userClient
-      .from("community_posts")
-      .select("id, author_id, post_type, title, body, shared_transcript, created_at, edited_at")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .range(from, to)
-      .returns<PostRow[]>()
+    const { data: rawPosts, error: postsError } = await context.userClient.rpc(
+      "community_ranked_feed",
+      { page_offset: offset, page_size: PAGE_SIZE + 1 },
+    ) as { data: RankedPostRow[] | null; error: unknown }
 
     if (postsError) {
-      logCommunityQueryError("Community posts query failed", postsError)
+      logCommunityQueryError("Ranked Community feed query failed", postsError)
       return noStoreJson(
-        { error: "Community posts could not be loaded." },
+        { error: "Community ranking is not ready yet. Run the newest Supabase migration, then try again." },
         { status: 500 },
       )
     }
@@ -93,49 +70,28 @@ export async function GET(request: Request) {
     const postIds = posts.map((post) => post.id)
     const authorIds = Array.from(new Set(posts.map((post) => post.author_id)))
 
-    // Secondary metadata must never take down the actual feed. A temporary
-    // author, like-count, or reply-count query failure falls back gracefully.
-    const [profilesResult, likesResult, repliesResult] = await Promise.all([
-      authorIds.length > 0
-        ? context.admin
-            .from("profiles")
-            .select("id, username, display_name")
-            .in("id", authorIds)
-            .returns<ProfileRow[]>()
+    const [profilesResult, viewerLikesResult] = await Promise.all([
+      authorIds.length
+        ? context.userClient.rpc("community_public_profiles", {
+            requested_user_ids: authorIds,
+          }) as PromiseLike<{ data: ProfileRow[] | null; error: unknown }>
         : Promise.resolve({ data: [] as ProfileRow[], error: null }),
-      postIds.length > 0
-        ? context.admin
+      postIds.length
+        ? context.userClient
             .from("community_post_likes")
-            .select("post_id, user_id")
-            .in("post_id", postIds)
-            .returns<PostLikeRow[]>()
-        : Promise.resolve({ data: [] as PostLikeRow[], error: null }),
-      postIds.length > 0
-        ? context.admin
-            .from("community_replies")
             .select("post_id")
             .in("post_id", postIds)
-            .eq("status", "active")
-            .returns<ReplyRow[]>()
-        : Promise.resolve({ data: [] as ReplyRow[], error: null }),
+            .returns<ViewerLikeRow[]>()
+        : Promise.resolve({ data: [] as ViewerLikeRow[], error: null }),
     ])
 
     if (profilesResult.error) logCommunityQueryError("Community author lookup failed", profilesResult.error)
-    if (likesResult.error) logCommunityQueryError("Community like-count lookup failed", likesResult.error)
-    if (repliesResult.error) logCommunityQueryError("Community reply-count lookup failed", repliesResult.error)
+    if (viewerLikesResult.error) logCommunityQueryError("Viewer Community likes lookup failed", viewerLikesResult.error)
 
-    const profiles = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile]))
-    const likeCounts = new Map<string, number>()
-    const likedByViewer = new Set<string>()
-    for (const like of likesResult.data ?? []) {
-      likeCounts.set(like.post_id, (likeCounts.get(like.post_id) ?? 0) + 1)
-      if (like.user_id === context.userId) likedByViewer.add(like.post_id)
-    }
-
-    const replyCounts = new Map<string, number>()
-    for (const reply of repliesResult.data ?? []) {
-      replyCounts.set(reply.post_id, (replyCounts.get(reply.post_id) ?? 0) + 1)
-    }
+    const profileRows: ProfileRow[] = profilesResult.data ?? []
+    const viewerLikeRows: ViewerLikeRow[] = viewerLikesResult.data ?? []
+    const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
+    const likedByViewer = new Set<string>(viewerLikeRows.map((like: ViewerLikeRow) => like.post_id))
 
     const safePosts: CommunityFeedPost[] = posts.map((post) => {
       const author = profiles.get(post.author_id)
@@ -150,10 +106,10 @@ export async function GET(request: Request) {
         author: {
           id: post.author_id,
           displayName: author?.display_name ?? "StoryTuner member",
-          username: author?.username ?? "member",
+          username: author?.username ?? `member_${post.author_id.slice(0, 6)}`,
         },
-        likeCount: likeCounts.get(post.id) ?? 0,
-        replyCount: replyCounts.get(post.id) ?? 0,
+        likeCount: Number(post.like_count) || 0,
+        replyCount: Number(post.reply_count) || 0,
         likedByViewer: likedByViewer.has(post.id),
         mine: post.author_id === context.userId,
       }

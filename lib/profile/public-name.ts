@@ -1,47 +1,22 @@
 const blockedFragments = [
-  "poop",
-  "penis",
-  "vagina",
-  "pussy",
-  "dildo",
-  "porn",
-  "porno",
-  "nude",
-  "nudes",
-  "semen",
-  "sperm",
-  "ejaculate",
-  "orgasm",
-  "masturbat",
-  "blowjob",
-  "handjob",
-  "fuck",
-  "fuk",
-  "shit",
-  "bitch",
-  "asshole",
-  "motherfucker",
-  "cocksucker",
-  "nazi",
-  "kkk",
+  "assman", "assguy", "assboy", "assgirl", "assface", "asshead", "assmaster",
+  "dickguy", "dickboy", "dickgirl", "dickhead", "dickface", "dickmaster",
+  "cockboy", "cockgirl", "cockhead", "cockface", "poop", "penis", "vagina",
+  "pussy", "dildo", "porn", "porno", "nude", "nudes", "semen", "sperm",
+  "ejaculate", "orgasm", "masturbat", "blowjob", "handjob", "fuck", "fuk",
+  "phuck", "shit", "bitch", "asshole", "motherfucker", "cocksucker", "nazi",
+  "kkk", "heilhitler", "hitler", "suicidebait", "killurself", "killyourself",
+  "onlyfans", "sexworker", "rapeme", "molest", "pedophile", "bestial",
+  "incest", "cumslut", "cumdump", "boobies", "titties", "horny", "thot",
 ]
 
 const blockedExact = new Set([
-  "cock",
-  "dick",
-  "cum",
-  "tits",
-  "boobs",
-  "boob",
-  "anus",
-  "whore",
-  "slut",
-  "bastard",
-  "sex",
-  "rape",
-  "rapist",
-  "stfu",
+  "ass", "cock", "dick", "cum", "tits", "tit", "boobs", "boob", "anus",
+  "whore", "slut", "bastard", "sex", "rape", "rapist", "stfu", "nigger",
+  "nigga", "faggot", "retard", "cunt", "twat", "wanker", "pedo", "nonce",
 ])
+
+const suspiciousCombination = /(?:ass|dick|cock|penis|cum|sex|boob|tit|pussy|fuck|shit|bitch|slut|whore)(?:man|guy|boy|girl|kid|king|queen|lord|master|lover|face|head|69|420)$/
 
 const suggestionSuffixes = [
   "tells",
@@ -62,9 +37,10 @@ function leetNormalize(value: string) {
     .replace(/[1!|]/g, "i")
     .replace(/3/g, "e")
     .replace(/4/g, "a")
-    .replace(/5/g, "s")
-    .replace(/7/g, "t")
+    .replace(/5|\$/g, "s")
+    .replace(/[7+]/g, "t")
     .replace(/8/g, "b")
+    .replace(/@/g, "a")
 }
 
 function publicNameParts(value: string) {
@@ -77,15 +53,17 @@ function publicNameParts(value: string) {
 export function isPublicNameAppropriate(value: string) {
   const parts = publicNameParts(value)
   const collapsed = parts.join("")
+  const squeezed = collapsed.replace(/(.)\1+/g, "$1")
 
   if (parts.some((part) => blockedExact.has(part))) return false
-  return !blockedFragments.some((fragment) => collapsed.includes(fragment))
+  if (blockedFragments.some((fragment) => collapsed.includes(fragment) || squeezed.includes(fragment))) return false
+  return !suspiciousCombination.test(collapsed)
 }
 
 export function validateUsername(value: string) {
   const clean = value.trim().toLowerCase()
   if (!/^[a-z0-9][a-z0-9_]{2,23}$/.test(clean)) {
-    return "Use 3–24 lowercase letters, numbers, or underscores. Start with a letter or number."
+    return "Use 3 to 24 lowercase letters, numbers, or underscores. Start with a letter or number."
   }
   if (!isPublicNameAppropriate(clean)) {
     return "Choose a different username. Vulgar, sexual, hateful, or harassing terms are not allowed."

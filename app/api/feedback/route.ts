@@ -1,4 +1,4 @@
-import { getAuthenticatedUser } from "@/lib/require-auth"
+import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson } from "@/lib/openai-server"
 
 export const runtime = "nodejs"
@@ -76,8 +76,9 @@ const writtenStorySchema = {
 }
 
 export async function POST(req: Request) {
-  const user = await getAuthenticatedUser()
-  if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
+  const auth = await getActiveAuthenticatedUser()
+  if (!auth.ok) return auth.response
+  const user = auth.user
   try {
     const body = (await req.json()) as Record<string, unknown>
     const mode = typeof body.mode === "string" ? body.mode : "story"

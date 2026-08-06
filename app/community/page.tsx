@@ -11,7 +11,7 @@ export default async function CommunityPage() {
     <MobileShell>
       <CommunityClient
         membershipActive={membership.active}
-        currentDisplayName={user.profile?.display_name ?? "StoryTuner member"}
+        currentUsername={user.profile?.username ?? "member"}
       />
     </MobileShell>
   )

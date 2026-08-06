@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Check, Flame, MessageCircle, Mic2, Play, Shuffle } from "lucide-react"
+import { ArrowRight, Check, Flame, Map, MessageCircle, Mic2, Play, Shuffle } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { Weaver } from "@/components/weaver"
@@ -68,6 +68,14 @@ export function HomeDashboard() {
           <h2 className="text-sm font-semibold">Practice</h2>
           <Link href="/arena/recordings" className="text-xs font-semibold text-brand">Past recordings</Link>
         </div>
+        <Link href="/planner" className="mb-3 flex items-center gap-4 rounded-3xl border border-brand/35 bg-brand-soft/45 p-4 transition-colors hover:border-brand">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground"><Map className="h-5 w-5" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">Plan a story with Weaver</span>
+            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">Turn rough ideas, important facts, and nerves into a clear rehearsal plan before you record.</span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
         <div className="grid grid-cols-2 gap-3">
           <Link href="/arena?mode=free" className="rounded-3xl border border-border bg-card p-4 transition-colors hover:border-brand/50">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Mic2 className="h-4.5 w-4.5" /></span>

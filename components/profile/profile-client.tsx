@@ -1,12 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { BarChart3, ChevronRight, LockKeyhole, Mail, MessageCircle, Settings, Sparkles, Star } from "lucide-react"
+import { BarChart3, ChevronRight, LockKeyhole, Mail, Map, MessageCircle, Settings, ShieldCheck, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { Weaver } from "@/components/weaver"
 import { useApp } from "@/lib/app-state"
 
-export function ProfileClient() {
+export function ProfileClient({ moderatorRole }: { moderatorRole: "moderator" | "admin" | null }) {
   const { state } = useApp()
   return (
     <div className="flex flex-col gap-6">
@@ -45,9 +45,11 @@ export function ProfileClient() {
         <Eyebrow className="mb-3">Account</Eyebrow>
         <div className="overflow-hidden rounded-3xl border border-border bg-card">
           <Menu href="/progress" icon={BarChart3} title="Progress" detail="Activity, streaks, and unit completion" />
+          <Menu href="/planner" icon={Map} title="Story Planner" detail="Shape a story before you record, present, interview, or have a difficult conversation" />
           <Menu href="/coach" icon={MessageCircle} title="Ask Weaver" detail="Story coaching for ideas, structure, language, delivery, and long-term growth" />
           <Menu href="/settings" icon={Settings} title="Settings and privacy" detail="Notifications, recordings, and data controls" />
           <Menu href="/membership" icon={Star} title={state.premium ? "StoryTuner Membership" : "Membership"} detail={state.premium ? "Membership is active on this device" : "Founding waitlist offer · $11.99/year"} />
+          {moderatorRole && <Menu href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Review reports, hide content, and manage account restrictions" />}
           <Menu href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance} XP available to spend`} last />
         </div>
       </section>

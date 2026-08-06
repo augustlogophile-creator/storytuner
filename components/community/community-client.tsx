@@ -31,6 +31,7 @@ import {
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { Eyebrow } from "@/components/eyebrow"
 import type {
+  CommunityAuthor,
   CommunityFeedPost,
   CommunityFeedResponse,
   CommunityRepliesResponse,
@@ -41,7 +42,7 @@ import { cn } from "@/lib/utils"
 
 type CommunityClientProps = {
   membershipActive: boolean
-  currentDisplayName: string
+  currentUsername: string
 }
 
 type ApiErrorPayload = { error?: string }
@@ -64,9 +65,9 @@ const reportReasons: { value: CommunityReportReason; label: string }[] = [
   { value: "other", label: "Something else" },
 ]
 
-export function CommunityClient({ membershipActive, currentDisplayName }: CommunityClientProps) {
+export function CommunityClient({ membershipActive, currentUsername }: CommunityClientProps) {
   if (!membershipActive) return <MembershipLock />
-  return <MemberCommunity currentDisplayName={currentDisplayName} />
+  return <MemberCommunity currentUsername={currentUsername} />
 }
 
 function MembershipLock() {
@@ -104,7 +105,7 @@ function MembershipLock() {
   )
 }
 
-function MemberCommunity({ currentDisplayName }: { currentDisplayName: string }) {
+function MemberCommunity({ currentUsername }: { currentUsername: string }) {
   const [posts, setPosts] = useState<CommunityFeedPost[]>([])
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
@@ -133,7 +134,7 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
       }
       if (!response.ok) throw new Error(payload.error || "Community posts could not be loaded.")
 
-      setPosts((current) => (replace ? payload.posts : mergePosts(current, payload.posts)))
+      setPosts((current) => rankPosts(replace ? payload.posts : mergePosts(current, payload.posts)))
       setPage(payload.page)
       setHasMore(payload.hasMore)
     } catch (error) {
@@ -168,7 +169,7 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
       if (!response.ok || !payload.post) throw new Error(payload.error || "Your post could not be published.")
 
       setFeedError("")
-      setPosts((current) => [payload.post!, ...current.filter((post) => post.id !== payload.post!.id)])
+      setPosts((current) => rankPosts([payload.post!, ...current.filter((post) => post.id !== payload.post!.id)]))
       setDraft("")
       window.setTimeout(() => {
         document.getElementById("community-feed")?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -181,7 +182,7 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
   }
 
   function updatePost(updated: CommunityFeedPost) {
-    setPosts((current) => current.map((post) => (post.id === updated.id ? updated : post)))
+    setPosts((current) => rankPosts(current.map((post) => (post.id === updated.id ? updated : post))))
   }
 
   function deletePost(postId: string) {
@@ -213,7 +214,7 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="share-heading" className="text-base font-semibold">Share something</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Posting as {currentDisplayName}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Posting as @{currentUsername}</p>
           </div>
           <CharacterCount value={draft.length} maximum={5000} warningAt={4500} />
         </div>
@@ -242,7 +243,8 @@ function MemberCommunity({ currentDisplayName }: { currentDisplayName: string })
       <section id="community-feed" aria-labelledby="community-feed-heading" aria-live="polite" className="scroll-mt-20 pt-2">
         <div className="mb-4">
           <Eyebrow>Community feed</Eyebrow>
-          <h2 id="community-feed-heading" className="mt-2 text-xl font-semibold tracking-tight">Latest conversations</h2>
+          <h2 id="community-feed-heading" className="mt-2 text-xl font-semibold tracking-tight">Top stories</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Ranked by likes, with newer stories breaking ties.</p>
         </div>
 
         {loading && posts.length === 0 ? (
@@ -330,6 +332,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
   const [replyDraft, setReplyDraft] = useState("")
   const [replyingTo, setReplyingTo] = useState<CommunityReply | null>(null)
   const [postingReply, setPostingReply] = useState(false)
+  const [visibleThreadCount, setVisibleThreadCount] = useState(4)
+  const [newestReplyId, setNewestReplyId] = useState<string | null>(null)
   const replyComposerRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -428,6 +432,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
       }
       if (!response.ok) throw new Error(payload.error || "Replies could not be loaded.")
       setReplies(payload.replies)
+      setVisibleThreadCount(4)
+      setNewestReplyId(null)
       setThreadLoaded(true)
     } catch (error) {
       setThreadError(errorMessage(error, "Replies could not be loaded."))
@@ -468,6 +474,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
       if (!response.ok || !payload.reply) throw new Error(payload.error || "Your reply could not be posted.")
 
       setReplies((current) => [...current, payload.reply!])
+      setNewestReplyId(payload.reply.id)
+      if (!payload.reply.parentReplyId) {
+        setVisibleThreadCount((count) => Math.max(count, groupedReplies.length + 1))
+      }
       setThreadLoaded(true)
       setReplyDraft("")
       setReplyingTo(null)
@@ -501,7 +511,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
     if (replyingTo?.id === replyId) setReplyingTo(null)
   }
 
-  const replyAuthors = useMemo(() => new Map(replies.map((reply) => [reply.id, reply.author.displayName])), [replies])
+  const replyAuthors = useMemo(() => new Map(replies.map((reply) => [reply.id, publicAuthorLabel(reply.author)])), [replies])
+  const groupedReplies = useMemo(() => groupConversationReplies(replies), [replies])
   const menuItems: MenuItem[] = post.mine
     ? [
         { label: "Edit post", icon: Pencil, onSelect: () => setEditing(true) },
@@ -513,7 +524,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
     <article id={post.id} className="scroll-mt-24 rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{post.author.displayName}</p>
+          <p className="truncate text-sm font-semibold">{publicAuthorLabel(post.author)}</p>
           <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
             {relativeDate(post.createdAt)}{post.editedAt ? " · edited" : ""}
           </p>
@@ -588,22 +599,34 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
           ) : (
             <div className="flex flex-col gap-3">
               {threadError && <p className="text-xs text-destructive" role="alert">{threadError}</p>}
-              {replies.map((reply) => (
-                <ReplyCard
-                  key={reply.id}
-                  reply={reply}
-                  parentAuthor={reply.parentReplyId ? replyAuthors.get(reply.parentReplyId) ?? "another member" : null}
-                  onReply={() => beginReply(reply)}
+              {groupedReplies.slice(0, visibleThreadCount).map(({ root, children }) => (
+                <ReplyThreadGroup
+                  key={root.id}
+                  root={root}
+                  children={children}
+                  replyAuthors={replyAuthors}
+                  onReply={beginReply}
                   onUpdated={updateReply}
                   onDeleted={markReplyDeleted}
                   onMembershipRequired={onMembershipRequired}
+                  autoRevealReplyId={newestReplyId}
                 />
               ))}
+
+              {groupedReplies.length > visibleThreadCount && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleThreadCount((count) => count + 4)}
+                  className="mx-auto rounded-full px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-soft/60"
+                >
+                  See {Math.min(4, groupedReplies.length - visibleThreadCount)} more responses
+                </button>
+              )}
 
               <div className="rounded-2xl border border-border bg-background p-3">
                 {replyingTo && (
                   <div className="mb-2 flex items-center justify-between gap-3 rounded-xl bg-secondary px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Replying to <span className="font-semibold text-foreground">{replyingTo.author.displayName}</span></p>
+                    <p className="text-xs text-muted-foreground">Replying to <span className="font-semibold text-foreground">{publicAuthorLabel(replyingTo.author)}</span></p>
                     <button type="button" onClick={() => setReplyingTo(null)} aria-label="Cancel reply target"><X className="h-3.5 w-3.5 text-muted-foreground" /></button>
                   </div>
                 )}
@@ -653,6 +676,109 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
   )
 }
 
+type ReplyThreadGroupProps = {
+  root: CommunityReply
+  children: CommunityReply[]
+  replyAuthors: Map<string, string>
+  onReply: (reply: CommunityReply) => void
+  onUpdated: (reply: CommunityReply) => void
+  onDeleted: (replyId: string) => void
+  onMembershipRequired: () => void
+  autoRevealReplyId: string | null
+}
+
+function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, onDeleted, onMembershipRequired, autoRevealReplyId }: ReplyThreadGroupProps) {
+  const [childrenOpen, setChildrenOpen] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(4)
+  const visibleChildren = children.slice(0, visibleCount)
+  const remaining = Math.max(0, children.length - visibleCount)
+
+  useEffect(() => {
+    if (!autoRevealReplyId) return
+    const index = children.findIndex((reply) => reply.id === autoRevealReplyId)
+    if (index < 0) return
+    setChildrenOpen(true)
+    setVisibleCount(Math.max(4, index + 1))
+  }, [autoRevealReplyId, children])
+
+  return (
+    <div className="flex flex-col gap-2">
+      <ReplyCard
+        reply={root}
+        parentAuthor={null}
+        onReply={() => onReply(root)}
+        onUpdated={onUpdated}
+        onDeleted={onDeleted}
+        onMembershipRequired={onMembershipRequired}
+      />
+
+      {children.length > 0 && !childrenOpen && (
+        <button
+          type="button"
+          onClick={() => { setChildrenOpen(true); setVisibleCount(4) }}
+          className="ml-4 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.7rem] font-semibold text-brand hover:bg-brand-soft/60 sm:ml-7"
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> See {children.length} {children.length === 1 ? "reply" : "replies"}
+        </button>
+      )}
+
+      {childrenOpen && (
+        <div className="ml-4 flex flex-col gap-2 border-l border-brand/20 pl-3 sm:ml-7 sm:pl-4">
+          {visibleChildren.map((reply) => (
+            <ReplyCard
+              key={reply.id}
+              reply={reply}
+              parentAuthor={reply.parentReplyId ? replyAuthors.get(reply.parentReplyId) ?? "another member" : null}
+              onReply={() => onReply(reply)}
+              onUpdated={onUpdated}
+              onDeleted={onDeleted}
+              onMembershipRequired={onMembershipRequired}
+              nested
+            />
+          ))}
+          <div className="flex flex-wrap items-center gap-2">
+            {remaining > 0 && (
+              <button type="button" onClick={() => setVisibleCount((count) => count + 4)} className="rounded-full px-3 py-1.5 text-[0.7rem] font-semibold text-brand hover:bg-brand-soft/60">
+                See {Math.min(4, remaining)} more
+              </button>
+            )}
+            <button type="button" onClick={() => { setChildrenOpen(false); setVisibleCount(4) }} className="rounded-full px-3 py-1.5 text-[0.7rem] font-semibold text-muted-foreground hover:bg-secondary">
+              Hide replies
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function groupConversationReplies(replies: CommunityReply[]) {
+  const byId = new Map(replies.map((reply) => [reply.id, reply]))
+  const roots = replies.filter((reply) => !reply.parentReplyId)
+  const childrenByRoot = new Map<string, CommunityReply[]>()
+
+  for (const reply of replies) {
+    if (!reply.parentReplyId) continue
+    let cursor: CommunityReply | undefined = reply
+    const visited = new Set<string>()
+    while (cursor?.parentReplyId && !visited.has(cursor.id)) {
+      visited.add(cursor.id)
+      const parent = byId.get(cursor.parentReplyId)
+      if (!parent) break
+      cursor = parent
+    }
+    const rootId = cursor && !cursor.parentReplyId ? cursor.id : reply.parentReplyId
+    const bucket = childrenByRoot.get(rootId) ?? []
+    bucket.push(reply)
+    childrenByRoot.set(rootId, bucket)
+  }
+
+  return roots.map((root) => ({
+    root,
+    children: (childrenByRoot.get(root.id) ?? []).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+  }))
+}
+
 type ReplyCardProps = {
   reply: CommunityReply
   parentAuthor: string | null
@@ -660,9 +786,10 @@ type ReplyCardProps = {
   onUpdated: (reply: CommunityReply) => void
   onDeleted: (replyId: string) => void
   onMembershipRequired: () => void
+  nested?: boolean
 }
 
-function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembershipRequired }: ReplyCardProps) {
+function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembershipRequired, nested = false }: ReplyCardProps) {
   const [liking, setLiking] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editDraft, setEditDraft] = useState(reply.body)
@@ -675,7 +802,7 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
 
   if (reply.status !== "active") {
     return (
-      <div className={cn("rounded-2xl border border-dashed border-border px-4 py-3", reply.parentReplyId && "ml-5 sm:ml-8")}>
+      <div className="rounded-2xl border border-dashed border-border px-4 py-3">
         <p className="text-xs italic text-muted-foreground">Reply deleted.</p>
       </div>
     )
@@ -756,10 +883,10 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
     : [{ label: "Report reply", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
 
   return (
-    <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3", reply.parentReplyId && "ml-5 border-l-2 border-brand/30 sm:ml-8")}>
+    <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3", nested && "bg-secondary/30")}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold">{reply.author.displayName}</p>
+          <p className="text-xs font-semibold">{publicAuthorLabel(reply.author)}</p>
           <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
             {parentAuthor ? `Replying to ${parentAuthor} · ` : ""}{relativeDate(reply.createdAt)}{reply.editedAt ? " · edited" : ""}
           </p>
@@ -906,9 +1033,14 @@ function ReportDialog({
       <p>Reports are private. The person who posted this will not see who submitted the report.</p>
       <label className="mt-4 block">
         <span className="text-xs font-semibold text-foreground">Reason</span>
-        <select value={reason} onChange={(event) => setReason(event.target.value as CommunityReportReason)} className="mt-2 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-brand">
-          {reportReasons.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-        </select>
+        <div className="relative mt-2">
+          <select value={reason} onChange={(event) => setReason(event.target.value as CommunityReportReason)} className="w-full appearance-none rounded-xl border border-border bg-background py-2.5 pl-3 pr-16 text-sm text-foreground outline-none focus:border-brand">
+            {reportReasons.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+          <span className="pointer-events-none absolute right-7 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+            <ChevronDown className="h-4 w-4" strokeWidth={2.3} />
+          </span>
+        </div>
       </label>
       <label className="mt-3 block">
         <span className="text-xs font-semibold text-foreground">Optional details</span>
@@ -921,6 +1053,19 @@ function ReportDialog({
 
 function CharacterCount({ value, maximum, warningAt }: { value: number; maximum: number; warningAt: number }) {
   return <span className={cn("font-mono text-[0.65rem]", value > warningAt ? "text-destructive" : "text-muted-foreground")}>{value}/{maximum}</span>
+}
+
+function publicAuthorLabel(author: CommunityAuthor) {
+  const username = author.username?.trim()
+  if (username && username !== "member") return `@${username}`
+  return author.displayName?.trim() || "StoryTuner member"
+}
+
+function rankPosts(posts: CommunityFeedPost[]) {
+  return [...posts].sort((a, b) => {
+    if (b.likeCount !== a.likeCount) return b.likeCount - a.likeCount
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
 }
 
 function mergePosts(current: CommunityFeedPost[], incoming: CommunityFeedPost[]) {

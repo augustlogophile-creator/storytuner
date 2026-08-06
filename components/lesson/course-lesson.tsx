@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState, type ChangeEvent } from "react"
-import { ArrowRight, Check, ChevronLeft, Loader2, Lock, Sparkles } from "lucide-react"
+import { ArrowRight, Check, ChevronLeft, Loader2, Lock, Sparkles, X } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
 import { RichText } from "@/components/rich-text"
@@ -282,7 +282,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
       </section>
       {answered && (
         <section className={cn("rounded-3xl border p-5", correct ? "border-brand/40 bg-brand-soft/40" : "border-streak/30 bg-streak-soft/50")}>
-          <div className="flex items-center gap-2"><span className={cn("flex h-7 w-7 items-center justify-center rounded-full", correct ? "bg-brand text-brand-foreground" : "bg-streak text-white")}><Check className="h-4 w-4" /></span><h3 className="text-sm font-semibold">{correct ? "Exactly." : "Not quite."}</h3></div>
+          <div className="flex items-center gap-2"><span className={cn("flex h-7 w-7 items-center justify-center rounded-full", correct ? "bg-brand text-brand-foreground" : "bg-destructive text-destructive-foreground")}>{correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" strokeWidth={2.8} />}</span><h3 className="text-sm font-semibold">{correct ? "Exactly." : "Not quite."}</h3></div>
           <p className="mt-3 text-sm leading-relaxed text-foreground/90">{question.explanation}</p>
         </section>
       )}

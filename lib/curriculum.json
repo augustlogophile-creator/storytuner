@@ -46,12 +46,12 @@
       {
         "question": "A student writes: \"I woke up late, missed the bus, and got a ride from my neighbor instead.\" What is this account currently missing?",
         "options": [
-          "A beginning, middle, and end",
-          "Any stakes or a change in the narrator",
           "Enough sensory detail",
-          "A funny line"
+          "A funny line",
+          "A beginning, middle, and end, because the account jumps between events without a sequence the listener can follow",
+          "Any stakes or a change in the narrator"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "It has a clear shape already. What is missing is stakes (why did missing the bus matter?) and a change (is the narrator different afterward?)."
       },
       {
@@ -66,23 +66,23 @@
       {
         "question": "What does the Removal Test check for?",
         "options": [
-          "Whether a story is too long",
           "Whether the real story lives in the events themselves or in what those events did to the narrator internally",
-          "Whether a story has enough characters",
-          "Whether the ending is a surprise"
+          "Whether the ending is a surprise",
+          "Whether a story is too long",
+          "Whether the story includes enough named characters and background facts for the audience to reconstruct every event"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "If a story still \"matters\" even when told with zero emotional content, like a police report, the real story has not been found yet; it is hiding in the internal change, not the raw events."
       },
       {
         "question": "A story has clear stakes and a clean beginning-middle-end, but the narrator seems exactly the same person at the end as at the start. What is most likely to feel wrong to a listener?",
         "options": [
+          "The story will feel overly dramatic because strong stakes should be avoided unless the narrator changes immediately",
           "The story will feel too short",
-          "The story will feel like it just stops, without a real payoff",
-          "The story will feel too dramatic",
-          "The story will feel too funny"
+          "The story will feel too funny",
+          "The story will feel like it just stops, without a real payoff"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "Shape and stakes without change tends to leave an audience unsatisfied. It builds tension but never resolves into a shift, so it feels like it simply stops rather than lands."
       }
     ]
@@ -128,20 +128,20 @@
         "question": "Why do very large life events (a major move, a breakup, a diagnosis) often make weak raw material for a short story?",
         "options": [
           "They are too boring for an audience",
+          "Audiences struggle to believe a large event unless the narrator explains every major consequence from beginning to end",
           "They contain dozens of tangled, competing stories, making them hard to shape into one clean narrative",
-          "Audiences do not believe big events actually happened",
           "They always require too much backstory to explain"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Huge events are not a single story; they are a container holding many possible stories. Trying to tell \"the whole year\" instead of one specific moment usually produces a confusing, unfocused draft."
       },
       {
         "question": "Which of the following is NOT one of the four places this unit suggests digging for material?",
         "options": [
+          "Stories you already find yourself retelling, especially ones whose sequence and payoff are already familiar",
           "Sensory triggers like a smell or object",
-          "Moments involving a clear decision",
           "The most objectively impressive achievement of your life",
-          "Stories you already find yourself retelling"
+          "Moments involving a clear decision"
         ],
         "correct": 2,
         "explanation": "\"Objectively impressive\" is not on the list, and often works against a story. The unit points toward sensory triggers, decisions, repeated stories, and moments of discomfort instead."
@@ -158,20 +158,20 @@
       {
         "question": "A student wants to tell a story about a sibling’s private struggle with an illness. According to the ownership test, what should they check first?",
         "options": [
-          "Whether the illness makes a dramatic enough topic",
           "Whether they can tell it using only what they personally witnessed, felt, and did, without guessing at the sibling’s inner thoughts",
           "Whether their sibling is a public figure",
-          "Whether the story has a happy ending"
+          "Whether the story has a happy ending",
+          "Whether the illness is dramatic enough to justify sharing private details that the sibling may not want made public"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "The ownership test asks whether the story can stay anchored in the narrator’s own direct experience. If it would require speaking for the other person’s private inner life, it is not yet the narrator’s story to tell in that form."
       },
       {
         "question": "Why do decisions make especially good raw material for a story?",
         "options": [
-          "They are always dramatic",
+          "They are easier to remember precisely because a decision gives the narrator a complete record of every surrounding detail",
           "They come with a built-in before-and-after, which is exactly the structure a story needs",
-          "They are easy to remember precisely",
+          "They are always dramatic",
           "They require no further shaping"
         ],
         "correct": 1,
@@ -215,10 +215,10 @@
       {
         "question": "How does this unit define \"stakes\"?",
         "options": [
-          "The moral of the story",
+          "The number of characters involved",
           "Whatever the narrator wanted, feared, needed, or stood to lose in the moment",
-          "The setting where the story takes place",
-          "The number of characters involved"
+          "The moral of the story",
+          "The setting and circumstances around the event, including where it happened and who was present"
         ],
         "correct": 1,
         "explanation": "Stakes are the personal thing at risk for the narrator in that specific moment, not a general theme or lesson."
@@ -226,23 +226,23 @@
       {
         "question": "Why does this unit insist that stakes are \"personal\" rather than objective?",
         "options": [
-          "Because audiences only care about wealthy or famous narrators",
-          "Because something that sounds minor from the outside (like a bag of chips) can carry enormous stakes if it matters deeply to the narrator in that moment",
           "Because objective stakes are always more dramatic",
-          "Because personal stakes are easier to fake"
+          "Because personal stakes are easier to fake",
+          "Because audiences only care when the narrator is objectively important, successful, wealthy, or publicly recognizable",
+          "Because something that sounds minor from the outside (like a bag of chips) can carry enormous stakes if it matters deeply to the narrator in that moment"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "What counts as high-stakes is defined by what the narrator cared about, not by some external ranking of how serious the situation looks from the outside."
       },
       {
         "question": "What is the difference between internal and external stakes?",
         "options": [
-          "Internal stakes involve other people; external stakes only involve the narrator",
-          "Internal stakes are questions or fears inside the narrator’s mind; external stakes are real-world obstacles or dangers",
+          "External stakes are always more important than internal stakes",
           "There is no real difference",
-          "External stakes are always more important than internal stakes"
+          "Internal stakes are questions or fears inside the narrator’s mind; external stakes are real-world obstacles or dangers",
+          "Internal stakes involve the reactions of other people, while external stakes concern only the narrator's private thoughts"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Internal stakes live inside the narrator (self-doubt, fear, a question about who they are); external stakes live in the world around them (danger, a deadline, an opponent). Strong stories often use both together."
       },
       {
@@ -257,12 +257,12 @@
       {
         "question": "A student’s draft says: \"It was a big day for me.\" Using this unit’s standard, what is the problem?",
         "options": [
-          "It is too short",
           "It fails the specificity test: it does not tell the listener what was actually at risk",
-          "It uses the wrong tense",
-          "It is too dramatic"
+          "It is too dramatic",
+          "The sentence uses a vague past-tense construction instead of naming the exact date and location of the event",
+          "It is too short"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "This sentence gestures at importance without saying what the importance actually was. A stronger version would name the specific want, fear, or risk directly."
       }
     ]
@@ -299,7 +299,7 @@
       {
         "question": "What is the key difference between an anecdote and a story, according to this unit?",
         "options": [
-          "Stories must be sad and anecdotes must be funny",
+          "Stories must deal with serious material and end with a lesson, while anecdotes are short and mainly meant to be funny",
           "A story involves a real arc of change; an anecdote can be entertaining without the narrator changing at all",
           "Anecdotes are always shorter than stories",
           "There is no real difference"
@@ -310,43 +310,43 @@
       {
         "question": "What does the one-sentence test check for?",
         "options": [
-          "Whether a story is the right length",
           "Whether the summary sentence describes meaning (what it’s really about) rather than plot (what happened)",
-          "Whether the story has a joke in it",
-          "Whether the story is grammatically correct"
+          "Whether the sentence is grammatically polished enough to serve as the opening line of the finished story",
+          "Whether a story is the right length",
+          "Whether the story has a joke in it"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "A \"meaning\" sentence names an internal shift or realization. A \"plot\" sentence just restates events. If a student can only produce a plot sentence, the real story has not been found yet."
       },
       {
         "question": "A student writes the one-sentence summary: \"I went camping and it rained the whole time.\" What is the problem?",
         "options": [
-          "It is too long",
-          "It describes plot, not meaning, so it fails the one-sentence test",
           "It uses the wrong tense",
-          "It does not mention the weather clearly enough"
+          "It is too long",
+          "It does not provide enough weather detail, such as the amount of rain, temperature, and length of the storm",
+          "It describes plot, not meaning, so it fails the one-sentence test"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "This sentence only restates what happened. A passing version would instead name what the experience meant, for example, learning something about patience, family, or expectations."
       },
       {
         "question": "Which of these is one of the five categories of change (arc types) named in this unit?",
         "options": [
-          "Financial",
-          "Attitudinal",
+          "Alphabetical",
           "Geographic",
-          "Alphabetical"
+          "Attitudinal",
+          "Financial"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "The five categories are physical, situational, emotional, behavioral, and attitudinal."
       },
       {
         "question": "True or false: an anecdote can never be worth telling on its own, and should always be developed into a full story with an arc.",
         "options": [
-          "True",
-          "False"
+          "False",
+          "True"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "This unit does not claim anecdotes are worthless. In casual, low-stakes settings, a fun anecdote with no arc can be exactly the right thing to share. The arc matters most when building a fuller, five-minute personal narrative."
       }
     ]
@@ -388,30 +388,30 @@
         "question": "Which narrative mode is defined as \"a specific moment played out in real time, with sensory detail, so the listener feels present inside it\"?",
         "options": [
           "Summary",
-          "Reflection",
           "Scene",
+          "Reflection",
           "Backstory"
         ],
-        "correct": 2,
+        "correct": 1,
         "explanation": "Scene is the mode that slows down and shows a moment happening in real time. The most important moment in a story is almost always told this way."
       },
       {
         "question": "What problem tends to occur when a story is almost entirely summary, with very little scene?",
         "options": [
-          "It becomes too short to tell",
           "It reads like a report instead of a lived experience",
           "It becomes too funny",
-          "It has too many characters"
+          "It has too many characters",
+          "It becomes too short because summary removes the background facts that a listener needs before any scene can begin"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "Summary is useful for skipping time efficiently, but without real scenes to slow down inside, a story loses the feeling of being present and starts to sound like a recap."
       },
       {
         "question": "A draft reads: \"Then I felt really betrayed. Then I felt confused. Then I felt like I needed to leave.\" Which mode dominates this passage, and what is missing?",
         "options": [
-          "Scene dominates; it needs more reflection",
+          "Summary dominates; the passage needs more names, dates, and chronological information about what happened next",
           "Reflection dominates; it needs a specific scene with sensory or concrete detail",
-          "Summary dominates; it needs more names and dates",
+          "Scene dominates; it needs more reflection",
           "It is balanced correctly already"
         ],
         "correct": 1,
@@ -420,21 +420,21 @@
       {
         "question": "True or false: a story should narrate every literal physical step of an event (opening a door, sitting down, picking up a phone) in order to stay honest.",
         "options": [
-          "True",
-          "False"
+          "False",
+          "True"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "Jump cuts are allowed and expected. Only the stepping stones an audience actually needs to follow the logic of the story should be included; everything else can be skipped without dishonesty."
       },
       {
         "question": "According to the ratio check, roughly what proportion of a story being reflection is a signal that a draft may be \"telling\" rather than \"showing\"?",
         "options": [
-          "More than about one-fifth of the total",
-          "More than about three-quarters of the total",
+          "Reflection amount never matters",
           "Exactly one-half",
-          "Reflection amount never matters"
+          "More than about three-quarters of the total",
+          "More than about one-fifth of the total"
         ],
-        "correct": 0,
+        "correct": 3,
         "explanation": "If reflection makes up more than roughly a fifth of the total stepping stones, it is worth checking whether a summarized feeling could instead be shown through a specific scene."
       }
     ]
@@ -475,12 +475,12 @@
       {
         "question": "Why does showing a coach re-tying the same shoelace before every game work better than stating \"my coach was intense\"?",
         "options": [
-          "It is funnier",
           "It reveals character through specific behavior rather than a general adjective",
-          "It is shorter to say",
-          "It uses more advanced vocabulary"
+          "It replaces a basic adjective with a more sophisticated description, which automatically makes the writing stronger",
+          "It is funnier",
+          "It is shorter to say"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "Specific, repeated behavior shows a trait rather than simply naming it, which is almost always more convincing and more memorable to an audience."
       },
       {
@@ -489,7 +489,7 @@
           "Whether it is grammatically correct",
           "Whether it supports the story’s one-sentence meaning",
           "Whether it happened on a specific date",
-          "Whether another student finds it interesting"
+          "Whether another reader finds the detail interesting on its own, even if it does not support the story's main meaning"
         ],
         "correct": 1,
         "explanation": "A detail earns its place by supporting the emotional core of the story (the one-sentence meaning from Unit 4), not simply by being vivid or memorable on its own."
@@ -497,30 +497,30 @@
       {
         "question": "Why can including too many specific dates or minor character names actually weaken a story, even if all of them are accurate?",
         "options": [
-          "Because audiences do not believe precise details",
-          "Because each additional detail is a small tax on the listener’s attention, and too many compete for focus",
           "Because it makes the story too short",
+          "Because audiences tend to distrust exact dates and names, assuming that details this precise were probably invented",
+          "Because each additional detail is a small tax on the listener’s attention, and too many compete for focus",
           "Because dates are considered rude to mention"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Every extra specific detail asks the listener to track one more piece of information. Beyond a certain point, this creates clutter rather than richness."
       },
       {
         "question": "True or false: it is dishonest to slightly simplify a timeline, for example combining two very similar conversations into one, as long as the emotional truth of the story is preserved.",
         "options": [
-          "True",
-          "False"
+          "False",
+          "True"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "This unit treats reasonable simplification, like condensing similar conversations or admitting uncertainty about a minor detail, as an honest part of shaping a true story, distinct from fabricating events or motives."
       },
       {
         "question": "What is the correct way to handle a moment where a narrator wants to describe what another person was thinking or feeling?",
         "options": [
-          "State it as fact, since the narrator was there",
+          "Leave the other person out of the story entirely whenever their private thoughts cannot be confirmed directly",
           "Frame it clearly as the narrator’s own impression or assumption, not as a known fact",
-          "Leave the other person out of the story entirely",
-          "Ask the other person to co-write that section"
+          "Ask the other person to co-write that section",
+          "State it as fact, since the narrator was there"
         ],
         "correct": 1,
         "explanation": "Unless the narrator has direct knowledge (the person said it aloud, for instance), any claim about someone else’s inner state should be framed as the narrator’s own impression, such as \"I was sure he thought less of me,\" rather than stated as objective fact."
@@ -563,21 +563,21 @@
       {
         "question": "Why is stating an emotion directly (\"I was terrified\") often weaker than implying it through detail?",
         "options": [
-          "Stating emotions directly is grammatically incorrect",
-          "A specific physical sensation or detail lets the audience feel the emotion rather than just being told about it",
           "Audiences do not believe stated emotions",
-          "Stated emotions take too long to say"
+          "Stated emotions take too long to say",
+          "A specific physical sensation or detail lets the audience feel the emotion rather than just being told about it",
+          "Direct emotion words are grammatically incorrect in narrative writing and should always be replaced with physical description"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Naming a feeling directly tells the audience what to feel. A specific sensory or physical detail lets them arrive at the feeling themselves, which tends to land harder."
       },
       {
         "question": "What does the phrase \"telling a story from your scars, not your wounds\" mean?",
         "options": [
-          "Only tell stories about physical injuries",
+          "Avoid telling emotional stories until the experience no longer creates any feeling or discomfort for the narrator",
           "Wait until you have enough distance and healing to see the shape of an experience clearly, rather than telling it while still raw and overwhelmed",
-          "Avoid telling any emotional stories at all",
-          "Always downplay difficult experiences"
+          "Always downplay difficult experiences",
+          "Only tell stories about physical injuries"
         ],
         "correct": 1,
         "explanation": "A \"scar\" has healed enough to look at directly and describe with perspective. A \"wound\" is still raw, and trying to tell that story publicly can mean reliving it rather than shaping it."
@@ -585,9 +585,9 @@
       {
         "question": "Which of these is listed as a sign that a piece of personal material may not yet be ready to tell?",
         "options": [
-          "The narrator has told it once before",
+          "The story has a clear one-sentence meaning that the narrator can explain calmly before beginning the draft",
           "The narrator becomes overwhelmed and cannot continue describing it",
-          "The story has a clear one-sentence meaning",
+          "The narrator has told it once before",
           "The story includes dialogue"
         ],
         "correct": 1,
@@ -596,21 +596,21 @@
       {
         "question": "True or false: showing an unflattering side of yourself in a story, such as admitting jealousy or cowardice, tends to make a narrator less believable to an audience.",
         "options": [
-          "True",
-          "False"
+          "False",
+          "True"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "The opposite is true. A narrator who only shows flattering sides of themselves tends to feel less believable. Honest vulnerability, including unflattering moments, is what builds real trust with an audience."
       },
       {
         "question": "What should a student do if working on this unit’s exercises brings up material that feels too overwhelming to continue with?",
         "options": [
-          "Push through no matter what, since the assignment requires it",
-          "Set it aside and know that \"not ready yet\" is a legitimate answer, and reach out to a trusted adult if needed",
+          "Avoid personal storytelling entirely from then on",
+          "Push through and finish the exercise because stopping would prevent the narrator from building the resilience required for personal storytelling",
           "Share it publicly anyway to get it over with",
-          "Avoid personal storytelling entirely from then on"
+          "Set it aside and know that \"not ready yet\" is a legitimate answer, and reach out to a trusted adult if needed"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "This unit is explicit that no one is required to share material they are not ready for, and that reaching out for support is the right move if something feels overwhelming."
       }
     ]
@@ -652,44 +652,44 @@
         "question": "What is the difference between the \"engineered punchline\" and the \"straight-faced build\" comic approaches?",
         "options": [
           "One is always funnier than the other",
+          "There is no real difference",
           "The engineered punchline signals and delivers a sharp planned line; the straight-faced build lets humor emerge slowly from a sincere, wandering account",
-          "The straight-faced build only works for sad stories",
-          "There is no real difference"
+          "The straight-faced build works only when the subject is sad or serious, while engineered punchlines are reserved for comic stories"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Both are valid registers. The engineered punchline is a constructed, signaled joke; the straight-faced build lets absurdity surface naturally through a sincere telling."
       },
       {
         "question": "What problem does mixing both comic registers inconsistently within one story tend to cause?",
         "options": [
-          "It makes the story too short",
           "It confuses the audience about how they are supposed to feel or react",
-          "It is against the rules of storytelling",
-          "It makes the story too long"
+          "It makes the story too long",
+          "It violates a fixed storytelling rule by combining two forms of humor that should never appear in the same performance",
+          "It makes the story too short"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "Switching unpredictably between a signaled, constructed joke style and a sincere, deadpan style tends to disorient listeners about the story’s tone."
       },
       {
         "question": "What is meant by using humor \"defensively\" or \"as deflection\" in a story?",
         "options": [
-          "Using humor to protect a joke from criticism",
+          "Telling only funny stories so the audience never sees the narrator become serious, vulnerable, or emotionally uncomfortable",
+          "Apologizing before telling a joke",
           "Throwing in a joke at an emotionally intense moment to relieve the narrator’s own discomfort, which can create distance from the audience",
-          "Telling only funny stories and no serious ones",
-          "Apologizing before telling a joke"
+          "Using humor to protect a joke from criticism"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "When a joke is used to escape an uncomfortable emotional moment rather than to serve the story, it often pulls the audience out of the moment instead of deepening their connection to it."
       },
       {
         "question": "According to the \"decoration test,\" what question should be asked about any funny detail in a draft?",
         "options": [
-          "Is it appropriate for all audiences?",
-          "Does it also reveal character, advance the plot, or build atmosphere, or is it only funny?",
           "Is it based on a real event?",
-          "Would a comedian approve of it?"
+          "Would a comedian approve of it?",
+          "Does it also reveal character, advance the plot, or build atmosphere, or is it only funny?",
+          "Would every possible audience consider this detail appropriate and harmless, regardless of the story's subject or setting?"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "A funny detail earns its place if it does double duty (character, plot, or atmosphere) in addition to being funny. If it does nothing else, it is likely just decoration and can usually be cut."
       },
       {
@@ -740,10 +740,10 @@
       {
         "question": "According to this unit, what determines the \"right\" structure for a story?",
         "options": [
-          "Whichever structure is most complex and impressive",
-          "Whichever structure best serves the material and does not confuse the listener",
           "Always chronological order, no exceptions",
-          "Whichever structure is shortest"
+          "Whichever structure best serves the material and does not confuse the listener",
+          "Whichever structure is shortest",
+          "Whichever structure is most complex and technically impressive, because complexity proves that a story was carefully designed"
         ],
         "correct": 1,
         "explanation": "There is no single correct structure. The goal is choosing whichever shape lets the listener follow effortlessly while still feeling the story’s full weight."
@@ -751,34 +751,34 @@
       {
         "question": "When does straight chronological order work especially well?",
         "options": [
+          "Never; chronological order is outdated because a strong story should always begin near its climax and then move backward",
           "Only for very short stories",
-          "When a surprise or mystery depends on the audience not knowing what is coming yet",
           "Only for stories about historical events",
-          "Never; it is considered an outdated technique"
+          "When a surprise or mystery depends on the audience not knowing what is coming yet"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "If revealing information out of order would spoil a surprise or mystery, telling events in the order they actually happened preserves that effect."
       },
       {
         "question": "What risk does this unit associate with overusing the cliffhanger opening?",
         "options": [
-          "It makes the story too short",
           "If overused or handled clumsily, it can feel theatrical rather than organic, and may create dread that distracts from the story’s emotional detail",
+          "It makes the story too short",
           "It is illegal in formal writing",
-          "It only works for comedic stories"
+          "It only works in comedy, because serious stories cannot begin with a dramatic promise without losing credibility"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "The cliffhanger opening is a powerful but risky tool. Used too often or without care, it can feel like a gimmick rather than a natural way into the story."
       },
       {
         "question": "What problem does the \"smaller story as a lens\" technique solve?",
         "options": [
-          "It makes a story shorter to tell",
           "It makes a very large, overwhelming, or historic event emotionally accessible by narrowing focus to one small, specific relationship or detail",
-          "It adds more characters to a story",
-          "It removes the need for an ending"
+          "It adds more characters and background information so the audience can understand every part of a large historical event",
+          "It removes the need for an ending",
+          "It makes a story shorter to tell"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "When a subject is too big to fully absorb (a disaster, a historic event), focusing on one small, specific thread within it gives the audience something concrete and human to hold onto."
       },
       {
@@ -832,21 +832,21 @@
       {
         "question": "What mistake does this unit warn against when using a single-frame opening?",
         "options": [
-          "Using dialogue in the first line",
+          "Using dialogue in the first line, because a single-frame opening must begin with factual context rather than a character speaking",
+          "Making the opening too short",
           "Stretching the one sentence of necessary context into four or five sentences, delaying the action",
-          "Starting with a question",
-          "Making the opening too short"
+          "Starting with a question"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "The single-frame open is meant to be exactly one sentence of context before jumping into action. Padding it out with more setup defeats its purpose."
       },
       {
         "question": "Why is stating a lesson directly at the end of a story (\"and that’s when I realized...\") often a weaker choice than showing it?",
         "options": [
-          "It is grammatically incorrect",
-          "It tells the audience what to think instead of letting them arrive at the realization themselves through a concrete image or action",
           "It makes the story too long",
-          "Audiences do not like the word \"realized\""
+          "It tells the audience what to think instead of letting them arrive at the realization themselves through a concrete image or action",
+          "Audiences dislike the word \"realized,\" so the lesson should be restated with a different abstract phrase instead",
+          "It is grammatically incorrect"
         ],
         "correct": 1,
         "explanation": "A stated lesson removes the audience’s chance to feel the change for themselves. A concrete final image or action that demonstrates the same growth tends to land harder."
@@ -854,32 +854,32 @@
       {
         "question": "Describe what the \"callback\" ending pattern does.",
         "options": [
-          "It summarizes the entire plot one more time",
+          "It ends with a direct question to the audience",
+          "It introduces a new character or event at the end so the final moment feels surprising and unrelated to the opening",
           "It returns to an image or phrase from the story’s opening, now carrying new weight because of what happened in between",
-          "It introduces a brand new character at the very end",
-          "It ends with a direct question to the audience"
+          "It summarizes the entire plot one more time"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "A callback ending echoes the opening, letting the audience feel the distance traveled between the story’s start and its end."
       },
       {
         "question": "True or false: after delivering the strongest possible final line, it is a good idea to add a soft, trailing phrase like \"...yeah, so that’s basically it\" to ease the audience out of the story.",
         "options": [
-          "True",
-          "False"
+          "False",
+          "True"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "This unit specifically warns against this. The silence right after a strong final line is doing real work; adding an apologetic trailing phrase undercuts that effect."
       },
       {
         "question": "What is the key difference between a cold open and a single-frame open?",
         "options": [
-          "A cold open uses dialogue; a single-frame open never does",
+          "There is no real difference between them",
+          "A cold open must use dialogue, while a single-frame open must use narration and can never include spoken words",
           "A cold open begins mid-action with zero preamble; a single-frame open allows exactly one sentence of necessary context before the action begins",
-          "A cold open is always longer",
-          "There is no real difference between them"
+          "A cold open is always longer"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Both approaches aim for immediacy, but the single-frame open allows one brief sentence of context first, while the cold open drops the audience straight into action."
       }
     ]
@@ -920,34 +920,34 @@
       {
         "question": "Why does this unit recommend familiarization over word-for-word memorization for most of a story?",
         "options": [
+          "Familiarization requires almost no rehearsal because the speaker is free to improvise the plot and ending each time",
           "Memorization takes too long to practice",
-          "Word-for-word memorization is fragile; losing one word can derail the whole telling, while familiarization allows natural wording to shift while the shape stays fixed",
           "Memorization is considered cheating",
-          "Familiarization requires no practice at all"
+          "Word-for-word memorization is fragile; losing one word can derail the whole telling, while familiarization allows natural wording to shift while the shape stays fixed"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "Because memorization retrieves a fixed sequence, one dropped word can cause the speaker to lose their place entirely. Familiarization is more resilient because the speaker actually knows the story, not just its exact wording."
       },
       {
         "question": "Which two parts of a story does this unit suggest are worth memorizing closely, as an exception to the general rule?",
         "options": [
-          "The middle section and the backstory",
           "The opening line and the closing line",
-          "Every piece of dialogue",
-          "The stepping stones only"
+          "The middle section and all necessary backstory, since those parts contain the most names, dates, and factual information",
+          "The stepping stones only",
+          "Every piece of dialogue"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "The opening and closing lines carry the most weight and help anchor a speaker at the two moments where nerves tend to be highest."
       },
       {
         "question": "Why does this unit recommend placing the identifying phrase before a quote (\"I said, ’How old is she?’\") rather than after it, in spoken storytelling?",
         "options": [
-          "It is grammatically required",
-          "It sounds more natural when spoken aloud, unlike the reverse order which can feel written rather than conversational",
           "It saves time",
-          "It avoids using quotation marks"
+          "It removes the need to say punctuation aloud, which is the main difficulty created by placing the identifying phrase after a quote",
+          "It is grammatically required",
+          "It sounds more natural when spoken aloud, unlike the reverse order which can feel written rather than conversational"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "Placing \"I said\" before the quote mirrors how people naturally speak, whereas the reverse order (common in written prose) can sound stilted when spoken aloud."
       },
       {
@@ -962,12 +962,12 @@
       {
         "question": "What is the purpose of a deliberate pause placed right before an important line?",
         "options": [
-          "To let the speaker remember what comes next",
           "To give the line more weight and let the audience’s imagination lean toward the gap, so the payoff lands harder",
+          "To signal the story is now over",
           "To fill time when a story is running short",
-          "To signal the story is now over"
+          "To give the speaker extra time to remember the next sentence, even when the line itself is not especially important"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "A brief, well-placed silence builds anticipation, so that when the important line finally arrives, it lands with more impact."
       }
     ]
@@ -1008,12 +1008,12 @@
       {
         "question": "Which of these is a practical strategy this unit suggests for managing visible nervousness?",
         "options": [
-          "Avoiding eye contact with the audience entirely",
-          "Grounding the body by planting your feet, standing up straight, and taking a slow breath before starting",
+          "Refusing to acknowledge nervousness and hiding every visible sign so the audience assumes the speaker feels completely calm",
           "Speaking as quickly as possible to finish sooner",
-          "Refusing to acknowledge nerves under any circumstance"
+          "Avoiding eye contact with the audience entirely",
+          "Grounding the body by planting your feet, standing up straight, and taking a slow breath before starting"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "Physical grounding techniques, along with having water on hand and accepting rather than fighting visible nerves, are the practical strategies this unit recommends."
       },
       {
@@ -1021,8 +1021,8 @@
         "options": [
           "It makes the story shorter",
           "It often earns goodwill and connection rather than judgment from the audience",
-          "It is required by storytelling convention",
-          "It guarantees the audience will laugh"
+          "It guarantees the audience will laugh",
+          "It fulfills a standard storytelling convention that requires speakers to announce their emotions before beginning a personal story"
         ],
         "correct": 1,
         "explanation": "Audiences tend to respond warmly to an honest, brief acknowledgment of nerves, rather than viewing it as a weakness."
@@ -1032,8 +1032,8 @@
         "options": [
           "A bridging phrase is one short clarifying line that keeps momentum; over-explaining stops the story to define multiple terms at length, killing momentum",
           "There is no real difference",
-          "Bridging phrases are only for comedic stories",
-          "Over-explaining is always more respectful to the audience"
+          "Over-explaining is more respectful because it gives the audience every definition, name, and piece of context before the story continues",
+          "Bridging phrases are only for comedic stories"
         ],
         "correct": 0,
         "explanation": "A single short phrase can give an unfamiliar audience just enough context without derailing the story, while stopping to explain everything at length breaks the story’s flow."
@@ -1050,12 +1050,12 @@
       {
         "question": "According to this unit, what should a narrator NOT do in response to an audience that does not fully relate to their story?",
         "options": [
-          "Continue telling it honestly anyway",
           "Soften or distort the honest account based on a guess about what that audience wants to hear",
-          "Consider adding one bridging phrase for context",
-          "Reflect afterward on how it landed"
+          "Consider adding one brief bridging phrase that gives the audience enough context to follow an unfamiliar reference",
+          "Reflect afterward on how it landed",
+          "Continue telling it honestly anyway"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "This unit is explicit that a narrator should never distort or soften an honest story based on assumptions about audience preference; the goal is honest telling, not audience-pleasing distortion."
       }
     ]
@@ -1096,21 +1096,21 @@
       {
         "question": "Why can a personal story be stronger evidence of a quality like resilience than simply stating \"I am resilient\"?",
         "options": [
-          "Because stories are always longer than claims",
-          "Because a specific scene demonstrates the quality in action, which is more convincing than an unsupported assertion",
+          "Because stories are longer than claims, and the extra length alone makes any statement sound more thoughtful and credible",
           "Because interviewers prefer long answers",
+          "Because a specific scene demonstrates the quality in action, which is more convincing than an unsupported assertion",
           "Because claims are considered dishonest"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "A concrete story shows the quality happening, giving the listener evidence to believe, rather than simply asking them to take the claim at face value."
       },
       {
         "question": "What typically changes, and what stays the same, when compressing a five-minute story down to under two minutes?",
         "options": [
-          "Everything changes; short and long stories share nothing in common",
-          "The three ingredients (shape, stakes, change) still apply, but the number of scenes shrinks and backstory compresses to a minimum",
           "The ending is removed entirely",
-          "The stakes are no longer necessary in short form"
+          "The three ingredients (shape, stakes, change) still apply, but the number of scenes shrinks and backstory compresses to a minimum",
+          "The stakes are no longer necessary in short form",
+          "Everything changes: short stories need a different structure, can remove the stakes, and do not need the same kind of ending"
         ],
         "correct": 1,
         "explanation": "The underlying method stays the same regardless of length. What changes is scale: fewer scenes, and only the bare minimum backstory needed to understand the story."
@@ -1118,12 +1118,12 @@
       {
         "question": "What additional element does this unit suggest adding when a personal story is being used for advocacy?",
         "options": [
-          "A longer backstory section",
           "A clear call to action at the end, so the audience knows what to do with the feeling the story created",
           "More humor throughout",
+          "A longer backstory section",
           "A disclaimer at the beginning"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "When a story is meant to move an audience toward supporting a cause, ending with a specific, clear action gives that emotional response somewhere to go."
       },
       {
@@ -1139,11 +1139,11 @@
         "question": "According to this unit, what is the core claim about how storytelling skills transfer to interviews, essays, and advocacy?",
         "options": [
           "They do not transfer at all; those are entirely separate skills",
-          "The underlying method (stakes, detail, arc, structure) stays the same; only length, formality, and context requirements change",
           "Only the ending technique transfers",
+          "The underlying method (stakes, detail, arc, structure) stays the same; only length, formality, and context requirements change",
           "Only humor techniques transfer to interviews"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "This unit’s central point is that the same craft fundamentals apply across contexts. What shifts is scale and formality, not the underlying skillset."
       }
     ]
@@ -1180,21 +1180,21 @@
       {
         "question": "What does this unit mean by saying listening is \"half\" of storytelling craft?",
         "options": [
-          "Listening takes up half the time of any conversation",
-          "A person who has only practiced telling stories and never practiced receiving them is only half-trained in the overall skill",
           "Listening is twice as important as telling",
-          "Storytellers should speak for exactly half the time in any conversation"
+          "Listening takes up half the time of any conversation",
+          "Storytellers should speak for exactly half the time in any conversation",
+          "A person who has only practiced telling stories and never practiced receiving them is only half-trained in the overall skill"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "Storytelling is treated as a two-way skill in this unit. Being a strong listener is presented as equally essential to the craft as being a strong teller."
       },
       {
         "question": "Which listening habit does this unit specifically recommend practicing?",
         "options": [
-          "Interrupting to ask clarifying questions as soon as something is unclear",
+          "Taking detailed written notes throughout",
           "Noticing where a speaker pauses and resisting the urge to fill that silence",
           "Preparing your own similar story to share as soon as the speaker finishes",
-          "Taking detailed written notes throughout"
+          "Interrupting to ask clarifying questions as soon as something is unclear"
         ],
         "correct": 1,
         "explanation": "Resisting the instinct to fill a speaker’s pause, and instead noticing what the story is building toward, is one of the specific listening habits this unit highlights."
@@ -1202,12 +1202,12 @@
       {
         "question": "Why does this unit suggest that new storytellers should spend real time listening to other people’s stories?",
         "options": [
-          "To fill time before writing their own story",
           "Because craft is learned largely through exposure, similar to how musicians learn by listening to thousands of hours of music before performing",
-          "Because listening is required before a person is allowed to write a story",
-          "To collect material to copy directly"
+          "To collect material to copy directly",
+          "To fill time before writing their own story",
+          "Because listening is required before a person is allowed to write a story"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "This unit compares storytelling craft to music: much of the learning happens through attentive exposure to other people’s work, noticing what specifically works and why."
       },
       {
@@ -1222,12 +1222,12 @@
       {
         "question": "According to this unit, is a story’s impact on a particular listener something the storyteller can fully control or predict?",
         "options": [
-          "Yes, a well-built story always lands the same way for everyone",
-          "No, a story’s specific impact on any given listener is not something the storyteller controls or can predict",
           "Only professional storytellers can control this",
-          "Impact can be controlled through better memorization"
+          "Impact can be controlled through better memorization",
+          "Yes, a well-built story always lands the same way for everyone",
+          "No, a story’s specific impact on any given listener is not something the storyteller controls or can predict"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "This unit is explicit that how a story lands for a specific listener is genuinely outside the teller’s control, which is part of why full, generous listening matters so much on the receiving end."
       }
     ]
@@ -1274,54 +1274,54 @@
       {
         "question": "What is the first pass in the ten-pass capstone process?",
         "options": [
-          "Choosing your structure",
-          "Confirming the three ingredients: shape, stakes, and change",
           "Rehearsing aloud",
-          "Writing the final reflection"
+          "Writing the final reflection",
+          "Choosing your structure",
+          "Confirming the three ingredients: shape, stakes, and change"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "The process begins by confirming that all three core ingredients from Unit 1 are present and specific before moving on to later passes."
       },
       {
         "question": "Which unit’s tool does the capstone use to check whether a story is genuinely the narrator’s to tell?",
         "options": [
           "Unit 8 (Humor)",
-          "Unit 2 (ownership test)",
           "Unit 10 (Openings and Endings)",
+          "Unit 2 (ownership test)",
           "Unit 12 (Presence)"
         ],
-        "correct": 1,
+        "correct": 2,
         "explanation": "Pass two of the capstone specifically revisits the ownership test from Unit 2: can the story be told using only what the narrator personally witnessed, felt, and did?"
       },
       {
         "question": "According to the assessment rubric, what should an ending demonstrate to score well?",
         "options": [
-          "A surprising plot twist",
-          "That it shows change and stops cleanly, rather than stating a lesson or trailing off",
           "The longest possible final line",
-          "A direct question to the audience"
+          "A surprising plot twist",
+          "A direct question to the audience",
+          "That it shows change and stops cleanly, rather than stating a lesson or trailing off"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "The rubric rewards endings that show change through a concrete image or action and stop cleanly, consistent with Unit 10’s guidance."
       },
       {
         "question": "True or false: the capstone’s ten passes should be completed in any order the student prefers, since order does not matter.",
         "options": [
-          "True",
-          "False"
+          "False",
+          "True"
         ],
-        "correct": 1,
+        "correct": 0,
         "explanation": "The ten passes are designed to build on each other in sequence, from confirming the core ingredients through to final rehearsal, similar to how the units themselves build on one another."
       },
       {
         "question": "What are the three final deliverables required by the capstone project?",
         "options": [
           "A video, a poster, and a group presentation",
-          "A written ten-pass outline, a live telling of the finished story, and a short written reflection",
           "A multiple-choice test only",
-          "A peer-graded rubric only"
+          "A peer-graded rubric only",
+          "A written ten-pass outline, a live telling of the finished story, and a short written reflection"
         ],
-        "correct": 1,
+        "correct": 3,
         "explanation": "The capstone asks for a completed written outline of all ten passes, an actual live telling timed to three to five minutes, and a reflection on what changed and which tools mattered most."
       }
     ]

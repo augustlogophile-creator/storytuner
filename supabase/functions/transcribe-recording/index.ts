@@ -53,6 +53,31 @@ Deno.serve(async (request: Request) => {
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) return jsonResponse({ error: "Your login session is invalid." }, 401);
 
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (serviceRoleKey) {
+      const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+      const { data: moderation, error: moderationError } = await adminClient
+        .from("community_moderation_status")
+        .select("account_status, account_suspended_until, public_message")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (moderationError) {
+        console.error("Transcription restriction lookup failed:", moderationError.message);
+      } else if (moderation) {
+        const suspendedUntil = moderation.account_suspended_until
+          ? new Date(moderation.account_suspended_until).getTime()
+          : null;
+        const activelySuspended = moderation.account_status === "suspended"
+          && (suspendedUntil === null || suspendedUntil > Date.now());
+        if (moderation.account_status === "banned" || activelySuspended) {
+          return jsonResponse({ error: moderation.public_message || "This account is currently restricted." }, 403);
+        }
+      }
+    }
+
     const requestBody = await request.json();
     recordingId = typeof requestBody?.recordingId === "string" ? requestBody.recordingId : null;
     if (!recordingId) return jsonResponse({ error: "A recordingId is required." }, 400);

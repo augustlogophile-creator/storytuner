@@ -59,13 +59,15 @@ export async function GET(_request: Request, routeContext: RouteContext) {
 
     if (repliesError) throw repliesError
 
-    const replyRows = rows ?? []
-    const authorIds = Array.from(new Set(replyRows.filter((reply) => reply.status === "active").map((reply) => reply.author_id)))
-    const replyIds = replyRows.map((reply) => reply.id)
+    const replyRows: ReplyRow[] = rows ?? []
+    const authorIds = Array.from(new Set(replyRows.filter((reply: ReplyRow) => reply.status === "active").map((reply: ReplyRow) => reply.author_id)))
+    const replyIds = replyRows.map((reply: ReplyRow) => reply.id)
 
     const [profilesResult, likesResult] = await Promise.all([
       authorIds.length
-        ? context.admin.from("profiles").select("id, username, display_name").in("id", authorIds).returns<ProfileRow[]>()
+        ? context.userClient.rpc("community_public_profiles", {
+            requested_user_ids: authorIds,
+          }) as PromiseLike<{ data: ProfileRow[] | null; error: unknown }>
         : Promise.resolve({ data: [] as ProfileRow[], error: null }),
       replyIds.length
         ? context.admin.from("community_reply_likes").select("reply_id, user_id").in("reply_id", replyIds).returns<ReplyLikeRow[]>()
@@ -75,7 +77,8 @@ export async function GET(_request: Request, routeContext: RouteContext) {
     if (profilesResult.error) console.error("Community reply author lookup failed", profilesResult.error)
     if (likesResult.error) console.error("Community reply-like lookup failed", likesResult.error)
 
-    const profiles = new Map((profilesResult.data ?? []).map((profile) => [profile.id, profile]))
+    const profileRows: ProfileRow[] = profilesResult.data ?? []
+    const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
     const likeCounts = new Map<string, number>()
     const likedByViewer = new Set<string>()
     for (const like of likesResult.data ?? []) {
@@ -83,7 +86,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
       if (like.user_id === context.userId) likedByViewer.add(like.reply_id)
     }
 
-    const replies: CommunityReply[] = replyRows.map((reply) => {
+    const replies: CommunityReply[] = replyRows.map((reply: ReplyRow) => {
       const deleted = reply.status !== "active"
       const author = deleted ? undefined : profiles.get(reply.author_id)
       return {

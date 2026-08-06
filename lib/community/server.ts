@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getMembershipByUserId } from "@/lib/membership-server"
-import { getAuthenticatedUser } from "@/lib/require-auth"
+import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
 
 export type CommunityProfile = {
   id: string
@@ -9,7 +9,6 @@ export type CommunityProfile = {
   display_name: string
   onboarding_completed: boolean
 }
-
 
 export type CommunityApiContext = {
   ok: true
@@ -25,6 +24,30 @@ export async function getCommunityApiContext() {
     return {
       ok: false as const,
       response: Response.json({ error: "Authentication required." }, { status: 401 }),
+    }
+  }
+
+  const restriction = await getAccountRestriction(authenticated.id)
+  if (restriction.restricted) {
+    return {
+      ok: false as const,
+      response: Response.json({ error: restriction.publicMessage || "This account is currently restricted." }, { status: 403 }),
+    }
+  }
+
+  const communityUntil = restriction.communitySuspendedUntil
+    ? new Date(restriction.communitySuspendedUntil).getTime()
+    : null
+  if (communityUntil && communityUntil > Date.now()) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        {
+          error: restriction.publicMessage || "Community access is temporarily suspended.",
+          suspendedUntil: restriction.communitySuspendedUntil,
+        },
+        { status: 403 },
+      ),
     }
   }
 

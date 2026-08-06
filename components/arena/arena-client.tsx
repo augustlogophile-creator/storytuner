@@ -12,6 +12,7 @@ import {
   FileText,
   Loader2,
   LockKeyhole,
+  Map,
   MessageCircle,
   Mic2,
   Pause,
@@ -141,6 +142,7 @@ export function ArenaClient() {
   const [cameraOn, setCameraOn] = useState(true)
   const [targetSeconds, setTargetSeconds] = useState(90)
   const [showDurationOptions, setShowDurationOptions] = useState(false)
+  const [plannerPlan, setPlannerPlan] = useState<{ title: string; plan: string; throughline: string } | null>(null)
   const [confirmAction, setConfirmAction] = useState<ArenaConfirmAction>(null)
   const [pendingHref, setPendingHref] = useState("")
   const [extraSeconds, setExtraSeconds] = useState(0)
@@ -176,9 +178,23 @@ export function ArenaClient() {
   const transcriptWordCount = meaningfulWordCount(transcript)
 
   useEffect(() => {
-    const mode = new URLSearchParams(window.location.search).get("mode")
+    const params = new URLSearchParams(window.location.search)
+    const mode = params.get("mode")
     if (mode === "scenario") setStoryMode("scenario")
     if (mode === "free") setStoryMode("free")
+    if (params.get("planned") === "1") {
+      try {
+        const stored = window.sessionStorage.getItem("storytuner:planner-plan")
+        if (stored) {
+          const parsed = JSON.parse(stored) as { title?: string; plan?: string; throughline?: string }
+          if (parsed.title && parsed.plan && parsed.throughline) {
+            setPlannerPlan({ title: parsed.title, plan: parsed.plan, throughline: parsed.throughline })
+          }
+        }
+      } catch {
+        setPlannerPlan(null)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -750,6 +766,29 @@ export function ArenaClient() {
                 {isOpenResponse && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Unprompted. Choose what you want to talk about.</p>}
               </section>
             </>
+          )}
+
+          {plannerPlan ? (
+            <section className="rounded-3xl border border-brand/35 bg-brand-soft/45 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Eyebrow>Plan ready</Eyebrow>
+                  <h2 className="mt-2 text-base font-semibold">{plannerPlan.title}</h2>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{plannerPlan.throughline}</p>
+                </div>
+                <button type="button" onClick={() => setPlannerPlan(null)} className="rounded-full p-2 text-muted-foreground hover:bg-background" aria-label="Hide story plan"><X className="h-4 w-4" /></button>
+              </div>
+              <details className="mt-4 rounded-2xl bg-background/75 px-4 py-3">
+                <summary className="cursor-pointer text-sm font-semibold">View rehearsal outline</summary>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{plannerPlan.plan}</p>
+              </details>
+            </section>
+          ) : (
+            <Link href="/planner" className="flex items-center gap-4 rounded-3xl border border-brand/30 bg-brand-soft/35 p-4 transition-colors hover:border-brand">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground"><Map className="h-4.5 w-4.5" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">Not sure what to say yet?</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">Use Story Planner to shape your facts, purpose, structure, and nerves before entering the recording room.</span></span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
           )}
 
           <section className="rounded-3xl border border-border bg-card p-5">
