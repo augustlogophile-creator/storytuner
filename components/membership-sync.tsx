@@ -4,20 +4,27 @@ import { useEffect } from "react"
 import { useApp } from "@/lib/app-state"
 
 export function MembershipSync() {
-  const { setPremium } = useApp()
+  const { state, setPremium } = useApp()
+  const userId = state.accountOwnerId
 
   useEffect(() => {
+    if (!userId) {
+      setPremium(false)
+      return
+    }
+
     let active = true
     fetch("/api/membership", { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() as Promise<{ active?: boolean }> : { active: false })
+      .then(async (response) => response.ok ? response.json() as Promise<{ active?: boolean }> : null)
       .then((result) => {
-        if (active) setPremium(Boolean(result.active))
+        if (active && result) setPremium(Boolean(result.active))
       })
       .catch(() => {
-        if (active) setPremium(false)
+        // Keep the server-provided status during a temporary network failure.
       })
+
     return () => { active = false }
-  }, [setPremium])
+  }, [setPremium, userId])
 
   return null
 }

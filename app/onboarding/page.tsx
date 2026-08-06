@@ -19,7 +19,7 @@ export default async function AccountSetupPage() {
 
   return (
     <Suspense fallback={<main className="min-h-screen bg-background" />}>
-      <AccountSetup initialName={metadataName} initialProfile={profile ?? null} />
+      <AccountSetup initialName={metadataName} initialEmail={userData.user?.email ?? ""} initialProfile={profile ?? null} />
     </Suspense>
   )
 }

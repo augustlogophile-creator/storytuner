@@ -6,6 +6,7 @@ import { Check, ChevronDown, ChevronRight, Cloud, CloudOff, LoaderCircle, LogOut
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useApp } from "@/lib/app-state"
+import { validateDisplayName } from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
@@ -67,6 +68,12 @@ export function SettingsClient() {
 
   const saveDisplayName = useCallback(async () => {
     if (!nameChanged) return setDialog(null)
+    const validationError = validateDisplayName(cleanDisplayName)
+    if (validationError) {
+      setDialog(null)
+      setNotice(validationError)
+      return
+    }
     setBusy(true)
     setNotice("")
     const supabase = createClient()
@@ -80,6 +87,9 @@ export function SettingsClient() {
     if (error) {
       setBusy(false)
       setDialog(null)
+      if (error.code === "23514" || error.message.toLowerCase().includes("public name")) {
+        return setNotice("Choose a different display name. Vulgar, sexual, hateful, or harassing terms are not allowed.")
+      }
       return setNotice("StoryTuner could not update your account profile. Try again.")
     }
     updateProfileName(cleanDisplayName)

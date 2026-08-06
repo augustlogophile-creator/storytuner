@@ -12,20 +12,21 @@ const rows = [
   { feature: "Community", detail: "Share stories, respond, and learn from other members.", free: "Locked", member: "Full access" },
 ]
 
-type MembershipStatus = {
+export type MembershipStatus = {
   active: boolean
   status: string
   cancelAtPeriodEnd: boolean
   currentPeriodEnd: string | null
 }
 
-export function MembershipClient() {
-  const { state, setPremium } = useApp()
-  const [status, setStatus] = useState<MembershipStatus | null>(null)
+export function MembershipClient({ initialStatus }: { initialStatus: MembershipStatus }) {
+  const { setPremium } = useApp()
+  const [status, setStatus] = useState<MembershipStatus>(initialStatus)
   const [busy, setBusy] = useState<"checkout" | "portal" | null>(null)
   const [message, setMessage] = useState("")
 
   useEffect(() => {
+    setPremium(initialStatus.active)
     fetch("/api/membership", { cache: "no-store" })
       .then(async (response) => response.ok ? response.json() as Promise<MembershipStatus> : null)
       .then((result) => {
@@ -33,8 +34,10 @@ export function MembershipClient() {
         setStatus(result)
         setPremium(result.active)
       })
-      .catch(() => setMessage("Membership status could not be refreshed right now."))
-  }, [setPremium])
+      .catch(() => {
+        // Keep the server-rendered membership status instead of flashing the free plan.
+      })
+  }, [initialStatus.active, setPremium])
 
   async function openCheckout() {
     setBusy("checkout")
@@ -68,8 +71,8 @@ export function MembershipClient() {
     }
   }
 
-  const active = status?.active ?? state.premium
-  const renewalDate = status?.currentPeriodEnd
+  const active = status.active
+  const renewalDate = status.currentPeriodEnd
     ? new Intl.DateTimeFormat(undefined, { month: "long", day: "numeric", year: "numeric" }).format(new Date(status.currentPeriodEnd))
     : null
 
@@ -113,7 +116,7 @@ export function MembershipClient() {
         {active ? (
           <>
             <p className="mt-5 rounded-2xl bg-white/10 p-4 text-sm">
-              Membership is active{status?.cancelAtPeriodEnd ? renewalDate ? ` until ${renewalDate}.` : "." : renewalDate ? ` and renews on ${renewalDate}.` : "."}
+              Membership is active{status.cancelAtPeriodEnd ? renewalDate ? ` until ${renewalDate}.` : "." : renewalDate ? ` and renews on ${renewalDate}.` : "."}
             </p>
             <button type="button" onClick={openPortal} disabled={busy !== null} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-background px-5 py-3 text-sm font-semibold text-foreground disabled:opacity-60">
               {busy === "portal" && <Loader2 className="h-4 w-4 animate-spin" />} Manage billing

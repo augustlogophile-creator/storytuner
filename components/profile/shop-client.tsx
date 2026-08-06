@@ -1,25 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Check, Lock, Sparkles } from "lucide-react"
 import { BackLink } from "@/components/page-header"
-import { NoticeDialog } from "@/components/confirm-dialog"
+import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { Weaver } from "@/components/weaver"
 import { useApp, weaverColors } from "@/lib/app-state"
 
 export function ShopClient() {
   const { state, purchaseWeaver, equipWeaver } = useApp()
   const [notice, setNotice] = useState("")
+  const [pendingPurchaseId, setPendingPurchaseId] = useState<string | null>(null)
   const active = weaverColors.find((item) => item.id === state.activeWeaver) ?? weaverColors[0]
+  const pendingPurchase = useMemo(
+    () => weaverColors.find((item) => item.id === pendingPurchaseId) ?? null,
+    [pendingPurchaseId],
+  )
 
   function choose(id: string) {
+    const color = weaverColors.find((item) => item.id === id)
+    if (!color) return
+
     const owned = state.ownedWeavers.includes(id)
     if (owned) {
       equipWeaver(id)
-      setNotice("Weaver's color has been updated.")
+      setNotice(`${color.name} is now equipped.`)
       return
     }
-    const result = purchaseWeaver(id)
+
+    if (state.xpBalance < color.cost) {
+      setNotice(`You need ${color.cost - state.xpBalance} more XP to unlock ${color.name}.`)
+      return
+    }
+
+    setPendingPurchaseId(id)
+  }
+
+  function confirmPurchase() {
+    if (!pendingPurchase) return
+    const result = purchaseWeaver(pendingPurchase.id)
+    setPendingPurchaseId(null)
     setNotice(result.message)
   }
 
@@ -87,6 +107,20 @@ export function ShopClient() {
           )
         })}
       </div>
+
+      {pendingPurchase && (
+        <ConfirmDialog
+          open
+          title={`Unlock ${pendingPurchase.name}?`}
+          confirmLabel={`Spend ${pendingPurchase.cost} XP`}
+          tone="brand"
+          onCancel={() => setPendingPurchaseId(null)}
+          onConfirm={confirmPurchase}
+        >
+          This will use <strong className="font-semibold text-foreground">{pendingPurchase.cost} XP</strong> and automatically equip the new Weaver. You will have <strong className="font-semibold text-foreground">{state.xpBalance - pendingPurchase.cost} XP</strong> left.
+        </ConfirmDialog>
+      )}
+
       <NoticeDialog open={Boolean(notice)} title="Weaver shop" onClose={() => setNotice("")}>
         {notice}
       </NoticeDialog>

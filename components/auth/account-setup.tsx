@@ -1,11 +1,16 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useMemo, useState, type FormEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowRight, Check, Loader2 } from "lucide-react"
 import { Weaver } from "@/components/weaver"
 import { useApp } from "@/lib/app-state"
 import { safeInternalPath } from "@/lib/auth/redirects"
+import {
+  usernameSuggestionsFromEmail,
+  validateDisplayName,
+  validateUsername,
+} from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
 
 type InitialProfile = {
@@ -14,20 +19,24 @@ type InitialProfile = {
   confirmed_age_13_plus: boolean
 } | null
 
-export function AccountSetup({ initialName, initialProfile }: { initialName: string; initialProfile: InitialProfile }) {
+export function AccountSetup({
+  initialName,
+  initialEmail,
+  initialProfile,
+}: {
+  initialName: string
+  initialEmail: string
+  initialProfile: InitialProfile
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { state, ready, completeOnboarding } = useApp()
-  const [username, setUsername] = useState(initialProfile?.username ?? "")
+  const { completeOnboarding } = useApp()
+  const suggestions = useMemo(() => usernameSuggestionsFromEmail(initialEmail), [initialEmail])
+  const [username, setUsername] = useState(initialProfile?.username ?? suggestions[0] ?? "story_weaves")
   const [displayName, setDisplayName] = useState(initialProfile?.display_name ?? initialName)
   const [ageConfirmed, setAgeConfirmed] = useState(Boolean(initialProfile?.confirmed_age_13_plus))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
-  useEffect(() => {
-    if (!ready || initialProfile?.display_name) return
-    if (state.profile.name !== "Storyteller") setDisplayName(state.profile.name)
-  }, [initialProfile?.display_name, ready, state.profile.name])
 
   async function finish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -35,10 +44,10 @@ export function AccountSetup({ initialName, initialProfile }: { initialName: str
     const cleanUsername = username.trim().toLowerCase()
     const cleanDisplayName = displayName.trim()
 
-    if (!/^[a-z0-9][a-z0-9_]{2,23}$/.test(cleanUsername)) {
-      return setError("Use 3–24 lowercase letters, numbers, or underscores. Start with a letter or number.")
-    }
-    if (!cleanDisplayName) return setError("Enter a display name.")
+    const usernameError = validateUsername(cleanUsername)
+    if (usernameError) return setError(usernameError)
+    const displayNameError = validateDisplayName(cleanDisplayName)
+    if (displayNameError) return setError(displayNameError)
     if (!ageConfirmed) return setError("You must confirm that you are at least 13 to use StoryTuner.")
 
     setLoading(true)
@@ -60,7 +69,10 @@ export function AccountSetup({ initialName, initialProfile }: { initialName: str
     if (profileError) {
       setLoading(false)
       if (profileError.code === "23505") return setError("That username is already taken. Try another one.")
-      return setError("StoryTuner could not save your profile. Check that the Supabase profile migration has been applied, then try again.")
+      if (profileError.code === "23514" || profileError.message.toLowerCase().includes("public name")) {
+        return setError("Choose a different public name. Vulgar, sexual, hateful, or harassing terms are not allowed.")
+      }
+      return setError("StoryTuner could not save your profile. Check that the newest Supabase profile migration has been applied, then try again.")
     }
 
     completeOnboarding(cleanDisplayName)
@@ -77,7 +89,7 @@ export function AccountSetup({ initialName, initialProfile }: { initialName: str
           <span className="mx-auto mt-5 flex h-11 w-11 items-center justify-center rounded-full border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_10px_28px_rgba(21,93,183,0.10)]"><Check className="h-5 w-5" /></span>
           <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Profile setup</p>
           <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">Choose how you appear in StoryTuner.</h1>
-          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">Your username is public in Community. It is separate from the email you use to log in.</p>
+          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">Your public name is separate from the email you use to log in.</p>
 
           <form onSubmit={finish} className="mt-8 space-y-5">
             <label className="block">
@@ -85,11 +97,25 @@ export function AccountSetup({ initialName, initialProfile }: { initialName: str
               <input
                 value={username}
                 onChange={(event) => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24))}
-                placeholder="august_stories"
+                placeholder={suggestions[0] ?? "story_weaves"}
                 autoComplete="username"
                 className="auth-input mt-2"
               />
             </label>
+            {suggestions.length > 1 && (
+              <div className="-mt-2 flex flex-wrap gap-2" aria-label="Suggested usernames">
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setUsername(suggestion)}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${username === suggestion ? "border-brand bg-brand-soft text-accent-foreground" : "border-border bg-background text-muted-foreground hover:border-brand/40"}`}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
             <label className="block">
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Display name</span>
               <input
@@ -109,7 +135,7 @@ export function AccountSetup({ initialName, initialProfile }: { initialName: str
 
             <button
               type="submit"
-              disabled={!ready || loading}
+              disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_rgba(38,34,29,0.12)] transition active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Enter StoryTuner <ArrowRight className="h-4 w-4" /></>}
@@ -119,5 +145,4 @@ export function AccountSetup({ initialName, initialProfile }: { initialName: str
       </section>
     </main>
   )
-
 }

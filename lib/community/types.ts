@@ -45,3 +45,13 @@ export type CommunityFeedResponse = {
 export type CommunityRepliesResponse = {
   replies: CommunityReply[]
 }
+
+export type CommunityReportReason =
+  | "harassment"
+  | "hate"
+  | "sexual_content"
+  | "violence"
+  | "self_harm"
+  | "personal_information"
+  | "spam"
+  | "other"

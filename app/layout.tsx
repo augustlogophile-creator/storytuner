@@ -2,6 +2,8 @@ import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
+import { getMembershipByUserId } from "@/lib/membership-server"
+import { getAuthenticatedUser } from "@/lib/require-auth"
 import "./globals.css"
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
@@ -21,11 +23,34 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const authenticated = await getAuthenticatedUser()
+  let initialDisplayName = "Storyteller"
+  let initialMembershipActive = false
+
+  if (authenticated) {
+    const [membership, profileResult] = await Promise.all([
+      getMembershipByUserId(authenticated.id),
+      authenticated.supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", authenticated.id)
+        .maybeSingle<{ display_name: string }>(),
+    ])
+    initialMembershipActive = membership.active
+    initialDisplayName = profileResult.data?.display_name?.trim() || "Storyteller"
+  }
+
   return (
     <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders
+          initialUserId={authenticated?.id ?? null}
+          initialDisplayName={initialDisplayName}
+          initialMembershipActive={initialMembershipActive}
+        >
+          {children}
+        </AppProviders>
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
