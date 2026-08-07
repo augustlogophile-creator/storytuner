@@ -2,6 +2,7 @@ import type { CommunityReportReason } from "@/lib/community/types"
 
 export type ModerationAccountStatus = "active" | "suspended" | "banned"
 export type ModerationReportStatus = "open" | "reviewing" | "resolved" | "dismissed"
+export type ModerationReportSource = "user" | "ai"
 
 export type ModerationActionHistoryItem = {
   actionType: string
@@ -18,7 +19,14 @@ export type ModerationReportItem = {
   createdAt: string
   reviewedAt: string | null
   resolutionNote: string | null
-  reporter: { id: string; username: string }
+  source: ModerationReportSource
+  reporter: { id: string; username: string } | null
+  ai: {
+    model: string | null
+    topCategory: string | null
+    topScore: number | null
+    recommendedAction: string | null
+  } | null
   targetUser: {
     id: string
     username: string

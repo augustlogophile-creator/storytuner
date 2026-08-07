@@ -84,6 +84,7 @@ export async function POST(request: Request) {
 
   const { error } = await context.admin.from("community_reports").insert({
     reporter_id: context.userId,
+    source: "user",
     post_id: postId,
     reply_id: replyId,
     reason,

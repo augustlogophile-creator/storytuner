@@ -20,6 +20,7 @@ const statuses: { value: ModerationReportStatus; label: string }[] = [
 
 const actions: { value: ModerationAction; label: string }[] = [
   { value: "hide", label: "Remove content" },
+  { value: "restore_content", label: "Restore content" },
   { value: "warn", label: "Record warning" },
   { value: "suspend_community", label: "Suspend Community" },
   { value: "suspend_account", label: "Suspend account" },
@@ -134,16 +135,30 @@ function ReportSummary({ report }: { report: ModerationReportItem }) {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">@{report.targetUser.username} · {new Date(report.createdAt).toLocaleDateString()}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-muted-foreground">
-          {report.content.kind}
-        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {report.source === "ai" && (
+            <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-brand">AI</span>
+          )}
+          <span className="rounded-full bg-secondary px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-muted-foreground">
+            {report.content.kind}
+          </span>
+        </div>
       </div>
 
       <blockquote className="mt-4 rounded-2xl bg-secondary/60 px-4 py-3 text-sm leading-6">
         {report.content.body || "This content is no longer visible in Community."}
       </blockquote>
 
-      {report.details && <p className="mt-3 text-xs leading-5 text-muted-foreground">Reporter note: {report.details}</p>}
+      {report.details && (
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">
+          {report.source === "ai" ? "AI review: " : "Reporter note: "}{report.details}
+        </p>
+      )}
+      {report.source === "ai" && report.ai?.recommendedAction && (
+        <p className="mt-2 rounded-xl bg-brand-soft/55 px-3 py-2 text-xs font-medium leading-5 text-foreground">
+          Suggested: {report.ai.recommendedAction}
+        </p>
+      )}
       <p className="mt-3 text-xs text-muted-foreground">
         {report.targetUser.priorReports} report{report.targetUser.priorReports === 1 ? "" : "s"} · {report.targetUser.priorActions} prior action{report.targetUser.priorActions === 1 ? "" : "s"}
       </p>
@@ -158,7 +173,8 @@ function OpenReportCard({
   report: ModerationReportItem
   onMoved: (id: string, status: ModerationReportStatus) => void
 }) {
-  const [action, setAction] = useState<ModerationAction>("hide")
+  const aiSuggestsSuspension = report.source === "ai" && Boolean(report.ai?.recommendedAction?.includes("7-day Community suspension"))
+  const [action, setAction] = useState<ModerationAction>(aiSuggestsSuspension ? "suspend_community" : "hide")
   const [durationDays, setDurationDays] = useState(7)
   const [note, setNote] = useState("")
   const [hideContent, setHideContent] = useState(true)

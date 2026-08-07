@@ -28,7 +28,7 @@ const bodySchema = z.object({
 })
 
 type RouteContext = { params: Promise<{ reportId: string }> }
-type ReportRow = { id: string; post_id: string | null; reply_id: string | null; status: string }
+type ReportRow = { id: string; post_id: string | null; reply_id: string | null; status: string; source: "user" | "ai" }
 type TargetRow = { author_id: string; status: string }
 
 function futureDate(days: number) {
@@ -53,7 +53,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 
   const { data: report, error: reportError } = await context.admin
     .from("community_reports")
-    .select("id, post_id, reply_id, status")
+    .select("id, post_id, reply_id, status, source")
     .eq("id", params.data.reportId)
     .maybeSingle<ReportRow>()
 
@@ -230,6 +230,10 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       const { error } = await context.admin.from(targetTable).update({ status: "removed" }).eq("id", targetId)
       if (error) throw error
       await logAction(context.admin, target.author_id, context.userId, report.id, "hide_content", durationDays ?? null, note)
+    } else if (shouldHide && target.status === "removed" && report.source === "ai") {
+      // The AI already held this content before it became visible. Record the
+      // owner's decision to keep it removed so the audit history is explicit.
+      await logAction(context.admin, target.author_id, context.userId, report.id, "hide_content", durationDays ?? null, note || "AI hold confirmed")
     }
 
     if (action === "restore_content") {
@@ -298,6 +302,11 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     }
 
     const dismissed = action === "dismiss"
+    if (dismissed && report.source === "ai" && target.status === "removed") {
+      const { error: restoreError } = await context.admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
+      if (restoreError) throw restoreError
+      await logAction(context.admin, target.author_id, context.userId, report.id, "restore_content", null, note || "AI flag dismissed")
+    }
     const resolutionStatus = dismissed ? "dismissed" : "resolved"
     const { error: updateError } = await context.admin
       .from("community_reports")

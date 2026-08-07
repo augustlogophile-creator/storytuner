@@ -12,7 +12,8 @@ export const runtime = "nodejs"
 
 type ReportRow = {
   id: string
-  reporter_id: string
+  reporter_id: string | null
+  source: "user" | "ai"
   post_id: string | null
   reply_id: string | null
   reason: CommunityReportReason
@@ -21,6 +22,10 @@ type ReportRow = {
   created_at: string
   reviewed_at: string | null
   resolution_note: string | null
+  ai_model: string | null
+  ai_top_category: string | null
+  ai_top_score: number | null
+  ai_recommended_action: string | null
 }
 type ProfileRow = { id: string; username: string; display_name: string }
 type PostRow = { id: string; author_id: string; body: string; status: string }
@@ -54,7 +59,7 @@ export async function GET(request: Request) {
 
   const reportsResult = await context.admin
     .from("community_reports")
-    .select("id, reporter_id, post_id, reply_id, reason, details, status, created_at, reviewed_at, resolution_note")
+    .select("id, reporter_id, source, post_id, reply_id, reason, details, status, created_at, reviewed_at, resolution_note, ai_model, ai_top_category, ai_top_score, ai_recommended_action")
     .eq("status", status)
     .order("created_at", { ascending: true })
     .limit(100)
@@ -110,7 +115,7 @@ export async function GET(request: Request) {
   })))
   const profileIds = Array.from(new Set([
     ...targetUserIds,
-    ...rows.map((row: ReportRow) => row.reporter_id),
+    ...rows.flatMap((row: ReportRow) => row.reporter_id ? [row.reporter_id] : []),
   ]))
 
   const [profilesResult, statusesResult, actionsResult] = await Promise.all([
@@ -167,7 +172,7 @@ export async function GET(request: Request) {
     if (!targetId) continue
 
     const targetProfile = profiles.get(targetId)
-    const reporterProfile = profiles.get(report.reporter_id)
+    const reporterProfile = report.reporter_id ? profiles.get(report.reporter_id) : undefined
     const moderationStatus = statuses.get(targetId)
 
     safeReports.push({
@@ -178,10 +183,17 @@ export async function GET(request: Request) {
       createdAt: report.created_at,
       reviewedAt: report.reviewed_at,
       resolutionNote: report.resolution_note,
-      reporter: {
+      source: report.source,
+      reporter: report.reporter_id ? {
         id: report.reporter_id,
         username: reporterProfile?.username ?? "unknown_reporter",
-      },
+      } : null,
+      ai: report.source === "ai" ? {
+        model: report.ai_model,
+        topCategory: report.ai_top_category,
+        topScore: report.ai_top_score,
+        recommendedAction: report.ai_recommended_action,
+      } : null,
       targetUser: {
         id: targetId,
         username: targetProfile?.username ?? `member_${targetId.slice(0, 6)}`,

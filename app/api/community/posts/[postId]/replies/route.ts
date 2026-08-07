@@ -2,6 +2,7 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson, type CommunityApiContext } from "@/lib/community/server"
 import type { CommunityReply, CommunityContentStatus } from "@/lib/community/types"
 import { renderableCommunityReplies } from "@/lib/community/visible-replies"
+import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -163,6 +164,17 @@ export async function POST(request: Request, routeContext: RouteContext) {
       return noStoreJson({ error: "You have posted several replies recently. Wait a few minutes before replying again." }, { status: 429 })
     }
 
+    let moderation
+    try {
+      moderation = await moderateCommunityText(parsedBody.data.body)
+    } catch (moderationError) {
+      console.error("Community reply AI moderation unavailable", moderationError)
+      return noStoreJson(
+        { error: "Community safety checks are temporarily unavailable. Please try replying again in a moment." },
+        { status: 503 },
+      )
+    }
+
     const { data: inserted, error: insertError } = await context.admin
       .from("community_replies")
       .insert({
@@ -170,12 +182,31 @@ export async function POST(request: Request, routeContext: RouteContext) {
         author_id: context.userId,
         parent_reply_id: parentReplyId,
         body: parsedBody.data.body,
-        status: "active",
+        status: moderation.flagged ? "removed" : "active",
       })
       .select("id, post_id, parent_reply_id, author_id, body, status, created_at, edited_at")
       .single<ReplyRow>()
 
     if (insertError) throw insertError
+
+    if (moderation.flagged) {
+      try {
+        await createAiModerationReport({
+          admin: context.admin,
+          userId: context.userId,
+          replyId: inserted.id,
+          moderation,
+        })
+      } catch (reportError) {
+        console.error("AI reply moderation report creation failed", reportError)
+        await context.admin.from("community_replies").delete().eq("id", inserted.id)
+        return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
+      }
+      return noStoreJson(
+        { heldForReview: true, message: COMMUNITY_AI_HOLD_MESSAGE },
+        { status: 202 },
+      )
+    }
 
     const reply: CommunityReply = {
       id: inserted.id,

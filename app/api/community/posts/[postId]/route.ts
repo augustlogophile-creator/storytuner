@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost } from "@/lib/community/types"
+import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
+import { countActiveRenderableReplies } from "@/lib/community/visible-replies"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -49,10 +51,21 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   if (existing.author_id !== context.userId) return noStoreJson({ error: "You can edit only your own posts." }, { status: 403 })
   if (existing.post_type !== "text") return noStoreJson({ error: "This shared item cannot be edited here." }, { status: 400 })
 
+  let moderation
+  try {
+    moderation = await moderateCommunityText(parsedBody.data.body)
+  } catch (moderationError) {
+    console.error("Community post edit AI moderation unavailable", moderationError)
+    return noStoreJson(
+      { error: "Community safety checks are temporarily unavailable. Please try saving again in a moment." },
+      { status: 503 },
+    )
+  }
+
   const editedAt = new Date().toISOString()
   const { data: updated, error: updateError } = await context.admin
     .from("community_posts")
-    .update({ body: parsedBody.data.body, edited_at: editedAt })
+    .update({ body: parsedBody.data.body, edited_at: editedAt, status: moderation.flagged ? "removed" : "active" })
     .eq("id", existing.id)
     .eq("author_id", context.userId)
     .eq("status", "active")
@@ -64,10 +77,35 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return noStoreJson({ error: "The post could not be updated." }, { status: 500 })
   }
 
-  const [{ count: likeCount }, { count: replyCount }] = await Promise.all([
+  if (moderation.flagged) {
+    try {
+      await createAiModerationReport({
+        admin: context.admin,
+        userId: context.userId,
+        postId: updated.id,
+        moderation,
+      })
+    } catch (reportError) {
+      console.error("AI moderation report creation failed for edited post", reportError)
+      await context.admin
+        .from("community_posts")
+        .update({ body: existing.body, edited_at: existing.edited_at, status: "active" })
+        .eq("id", existing.id)
+      return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
+    }
+    return noStoreJson({ heldForReview: true, message: COMMUNITY_AI_HOLD_MESSAGE }, { status: 202 })
+  }
+
+  const [{ count: likeCount }, repliesResult] = await Promise.all([
     context.admin.from("community_post_likes").select("post_id", { count: "exact", head: true }).eq("post_id", updated.id),
-    context.admin.from("community_replies").select("id", { count: "exact", head: true }).eq("post_id", updated.id).eq("status", "active"),
+    context.userClient
+      .from("community_replies")
+      .select("id, parent_reply_id, status")
+      .eq("post_id", updated.id)
+      .returns<Array<{ id: string; parent_reply_id: string | null; status: string }>>(),
   ])
+  if (repliesResult.error) console.error("Community post edit reply-count refresh failed", repliesResult.error)
+  const replyCount = countActiveRenderableReplies(repliesResult.data ?? [])
 
   const post: CommunityFeedPost = {
     id: updated.id,
@@ -83,7 +121,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       username: context.profile.username,
     },
     likeCount: likeCount ?? 0,
-    replyCount: replyCount ?? 0,
+    replyCount,
     likedByViewer: false,
     mine: true,
   }

@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost } from "@/lib/community/types"
+import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -42,18 +43,48 @@ export async function POST(request: Request) {
       )
     }
 
+    let moderation
+    try {
+      moderation = await moderateCommunityText(parsed.data.body)
+    } catch (moderationError) {
+      console.error("Community AI moderation unavailable", moderationError)
+      return noStoreJson(
+        { error: "Community safety checks are temporarily unavailable. Please try publishing again in a moment." },
+        { status: 503 },
+      )
+    }
+
     const { data, error } = await context.admin
       .from("community_posts")
       .insert({
         author_id: context.userId,
         post_type: "text",
         body: parsed.data.body,
-        status: "active",
+        status: moderation.flagged ? "removed" : "active",
       })
       .select("id, created_at")
       .single<InsertedPost>()
 
     if (error) throw error
+
+    if (moderation.flagged) {
+      try {
+        await createAiModerationReport({
+          admin: context.admin,
+          userId: context.userId,
+          postId: data.id,
+          moderation,
+        })
+      } catch (reportError) {
+        console.error("AI moderation report creation failed", reportError)
+        await context.admin.from("community_posts").delete().eq("id", data.id)
+        return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
+      }
+      return noStoreJson(
+        { heldForReview: true, message: COMMUNITY_AI_HOLD_MESSAGE },
+        { status: 202 },
+      )
+    }
 
     const post: CommunityFeedPost = {
       id: data.id,

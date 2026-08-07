@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityReply, CommunityContentStatus } from "@/lib/community/types"
+import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -46,10 +47,21 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That reply is no longer available." }, { status: 404 })
   if (existing.author_id !== context.userId) return noStoreJson({ error: "You can edit only your own replies." }, { status: 403 })
 
+  let moderation
+  try {
+    moderation = await moderateCommunityText(parsedBody.data.body)
+  } catch (moderationError) {
+    console.error("Community reply edit AI moderation unavailable", moderationError)
+    return noStoreJson(
+      { error: "Community safety checks are temporarily unavailable. Please try saving again in a moment." },
+      { status: 503 },
+    )
+  }
+
   const editedAt = new Date().toISOString()
   const { data: updated, error: updateError } = await context.admin
     .from("community_replies")
-    .update({ body: parsedBody.data.body, edited_at: editedAt })
+    .update({ body: parsedBody.data.body, edited_at: editedAt, status: moderation.flagged ? "removed" : "active" })
     .eq("id", existing.id)
     .eq("author_id", context.userId)
     .eq("status", "active")
@@ -59,6 +71,25 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   if (updateError) {
     console.error("Community reply edit failed", updateError)
     return noStoreJson({ error: "The reply could not be updated." }, { status: 500 })
+  }
+
+  if (moderation.flagged) {
+    try {
+      await createAiModerationReport({
+        admin: context.admin,
+        userId: context.userId,
+        replyId: updated.id,
+        moderation,
+      })
+    } catch (reportError) {
+      console.error("AI moderation report creation failed for edited reply", reportError)
+      await context.admin
+        .from("community_replies")
+        .update({ body: existing.body, edited_at: existing.edited_at, status: "active" })
+        .eq("id", existing.id)
+      return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
+    }
+    return noStoreJson({ heldForReview: true, message: COMMUNITY_AI_HOLD_MESSAGE }, { status: 202 })
   }
 
   const [{ count: likeCount }, { data: ownLike }] = await Promise.all([

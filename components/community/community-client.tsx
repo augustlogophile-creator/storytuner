@@ -39,6 +39,7 @@ import type {
   CommunityReportReason,
 } from "@/lib/community/types"
 import { cn } from "@/lib/utils"
+import { countActiveRenderableReplies } from "@/lib/community/visible-replies"
 
 type CommunityClientProps = {
   membershipActive: boolean
@@ -115,6 +116,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
   const [draft, setDraft] = useState("")
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState("")
+  const [publishNotice, setPublishNotice] = useState("")
   const [membershipRequired, setMembershipRequired] = useState(false)
 
   const loadPage = useCallback(async (targetPage: number, replace: boolean) => {
@@ -182,9 +184,14 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ body }),
       })
-      const payload = (await response.json()) as { post?: CommunityFeedPost } & ApiErrorPayload
+      const payload = (await response.json()) as { post?: CommunityFeedPost; heldForReview?: boolean; message?: string } & ApiErrorPayload
       if (isMembershipDenial(response, payload)) {
         setMembershipRequired(true)
+        return
+      }
+      if (response.ok && payload.heldForReview) {
+        setDraft("")
+        setPublishNotice(payload.message || "This post is being held for moderator review and is not visible to other members.")
         return
       }
       if (!response.ok || !payload.post) throw new Error(payload.error || "Your post could not be published.")
@@ -296,6 +303,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
                 onUpdated={updatePost}
                 onDeleted={deletePost}
                 onMembershipRequired={() => setMembershipRequired(true)}
+                onModerationHeld={(message) => setPublishNotice(message)}
               />
             ))}
             {hasMore && (
@@ -312,6 +320,9 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
           </div>
         )}
       </section>
+      <NoticeDialog open={Boolean(publishNotice)} title="Held for review" onClose={() => setPublishNotice("")}>
+        {publishNotice}
+      </NoticeDialog>
     </div>
   )
 }
@@ -333,9 +344,10 @@ type PostCardProps = {
   onUpdated: (post: CommunityFeedPost) => void
   onDeleted: (postId: string) => void
   onMembershipRequired: () => void
+  onModerationHeld: (message: string) => void
 }
 
-function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCardProps) {
+function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerationHeld }: PostCardProps) {
   const [liking, setLiking] = useState(false)
   const [postError, setPostError] = useState("")
   const [editing, setEditing] = useState(false)
@@ -345,6 +357,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [notice, setNotice] = useState("")
+  const [noticeTitle, setNoticeTitle] = useState("Report received")
   const [threadOpen, setThreadOpen] = useState(false)
   const [threadLoaded, setThreadLoaded] = useState(false)
   const [threadLoading, setThreadLoading] = useState(false)
@@ -397,9 +410,15 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ body }),
       })
-      const payload = (await response.json()) as { post?: CommunityFeedPost } & ApiErrorPayload
+      const payload = (await response.json()) as { post?: CommunityFeedPost; heldForReview?: boolean; message?: string } & ApiErrorPayload
       if (isMembershipDenial(response, payload)) {
         onMembershipRequired()
+        return
+      }
+      if (response.ok && payload.heldForReview) {
+        setEditing(false)
+        onModerationHeld(payload.message || "This edit is being held for moderator review and is no longer visible to other members.")
+        onDeleted(post.id)
         return
       }
       if (!response.ok || !payload.post) throw new Error(payload.error || "The post could not be updated.")
@@ -498,9 +517,16 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ body, parentReplyId: replyingTo?.id ?? null }),
       })
-      const payload = (await response.json()) as { reply?: CommunityReply } & ApiErrorPayload
+      const payload = (await response.json()) as { reply?: CommunityReply; heldForReview?: boolean; message?: string } & ApiErrorPayload
       if (isMembershipDenial(response, payload)) {
         onMembershipRequired()
+        return
+      }
+      if (response.ok && payload.heldForReview) {
+        setReplyDraft("")
+        setReplyingTo(null)
+        setNoticeTitle("Held for review")
+        setNotice(payload.message || "This reply is being held for moderator review and is not visible to other members.")
         return
       }
       if (!response.ok || !payload.reply) throw new Error(payload.error || "Your reply could not be posted.")
@@ -527,24 +553,28 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
   }
 
   function markReplyDeleted(replyId: string) {
-    const deletedReply = replies.find((reply) => reply.id === replyId)
-    setReplies((current) => current.map((reply) => (
+    const nextReplies = replies.map((reply) => (
       reply.id === replyId
         ? {
             ...reply,
             body: "",
-            status: "deleted",
+            status: "deleted" as const,
             author: { id: "", displayName: "StoryTuner member", username: "member" },
             mine: false,
             likeCount: 0,
             likedByViewer: false,
           }
         : reply
-    )))
-    // Every active comment contributes one response, including nested replies.
-    if (deletedReply && deletedReply.status === "active") {
-      onUpdated({ ...post, replyCount: Math.max(0, post.replyCount - 1) })
-    }
+    ))
+    setReplies(nextReplies)
+    // Count every active comment that still has a visible ancestry. If a parent
+    // disappears, its nested descendants stop counting immediately too.
+    const nextReplyCount = countActiveRenderableReplies(nextReplies.map((reply) => ({
+      id: reply.id,
+      parent_reply_id: reply.parentReplyId,
+      status: reply.status,
+    })))
+    onUpdated({ ...post, replyCount: nextReplyCount })
     if (replyingTo?.id === replyId) setReplyingTo(null)
   }
 
@@ -646,6 +676,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
                   onUpdated={updateReply}
                   onDeleted={markReplyDeleted}
                   onMembershipRequired={onMembershipRequired}
+                  onModerationHeld={(message) => { setNoticeTitle("Held for review"); setNotice(message) }}
                   autoRevealReplyId={newestReplyId}
                 />
               ))}
@@ -705,10 +736,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
         target="post"
         targetId={post.id}
         onCancel={() => setReportOpen(false)}
-        onReported={(message) => { setReportOpen(false); setNotice(message) }}
+        onReported={(message) => { setReportOpen(false); setNoticeTitle("Report received"); setNotice(message) }}
       />
 
-      <NoticeDialog open={Boolean(notice)} title="Report received" onClose={() => setNotice("")}>{notice}</NoticeDialog>
+      <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={() => setNotice("")}>{notice}</NoticeDialog>
     </article>
   )
 }
@@ -721,10 +752,11 @@ type ReplyThreadGroupProps = {
   onUpdated: (reply: CommunityReply) => void
   onDeleted: (replyId: string) => void
   onMembershipRequired: () => void
+  onModerationHeld: (message: string) => void
   autoRevealReplyId: string | null
 }
 
-function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, onDeleted, onMembershipRequired, autoRevealReplyId }: ReplyThreadGroupProps) {
+function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, onDeleted, onMembershipRequired, onModerationHeld, autoRevealReplyId }: ReplyThreadGroupProps) {
   const [childrenOpen, setChildrenOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(4)
   const activeChildren = children.filter((reply) => reply.status === "active")
@@ -748,6 +780,7 @@ function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, on
         onUpdated={onUpdated}
         onDeleted={onDeleted}
         onMembershipRequired={onMembershipRequired}
+        onModerationHeld={onModerationHeld}
       />
 
       {activeChildren.length > 0 && !childrenOpen && (
@@ -771,6 +804,7 @@ function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, on
               onUpdated={onUpdated}
               onDeleted={onDeleted}
               onMembershipRequired={onMembershipRequired}
+              onModerationHeld={onModerationHeld}
               nested
             />
           ))}
@@ -826,10 +860,11 @@ type ReplyCardProps = {
   onUpdated: (reply: CommunityReply) => void
   onDeleted: (replyId: string) => void
   onMembershipRequired: () => void
+  onModerationHeld: (message: string) => void
   nested?: boolean
 }
 
-function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembershipRequired, nested = false }: ReplyCardProps) {
+function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembershipRequired, onModerationHeld, nested = false }: ReplyCardProps) {
   const [liking, setLiking] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editDraft, setEditDraft] = useState(reply.body)
@@ -838,6 +873,7 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [notice, setNotice] = useState("")
+  const [noticeTitle, setNoticeTitle] = useState("Report received")
   const [error, setError] = useState("")
 
   if (reply.status !== "active") {
@@ -881,8 +917,14 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ body }),
       })
-      const payload = (await response.json()) as { reply?: CommunityReply } & ApiErrorPayload
+      const payload = (await response.json()) as { reply?: CommunityReply; heldForReview?: boolean; message?: string } & ApiErrorPayload
       if (isMembershipDenial(response, payload)) { onMembershipRequired(); return }
+      if (response.ok && payload.heldForReview) {
+        setEditing(false)
+        onModerationHeld(payload.message || "This edit is being held for moderator review and is no longer visible to other members.")
+        onDeleted(reply.id)
+        return
+      }
       if (!response.ok || !payload.reply) throw new Error(payload.error || "The reply could not be updated.")
       onUpdated(payload.reply)
       setEditing(false)
@@ -965,8 +1007,8 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
         The reply will be replaced with a deleted placeholder so the rest of the conversation still makes sense. This cannot be undone.
       </ConfirmDialog>
 
-      <ReportDialog open={reportOpen} target="reply" targetId={reply.id} onCancel={() => setReportOpen(false)} onReported={(message) => { setReportOpen(false); setNotice(message) }} />
-      <NoticeDialog open={Boolean(notice)} title="Report received" onClose={() => setNotice("")}>{notice}</NoticeDialog>
+      <ReportDialog open={reportOpen} target="reply" targetId={reply.id} onCancel={() => setReportOpen(false)} onReported={(message) => { setReportOpen(false); setNoticeTitle("Report received"); setNotice(message) }} />
+      <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={() => setNotice("")}>{notice}</NoticeDialog>
     </div>
   )
 }
