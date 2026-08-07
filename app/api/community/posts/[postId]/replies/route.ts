@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson, type CommunityApiContext } from "@/lib/community/server"
 import type { CommunityReply, CommunityContentStatus } from "@/lib/community/types"
+import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -59,7 +60,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
 
     if (repliesError) throw repliesError
 
-    const replyRows: ReplyRow[] = rows ?? []
+    const replyRows: ReplyRow[] = renderableCommunityReplies(rows ?? [])
     const authorIds = Array.from(new Set(replyRows.filter((reply: ReplyRow) => reply.status === "active").map((reply: ReplyRow) => reply.author_id)))
     const replyIds = replyRows.map((reply: ReplyRow) => reply.id)
 

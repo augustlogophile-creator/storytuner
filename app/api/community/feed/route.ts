@@ -1,5 +1,6 @@
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types"
+import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -27,7 +28,12 @@ type ProfileRow = {
 }
 
 type ViewerLikeRow = { post_id: string }
-type ActiveReplyRow = { post_id: string }
+type VisibleReplyRow = {
+  id: string
+  post_id: string
+  parent_reply_id: string | null
+  status: string
+}
 
 function parsePage(request: Request) {
   const raw = new URL(request.url).searchParams.get("page")
@@ -87,11 +93,10 @@ export async function GET(request: Request) {
       postIds.length
         ? context.userClient
             .from("community_replies")
-            .select("post_id")
+            .select("id, post_id, parent_reply_id, status")
             .in("post_id", postIds)
-            .eq("status", "active")
-            .returns<ActiveReplyRow[]>()
-        : Promise.resolve({ data: [] as ActiveReplyRow[], error: null }),
+            .returns<VisibleReplyRow[]>()
+        : Promise.resolve({ data: [] as VisibleReplyRow[], error: null }),
     ])
 
     if (profilesResult.error) logCommunityQueryError("Community author lookup failed", profilesResult.error)
@@ -100,12 +105,15 @@ export async function GET(request: Request) {
 
     const profileRows: ProfileRow[] = profilesResult.data ?? []
     const viewerLikeRows: ViewerLikeRow[] = viewerLikesResult.data ?? []
-    const activeReplyRows: ActiveReplyRow[] = activeRepliesResult.data ?? []
+    const visibleReplyRows: VisibleReplyRow[] = activeRepliesResult.data ?? []
     const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
     const likedByViewer = new Set<string>(viewerLikeRows.map((like: ViewerLikeRow) => like.post_id))
     const visibleReplyCounts = new Map<string, number>()
-    for (const reply of activeReplyRows) {
-      visibleReplyCounts.set(reply.post_id, (visibleReplyCounts.get(reply.post_id) ?? 0) + 1)
+    for (const postId of postIds) {
+      const rowsForPost = visibleReplyRows.filter((reply) => reply.post_id === postId)
+      const renderableRows = renderableCommunityReplies(rowsForPost)
+      const activeCount = renderableRows.filter((reply) => reply.status === "active").length
+      visibleReplyCounts.set(postId, activeCount)
     }
 
     const safePosts: CommunityFeedPost[] = posts.map((post) => {
