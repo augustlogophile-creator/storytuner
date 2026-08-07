@@ -15,7 +15,10 @@ export function CoachClient() {
   const [error, setError] = useState("")
   const [recordingId, setRecordingId] = useState("")
   const endRef = useRef<HTMLDivElement | null>(null)
-  const remaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
+  const requestKeyRef = useRef<string | null>(null)
+  const [serverRemaining, setServerRemaining] = useState<number | null>(null)
+  const localRemaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
+  const remaining = state.premium ? Number.POSITIVE_INFINITY : (serverRemaining ?? localRemaining)
   const blocked = !state.premium && remaining === 0
   const recording = useMemo(
     () => state.recordings.find((item) => item.id === recordingId),
@@ -30,11 +33,27 @@ export function CoachClient() {
 
   useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [state.coach.messages, loading])
 
+  useEffect(() => {
+    let cancelled = false
+    void fetch("/api/usage", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null
+        return response.json() as Promise<{ coach?: { remaining?: number } }>
+      })
+      .then((data) => {
+        if (!cancelled && typeof data?.coach?.remaining === "number") setServerRemaining(data.coach.remaining)
+      })
+      .catch(() => undefined)
+    return () => { cancelled = true }
+  }, [state.premium])
+
   async function send() {
     const clean = input.trim()
     if (!clean || loading || blocked) return
     setLoading(true)
     setError("")
+    const requestKey = requestKeyRef.current ?? crypto.randomUUID()
+    requestKeyRef.current = requestKey
     try {
       const history = state.coach.messages.slice(-10).map((message) => ({ role: message.role, content: message.content }))
       const response = await fetch("/api/coach", {
@@ -45,11 +64,17 @@ export function CoachClient() {
           storyContext: recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.",
           scoreContext: recording ? scoreContext(recording) : "No prior score selected.",
           personalizationContext: state.settings.aiOptIn ? personalizationContext(state.recordings) : "",
+          requestKey,
         }),
       })
-      const data = (await response.json()) as { reply?: string; error?: string }
-      if (!response.ok || !data.reply) throw new Error(data.error || "Weaver could not respond.")
+      const data = (await response.json()) as { reply?: string; error?: string; code?: string; usage?: { remaining?: number } }
+      if (typeof data.usage?.remaining === "number") setServerRemaining(data.usage.remaining)
+      if (!response.ok || !data.reply) {
+        if (data.code === "COACH_LIMIT_REACHED") setServerRemaining(0)
+        throw new Error(data.error || "Weaver could not respond.")
+      }
       addCoachExchange(clean, data.reply)
+      requestKeyRef.current = null
       setInput("")
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Weaver could not respond.")
@@ -136,7 +161,7 @@ export function CoachClient() {
             <div className="flex items-end gap-2 rounded-2xl border border-border bg-background px-3 py-2 focus-within:border-brand">
               <textarea
                 value={input}
-                onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setInput(event.target.value)}
+                onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { requestKeyRef.current = null; setInput(event.target.value) }}
                 onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault()

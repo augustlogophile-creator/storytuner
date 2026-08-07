@@ -188,7 +188,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "lesson", unitTitle: unit.title, technique: unit.skill, prompt: unit.drill.prompt, answer: response }),
+        body: JSON.stringify({ mode: "lesson", unitIndex: unit.index, unitTitle: unit.title, technique: unit.skill, prompt: unit.drill.prompt, answer: response }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "The coach could not respond.")

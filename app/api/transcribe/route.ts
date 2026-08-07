@@ -1,5 +1,7 @@
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson, transcribeWithOpenAI } from "@/lib/openai-server"
+import { getMembershipByUserId } from "@/lib/membership-server"
+import { isUuid, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -23,12 +25,50 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData()
     const file = form.get("file")
+    const requestKey = form.get("requestKey")
+    const durationSeconds = Number(form.get("durationSeconds") ?? 0)
     if (!(file instanceof File)) return Response.json({ error: "No recording was provided." }, { status: 400 })
     if (file.size > 4 * 1024 * 1024) return Response.json({ error: "This recording is too large to transcribe." }, { status: 413 })
+    if (!isUuid(requestKey)) return Response.json({ error: "This transcription request is missing a valid request key." }, { status: 400 })
 
-    const raw = await transcribeWithOpenAI(file)
+    const membership = await getMembershipByUserId(user.id)
+    if (!membership.active && Number.isFinite(durationSeconds) && durationSeconds > 300) {
+      return Response.json({
+        code: "ARENA_DURATION_MEMBERSHIP_REQUIRED",
+        error: "Recording targets longer than five minutes require StoryTuner Membership.",
+      }, { status: 403 })
+    }
+    let reservation: UsageReservation | null = null
+    if (!membership.active) {
+      reservation = await reserveUsage(user.id, "arena_review", requestKey)
+      if (!reservation.allowed) {
+        return Response.json({
+          code: "ARENA_LIMIT_REACHED",
+          error: "You have used both free spoken story reviews. Membership unlocks unlimited practice.",
+          usage: reservation,
+        }, { status: 403 })
+      }
+    }
+
+    let raw: string
+    try {
+      raw = await transcribeWithOpenAI(file)
+    } catch (error) {
+      if (reservation && !reservation.alreadyReserved) {
+        await releaseUsage(user.id, "arena_review", requestKey).catch((releaseError) =>
+          console.error("Transcription usage rollback failed", releaseError),
+        )
+      }
+      throw error
+    }
+
     const rawWordCount = meaningfulWordCount(raw)
     if (rawWordCount < 3) {
+      if (reservation && !reservation.alreadyReserved) {
+        await releaseUsage(user.id, "arena_review", requestKey).catch((releaseError) =>
+          console.error("No-speech usage rollback failed", releaseError),
+        )
+      }
       return Response.json({
         code: "NO_SPEECH",
         wordCount: rawWordCount,
@@ -50,10 +90,10 @@ export async function POST(req: Request) {
       })
       const text = cleaned.transcript.trim()
       const wordCount = meaningfulWordCount(text)
-      return Response.json({ text, title: cleaned.title.trim(), wordCount, minimumWords: MIN_STORY_WORDS })
+      return Response.json({ text, title: cleaned.title.trim(), wordCount, minimumWords: MIN_STORY_WORDS, usage: reservation })
     } catch (cleanupError) {
       console.error("StoryTuner transcript cleanup error", cleanupError)
-      return Response.json({ text: raw, title: titleFrom(raw), wordCount: rawWordCount, minimumWords: MIN_STORY_WORDS })
+      return Response.json({ text: raw, title: titleFrom(raw), wordCount: rawWordCount, minimumWords: MIN_STORY_WORDS, usage: reservation })
     }
   } catch (error) {
     console.error("StoryTuner transcription error", error)

@@ -35,6 +35,9 @@ Deno.serve(async (request: Request) => {
 
   let recordingId: string | null = null;
   let userClient: ReturnType<typeof createClient> | null = null;
+  let adminClient: ReturnType<typeof createClient> | null = null;
+  let userId: string | null = null;
+  let usageReservedNow = false;
 
   try {
     const authorization = request.headers.get("Authorization");
@@ -52,12 +55,14 @@ Deno.serve(async (request: Request) => {
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) return jsonResponse({ error: "Your login session is invalid." }, 401);
+    userId = user.id;
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (serviceRoleKey) {
-      const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      });
+    if (!serviceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is unavailable.");
+    adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    {
       const { data: moderation, error: moderationError } = await adminClient
         .from("community_moderation_status")
         .select("account_status, account_suspended_until, public_message")
@@ -84,7 +89,7 @@ Deno.serve(async (request: Request) => {
 
     const { data: recording, error: recordingError } = await userClient
       .from("recording_uploads")
-      .select("id, user_id, storage_path, content_type, status, transcript")
+      .select("id, user_id, storage_path, content_type, duration_seconds, status, transcript")
       .eq("id", recordingId)
       .single();
 
@@ -93,6 +98,45 @@ Deno.serve(async (request: Request) => {
 
     if (recording.status === "ready" && recording.transcript) {
       return jsonResponse({ recordingId, transcript: recording.transcript, status: "ready" });
+    }
+
+    const { data: subscription, error: subscriptionError } = await adminClient
+      .from("subscriptions")
+      .select("status, current_period_end")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (subscriptionError) throw new Error(`Could not verify membership: ${subscriptionError.message}`);
+
+    const membershipActive = Boolean(
+      subscription
+      && ["active", "trialing"].includes(subscription.status)
+      && (!subscription.current_period_end || new Date(subscription.current_period_end).getTime() > Date.now())
+    );
+
+    if (!membershipActive && Number(recording.duration_seconds || 0) > 300) {
+      return jsonResponse({
+        code: "ARENA_DURATION_MEMBERSHIP_REQUIRED",
+        error: "Recording targets longer than five minutes require StoryTuner Membership.",
+      }, 403);
+    }
+
+    let usage: Record<string, unknown> | null = null;
+    if (!membershipActive) {
+      const { data: reservation, error: reservationError } = await adminClient.rpc("reserve_storytuner_usage", {
+        p_user_id: user.id,
+        p_feature: "arena_review",
+        p_request_key: recordingId,
+      });
+      if (reservationError) throw new Error(`Could not verify free usage: ${reservationError.message}`);
+      usage = reservation as Record<string, unknown>;
+      if (!usage?.allowed) {
+        return jsonResponse({
+          code: "ARENA_LIMIT_REACHED",
+          error: "You have used both free spoken story reviews. Membership unlocks unlimited practice.",
+          usage,
+        }, 403);
+      }
+      usageReservedNow = !Boolean(usage.alreadyReserved);
     }
 
     const { error: statusError } = await userClient
@@ -137,11 +181,19 @@ Deno.serve(async (request: Request) => {
       .eq("id", recordingId);
     if (saveError) throw new Error(`Could not save transcript: ${saveError.message}`);
 
-    return jsonResponse({ recordingId, transcript, title, wordCount, status: "ready" });
+    return jsonResponse({ recordingId, transcript, title, wordCount, status: "ready", usage });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown transcription error.";
     if (userClient && recordingId) {
       await userClient.from("recording_uploads").update({ status: "failed", error_message: message.slice(0, 500) }).eq("id", recordingId);
+    }
+    if (adminClient && userId && recordingId && usageReservedNow) {
+      await adminClient
+        .from("user_usage_events")
+        .delete()
+        .eq("user_id", userId)
+        .eq("feature", "arena_review")
+        .eq("request_key", recordingId);
     }
     console.error("Transcription error:", message);
     return jsonResponse({ error: "Transcription failed.", details: message }, 500);

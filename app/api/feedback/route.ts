@@ -1,5 +1,7 @@
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson } from "@/lib/openai-server"
+import { getMembershipByUserId } from "@/lib/membership-server"
+import { isUuid, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -86,6 +88,20 @@ export async function POST(req: Request) {
     if (mode === "lesson") {
       const answer = typeof body.answer === "string" ? body.answer.trim() : ""
       if (answer.length < 20) return Response.json({ error: "Write a little more so Weaver can respond usefully." }, { status: 400 })
+      if (answer.length > 6000) return Response.json({ error: "Keep lesson responses under 6,000 characters." }, { status: 400 })
+
+      const unitIndex = Number(body.unitIndex ?? 0)
+      if (!Number.isInteger(unitIndex) || unitIndex < 1 || unitIndex > 15) {
+        return Response.json({ error: "This lesson request is missing a valid unit." }, { status: 400 })
+      }
+      const membership = await getMembershipByUserId(user.id)
+      if (!membership.active && unitIndex > 5) {
+        return Response.json({
+          code: "LESSON_MEMBERSHIP_REQUIRED",
+          error: "The free plan includes the first five lessons. Membership unlocks all fifteen.",
+        }, { status: 403 })
+      }
+
       const object = await openAIJson<{ pass: boolean; working: string; fix: string }>({
         name: "lesson_feedback",
         schema: lessonSchema,
@@ -105,6 +121,7 @@ export async function POST(req: Request) {
 
     if (mode === "arena") {
       const transcript = typeof body.transcript === "string" ? body.transcript.trim() : ""
+      if (transcript.length > 30000) return Response.json({ error: "This transcript is too long to review." }, { status: 400 })
       const wordCount = meaningfulWordCount(transcript)
       if (wordCount < 50) {
         return Response.json({
@@ -115,7 +132,33 @@ export async function POST(req: Request) {
             : `Weaver caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least 50 words, then try again.`,
         }, { status: 400 })
       }
-      const object = await openAIJson<{
+      const requestKey = body.requestKey
+      if (!isUuid(requestKey)) {
+        return Response.json({ error: "This story review is missing a valid request key. Refresh and try again." }, { status: 400 })
+      }
+
+      const membership = await getMembershipByUserId(user.id)
+      const requestedSeconds = Number(body.targetSeconds ?? body.seconds ?? 0)
+      if (!membership.active && Number.isFinite(requestedSeconds) && requestedSeconds > 300) {
+        return Response.json({
+          code: "ARENA_DURATION_MEMBERSHIP_REQUIRED",
+          error: "Recording targets longer than five minutes require StoryTuner Membership.",
+        }, { status: 403 })
+      }
+      let reservation: UsageReservation | null = null
+      if (!membership.active) {
+        reservation = await reserveUsage(user.id, "arena_review", requestKey)
+        if (!reservation.allowed) {
+          return Response.json({
+            code: "ARENA_LIMIT_REACHED",
+            error: "You have used both free spoken story reviews. Membership unlocks unlimited practice.",
+            usage: reservation,
+          }, { status: 403 })
+        }
+      }
+
+      try {
+        const object = await openAIJson<{
         hook: number
         development: number
         landing: number
@@ -142,8 +185,16 @@ Then write a revised version of the full story. Preserve every real event, the s
             content: `Practice mode: ${String(body.context || "Open story")}\nInstruction or prompt: ${String(body.prompt || "Tell a story of your choice")}\nTarget length: ${Number(body.targetSeconds || body.seconds || 0)} seconds\nActual length: ${Number(body.seconds || 0)} seconds\n\nClean transcript:\n${transcript}`,
           },
         ],
-      })
-      return Response.json(object)
+        })
+        return Response.json({ ...object, usage: reservation })
+      } catch (error) {
+        if (reservation && !reservation.alreadyReserved) {
+          await releaseUsage(user.id, "arena_review", requestKey).catch((releaseError) =>
+            console.error("Arena usage rollback failed", releaseError),
+          )
+        }
+        throw error
+      }
     }
 
     const story = typeof body.story === "string" ? body.story.trim() : ""

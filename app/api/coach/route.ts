@@ -1,5 +1,7 @@
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIText } from "@/lib/openai-server"
+import { getMembershipByUserId } from "@/lib/membership-server"
+import { isUuid, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -31,8 +33,28 @@ export async function POST(req: Request) {
       : []
     const latest = messages.at(-1)?.content?.trim() || ""
     if (!latest) return Response.json({ error: "Ask Weaver a question first." }, { status: 400 })
+    if (latest.length > 5000) return Response.json({ error: "Keep each Weaver message under 5,000 characters." }, { status: 400 })
 
-    const reply = await openAIText([
+    const requestKey = body && typeof (body as { requestKey?: unknown }).requestKey !== "undefined"
+      ? (body as { requestKey?: unknown }).requestKey
+      : null
+    if (!isUuid(requestKey)) return Response.json({ error: "This coaching request is missing a valid request key. Refresh and try again." }, { status: 400 })
+
+    const membership = await getMembershipByUserId(user.id)
+    let reservation: UsageReservation | null = null
+    if (!membership.active) {
+      reservation = await reserveUsage(user.id, "coach_message", requestKey)
+      if (!reservation.allowed) {
+        return Response.json({
+          code: "COACH_LIMIT_REACHED",
+          error: "You have used all five free Weaver messages. Membership unlocks unlimited coaching.",
+          usage: reservation,
+        }, { status: 403 })
+      }
+    }
+
+    try {
+      const reply = await openAIText([
       {
         role: "system",
         content: `You are Weaver, StoryTuner's friendly, sophisticated storytelling coach. Answer the user's exact question directly before adding explanation. Use plain, natural language. Be thorough enough to be genuinely useful, but do not ramble.
@@ -51,8 +73,16 @@ PRIVATE LONG-TERM COACHING CONTEXT:
 ${personalizedHistory || "Personalization from past recordings is disabled or no history was supplied."}`,
       },
       ...messages.map((item) => ({ role: item.role, content: item.content })),
-    ])
-    return Response.json({ reply })
+      ])
+      return Response.json({ reply, usage: reservation })
+    } catch (error) {
+      if (reservation && !reservation.alreadyReserved) {
+        await releaseUsage(user.id, "coach_message", requestKey).catch((releaseError) =>
+          console.error("Coach usage rollback failed", releaseError),
+        )
+      }
+      throw error
+    }
   } catch (error) {
     console.error("StoryTuner coach error", error)
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")

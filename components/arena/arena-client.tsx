@@ -26,7 +26,7 @@ import {
 import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
-import { canRecordInArena, FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
+import { FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
 import {
   deleteCloudRecording,
@@ -137,8 +137,10 @@ export function ArenaClient() {
   const prompt = storyMode === "free" ? "Tell a story of your choice." : scenario.prompts[promptIndex % scenario.prompts.length]
   const isOpenResponse = storyMode === "scenario" && promptIndex % scenario.prompts.length === scenario.prompts.length - 1
   const contextName = storyMode === "free" ? "Open story" : scenario.name
-  const remainingFreeStories = freeArenaRemaining(state)
-  const canRecord = canRecordInArena(state)
+  const localRemainingFreeStories = freeArenaRemaining(state)
+  const [serverRemainingFreeStories, setServerRemainingFreeStories] = useState<number | null>(null)
+  const remainingFreeStories = state.premium ? Number.POSITIVE_INFINITY : (serverRemainingFreeStories ?? localRemainingFreeStories)
+  const canRecord = state.premium || remainingFreeStories > 0
   const [cameraOn, setCameraOn] = useState(true)
   const [targetSeconds, setTargetSeconds] = useState(90)
   const [showDurationOptions, setShowDurationOptions] = useState(false)
@@ -175,7 +177,21 @@ export function ArenaClient() {
   const autoTranscriptionStartedRef = useRef(false)
   const preparingRoomRef = useRef(false)
   const captureVersionRef = useRef(0)
+  const reviewRequestKeyRef = useRef<string | null>(null)
   const transcriptWordCount = meaningfulWordCount(transcript)
+
+  async function refreshArenaUsage() {
+    try {
+      const response = await fetch("/api/usage", { cache: "no-store" })
+      if (!response.ok) return
+      const data = (await response.json()) as { arena?: { remaining?: number } }
+      if (typeof data.arena?.remaining === "number") setServerRemainingFreeStories(data.arena.remaining)
+    } catch {}
+  }
+
+  useEffect(() => {
+    void refreshArenaUsage()
+  }, [state.premium])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -264,6 +280,7 @@ export function ArenaClient() {
 
   function reset() {
     captureVersionRef.current += 1
+    reviewRequestKeyRef.current = null
     void cleanupDraftCloudUpload()
     streamRef.current?.getTracks().forEach((track) => track.stop())
     const audioRecorder = audioRecorderRef.current
@@ -443,6 +460,7 @@ export function ArenaClient() {
 
   function performRetakeRecording() {
     captureVersionRef.current += 1
+    reviewRequestKeyRef.current = null
     void cleanupDraftCloudUpload()
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
@@ -477,6 +495,7 @@ export function ArenaClient() {
 
   function performRetakeFromReview() {
     captureVersionRef.current += 1
+    reviewRequestKeyRef.current = null
     void cleanupDraftCloudUpload()
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setSeconds(0)
@@ -551,8 +570,10 @@ export function ArenaClient() {
           blob: source,
           durationSeconds: Math.max(1, seconds),
           onCreated: (cloudUpload) => {
-            if (captureVersion === captureVersionRef.current) cloudUploadRef.current = cloudUpload
-            else void deleteCloudRecording(cloudUpload).catch(() => undefined)
+            if (captureVersion === captureVersionRef.current) {
+              cloudUploadRef.current = cloudUpload
+              reviewRequestKeyRef.current = cloudUpload.id
+            } else void deleteCloudRecording(cloudUpload).catch(() => undefined)
           },
           onStage: (stage) => {
             if (captureVersion === captureVersionRef.current) setTranscriptionStage(stage)
@@ -568,17 +589,31 @@ export function ArenaClient() {
         setTranscript(result.transcript)
         setTitle((current) => current.trim() || result.title)
         setTranscriptionOutcome("success")
+        await refreshArenaUsage()
         return result.transcript.trim()
       } catch (cloudError) {
         cloudUploadRef.current = null
         if (captureVersion !== captureVersionRef.current) return ""
+        const cloudMessage = cloudError instanceof Error ? cloudError.message : ""
+        if (cloudMessage.includes("used both free spoken story reviews")) {
+          setServerRemainingFreeStories(0)
+          setTranscriptionOutcome("error")
+          throw cloudError
+        }
+        if (cloudMessage.includes("longer than five minutes require StoryTuner Membership")) {
+          setTranscriptionOutcome("error")
+          throw cloudError
+        }
 
         if (source.size <= 4_000_000) {
           try {
-            const fallback = await transcribeThroughVercel(source)
+            const fallbackKey = reviewRequestKeyRef.current ?? crypto.randomUUID()
+            reviewRequestKeyRef.current = fallbackKey
+            const fallback = await transcribeThroughVercel(source, fallbackKey)
             setTranscript(fallback.text)
             setTitle((current) => current.trim() || fallback.title)
             setTranscriptionOutcome("success")
+            await refreshArenaUsage()
             return fallback.text.trim()
           } catch {
             // Surface the more useful cloud-storage error below.
@@ -603,9 +638,11 @@ export function ArenaClient() {
     }
   }
 
-  async function transcribeThroughVercel(source: Blob) {
+  async function transcribeThroughVercel(source: Blob, requestKey: string) {
     const form = new FormData()
     form.set("file", new File([source], "storytuner-recording.webm", { type: source.type || "audio/webm" }))
+    form.set("requestKey", requestKey)
+    form.set("durationSeconds", String(Math.max(1, seconds)))
     const response = await fetch("/api/transcribe", { method: "POST", body: form })
     const data = (await response.json()) as { text?: string; title?: string; code?: string; error?: string }
     if (!response.ok || !data.text) {
@@ -627,6 +664,8 @@ export function ArenaClient() {
           ? "Weaver could not hear a story. Check your microphone and try another take."
           : `Weaver caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again.`)
       }
+      const requestKey = reviewRequestKeyRef.current ?? crypto.randomUUID()
+      reviewRequestKeyRef.current = requestKey
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -637,10 +676,15 @@ export function ArenaClient() {
           targetSeconds: limitSeconds,
           prompt,
           context: contextName,
+          requestKey,
         }),
       })
-      const data = (await response.json()) as Feedback & { error?: string }
-      if (!response.ok) throw new Error(data.error || "Weaver could not grade this story.")
+      const data = (await response.json()) as Feedback & { error?: string; code?: string; usage?: { remaining?: number } }
+      if (typeof data.usage?.remaining === "number") setServerRemainingFreeStories(data.usage.remaining)
+      if (!response.ok) {
+        if (data.code === "ARENA_LIMIT_REACHED") setServerRemainingFreeStories(0)
+        throw new Error(data.error || "Weaver could not grade this story.")
+      }
       const id = crypto.randomUUID()
       if (mediaBlob) await saveMedia(id, mediaBlob).catch(() => undefined)
       const cloudUpload = cloudUploadRef.current
@@ -678,6 +722,7 @@ export function ArenaClient() {
       }
       addRecording(recording)
       cloudUploadRef.current = null
+      reviewRequestKeyRef.current = null
       setFeedback(data)
       setSavedId(id)
       setPhase("result")
