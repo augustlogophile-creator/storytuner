@@ -27,6 +27,7 @@ type ProfileRow = {
 }
 
 type ViewerLikeRow = { post_id: string }
+type ActiveReplyRow = { post_id: string }
 
 function parsePage(request: Request) {
   const raw = new URL(request.url).searchParams.get("page")
@@ -70,7 +71,7 @@ export async function GET(request: Request) {
     const postIds = posts.map((post) => post.id)
     const authorIds = Array.from(new Set(posts.map((post) => post.author_id)))
 
-    const [profilesResult, viewerLikesResult] = await Promise.all([
+    const [profilesResult, viewerLikesResult, activeRepliesResult] = await Promise.all([
       authorIds.length
         ? context.userClient.rpc("community_public_profiles", {
             requested_user_ids: authorIds,
@@ -83,15 +84,29 @@ export async function GET(request: Request) {
             .in("post_id", postIds)
             .returns<ViewerLikeRow[]>()
         : Promise.resolve({ data: [] as ViewerLikeRow[], error: null }),
+      postIds.length
+        ? context.userClient
+            .from("community_replies")
+            .select("post_id")
+            .in("post_id", postIds)
+            .eq("status", "active")
+            .returns<ActiveReplyRow[]>()
+        : Promise.resolve({ data: [] as ActiveReplyRow[], error: null }),
     ])
 
     if (profilesResult.error) logCommunityQueryError("Community author lookup failed", profilesResult.error)
     if (viewerLikesResult.error) logCommunityQueryError("Viewer Community likes lookup failed", viewerLikesResult.error)
+    if (activeRepliesResult.error) logCommunityQueryError("Community active reply count lookup failed", activeRepliesResult.error)
 
     const profileRows: ProfileRow[] = profilesResult.data ?? []
     const viewerLikeRows: ViewerLikeRow[] = viewerLikesResult.data ?? []
+    const activeReplyRows: ActiveReplyRow[] = activeRepliesResult.data ?? []
     const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
     const likedByViewer = new Set<string>(viewerLikeRows.map((like: ViewerLikeRow) => like.post_id))
+    const visibleReplyCounts = new Map<string, number>()
+    for (const reply of activeReplyRows) {
+      visibleReplyCounts.set(reply.post_id, (visibleReplyCounts.get(reply.post_id) ?? 0) + 1)
+    }
 
     const safePosts: CommunityFeedPost[] = posts.map((post) => {
       const author = profiles.get(post.author_id)
@@ -109,7 +124,10 @@ export async function GET(request: Request) {
           username: author?.username ?? `member_${post.author_id.slice(0, 6)}`,
         },
         likeCount: Number(post.like_count) || 0,
-        replyCount: Number(post.reply_count) || 0,
+        // Count only replies that this viewer can actually see. This intentionally
+        // overrides the ranked-feed aggregate so removed, deleted, or blocked
+        // replies never linger in the visible response count.
+        replyCount: visibleReplyCounts.get(post.id) ?? 0,
         likedByViewer: likedByViewer.has(post.id),
         mine: post.author_id === context.userId,
       }

@@ -54,3 +54,4 @@ export type ModerationAction =
   | "clear_restrictions"
   | "restore_content"
   | "reopen"
+  | "revise"

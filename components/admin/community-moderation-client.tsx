@@ -115,7 +115,7 @@ export function CommunityModerationClient({ role: _role }: { role: "admin" }) {
           {reports.map((report) => (
             status === "open"
               ? <OpenReportCard key={report.id} report={report} onMoved={moveReport} />
-              : <PastDecisionCard key={report.id} report={report} onMoved={moveReport} />
+              : <PastDecisionCard key={report.id} report={report} onMoved={moveReport} onChanged={() => void load()} />
           ))}
         </div>
       )}
@@ -281,14 +281,22 @@ function OpenReportCard({
 function PastDecisionCard({
   report,
   onMoved,
+  onChanged,
 }: {
   report: ModerationReportItem
   onMoved: (id: string, status: ModerationReportStatus) => void
+  onChanged: () => void
 }) {
   const [busy, setBusy] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [error, setError] = useState("")
+  const [restrictionAction, setRestrictionAction] = useState<"keep" | "clear" | "suspend_community" | "suspend_account" | "ban_account">("keep")
+  const [contentAction, setContentAction] = useState<"keep" | "remove" | "restore">("keep")
+  const [durationDays, setDurationDays] = useState(7)
+  const [note, setNote] = useState(report.resolutionNote ?? "")
   const decisionLabels = useMemo(() => summarizeActions(report), [report])
+  const needsDuration = restrictionAction === "suspend_community" || restrictionAction === "suspend_account"
 
   async function reopen() {
     if (busy) return
@@ -312,46 +320,206 @@ function PastDecisionCard({
     }
   }
 
+  async function revise() {
+    if (busy) return
+    setBusy(true)
+    setError("")
+    try {
+      const response = await fetch(`/api/admin/community/reports/${report.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          action: "revise",
+          restrictionAction,
+          contentAction,
+          durationDays: needsDuration ? durationDays : null,
+          note,
+          hideContent: false,
+        }),
+      })
+      const payload = await response.json() as { completed?: boolean; status?: ModerationReportStatus; error?: string }
+      if (!response.ok || !payload.completed || payload.status !== "resolved") throw new Error(payload.error || "The decision could not be changed.")
+      setConfirmOpen(false)
+      setEditing(false)
+      setRestrictionAction("keep")
+      setContentAction("keep")
+      onChanged()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The decision could not be changed.")
+      setConfirmOpen(false)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (report.status === "dismissed") {
+    return (
+      <article className="rounded-3xl border border-border bg-card p-5">
+        <ReportSummary report={report} />
+        <div className="mt-4 rounded-2xl bg-secondary/60 p-4">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dismissed</p>
+          <p className="mt-1 text-sm font-semibold">Report dismissed</p>
+          {report.resolutionNote && <p className="mt-2 text-xs leading-5 text-muted-foreground">{report.resolutionNote}</p>}
+        </div>
+        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold"
+        >
+          <RotateCcw className="h-4 w-4" /> Reopen report
+        </button>
+        <ConfirmDialog
+          open={confirmOpen}
+          title="Reopen this report?"
+          confirmLabel="Reopen"
+          tone="brand"
+          busy={busy}
+          onCancel={() => { if (!busy) setConfirmOpen(false) }}
+          onConfirm={() => void reopen()}
+        >
+          The report will return to New so you can review it again.
+        </ConfirmDialog>
+      </article>
+    )
+  }
+
   return (
     <article className="rounded-3xl border border-border bg-card p-5">
       <ReportSummary report={report} />
 
-      <div className="mt-4 rounded-2xl bg-secondary/60 p-4">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          {report.status === "dismissed" ? "Dismissed" : "Decision"}
-        </p>
-        <p className="mt-1 text-sm font-semibold">{decisionLabels.join(" · ") || (report.status === "dismissed" ? "Report dismissed" : "Decision saved")}</p>
-        {(report.resolutionNote || report.actions.find((item) => item.note)?.note) && (
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            {report.resolutionNote || report.actions.find((item) => item.note)?.note}
-          </p>
+      <div className="mt-4 grid gap-2 rounded-2xl bg-secondary/60 p-4 sm:grid-cols-2">
+        <div>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Last decision</p>
+          <p className="mt-1 text-sm font-semibold">{decisionLabels.join(" · ") || "Decision saved"}</p>
+        </div>
+        <div>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Current enforcement</p>
+          <p className="mt-1 text-sm font-semibold">{currentEnforcementLabel(report)}</p>
+        </div>
+        <div>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Content</p>
+          <p className="mt-1 text-sm font-semibold">{currentContentLabel(report.content.status)}</p>
+        </div>
+        {(report.resolutionNote || report.actions.findLast((item) => item.note)?.note) && (
+          <div>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Moderator note</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">{report.resolutionNote || report.actions.findLast((item) => item.note)?.note}</p>
+          </div>
         )}
       </div>
 
-      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-      <button
-        type="button"
-        onClick={() => setConfirmOpen(true)}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold"
-      >
-        <RotateCcw className="h-4 w-4" /> {report.status === "dismissed" ? "Reopen report" : "Undo and revise"}
-      </button>
+      {editing ? (
+        <div className="mt-4 rounded-2xl border border-border bg-background p-4">
+          <p className="text-sm font-semibold">Change this decision</p>
+          <p className="mt-1 text-xs text-muted-foreground">Only the settings you change below will be updated. Earlier actions stay in the audit history.</p>
+
+          <label className="mt-4 block">
+            <span className="text-xs font-semibold text-muted-foreground">Account access</span>
+            <select
+              value={restrictionAction}
+              onChange={(event) => setRestrictionAction(event.target.value as typeof restrictionAction)}
+              className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand"
+            >
+              <option value="keep">Keep current restriction</option>
+              <option value="clear">Remove all restrictions</option>
+              <option value="suspend_community">Suspend Community only</option>
+              <option value="suspend_account">Suspend entire account</option>
+              <option value="ban_account">Permanently ban account</option>
+            </select>
+          </label>
+
+          {needsDuration && (
+            <label className="mt-3 block">
+              <span className="text-xs font-semibold text-muted-foreground">New duration in days</span>
+              <input
+                type="number"
+                min={1}
+                max={3650}
+                value={durationDays}
+                onChange={(event) => setDurationDays(Math.min(3650, Math.max(1, Number(event.target.value) || 1)))}
+                className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand"
+              />
+              <p className="mt-1 text-[0.68rem] text-muted-foreground">Examples: 1 day, 7 days, 30 days, 365 days.</p>
+            </label>
+          )}
+
+          <label className="mt-3 block">
+            <span className="text-xs font-semibold text-muted-foreground">Reported content</span>
+            <select
+              value={contentAction}
+              onChange={(event) => setContentAction(event.target.value as typeof contentAction)}
+              className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand"
+            >
+              <option value="keep">Keep current content state</option>
+              <option value="remove">Remove content</option>
+              <option value="restore">Restore content</option>
+            </select>
+          </label>
+
+          <label className="mt-3 block">
+            <span className="text-xs font-semibold text-muted-foreground">Updated moderator note, optional</span>
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              maxLength={2000}
+              rows={2}
+              className="mt-2 w-full resize-y rounded-2xl border border-border bg-card px-3 py-3 text-sm leading-6 outline-none focus:border-brand"
+            />
+          </label>
+
+          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+          <div className="mt-4 flex gap-2">
+            <button type="button" onClick={() => { setEditing(false); setError("") }} className="flex-1 rounded-full border border-border px-4 py-3 text-sm font-semibold">Cancel</button>
+            <button type="button" onClick={() => setConfirmOpen(true)} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">Save changes</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="mt-4 w-full rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold"
+          >
+            Change decision
+          </button>
+        </>
+      )}
 
       <ConfirmDialog
         open={confirmOpen}
-        title={report.status === "dismissed" ? "Reopen this report?" : "Undo this decision?"}
-        confirmLabel={report.status === "dismissed" ? "Reopen" : "Undo & reopen"}
-        tone={report.status === "dismissed" ? "brand" : "danger"}
+        title="Update this decision?"
+        confirmLabel="Save changes"
+        tone={restrictionAction === "ban_account" ? "danger" : "brand"}
         busy={busy}
         onCancel={() => { if (!busy) setConfirmOpen(false) }}
-        onConfirm={() => void reopen()}
+        onConfirm={() => void revise()}
       >
-        {report.status === "dismissed"
-          ? "The report will return to New so you can review it again."
-          : "Where it is safe to do so, content or restrictions created by this decision will be reversed. The report will return to New so you can choose a different action."}
+        The new enforcement will take effect immediately. The original decision will remain in the moderation history.
       </ConfirmDialog>
     </article>
   )
+}
+
+function currentEnforcementLabel(report: ModerationReportItem) {
+  const now = Date.now()
+  if (report.targetUser.accountStatus === "banned") return "Permanent account ban"
+  if (report.targetUser.accountStatus === "suspended" && (!report.targetUser.accountSuspendedUntil || new Date(report.targetUser.accountSuspendedUntil).getTime() > now)) {
+    return report.targetUser.accountSuspendedUntil
+      ? `Account suspended until ${new Date(report.targetUser.accountSuspendedUntil).toLocaleDateString()}`
+      : "Account suspended"
+  }
+  if (report.targetUser.communitySuspendedUntil && new Date(report.targetUser.communitySuspendedUntil).getTime() > now) {
+    return `Community suspended until ${new Date(report.targetUser.communitySuspendedUntil).toLocaleDateString()}`
+  }
+  return "No active restriction"
+}
+
+function currentContentLabel(status: string) {
+  if (status === "removed") return "Removed by moderation"
+  if (status === "deleted") return "Deleted by member"
+  return "Visible"
 }
 
 function summarizeActions(report: ModerationReportItem) {
@@ -370,6 +538,8 @@ function summarizeActions(report: ModerationReportItem) {
       community_suspension: action.durationDays ? `Community suspended ${action.durationDays}d` : "Community suspended",
       account_suspension: action.durationDays ? `Account suspended ${action.durationDays}d` : "Account suspended",
       account_ban: "Account banned",
+      restore_content: "Content restored",
+      restriction_cleared: "Restrictions removed",
     } as Record<string, string | undefined>)[action.actionType]
     if (label && !labels.includes(label)) labels.push(label)
   }

@@ -18,10 +18,13 @@ const bodySchema = z.object({
     "clear_restrictions",
     "restore_content",
     "reopen",
+    "revise",
   ]),
   durationDays: z.number().int().min(1).max(3650).nullable().optional(),
   note: z.string().trim().max(2000).default(""),
   hideContent: z.boolean().default(false),
+  restrictionAction: z.enum(["keep", "clear", "suspend_community", "suspend_account", "ban_account"]).optional(),
+  contentAction: z.enum(["keep", "remove", "restore"]).optional(),
 })
 
 type RouteContext = { params: Promise<{ reportId: string }> }
@@ -42,7 +45,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return Response.json({ error: body.success ? "That report could not be found." : body.error.issues[0]?.message || "The moderation action is invalid." }, { status: 400 })
   }
 
-  const { action, durationDays, note, hideContent } = body.data
+  const { action, durationDays, note, hideContent, restrictionAction = "keep", contentAction = "keep" } = body.data
   const adminOnly = new Set<ModerationAction>(["suspend_account", "ban_account", "clear_restrictions"])
   if (adminOnly.has(action) && context.role !== "admin") {
     return Response.json({ error: "Only a Community admin can apply or clear full-account restrictions." }, { status: 403 })
@@ -66,7 +69,8 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 
   if (targetError || !target) return Response.json({ error: "The reported content no longer exists." }, { status: 404 })
   const selfRestrictionActions = new Set<ModerationAction>(["suspend_community", "suspend_account", "ban_account"])
-  if (target.author_id === context.userId && selfRestrictionActions.has(action)) {
+  const reviseWouldRestrictOwner = action === "revise" && ["suspend_community", "suspend_account", "ban_account"].includes(restrictionAction)
+  if (target.author_id === context.userId && (selfRestrictionActions.has(action) || reviseWouldRestrictOwner)) {
     return Response.json({ error: "The StoryTuner owner account cannot be suspended or banned." }, { status: 400 })
   }
 
@@ -98,6 +102,123 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     } catch (error) {
       console.error("Moderation decision reopen failed", error)
       return Response.json({ error: "The decision could not be undone." }, { status: 500 })
+    }
+  }
+
+
+  if (action === "revise") {
+    try {
+      const revisionSummary: string[] = []
+
+      if (contentAction === "remove" && target.status === "active") {
+        const { error } = await context.admin.from(targetTable).update({ status: "removed" }).eq("id", targetId)
+        if (error) throw error
+        await logAction(context.admin, target.author_id, context.userId, report.id, "hide_content", null, note || "Decision revised")
+        revisionSummary.push("content removed")
+      }
+
+      if (contentAction === "restore" && target.status === "removed") {
+        const { error } = await context.admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
+        if (error) throw error
+        await logAction(context.admin, target.author_id, context.userId, report.id, "restore_content", null, note || "Decision revised")
+        revisionSummary.push("content restored")
+      }
+
+      if (restrictionAction === "clear") {
+        const { error } = await context.admin.from("community_moderation_status").upsert({
+          user_id: target.author_id,
+          account_status: "active",
+          account_suspended_until: null,
+          community_suspended_until: null,
+          public_message: null,
+          internal_note: note || null,
+          updated_by: context.userId,
+        }, { onConflict: "user_id" })
+        if (error) throw error
+        await logAction(context.admin, target.author_id, context.userId, report.id, "restriction_cleared", null, note || "Decision revised")
+        revisionSummary.push("restrictions removed")
+      }
+
+      if (restrictionAction === "suspend_community") {
+        const days = durationDays ?? 7
+        const publicMessage = (note || defaultPublicMessage("suspend_community", days)).slice(0, 500)
+        const { error } = await context.admin.from("community_moderation_status").upsert({
+          user_id: target.author_id,
+          account_status: "active",
+          account_suspended_until: null,
+          community_suspended_until: futureDate(days),
+          public_message: publicMessage,
+          internal_note: note || null,
+          updated_by: context.userId,
+        }, { onConflict: "user_id" })
+        if (error) throw error
+        await logAction(context.admin, target.author_id, context.userId, report.id, "community_suspension", days, note || "Decision revised")
+        revisionSummary.push(`Community suspended ${days}d`)
+      }
+
+      if (restrictionAction === "suspend_account") {
+        const days = durationDays ?? 7
+        const publicMessage = (note || defaultPublicMessage("suspend_account", days)).slice(0, 500)
+        const { error } = await context.admin.from("community_moderation_status").upsert({
+          user_id: target.author_id,
+          account_status: "suspended",
+          account_suspended_until: futureDate(days),
+          community_suspended_until: null,
+          public_message: publicMessage,
+          internal_note: note || null,
+          updated_by: context.userId,
+        }, { onConflict: "user_id" })
+        if (error) throw error
+        await logAction(context.admin, target.author_id, context.userId, report.id, "account_suspension", days, note || "Decision revised")
+        revisionSummary.push(`account suspended ${days}d`)
+      }
+
+      if (restrictionAction === "ban_account") {
+        const publicMessage = (note || defaultPublicMessage("ban_account", null)).slice(0, 500)
+        const { error } = await context.admin.from("community_moderation_status").upsert({
+          user_id: target.author_id,
+          account_status: "banned",
+          account_suspended_until: null,
+          community_suspended_until: null,
+          public_message: publicMessage,
+          internal_note: note || null,
+          updated_by: context.userId,
+        }, { onConflict: "user_id" })
+        if (error) throw error
+        await logAction(context.admin, target.author_id, context.userId, report.id, "account_ban", null, note || "Decision revised")
+        revisionSummary.push("account banned")
+      }
+
+      if (restrictionAction === "keep" && contentAction === "keep" && !note) {
+        return Response.json({ error: "Choose something to change before saving." }, { status: 400 })
+      }
+
+      const resolutionNote = note || (revisionSummary.length ? `Decision revised: ${revisionSummary.join(", ")}` : "Decision note updated")
+      const { error: updateError } = await context.admin
+        .from("community_reports")
+        .update({
+          status: "resolved",
+          reviewed_at: now,
+          reviewed_by: context.userId,
+          resolution_note: resolutionNote,
+        })
+        .eq("id", report.id)
+      if (updateError) throw updateError
+
+      await logAction(
+        context.admin,
+        target.author_id,
+        context.userId,
+        report.id,
+        "report_resolved",
+        durationDays ?? null,
+        resolutionNote,
+      )
+
+      return Response.json({ completed: true, status: "resolved" })
+    } catch (error) {
+      console.error("Moderation decision revision failed", error)
+      return Response.json({ error: "The decision could not be revised." }, { status: 500 })
     }
   }
 
@@ -237,6 +358,7 @@ function actionLabel(action: ModerationAction) {
     clear_restrictions: "Restrictions cleared",
     restore_content: "Content restored",
     reopen: "Decision undone and report reopened",
+    revise: "Decision revised",
   } satisfies Record<ModerationAction, string>)[action]
 }
 
@@ -244,6 +366,7 @@ function defaultPublicMessage(action: ModerationAction, days: number | null) {
   if (action === "suspend_community") return `Community access was suspended for ${days ?? 7} days after a moderation review.`
   if (action === "suspend_account") return `StoryTuner access was suspended for ${days ?? 7} days after a moderation review.`
   if (action === "ban_account") return "This account was disabled after a moderation review."
+  if (action === "revise") return "A previous moderation decision was updated."
   return "StoryTuner reviewed activity connected to this account."
 }
 
@@ -262,7 +385,7 @@ async function reverseReportEffects(
     .returns<{ action_type: string }[]>()
   if (reportActionsError) throw reportActionsError
 
-  const actionTypes = new Set((reportActions ?? []).map((item) => item.action_type))
+  const actionTypes = new Set((reportActions ?? []).map((item: { action_type: string }) => item.action_type))
 
   if (targetId && actionTypes.has("hide_content")) {
     const sameTargetQuery = admin.from("community_reports").select("id")
@@ -271,7 +394,7 @@ async function reverseReportEffects(
       : await sameTargetQuery.eq("reply_id", targetId).returns<{ id: string }[]>()
     if (sameTargetResult.error) throw sameTargetResult.error
 
-    const relatedReportIds = (sameTargetResult.data ?? []).map((item) => item.id)
+    const relatedReportIds = (sameTargetResult.data ?? []).map((item: { id: string }) => item.id)
     if (relatedReportIds.length > 0) {
       const { data: latestContentAction, error: latestContentActionError } = await admin
         .from("community_moderation_actions")

@@ -149,6 +149,27 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
     void loadPage(0, true)
   }, [loadPage])
 
+  useEffect(() => {
+    let lastRefresh = 0
+    const refreshVisibleFeed = () => {
+      if (document.visibilityState !== "visible") return
+      const now = Date.now()
+      if (now - lastRefresh < 1500) return
+      lastRefresh = now
+      void loadPage(0, true)
+    }
+
+    window.addEventListener("focus", refreshVisibleFeed)
+    document.addEventListener("visibilitychange", refreshVisibleFeed)
+    const interval = window.setInterval(refreshVisibleFeed, 30000)
+
+    return () => {
+      window.removeEventListener("focus", refreshVisibleFeed)
+      document.removeEventListener("visibilitychange", refreshVisibleFeed)
+      window.clearInterval(interval)
+    }
+  }, [loadPage])
+
   async function publishPost() {
     const body = draft.trim()
     if (!body || publishing) return
@@ -444,6 +465,14 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
       setThreadLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!threadOpen || !threadLoaded) return
+    void loadReplies()
+    // When the server-side visible reply count changes, refresh the open thread
+    // so moderation removals disappear from both the count and the conversation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.replyCount])
 
   async function toggleThread() {
     const nextOpen = !threadOpen
