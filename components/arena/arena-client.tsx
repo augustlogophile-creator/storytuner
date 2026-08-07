@@ -784,11 +784,13 @@ export function ArenaClient() {
               </details>
             </section>
           ) : (
-            <Link href="/planner" className="flex items-center gap-4 rounded-3xl border border-brand/30 bg-brand-soft/35 p-4 transition-colors hover:border-brand">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground"><Map className="h-4.5 w-4.5" /></span>
-              <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">Not sure what to say yet?</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">Use Story Planner to shape your facts, purpose, structure, and nerves before entering the recording room.</span></span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            </Link>
+            <div className="flex justify-end">
+              <Link href="/planner" className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-foreground">
+                <Map className="h-3.5 w-3.5 text-accent-foreground" />
+                Need help planning?
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           )}
 
           <section className="rounded-3xl border border-border bg-card p-5">

@@ -45,7 +45,7 @@ type FieldProps = {
   required?: boolean
 }
 
-export function StoryPlannerClient({ membershipActive }: { membershipActive: boolean }) {
+export function StoryPlannerClient() {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [plan, setPlan] = useState<StoryPlanRecord | null>(null)
   const [history, setHistory] = useState<StoryPlanRecord[]>([])
@@ -53,7 +53,6 @@ export function StoryPlannerClient({ membershipActive }: { membershipActive: boo
   const [historyError, setHistoryError] = useState("")
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState("")
-  const [freeLimitReached, setFreeLimitReached] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const ready = useMemo(() => (
@@ -85,7 +84,6 @@ export function StoryPlannerClient({ membershipActive }: { membershipActive: boo
     if (!ready || building) return
     setBuilding(true)
     setError("")
-    setFreeLimitReached(false)
     setCopied(false)
     try {
       const response = await fetch("/api/planner", {
@@ -95,7 +93,6 @@ export function StoryPlannerClient({ membershipActive }: { membershipActive: boo
       })
       const payload = await response.json() as { plan?: StoryPlanRecord; code?: string; error?: string }
       if (!response.ok || !payload.plan) {
-        if (payload.code === "PLANNER_FREE_LIMIT") setFreeLimitReached(true)
         throw new Error(payload.error || "Weaver could not build the plan.")
       }
       setPlan(payload.plan)
@@ -145,7 +142,6 @@ export function StoryPlannerClient({ membershipActive }: { membershipActive: boo
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
     setError("")
-    setFreeLimitReached(false)
   }
 
   return (
@@ -238,11 +234,6 @@ export function StoryPlannerClient({ membershipActive }: { membershipActive: boo
         {error && (
           <div className="mt-4 rounded-2xl bg-destructive/8 px-4 py-3" role="alert">
             <p className="text-sm text-destructive">{error}</p>
-            {freeLimitReached && (
-              <Link href="/membership" className="mt-3 inline-flex rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
-                View Membership
-              </Link>
-            )}
           </div>
         )}
         <button
@@ -254,7 +245,7 @@ export function StoryPlannerClient({ membershipActive }: { membershipActive: boo
           {building ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           {building ? "Weaver is shaping your plan..." : "Build my story plan"}
         </button>
-        <p className="mt-2 text-center text-xs text-muted-foreground">Plans are private and saved to your account. {membershipActive ? "Membership includes up to 10 plans per day." : "Free accounts include 2 plans total; Membership unlocks up to 10 per day."}</p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">Plans are private and saved to your account. Membership includes up to 10 plans per day.</p>
       </section>
 
       {plan && (

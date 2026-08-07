@@ -73,18 +73,28 @@ function toRecord(row: PlanRow): StoryPlanRecord {
   }
 }
 
-async function activeUser() {
+async function activeMember() {
   const user = await getAuthenticatedUser()
   if (!user) return { ok: false as const, response: Response.json({ error: "Authentication required." }, { status: 401 }) }
   const restriction = await getAccountRestriction(user.id)
   if (restriction.restricted) {
     return { ok: false as const, response: Response.json({ error: restriction.publicMessage || "This account is currently restricted." }, { status: 403 }) }
   }
+  const membership = await getMembershipByUserId(user.id)
+  if (!membership.active) {
+    return {
+      ok: false as const,
+      response: Response.json({
+        code: "PLANNER_MEMBERSHIP_REQUIRED",
+        error: "Story Planner is included with StoryTuner Membership.",
+      }, { status: 403 }),
+    }
+  }
   return { ok: true as const, user }
 }
 
 export async function GET() {
-  const auth = await activeUser()
+  const auth = await activeMember()
   if (!auth.ok) return auth.response
 
   const { data, error } = await auth.user.supabase
@@ -104,7 +114,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const auth = await activeUser()
+  const auth = await activeMember()
   if (!auth.ok) return auth.response
 
   const parsed = inputSchema.safeParse(await request.json().catch(() => null))
@@ -113,29 +123,20 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient()
-  const membership = await getMembershipByUserId(auth.user.id)
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
-  const usageQuery = admin
+  const { count, error: countError } = await admin
     .from("story_plans")
     .select("id", { count: "exact", head: true })
     .eq("user_id", auth.user.id)
-  const { count, error: countError } = membership.active
-    ? await usageQuery.gte("created_at", today.toISOString())
-    : await usageQuery
+    .gte("created_at", today.toISOString())
 
   if (countError) {
     console.error("Story Planner usage lookup failed", countError)
     return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
   }
-  if (membership.active && (count ?? 0) >= 10) {
+  if ((count ?? 0) >= 10) {
     return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Weaver can keep the feature reliable for everyone." }, { status: 429 })
-  }
-  if (!membership.active && (count ?? 0) >= 2) {
-    return Response.json({
-      code: "PLANNER_FREE_LIMIT",
-      error: "Free accounts include two Story Planner plans. Membership unlocks up to ten plans per day.",
-    }, { status: 403 })
   }
 
   const input = parsed.data

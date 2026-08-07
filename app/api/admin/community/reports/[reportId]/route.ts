@@ -64,7 +64,10 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     .maybeSingle<TargetRow>()
 
   if (targetError || !target) return Response.json({ error: "The reported content no longer exists." }, { status: 404 })
-  if (target.author_id === context.userId) return Response.json({ error: "You cannot moderate your own account from a report." }, { status: 400 })
+  const selfRestrictionActions = new Set<ModerationAction>(["suspend_community", "suspend_account", "ban_account"])
+  if (target.author_id === context.userId && selfRestrictionActions.has(action)) {
+    return Response.json({ error: "The StoryTuner owner account cannot be suspended or banned." }, { status: 400 })
+  }
 
   const { data: targetModerator } = await context.admin
     .from("community_moderators")

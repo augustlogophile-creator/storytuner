@@ -1,7 +1,16 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 
-export type ModeratorRole = "moderator" | "admin"
+export type ModeratorRole = "admin"
+
+export const STORYTUNER_OWNER_EMAIL = "storytunerapp@gmail.com"
+
+export function moderatorRoleFromClaims(claims: unknown): ModeratorRole | null {
+  if (!claims || typeof claims !== "object") return null
+  const email = (claims as { email?: unknown }).email
+  if (typeof email !== "string") return null
+  return email.trim().toLowerCase() === STORYTUNER_OWNER_EMAIL ? "admin" : null
+}
 
 export async function getModeratorContext() {
   const authenticated = await getAuthenticatedUser()
@@ -12,42 +21,18 @@ export async function getModeratorContext() {
     }
   }
 
-  const admin = createAdminClient()
-  const { data, error } = await admin
-    .from("community_moderators")
-    .select("role")
-    .eq("user_id", authenticated.id)
-    .maybeSingle<{ role: ModeratorRole }>()
-
-  if (error) {
-    console.error("Moderator lookup failed", error)
+  const role = moderatorRoleFromClaims(authenticated.claims)
+  if (!role) {
     return {
       ok: false as const,
-      response: Response.json({ error: "Moderation access could not be verified." }, { status: 500 }),
-    }
-  }
-
-  if (!data) {
-    return {
-      ok: false as const,
-      response: Response.json({ error: "Moderator access required." }, { status: 403 }),
+      response: Response.json({ error: `Only ${STORYTUNER_OWNER_EMAIL} can access moderation.` }, { status: 403 }),
     }
   }
 
   return {
     ok: true as const,
     userId: authenticated.id,
-    role: data.role,
-    admin,
+    role,
+    admin: createAdminClient(),
   }
-}
-
-export async function isCommunityModerator(userId: string) {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from("community_moderators")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle<{ role: ModeratorRole }>()
-  return data?.role ?? null
 }
