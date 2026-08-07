@@ -108,7 +108,8 @@ export async function GET(_request: Request, routeContext: RouteContext) {
       }
     })
 
-    return noStoreJson({ replies })
+    const activeReplyCount = replyRows.filter((reply: ReplyRow) => reply.status === "active").length
+    return noStoreJson({ replies, activeReplyCount })
   } catch (error) {
     console.error("Community replies loading failed", error)
     return noStoreJson({ error: "Replies could not be loaded." }, { status: 500 })

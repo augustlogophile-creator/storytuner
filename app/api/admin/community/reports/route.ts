@@ -19,6 +19,8 @@ type ReportRow = {
   details: string | null
   status: ModerationReportStatus
   created_at: string
+  reviewed_at: string | null
+  resolution_note: string | null
 }
 type ProfileRow = { id: string; username: string; display_name: string }
 type PostRow = { id: string; author_id: string; body: string; status: string }
@@ -30,7 +32,14 @@ type ModerationStatusRow = {
   community_suspended_until: string | null
 }
 type ContentOwnerRow = { id: string; author_id: string }
-type ActionRow = { user_id: string }
+type ActionRow = {
+  user_id: string
+  report_id: string | null
+  action_type: string
+  duration_days: number | null
+  note: string | null
+  created_at: string
+}
 type ReportTargetRow = { post_id: string | null; reply_id: string | null }
 
 const reportStatuses: ModerationReportStatus[] = ["open", "reviewing", "resolved", "dismissed"]
@@ -45,7 +54,7 @@ export async function GET(request: Request) {
 
   const reportsResult = await context.admin
     .from("community_reports")
-    .select("id, reporter_id, post_id, reply_id, reason, details, status, created_at")
+    .select("id, reporter_id, post_id, reply_id, reason, details, status, created_at, reviewed_at, resolution_note")
     .eq("status", status)
     .order("created_at", { ascending: true })
     .limit(100)
@@ -122,7 +131,7 @@ export async function GET(request: Request) {
     targetUserIds.length
       ? context.admin
           .from("community_moderation_actions")
-          .select("user_id")
+          .select("user_id, report_id, action_type, duration_days, note, created_at")
           .in("user_id", targetUserIds)
           .returns<ActionRow[]>()
       : Promise.resolve({ data: [] as ActionRow[], error: null }),
@@ -139,9 +148,15 @@ export async function GET(request: Request) {
   const statuses = new Map<string, ModerationStatusRow>(statusRows.map((row: ModerationStatusRow) => [row.user_id, row]))
   const priorReportCounts = await loadPriorReportCounts(context.admin, targetUserIds)
   const priorActionCounts = new Map<string, number>()
+  const actionsByReport = new Map<string, ActionRow[]>()
 
   for (const action of actionRows) {
     priorActionCounts.set(action.user_id, (priorActionCounts.get(action.user_id) ?? 0) + 1)
+    if (action.report_id) {
+      const bucket = actionsByReport.get(action.report_id) ?? []
+      bucket.push(action)
+      actionsByReport.set(action.report_id, bucket)
+    }
   }
 
   const safeReports: ModerationReportItem[] = []
@@ -161,6 +176,8 @@ export async function GET(request: Request) {
       details: report.details,
       status: report.status,
       createdAt: report.created_at,
+      reviewedAt: report.reviewed_at,
+      resolutionNote: report.resolution_note,
       reporter: {
         id: report.reporter_id,
         username: reporterProfile?.username ?? "unknown_reporter",
@@ -184,6 +201,14 @@ export async function GET(request: Request) {
             status: reply!.status,
             postId: reply!.post_id,
           },
+      actions: (actionsByReport.get(report.id) ?? [])
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map((action) => ({
+          actionType: action.action_type,
+          durationDays: action.duration_days,
+          note: action.note,
+          createdAt: action.created_at,
+        })),
     })
   }
 

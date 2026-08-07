@@ -3,12 +3,21 @@ import type { CommunityReportReason } from "@/lib/community/types"
 export type ModerationAccountStatus = "active" | "suspended" | "banned"
 export type ModerationReportStatus = "open" | "reviewing" | "resolved" | "dismissed"
 
+export type ModerationActionHistoryItem = {
+  actionType: string
+  durationDays: number | null
+  note: string | null
+  createdAt: string
+}
+
 export type ModerationReportItem = {
   id: string
   reason: CommunityReportReason
   details: string | null
   status: ModerationReportStatus
   createdAt: string
+  reviewedAt: string | null
+  resolutionNote: string | null
   reporter: { id: string; username: string }
   targetUser: {
     id: string
@@ -27,6 +36,7 @@ export type ModerationReportItem = {
     status: string
     postId: string | null
   }
+  actions: ModerationActionHistoryItem[]
 }
 
 export type ModerationReportsResponse = {
@@ -43,3 +53,4 @@ export type ModerationAction =
   | "ban_account"
   | "clear_restrictions"
   | "restore_content"
+  | "reopen"

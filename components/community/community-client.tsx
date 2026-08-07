@@ -432,6 +432,9 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
       }
       if (!response.ok) throw new Error(payload.error || "Replies could not be loaded.")
       setReplies(payload.replies)
+      if (typeof payload.activeReplyCount === "number" && payload.activeReplyCount !== post.replyCount) {
+        onUpdated({ ...post, replyCount: payload.activeReplyCount })
+      }
       setVisibleThreadCount(4)
       setNewestReplyId(null)
       setThreadLoaded(true)
@@ -445,7 +448,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
   async function toggleThread() {
     const nextOpen = !threadOpen
     setThreadOpen(nextOpen)
-    if (nextOpen && !threadLoaded && !threadLoading) await loadReplies()
+    if (nextOpen && !threadLoading) await loadReplies()
   }
 
   function beginReply(target: CommunityReply | null) {
@@ -690,8 +693,9 @@ type ReplyThreadGroupProps = {
 function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, onDeleted, onMembershipRequired, autoRevealReplyId }: ReplyThreadGroupProps) {
   const [childrenOpen, setChildrenOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(4)
-  const visibleChildren = children.slice(0, visibleCount)
-  const remaining = Math.max(0, children.length - visibleCount)
+  const activeChildren = children.filter((reply) => reply.status === "active")
+  const visibleChildren = activeChildren.slice(0, visibleCount)
+  const remaining = Math.max(0, activeChildren.length - visibleCount)
 
   useEffect(() => {
     if (!autoRevealReplyId) return
@@ -712,13 +716,13 @@ function ReplyThreadGroup({ root, children, replyAuthors, onReply, onUpdated, on
         onMembershipRequired={onMembershipRequired}
       />
 
-      {children.length > 0 && !childrenOpen && (
+      {activeChildren.length > 0 && !childrenOpen && (
         <button
           type="button"
           onClick={() => { setChildrenOpen(true); setVisibleCount(4) }}
           className="ml-4 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.7rem] font-semibold text-brand hover:bg-brand-soft/60 sm:ml-7"
         >
-          <MessageCircle className="h-3.5 w-3.5" /> See {children.length} {children.length === 1 ? "reply" : "replies"}
+          <MessageCircle className="h-3.5 w-3.5" /> See {activeChildren.length} {activeChildren.length === 1 ? "reply" : "replies"}
         </button>
       )}
 
@@ -773,10 +777,12 @@ function groupConversationReplies(replies: CommunityReply[]) {
     childrenByRoot.set(rootId, bucket)
   }
 
-  return roots.map((root) => ({
-    root,
-    children: (childrenByRoot.get(root.id) ?? []).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-  }))
+  return roots
+    .map((root) => ({
+      root,
+      children: (childrenByRoot.get(root.id) ?? []).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    }))
+    .filter(({ root, children }) => root.status === "active" || children.some((reply) => reply.status === "active"))
 }
 
 type ReplyCardProps = {

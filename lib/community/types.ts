@@ -44,6 +44,7 @@ export type CommunityFeedResponse = {
 
 export type CommunityRepliesResponse = {
   replies: CommunityReply[]
+  activeReplyCount: number
 }
 
 export type CommunityReportReason =

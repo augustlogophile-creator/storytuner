@@ -17,6 +17,7 @@ const bodySchema = z.object({
     "ban_account",
     "clear_restrictions",
     "restore_content",
+    "reopen",
   ]),
   durationDays: z.number().int().min(1).max(3650).nullable().optional(),
   note: z.string().trim().max(2000).default(""),
@@ -79,7 +80,28 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   }
 
   const now = new Date().toISOString()
-  const publicMessage = note || defaultPublicMessage(action, durationDays ?? null)
+
+  if (action === "reopen") {
+    try {
+      await reverseReportEffects(context.admin, report, target.author_id, targetTable, targetId, context.userId)
+      const { error: reopenError } = await context.admin
+        .from("community_reports")
+        .update({
+          status: "open",
+          reviewed_at: null,
+          reviewed_by: null,
+          resolution_note: null,
+        })
+        .eq("id", report.id)
+      if (reopenError) throw reopenError
+      return Response.json({ completed: true, status: "open" })
+    } catch (error) {
+      console.error("Moderation decision reopen failed", error)
+      return Response.json({ error: "The decision could not be undone." }, { status: 500 })
+    }
+  }
+
+  const publicMessage = (note || defaultPublicMessage(action, durationDays ?? null)).slice(0, 500)
   const shouldHide = action === "hide" || hideContent
 
   try {
@@ -214,6 +236,7 @@ function actionLabel(action: ModerationAction) {
     ban_account: "Account banned",
     clear_restrictions: "Restrictions cleared",
     restore_content: "Content restored",
+    reopen: "Decision undone and report reopened",
   } satisfies Record<ModerationAction, string>)[action]
 }
 
@@ -222,4 +245,78 @@ function defaultPublicMessage(action: ModerationAction, days: number | null) {
   if (action === "suspend_account") return `StoryTuner access was suspended for ${days ?? 7} days after a moderation review.`
   if (action === "ban_account") return "This account was disabled after a moderation review."
   return "StoryTuner reviewed activity connected to this account."
+}
+
+async function reverseReportEffects(
+  admin: SupabaseClient,
+  report: ReportRow,
+  userId: string,
+  targetTable: "community_posts" | "community_replies",
+  targetId: string | null,
+  moderatorId: string,
+) {
+  const { data: reportActions, error: reportActionsError } = await admin
+    .from("community_moderation_actions")
+    .select("action_type")
+    .eq("report_id", report.id)
+    .returns<{ action_type: string }[]>()
+  if (reportActionsError) throw reportActionsError
+
+  const actionTypes = new Set((reportActions ?? []).map((item) => item.action_type))
+
+  if (targetId && actionTypes.has("hide_content")) {
+    const sameTargetQuery = admin.from("community_reports").select("id")
+    const sameTargetResult = report.post_id
+      ? await sameTargetQuery.eq("post_id", targetId).returns<{ id: string }[]>()
+      : await sameTargetQuery.eq("reply_id", targetId).returns<{ id: string }[]>()
+    if (sameTargetResult.error) throw sameTargetResult.error
+
+    const relatedReportIds = (sameTargetResult.data ?? []).map((item) => item.id)
+    if (relatedReportIds.length > 0) {
+      const { data: latestContentAction, error: latestContentActionError } = await admin
+        .from("community_moderation_actions")
+        .select("report_id, action_type")
+        .in("report_id", relatedReportIds)
+        .in("action_type", ["hide_content", "restore_content"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ report_id: string | null; action_type: string }>()
+      if (latestContentActionError) throw latestContentActionError
+      if (latestContentAction?.report_id === report.id && latestContentAction.action_type === "hide_content") {
+        const { error: restoreError } = await admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
+        if (restoreError) throw restoreError
+        await logAction(admin, userId, moderatorId, report.id, "restore_content", null, "Decision undone")
+      }
+    }
+  }
+
+  const restrictionActions = ["community_suspension", "account_suspension", "account_ban", "restriction_cleared"]
+  const { data: latestRestrictionAction, error: latestRestrictionError } = await admin
+    .from("community_moderation_actions")
+    .select("report_id, action_type")
+    .eq("user_id", userId)
+    .in("action_type", restrictionActions)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ report_id: string | null; action_type: string }>()
+  if (latestRestrictionError) throw latestRestrictionError
+
+  if (latestRestrictionAction?.report_id === report.id) {
+    if (latestRestrictionAction.action_type === "community_suspension") {
+      const { error } = await admin
+        .from("community_moderation_status")
+        .update({ community_suspended_until: null, public_message: null, updated_by: moderatorId })
+        .eq("user_id", userId)
+      if (error) throw error
+      await logAction(admin, userId, moderatorId, report.id, "restriction_cleared", null, "Community suspension undone")
+    }
+    if (["account_suspension", "account_ban"].includes(latestRestrictionAction.action_type)) {
+      const { error } = await admin
+        .from("community_moderation_status")
+        .update({ account_status: "active", account_suspended_until: null, public_message: null, updated_by: moderatorId })
+        .eq("user_id", userId)
+      if (error) throw error
+      await logAction(admin, userId, moderatorId, report.id, "restriction_cleared", null, "Account restriction undone")
+    }
+  }
 }

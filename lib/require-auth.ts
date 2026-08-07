@@ -135,3 +135,65 @@ export async function signedInDestination() {
     .maybeSingle<{ onboarding_completed: boolean }>()
   return data?.onboarding_completed ? "/home" : "/onboarding"
 }
+
+export type AccountRestrictionDecisionContext = {
+  content: string | null
+  note: string | null
+  actionType: "account_suspension" | "account_ban" | null
+}
+
+export async function getAccountRestrictionDecisionContext(
+  userId: string,
+  accountStatus: "active" | "suspended" | "banned",
+): Promise<AccountRestrictionDecisionContext> {
+  if (accountStatus === "active") return { content: null, note: null, actionType: null }
+
+  const admin = createAdminClient()
+  const wantedAction = accountStatus === "banned" ? "account_ban" : "account_suspension"
+  const { data: action, error: actionError } = await admin
+    .from("community_moderation_actions")
+    .select("report_id, note, action_type")
+    .eq("user_id", userId)
+    .eq("action_type", wantedAction)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ report_id: string | null; note: string | null; action_type: "account_suspension" | "account_ban" }>()
+
+  if (actionError || !action) {
+    if (actionError) console.error("Restriction decision lookup failed", actionError)
+    return { content: null, note: null, actionType: null }
+  }
+
+  let content: string | null = null
+  if (action.report_id) {
+    const { data: report, error: reportError } = await admin
+      .from("community_reports")
+      .select("post_id, reply_id")
+      .eq("id", action.report_id)
+      .maybeSingle<{ post_id: string | null; reply_id: string | null }>()
+
+    if (reportError) {
+      console.error("Restriction report lookup failed", reportError)
+    } else if (report?.post_id) {
+      const { data } = await admin
+        .from("community_posts")
+        .select("body")
+        .eq("id", report.post_id)
+        .maybeSingle<{ body: string }>()
+      content = data?.body ?? null
+    } else if (report?.reply_id) {
+      const { data } = await admin
+        .from("community_replies")
+        .select("body")
+        .eq("id", report.reply_id)
+        .maybeSingle<{ body: string }>()
+      content = data?.body ?? null
+    }
+  }
+
+  return {
+    content,
+    note: action.note,
+    actionType: action.action_type,
+  }
+}
