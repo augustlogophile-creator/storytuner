@@ -513,7 +513,11 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
       setThreadLoaded(true)
       setReplyDraft("")
       setReplyingTo(null)
-      onUpdated({ ...post, replyCount: post.replyCount + 1 })
+      // Only a new top-level comment changes the post's response total.
+      // Replies to replies belong inside that comment thread.
+      if (!payload.reply.parentReplyId) {
+        onUpdated({ ...post, replyCount: post.replyCount + 1 })
+      }
     } catch (error) {
       setThreadError(errorMessage(error, "Your reply could not be posted."))
     } finally {
@@ -526,6 +530,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
   }
 
   function markReplyDeleted(replyId: string) {
+    const deletedReply = replies.find((reply) => reply.id === replyId)
     setReplies((current) => current.map((reply) => (
       reply.id === replyId
         ? {
@@ -539,7 +544,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
           }
         : reply
     )))
-    onUpdated({ ...post, replyCount: Math.max(0, post.replyCount - 1) })
+    // Removing a nested reply does not change the post-level response count.
+    if (deletedReply && !deletedReply.parentReplyId) {
+      onUpdated({ ...post, replyCount: Math.max(0, post.replyCount - 1) })
+    }
     if (replyingTo?.id === replyId) setReplyingTo(null)
   }
 
@@ -553,7 +561,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired }: PostCard
     : [{ label: "Report post", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
 
   return (
-    <article id={post.id} className="scroll-mt-24 rounded-3xl border border-border bg-card p-5">
+    <article id={post.id} className="app-surface scroll-mt-24 rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{publicAuthorLabel(post.author)}</p>
@@ -918,7 +926,7 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
     : [{ label: "Report reply", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
 
   return (
-    <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3", nested && "bg-secondary/30")}>
+    <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3 transition-colors", nested && "bg-secondary/30")}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold">{publicAuthorLabel(reply.author)}</p>

@@ -90,6 +90,7 @@ export async function GET(request: Request) {
             .select("post_id")
             .in("post_id", postIds)
             .eq("status", "active")
+            .is("parent_reply_id", null)
             .returns<ActiveReplyRow[]>()
         : Promise.resolve({ data: [] as ActiveReplyRow[], error: null }),
     ])
@@ -124,9 +125,9 @@ export async function GET(request: Request) {
           username: author?.username ?? `member_${post.author_id.slice(0, 6)}`,
         },
         likeCount: Number(post.like_count) || 0,
-        // Count only replies that this viewer can actually see. This intentionally
-        // overrides the ranked-feed aggregate so removed, deleted, or blocked
-        // replies never linger in the visible response count.
+        // The response count is intentionally only the number of active, top-level
+        // comments on the post. Likes never count, and replies-to-replies stay
+        // inside their parent thread instead of inflating the post response total.
         replyCount: visibleReplyCounts.get(post.id) ?? 0,
         likedByViewer: likedByViewer.has(post.id),
         mine: post.author_id === context.userId,

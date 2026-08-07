@@ -22,8 +22,8 @@ export function BottomNav() {
           const active = href === "/home" ? pathname === "/home" : pathname.startsWith(href)
           return (
             <li key={href} className="min-w-0 flex-1">
-              <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1 rounded-xl py-1.5 text-[0.6rem] font-medium transition-colors", active ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                <span className={cn("flex h-8 w-11 items-center justify-center rounded-full transition-colors", active ? "bg-brand-soft text-accent-foreground" : "bg-transparent")}>
+              <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1 rounded-xl py-1.5 text-[0.6rem] font-medium transition-all duration-200", active ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                <span className={cn("flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200", active ? "scale-100 bg-brand-soft text-accent-foreground shadow-[0_4px_14px_rgba(35,125,220,0.10)]" : "scale-[0.94] bg-transparent")}>
                   <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={active ? 2.4 : 1.9} />
                 </span>
                 <span className="truncate">{label}</span>
