@@ -55,6 +55,7 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
   }, [recording, mode, hasTranscript, audioEligible])
 
   if (!open || !recording) return null
+  const activeRecording = recording
 
   async function share() {
     if (!selectedAvailable || sharing) return
@@ -67,9 +68,9 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           mode,
-          recordingId: recording.cloudRecordingId ?? null,
-          title: recording.title,
-          transcript: recording.transcript,
+          recordingId: activeRecording.cloudRecordingId ?? null,
+          title: activeRecording.title,
+          transcript: activeRecording.transcript,
         }),
       })
       const payload = (await response.json()) as ApiPayload
@@ -94,7 +95,7 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
           <div className="min-w-0">
             <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">Share intentionally</p>
             <h2 id="share-recording-title" className="mt-1 text-lg font-semibold">Share to Community</h2>
-            <p className="mt-1 truncate text-xs text-muted-foreground">{recording.title}</p>
+            <p className="mt-1 truncate text-xs text-muted-foreground">{activeRecording.title}</p>
           </div>
           <button type="button" onClick={onClose} disabled={sharing} className="rounded-full p-2 text-muted-foreground hover:bg-secondary" aria-label="Close sharing options">
             <X className="h-4 w-4" />
