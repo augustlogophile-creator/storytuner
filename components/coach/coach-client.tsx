@@ -42,7 +42,15 @@ export function CoachClient() {
     else if (recordingId && !state.recordings.some((item) => item.id === recordingId)) setRecordingId("")
   }, [state.recordings, recordingId])
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [safeMessages, loading])
+  useEffect(() => {
+    const node = endRef.current
+    if (!node) return
+    try {
+      node.scrollIntoView({ behavior: "smooth", block: "end" })
+    } catch {
+      node.scrollIntoView()
+    }
+  }, [safeMessages.length, loading])
 
   useEffect(() => {
     let cancelled = false
