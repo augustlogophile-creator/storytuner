@@ -921,7 +921,10 @@ export function AppProvider({
   }, [])
 
   const clearCoach = useCallback(() => {
-    setState((current) => ({ ...current, coach: { ...current.coach, messages: [] } }))
+    setState((current) => {
+      if (!current.premium) return current
+      return { ...current, coach: { ...current.coach, messages: [] } }
+    })
   }, [])
 
   const value = useMemo<AppContextValue>(

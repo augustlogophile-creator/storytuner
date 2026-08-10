@@ -31,6 +31,7 @@ export function CoachClient() {
     ? Number.POSITIVE_INFINITY
     : Math.max(0, Math.min(FREE_COACH_LIMIT, serverRemaining ?? localRemaining))
   const blocked = !state.premium && remaining === 0
+  const used = state.premium ? 0 : Math.max(0, FREE_COACH_LIMIT - remaining)
   const recording = useMemo(
     () => state.recordings.find((item) => item.id === recordingId),
     [recordingId, state.recordings],
@@ -126,8 +127,8 @@ export function CoachClient() {
       </header>
 
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
-        <span>{state.premium ? "Unlimited messages with Membership" : `${remaining}/${FREE_COACH_LIMIT} free messages remaining`}</span>
-        {safeMessages.length > 0 && (
+        <span>{state.premium ? "Unlimited messages with Membership" : `${used} of ${FREE_COACH_LIMIT} free messages used`}</span>
+        {state.premium && safeMessages.length > 0 && (
           <button type="button" onClick={clearCoach} className="inline-flex items-center gap-1 font-semibold hover:text-foreground">
             <Trash2 className="h-3.5 w-3.5" /> Clear
           </button>
@@ -177,7 +178,7 @@ export function CoachClient() {
           <div className="border-t border-border p-5 text-center">
             <Lock className="mx-auto h-5 w-5 text-muted-foreground" />
             <p className="mt-2 text-sm font-semibold">Your five free messages are used.</p>
-            <p className="mt-1 text-xs text-muted-foreground">Membership includes unlimited coaching whenever you need it.</p>
+            <p className="mt-1 text-xs text-muted-foreground">Your five free exchanges stay here so you can revisit Weaver's advice. Membership includes unlimited coaching.</p>
             <Link href="/membership" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link>
           </div>
         ) : (
