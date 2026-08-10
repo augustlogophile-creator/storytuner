@@ -26,6 +26,7 @@ import {
 import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
+import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
 import { FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
 import {
@@ -128,7 +129,7 @@ const scenarios: Scenario[] = [
 ]
 
 export function ArenaClient() {
-  const { state, addRecording, shareRecording } = useApp()
+  const { state, addRecording } = useApp()
   const [phase, setPhase] = useState<Phase>("setup")
   const [storyMode, setStoryMode] = useState<StoryMode>("free")
   const [scenarioId, setScenarioId] = useState(scenarios[0].id)
@@ -971,7 +972,7 @@ export function ArenaClient() {
       {phase === "scoring" && <div className="flex min-h-96 flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center"><Loader2 className="h-8 w-8 animate-spin text-brand" /><h2 className="mt-5 text-lg font-semibold">Weaver is grading your story</h2><p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">Reviewing the hook, development, landing, and the clearest next revision.</p></div>}
 
       {phase === "result" && feedback && savedId && (
-        <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onShare={() => shareRecording(savedId)} onAgain={reset} shared={Boolean(state.recordings.find((item) => item.id === savedId)?.shared)} premium={state.premium} />
+        <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onAgain={reset} premium={state.premium} />
       )}
 
       <DurationOptionsDialog
@@ -1265,32 +1266,40 @@ function ReviewMediaPlayer({ src, kind, duration }: { src: string; kind: "video"
   )
 }
 
-function Result({ feedback, recording, onShare, onAgain, shared, premium }: { feedback: Feedback; recording?: Recording; onShare: () => void; onAgain: () => void; shared: boolean; premium: boolean }) {
-  const [justShared, setJustShared] = useState(false)
+function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback; recording?: Recording; onAgain: () => void; premium: boolean }) {
+  const [shareOpen, setShareOpen] = useState(false)
+  const [sharedPostId, setSharedPostId] = useState("")
   if (!recording) return null
-  const isShared = shared || justShared
   const strongest = labelArea(feedback.strongest)
   const weakest = labelArea(feedback.weakest)
   return (
-    <div className="flex flex-col gap-5">
-      <section className="flex items-center gap-5 rounded-3xl border border-border bg-card p-5"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-lg font-semibold leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
-      <section className="grid grid-cols-3 gap-3"><SubScore label="Hook" value={feedback.hook} /><SubScore label="Development" value={feedback.development} /><SubScore label="Landing" value={feedback.landing} /></section>
-      <FeedbackList tone="good" title={`What is working · ${strongest}`} items={feedback.strengths} />
-      <FeedbackList tone="bad" title={`What to improve · ${weakest}`} items={feedback.improvements} />
-      <section className="rounded-3xl border border-brand/35 bg-brand-soft p-5"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-accent-foreground">One change for your next take</p><p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{feedback.levelUp}</p></section>
-      <section className="rounded-3xl border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-sm font-semibold">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
-      <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground"><MessageCircle className="h-4 w-4" />Ask Weaver about this grade</Link>
-      <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
-      {isShared ? (
-        <Link href={`/community#post-${recording.id}`} className="flex items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-5 py-3.5 text-sm font-semibold text-accent-foreground"><Share2 className="h-4 w-4" />View shared story</Link>
-      ) : premium ? (
-        <button type="button" onClick={() => { onShare(); setJustShared(true) }} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Share transcript to Community</button>
-      ) : (
-        <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
-      )}
-      <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
-      <p className="text-center text-xs leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>
-    </div>
+    <>
+      <div className="flex flex-col gap-5">
+        <section className="flex items-center gap-5 rounded-3xl border border-border bg-card p-5"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-lg font-semibold leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
+        <section className="grid grid-cols-3 gap-3"><SubScore label="Hook" value={feedback.hook} /><SubScore label="Development" value={feedback.development} /><SubScore label="Landing" value={feedback.landing} /></section>
+        <FeedbackList tone="good" title={`What is working · ${strongest}`} items={feedback.strengths} />
+        <FeedbackList tone="bad" title={`What to improve · ${weakest}`} items={feedback.improvements} />
+        <section className="rounded-3xl border border-brand/35 bg-brand-soft p-5"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-accent-foreground">One change for your next take</p><p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{feedback.levelUp}</p></section>
+        <section className="rounded-3xl border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-sm font-semibold">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
+        <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground"><MessageCircle className="h-4 w-4" />Ask Weaver about this grade</Link>
+        <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
+        {sharedPostId ? (
+          <Link href={`/community#${sharedPostId}`} className="flex items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-5 py-3.5 text-sm font-semibold text-accent-foreground"><Share2 className="h-4 w-4" />View shared story</Link>
+        ) : premium ? (
+          <button type="button" onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Share to Community</button>
+        ) : (
+          <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
+        )}
+        <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
+        <p className="text-center text-xs leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>
+      </div>
+      <ShareRecordingDialog
+        open={shareOpen}
+        recording={recording}
+        onClose={() => setShareOpen(false)}
+        onShared={(post) => setSharedPostId(post.id)}
+      />
+    </>
   )
 }
 

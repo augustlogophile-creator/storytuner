@@ -92,6 +92,8 @@ export async function POST(request: Request) {
       title: null,
       body: parsed.data.body,
       sharedTranscript: null,
+      hasAudio: false,
+      audioDurationSeconds: null,
       createdAt: data.created_at,
       editedAt: null,
       author: {

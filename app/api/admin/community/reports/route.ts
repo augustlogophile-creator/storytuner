@@ -28,7 +28,7 @@ type ReportRow = {
   ai_recommended_action: string | null
 }
 type ProfileRow = { id: string; username: string; display_name: string }
-type PostRow = { id: string; author_id: string; body: string; status: string }
+type PostRow = { id: string; author_id: string; post_type: string; title: string | null; body: string; shared_transcript: string | null; status: string }
 type ReplyRow = { id: string; post_id: string; author_id: string; body: string; status: string }
 type ModerationStatusRow = {
   user_id: string
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
     postIds.length
       ? context.admin
           .from("community_posts")
-          .select("id, author_id, body, status")
+          .select("id, author_id, post_type, title, body, shared_transcript, status")
           .in("id", postIds)
           .returns<PostRow[]>()
       : Promise.resolve({ data: [] as PostRow[], error: null }),
@@ -205,7 +205,13 @@ export async function GET(request: Request) {
         priorActions: priorActionCounts.get(targetId) ?? 0,
       },
       content: post
-        ? { kind: "post", id: post.id, body: post.body, status: post.status, postId: null }
+        ? {
+            kind: "post",
+            id: post.id,
+            body: moderationPostBody(post),
+            status: post.status,
+            postId: null,
+          }
         : {
             kind: "reply",
             id: reply!.id,
@@ -229,6 +235,15 @@ export async function GET(request: Request) {
     { reports: safeReports, counts },
     { headers: { "Cache-Control": "private, no-store" } },
   )
+}
+
+function moderationPostBody(post: PostRow) {
+  if (post.shared_transcript?.trim()) return post.shared_transcript.trim()
+  if (post.body.trim()) return post.body.trim()
+  if (post.post_type === "audio" || post.post_type === "audio_transcript") {
+    return `[Shared audio] ${post.title?.trim() || "Untitled recording"}`
+  }
+  return post.title?.trim() || "Shared Community post"
 }
 
 async function loadPriorReportCounts(

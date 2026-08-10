@@ -28,6 +28,7 @@ type ProfileRow = {
 }
 
 type ViewerLikeRow = { post_id: string }
+type AudioRow = { post_id: string; duration_seconds: number; status: string }
 type VisibleReplyRow = {
   id: string
   post_id: string
@@ -77,7 +78,7 @@ export async function GET(request: Request) {
     const postIds = posts.map((post) => post.id)
     const authorIds = Array.from(new Set(posts.map((post) => post.author_id)))
 
-    const [profilesResult, viewerLikesResult, activeRepliesResult] = await Promise.all([
+    const [profilesResult, viewerLikesResult, activeRepliesResult, audioResult] = await Promise.all([
       authorIds.length
         ? context.userClient.rpc("community_public_profiles", {
             requested_user_ids: authorIds,
@@ -97,15 +98,26 @@ export async function GET(request: Request) {
             .in("post_id", postIds)
             .returns<VisibleReplyRow[]>()
         : Promise.resolve({ data: [] as VisibleReplyRow[], error: null }),
+      postIds.length
+        ? context.userClient
+            .from("community_audio")
+            .select("post_id, duration_seconds, status")
+            .in("post_id", postIds)
+            .eq("status", "ready")
+            .returns<AudioRow[]>()
+        : Promise.resolve({ data: [] as AudioRow[], error: null }),
     ])
 
     if (profilesResult.error) logCommunityQueryError("Community author lookup failed", profilesResult.error)
     if (viewerLikesResult.error) logCommunityQueryError("Viewer Community likes lookup failed", viewerLikesResult.error)
     if (activeRepliesResult.error) logCommunityQueryError("Community active reply count lookup failed", activeRepliesResult.error)
+    if (audioResult.error) logCommunityQueryError("Community audio metadata lookup failed", audioResult.error)
 
     const profileRows: ProfileRow[] = profilesResult.data ?? []
     const viewerLikeRows: ViewerLikeRow[] = viewerLikesResult.data ?? []
     const visibleReplyRows: VisibleReplyRow[] = activeRepliesResult.data ?? []
+    const audioRows: AudioRow[] = audioResult.data ?? []
+    const audioByPost = new Map(audioRows.map((audio) => [audio.post_id, audio]))
     const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
     const likedByViewer = new Set<string>(viewerLikeRows.map((like: ViewerLikeRow) => like.post_id))
     const visibleReplyCounts = new Map<string, number>()
@@ -124,6 +136,8 @@ export async function GET(request: Request) {
         title: post.title,
         body: post.body,
         sharedTranscript: post.shared_transcript,
+        hasAudio: audioByPost.has(post.id),
+        audioDurationSeconds: audioByPost.get(post.id)?.duration_seconds ?? null,
         createdAt: post.created_at,
         editedAt: post.edited_at,
         author: {

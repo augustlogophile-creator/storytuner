@@ -113,6 +113,8 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     title: updated.title,
     body: updated.body,
     sharedTranscript: updated.shared_transcript,
+    hasAudio: false,
+    audioDurationSeconds: null,
     createdAt: updated.created_at,
     editedAt: updated.edited_at,
     author: {
@@ -157,6 +159,14 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That post is no longer available." }, { status: 404 })
   if (existing.author_id !== context.userId) return noStoreJson({ error: "You can delete only your own posts." }, { status: 403 })
 
+  const { data: sharedAudio, error: audioLookupError } = await context.admin
+    .from("community_audio")
+    .select("storage_path")
+    .eq("post_id", existing.id)
+    .maybeSingle<{ storage_path: string }>()
+
+  if (audioLookupError) console.error("Community audio deletion lookup failed", audioLookupError)
+
   const deletedAt = new Date().toISOString()
   const { error: deleteError } = await context.admin
     .from("community_posts")
@@ -168,6 +178,21 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
   if (deleteError) {
     console.error("Community post deletion failed", deleteError)
     return noStoreJson({ error: "The post could not be deleted." }, { status: 500 })
+  }
+
+  // Once the post is inactive, RLS makes any lingering audio inaccessible.
+  // Storage cleanup is best-effort so a temporary storage error cannot keep a
+  // post visible after its owner chose to delete it.
+  if (sharedAudio?.storage_path) {
+    const { error: storageDeleteError } = await context.admin.storage
+      .from("storytuner-community-audio")
+      .remove([sharedAudio.storage_path])
+    if (storageDeleteError) {
+      console.error("Community audio storage cleanup failed", storageDeleteError)
+    } else {
+      const { error: audioRowDeleteError } = await context.admin.from("community_audio").delete().eq("post_id", existing.id)
+      if (audioRowDeleteError) console.error("Community audio metadata cleanup failed", audioRowDeleteError)
+    }
   }
 
   return noStoreJson({ deleted: true, postId: existing.id })

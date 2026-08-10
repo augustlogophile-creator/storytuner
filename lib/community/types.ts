@@ -13,6 +13,8 @@ export type CommunityFeedPost = {
   title: string | null
   body: string
   sharedTranscript: string | null
+  hasAudio: boolean
+  audioDurationSeconds: number | null
   createdAt: string
   editedAt: string | null
   author: CommunityAuthor

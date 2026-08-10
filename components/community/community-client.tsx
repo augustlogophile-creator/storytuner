@@ -17,6 +17,8 @@ import {
   ChevronUp,
   CornerUpLeft,
   Flag,
+  FileText,
+  Headphones,
   Heart,
   LoaderCircle,
   LockKeyhole,
@@ -255,7 +257,10 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
           className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand"
         />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
-        <div className="mt-3 flex justify-end">
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <Link href="/arena/recordings" className="inline-flex items-center gap-1.5 rounded-full px-2 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground">
+            <Headphones className="h-3.5 w-3.5" /> Share a recording
+          </Link>
           <button
             type="button"
             onClick={publishPost}
@@ -582,7 +587,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   const groupedReplies = useMemo(() => groupConversationReplies(replies), [replies])
   const menuItems: MenuItem[] = post.mine
     ? [
-        { label: "Edit post", icon: Pencil, onSelect: () => setEditing(true) },
+        ...(post.postType === "text" ? [{ label: "Edit post", icon: Pencil, onSelect: () => setEditing(true) } satisfies MenuItem] : []),
         { label: "Delete post", icon: Trash2, tone: "danger", onSelect: () => setDeleteOpen(true) },
       ]
     : [{ label: "Report post", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
@@ -621,7 +626,11 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
           </div>
         </div>
       ) : (
-        <p className="mt-4 whitespace-pre-wrap text-[0.95rem] leading-7 text-foreground/90 text-pretty">{post.body}</p>
+        <div className="mt-4 flex flex-col gap-3">
+          {post.body && <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-foreground/90 text-pretty">{post.body}</p>}
+          {post.hasAudio && <CommunityAudioPlayer postId={post.id} durationSeconds={post.audioDurationSeconds} onMembershipRequired={onMembershipRequired} />}
+          {post.sharedTranscript && <SharedTranscript transcript={post.sharedTranscript} defaultOpen={post.postType === "transcript"} />}
+        </div>
       )}
 
       {postError && <p className="mt-3 text-xs text-destructive" role="alert">{postError}</p>}
@@ -742,6 +751,62 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
       <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={() => setNotice("")}>{notice}</NoticeDialog>
     </article>
   )
+}
+
+function SharedTranscript({ transcript, defaultOpen }: { transcript: string; defaultOpen: boolean }) {
+  return (
+    <details open={defaultOpen} className="rounded-2xl border border-border bg-secondary/35 px-4 py-3">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-xs font-semibold text-muted-foreground">
+        <FileText className="h-3.5 w-3.5" /> Transcript
+      </summary>
+      <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{transcript}</p>
+    </details>
+  )
+}
+
+function CommunityAudioPlayer({ postId, durationSeconds, onMembershipRequired }: { postId: string; durationSeconds: number | null; onMembershipRequired: () => void }) {
+  const [url, setUrl] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  async function loadAudio() {
+    if (url || loading) return
+    setLoading(true)
+    setError("")
+    try {
+      const response = await fetch(`/api/community/posts/${postId}/audio`, { method: "GET", cache: "no-store", headers: { Accept: "application/json" } })
+      const payload = (await response.json()) as { url?: string; error?: string }
+      if (isMembershipDenial(response, payload)) {
+        onMembershipRequired()
+        return
+      }
+      if (!response.ok || !payload.url) throw new Error(payload.error || "Shared audio could not be loaded.")
+      setUrl(payload.url)
+    } catch (audioError) {
+      setError(errorMessage(audioError, "Shared audio could not be loaded."))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-secondary/35 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background"><Headphones className="h-4 w-4" /></span>
+          <div><p className="text-xs font-semibold">Shared audio</p>{durationSeconds ? <p className="text-[0.68rem] text-muted-foreground">{formatCommunityDuration(durationSeconds)}</p> : null}</div>
+        </div>
+        {!url && <button type="button" onClick={() => void loadAudio()} disabled={loading} className="rounded-full bg-background px-3 py-2 text-xs font-semibold disabled:opacity-50">{loading ? "Loading…" : "Load audio"}</button>}
+      </div>
+      {url && <audio controls preload="metadata" src={url} className="mt-3 w-full" />}
+      {error && <p className="mt-2 text-xs text-destructive" role="alert">{error}</p>}
+    </div>
+  )
+}
+
+function formatCommunityDuration(seconds: number) {
+  const safe = Math.max(0, Math.round(seconds))
+  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`
 }
 
 type ReplyThreadGroupProps = {

@@ -5,12 +5,16 @@ import { useState } from "react"
 import { AlertCircle, ArrowLeft, MessageCircle, Mic2, RotateCcw, Share2, Trash2 } from "lucide-react"
 import { MediaPlayer } from "@/components/arena/media-player"
 import { Eyebrow } from "@/components/eyebrow"
-import { ConfirmDialog } from "@/components/confirm-dialog"
-import { useApp } from "@/lib/app-state"
+import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
+import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
+import { useApp, type Recording } from "@/lib/app-state"
 
 export function RecordingsClient() {
-  const { state, deleteRecording, shareRecording } = useApp()
+  const { state, deleteRecording } = useApp()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
+  const [shareTarget, setShareTarget] = useState<Recording | null>(null)
+  const [sharedPosts, setSharedPosts] = useState<Record<string, string>>({})
+  const [shareNotice, setShareNotice] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState("")
 
@@ -102,10 +106,10 @@ export function RecordingsClient() {
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Weaver</Link>
                     <Link href="/arena" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
-                    {recording.shared && state.premium ? (
-                      <Link href={`/community#post-${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
+                    {sharedPosts[recording.id] ? (
+                      <Link href={`/community#${sharedPosts[recording.id]}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
                     ) : state.premium ? (
-                      <button type="button" onClick={() => shareRecording(recording.id)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share transcript</button>
+                      <button type="button" onClick={() => setShareTarget(recording)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share to Community</button>
                     ) : (
                       <Link href="/membership" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
                     )}
@@ -117,6 +121,16 @@ export function RecordingsClient() {
           </div>
         )}
       </div>
+      <ShareRecordingDialog
+        open={Boolean(shareTarget)}
+        recording={shareTarget}
+        onClose={() => setShareTarget(null)}
+        onShared={(post) => {
+          if (shareTarget) setSharedPosts((current) => ({ ...current, [shareTarget.id]: post.id }))
+          setShareNotice("Your recording is now in Community. Your private original was not changed.")
+        }}
+      />
+      <NoticeDialog open={Boolean(shareNotice)} title="Shared to Community" onClose={() => setShareNotice("")}>{shareNotice}</NoticeDialog>
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         title="Delete this recording?"
