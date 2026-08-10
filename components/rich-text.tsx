@@ -10,7 +10,8 @@ function inline(text: string): ReactNode[] {
 }
 
 export function RichText({ markdown }: { markdown: string }) {
-  const lines = markdown.split("\n")
+  const safeMarkdown = typeof markdown === "string" ? markdown : ""
+  const lines = safeMarkdown.split("\n")
   const output: ReactNode[] = []
   let index = 0
   while (index < lines.length) {

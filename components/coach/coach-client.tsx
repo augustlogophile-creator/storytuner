@@ -17,8 +17,19 @@ export function CoachClient() {
   const endRef = useRef<HTMLDivElement | null>(null)
   const requestKeyRef = useRef<string | null>(null)
   const [serverRemaining, setServerRemaining] = useState<number | null>(null)
+  const safeMessages = useMemo(
+    () => state.coach.messages.filter((message) =>
+      Boolean(message)
+      && (message.role === "user" || message.role === "assistant")
+      && typeof message.id === "string"
+      && typeof message.content === "string"
+    ),
+    [state.coach.messages],
+  )
   const localRemaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
-  const remaining = state.premium ? Number.POSITIVE_INFINITY : (serverRemaining ?? localRemaining)
+  const remaining = state.premium
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, Math.min(FREE_COACH_LIMIT, serverRemaining ?? localRemaining))
   const blocked = !state.premium && remaining === 0
   const recording = useMemo(
     () => state.recordings.find((item) => item.id === recordingId),
@@ -31,7 +42,7 @@ export function CoachClient() {
     else if (recordingId && !state.recordings.some((item) => item.id === recordingId)) setRecordingId("")
   }, [state.recordings, recordingId])
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [state.coach.messages, loading])
+  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [safeMessages, loading])
 
   useEffect(() => {
     let cancelled = false
@@ -41,7 +52,9 @@ export function CoachClient() {
         return response.json() as Promise<{ coach?: { remaining?: number } }>
       })
       .then((data) => {
-        if (!cancelled && typeof data?.coach?.remaining === "number") setServerRemaining(data.coach.remaining)
+        if (!cancelled && Number.isFinite(data?.coach?.remaining)) {
+          setServerRemaining(Math.max(0, Math.min(FREE_COACH_LIMIT, Number(data?.coach?.remaining))))
+        }
       })
       .catch(() => undefined)
     return () => { cancelled = true }
@@ -55,7 +68,7 @@ export function CoachClient() {
     const requestKey = requestKeyRef.current ?? crypto.randomUUID()
     requestKeyRef.current = requestKey
     try {
-      const history = state.coach.messages.slice(-10).map((message) => ({ role: message.role, content: message.content }))
+      const history = safeMessages.slice(-10).map((message) => ({ role: message.role, content: message.content }))
       const response = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,13 +80,16 @@ export function CoachClient() {
           requestKey,
         }),
       })
-      const data = (await response.json()) as { reply?: string; error?: string; code?: string; usage?: { remaining?: number } }
-      if (typeof data.usage?.remaining === "number") setServerRemaining(data.usage.remaining)
-      if (!response.ok || !data.reply) {
-        if (data.code === "COACH_LIMIT_REACHED") setServerRemaining(0)
-        throw new Error(data.error || "Weaver could not respond.")
+      const data = await response.json().catch(() => ({})) as { reply?: unknown; error?: unknown; code?: unknown; usage?: { remaining?: unknown } }
+      if (Number.isFinite(data.usage?.remaining)) {
+        setServerRemaining(Math.max(0, Math.min(FREE_COACH_LIMIT, Number(data.usage?.remaining))))
       }
-      addCoachExchange(clean, data.reply)
+      const reply = typeof data.reply === "string" ? data.reply.trim() : ""
+      if (!response.ok || !reply) {
+        if (data.code === "COACH_LIMIT_REACHED") setServerRemaining(0)
+        throw new Error(typeof data.error === "string" ? data.error : "Weaver could not respond.")
+      }
+      addCoachExchange(clean, reply)
       requestKeyRef.current = null
       setInput("")
     } catch (caught) {
@@ -103,7 +119,7 @@ export function CoachClient() {
 
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
         <span>{state.premium ? "Unlimited messages with Membership" : `${remaining}/${FREE_COACH_LIMIT} free messages remaining`}</span>
-        {state.coach.messages.length > 0 && (
+        {safeMessages.length > 0 && (
           <button type="button" onClick={clearCoach} className="inline-flex items-center gap-1 font-semibold hover:text-foreground">
             <Trash2 className="h-3.5 w-3.5" /> Clear
           </button>
@@ -112,7 +128,7 @@ export function CoachClient() {
 
       <section className="flex min-h-[25rem] flex-1 flex-col rounded-3xl border border-border bg-card">
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-5">
-          {state.coach.messages.length === 0 ? (
+          {safeMessages.length === 0 ? (
             <div className="m-auto max-w-xs text-center">
               <p className="text-sm font-semibold">Bring Weaver any storytelling question.</p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -121,7 +137,7 @@ export function CoachClient() {
             </div>
           ) : (
             <>
-              {state.coach.messages.map((message: CoachMessage) => (
+              {safeMessages.map((message: CoachMessage) => (
                 message.role === "user" ? (
                   <div key={message.id} className="ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">
                     {message.content}

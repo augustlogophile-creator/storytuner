@@ -84,6 +84,27 @@ export const weaverColors: WeaverColor[] = [
 
 export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }
 
+function normalizeCoachMessages(raw: unknown): CoachMessage[] {
+  if (!Array.isArray(raw)) return []
+  return raw.flatMap((item, index): CoachMessage[] => {
+    if (!item || typeof item !== "object") return []
+    const value = item as Partial<CoachMessage>
+    const role = value.role === "user" || value.role === "assistant" ? value.role : null
+    const content = typeof value.content === "string" ? value.content.trim() : ""
+    if (!role || !content) return []
+
+    const id = typeof value.id === "string" && value.id.trim()
+      ? value.id
+      : `legacy-coach-${role}-${index}-${content.length}`
+    const parsedTime = typeof value.createdAt === "string" ? Date.parse(value.createdAt) : Number.NaN
+    const createdAt = Number.isFinite(parsedTime)
+      ? new Date(parsedTime).toISOString()
+      : new Date(index * 1000).toISOString()
+
+    return [{ id, role, content, createdAt }]
+  }).slice(-30)
+}
+
 export type AppState = {
   version: 6
   accountOwnerId: string | null
@@ -198,7 +219,7 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
       ? {
           date: typeof value.coach.date === "string" ? value.coach.date : todayKey(),
           sent: typeof value.coach.sent === "number" ? value.coach.sent : 0,
-          messages: Array.isArray(value.coach.messages) ? value.coach.messages : [],
+          messages: normalizeCoachMessages(value.coach.messages),
         }
       : base.coach,
     responses: value.responses ?? {},
@@ -359,7 +380,7 @@ function mergeSyncedState(local: AppState, remoteRaw: unknown, accountOwnerId: s
   const xpLifetime = Math.max(remote.xpLifetime, local.xpLifetime)
   const spentXp = ownedWeavers.reduce((sum, id) => sum + (weaverColors.find((item) => item.id === id)?.cost ?? 0), 0)
   const recordings = mergeRecordingMetadata(remote.recordings, local.recordings)
-  const messages = [...remote.coach.messages, ...local.coach.messages]
+  const messages = normalizeCoachMessages([...remote.coach.messages, ...local.coach.messages])
     .filter((message, index, all) => all.findIndex((item) => item.id === message.id) === index)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     .slice(-30)
