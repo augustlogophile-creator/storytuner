@@ -23,6 +23,8 @@ import {
   LoaderCircle,
   LockKeyhole,
   MessageCircle,
+  Pause,
+  Play,
   MoreHorizontal,
   Pencil,
   RefreshCw,
@@ -237,38 +239,33 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
       </header>
 
       <section className="rounded-[2rem] border border-brand/35 bg-brand-soft/45 p-5 shadow-sm">
-        <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
+        <div className="flex items-center gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
             <Headphones className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
             <Eyebrow>Share a story</Eyebrow>
             <h2 className="mt-1 text-lg font-semibold">Choose a recording to share</h2>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Share either the audio or the transcript, then add an optional note asking for the kind of feedback you want.
-            </p>
           </div>
         </div>
-        <Link href="/arena/recordings" className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
+        <Link href="/arena/recordings" className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
           <Headphones className="h-4 w-4" /> Choose a story
         </Link>
-        <p className="mt-3 text-center text-[0.68rem] leading-5 text-muted-foreground">Private recordings never appear here unless you choose to share them.</p>
       </section>
 
       <section aria-labelledby="share-heading" className="rounded-3xl border border-border bg-card p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="share-heading" className="text-sm font-semibold">Post a note</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Reflections, storytelling tips, questions, or something you want to improve · @{currentUsername}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Reflections, tips, questions, or what you want to improve · @{currentUsername}</p>
           </div>
           <CharacterCount value={draft.length} maximum={5000} warningAt={4500} />
         </div>
         <textarea value={draft} maxLength={5000} rows={3} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)} placeholder="Share a reflection, a storytelling tip, a question, or something you want to get better at…" className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="hidden text-[0.68rem] text-muted-foreground sm:block">Lead with curiosity. Be specific about what helped.</p>
-          <button type="button" onClick={publishPost} disabled={!draft.trim() || publishing} className="ml-auto inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40">
-            {publishing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        <div className="mt-3 flex justify-end">
+          <button type="button" onClick={publishPost} disabled={!draft.trim() || publishing} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40">
+            {publishing ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
             {publishing ? "Publishing…" : "Post note"}
           </button>
         </div>
@@ -769,6 +766,10 @@ function CommunityAudioPlayer({ postId, durationSeconds, onMembershipRequired }:
   const [url, setUrl] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [mediaDuration, setMediaDuration] = useState(durationSeconds && durationSeconds > 0 ? durationSeconds : 0)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   async function loadAudio() {
     if (url || loading) return
@@ -782,6 +783,8 @@ function CommunityAudioPlayer({ postId, durationSeconds, onMembershipRequired }:
         return
       }
       if (!response.ok || !payload.url) throw new Error(payload.error || "Shared audio could not be loaded.")
+      setCurrentTime(0)
+      setPlaying(false)
       setUrl(payload.url)
     } catch (audioError) {
       setError(errorMessage(audioError, "Shared audio could not be loaded."))
@@ -790,16 +793,85 @@ function CommunityAudioPlayer({ postId, durationSeconds, onMembershipRequired }:
     }
   }
 
+  function syncDuration(audio: HTMLAudioElement) {
+    const next = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : (durationSeconds ?? 0)
+    if (next > 0) setMediaDuration(next)
+  }
+
+  async function togglePlayback() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (audio.paused) {
+      try {
+        await audio.play()
+      } catch {
+        setError("Audio could not start. Try again.")
+      }
+    } else {
+      audio.pause()
+    }
+  }
+
+  function seek(value: number) {
+    const audio = audioRef.current
+    if (!audio || mediaDuration <= 0) return
+    const next = Math.min(Math.max(value, 0), mediaDuration)
+    audio.currentTime = next
+    setCurrentTime(next)
+  }
+
+  const displayDuration = mediaDuration > 0 ? mediaDuration : (durationSeconds ?? 0)
+  const safeCurrent = displayDuration > 0 ? Math.min(currentTime, displayDuration) : 0
+  const progressPercent = displayDuration > 0 ? Math.min(100, Math.max(0, (safeCurrent / displayDuration) * 100)) : 0
+
   return (
     <div className="rounded-2xl border border-border bg-secondary/35 p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background"><Headphones className="h-4 w-4" /></span>
-          <div><p className="text-xs font-semibold">Shared audio</p>{durationSeconds ? <p className="text-[0.68rem] text-muted-foreground">{formatCommunityDuration(durationSeconds)}</p> : null}</div>
+          <div><p className="text-xs font-semibold">Shared audio</p>{displayDuration > 0 ? <p className="text-[0.68rem] text-muted-foreground">{formatCommunityDuration(displayDuration)}</p> : null}</div>
         </div>
         {!url && <button type="button" onClick={() => void loadAudio()} disabled={loading} className="rounded-full bg-background px-3 py-2 text-xs font-semibold disabled:opacity-50">{loading ? "Loading…" : "Load audio"}</button>}
       </div>
-      {url && <audio controls preload="metadata" src={url} className="mt-3 w-full" />}
+
+      {url && (
+        <div className="mt-3 rounded-2xl bg-background/80 px-3 py-3">
+          <audio
+            ref={audioRef}
+            preload="metadata"
+            src={url}
+            className="hidden"
+            onLoadedMetadata={(event) => syncDuration(event.currentTarget)}
+            onDurationChange={(event) => syncDuration(event.currentTarget)}
+            onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => { setPlaying(false); setCurrentTime(displayDuration) }}
+          />
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => void togglePlayback()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground" aria-label={playing ? "Pause audio" : "Play audio"}>
+              {playing ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
+            </button>
+            <span className="w-[4.6rem] shrink-0 text-xs font-medium tabular-nums text-foreground/80">{formatCommunityDuration(safeCurrent)} / {formatCommunityDuration(displayDuration)}</span>
+            <div className="relative min-w-0 flex-1">
+              <div className="relative h-1.5 rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-primary transition-[width] duration-100" style={{ width: `${progressPercent}%` }} />
+                <span className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-sm transition-[left] duration-100" style={{ left: `${progressPercent}%` }} aria-hidden="true" />
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={displayDuration > 0 ? displayDuration : 1}
+                step={0.1}
+                value={safeCurrent}
+                onChange={(event) => seek(Number(event.target.value))}
+                aria-label="Audio progress"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </div>
+          </div>
+        </div>
+      )}
       {error && <p className="mt-2 text-xs text-destructive" role="alert">{error}</p>}
     </div>
   )
