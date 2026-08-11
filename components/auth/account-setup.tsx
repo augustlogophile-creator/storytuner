@@ -31,6 +31,7 @@ export function AccountSetup({
   const router = useRouter()
   const searchParams = useSearchParams()
   const { completeOnboarding } = useApp()
+  const recoveryMode = searchParams.get("mode") === "login-recovery"
   const suggestions = useMemo(() => usernameSuggestionsFromEmail(initialEmail), [initialEmail])
   const [username, setUsername] = useState(initialProfile?.username ?? suggestions[0] ?? "story_weaves")
   const [displayName, setDisplayName] = useState(initialProfile?.display_name ?? initialName)
@@ -41,13 +42,18 @@ export function AccountSetup({
   async function finish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-    const cleanUsername = username.trim().toLowerCase()
-    const cleanDisplayName = displayName.trim()
+    let cleanUsername = (recoveryMode && initialProfile?.username ? initialProfile.username : username).trim().toLowerCase()
+    let cleanDisplayName = (recoveryMode && initialProfile?.display_name ? initialProfile.display_name : displayName).trim()
 
     const usernameError = validateUsername(cleanUsername)
-    if (usernameError) return setError(usernameError)
     const displayNameError = validateDisplayName(cleanDisplayName)
-    if (displayNameError) return setError(displayNameError)
+    if (recoveryMode) {
+      if (usernameError) cleanUsername = "story_weaves"
+      if (displayNameError) cleanDisplayName = "Storyteller"
+    } else {
+      if (usernameError) return setError(usernameError)
+      if (displayNameError) return setError(displayNameError)
+    }
     if (!ageConfirmed) return setError("You must confirm that you are at least 13 to use StoryTuner.")
 
     setLoading(true)
@@ -58,23 +64,49 @@ export function AccountSetup({
       return setError("Your session expired. Log in again to finish setting up your profile.")
     }
 
-    const { error: profileError } = await supabase.from("profiles").upsert({
+    let finalUsername = cleanUsername
+    let { error: profileError } = await supabase.from("profiles").upsert({
       id: userData.user.id,
-      username: cleanUsername,
+      username: finalUsername,
       display_name: cleanDisplayName,
       confirmed_age_13_plus: true,
       onboarding_completed: true,
     }, { onConflict: "id" })
 
+    if (profileError?.code === "23505" && recoveryMode && !initialProfile) {
+      const fallbackUsernames = [
+        ...suggestions.slice(1),
+        `story_${userData.user.id.replace(/-/g, "").slice(0, 10)}`,
+      ]
+      for (const candidate of fallbackUsernames) {
+        const normalized = candidate.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24)
+        if (validateUsername(normalized)) continue
+        const result = await supabase.from("profiles").upsert({
+          id: userData.user.id,
+          username: normalized,
+          display_name: cleanDisplayName,
+          confirmed_age_13_plus: true,
+          onboarding_completed: true,
+        }, { onConflict: "id" })
+        profileError = result.error
+        if (!profileError) {
+          finalUsername = normalized
+          break
+        }
+        if (profileError.code !== "23505") break
+      }
+    }
+
     if (profileError) {
       setLoading(false)
-      if (profileError.code === "23505") return setError("That username is already taken. Try another one.")
+      if (profileError.code === "23505") return setError(recoveryMode ? "StoryTuner could not restore your public username automatically. Try logging in again." : "That username is already taken. Try another one.")
       if (profileError.code === "23514" || profileError.message.toLowerCase().includes("public name")) {
         return setError("Choose a different public name. Vulgar, sexual, hateful, or harassing terms are not allowed.")
       }
       return setError("StoryTuner could not save your profile. Check that the newest Supabase profile migration has been applied, then try again.")
     }
 
+    setUsername(finalUsername)
     completeOnboarding(cleanDisplayName)
     const destination = safeInternalPath(searchParams.get("next"), "/home")
     router.replace(destination === "/onboarding" ? "/home" : destination)
@@ -87,12 +119,12 @@ export function AccountSetup({
         <div className="mx-auto w-full max-w-md">
           <div className="flex justify-center"><Weaver colorId="classic" size={90} /></div>
           <span className="mx-auto mt-5 flex h-11 w-11 items-center justify-center rounded-full border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_10px_28px_rgba(21,93,183,0.10)]"><Check className="h-5 w-5" /></span>
-          <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Profile setup</p>
-          <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">Choose how you appear in StoryTuner.</h1>
-          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">Your public name is separate from the email you use to log in.</p>
+          <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{recoveryMode ? "Account confirmation" : "Profile setup"}</p>
+          <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">{recoveryMode ? "Welcome back." : "Choose how you appear in StoryTuner."}</h1>
+          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">{recoveryMode ? "Your existing StoryTuner identity will stay exactly the same. Confirm the age requirement once to continue." : "Your public name is separate from the email you use to log in."}</p>
 
           <form onSubmit={finish} className="mt-8 space-y-5">
-            <label className="block">
+            {!recoveryMode && <label className="block">
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Public username</span>
               <input
                 value={username}
@@ -101,8 +133,8 @@ export function AccountSetup({
                 autoComplete="username"
                 className="auth-input mt-2"
               />
-            </label>
-            {suggestions.length > 1 && (
+            </label>}
+            {!recoveryMode && suggestions.length > 1 && (
               <div className="-mt-2 flex flex-wrap gap-2" aria-label="Suggested usernames">
                 {suggestions.map((suggestion) => (
                   <button
@@ -116,7 +148,7 @@ export function AccountSetup({
                 ))}
               </div>
             )}
-            <label className="block">
+            {!recoveryMode && <label className="block">
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Display name</span>
               <input
                 value={displayName}
@@ -125,7 +157,7 @@ export function AccountSetup({
                 autoComplete="name"
                 className="auth-input mt-2"
               />
-            </label>
+            </label>}
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-brand/35">
               <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
               <span className="text-sm leading-relaxed">I confirm that I am at least 13 years old.</span>

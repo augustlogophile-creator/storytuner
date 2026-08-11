@@ -4,6 +4,7 @@ import { getMembershipByUserId } from "@/lib/membership-server"
 import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
 import { rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -96,6 +97,24 @@ ${personalizedHistory || "Personalization from past recordings is disabled or no
         },
         ...messages.map((item) => ({ role: item.role, content: item.content })),
       ], "coach"), 2 * 60 * 1000)
+      const admin = createAdminClient()
+      const { error: historyError } = await admin.from("coach_exchanges").upsert({
+        user_id: user.id,
+        request_key: requestKey,
+        user_message: latest,
+        assistant_message: reply,
+      }, { onConflict: "user_id,request_key" })
+
+      if (historyError) {
+        if (reservation && !reservation.alreadyReserved) {
+          await releaseUsage(user.id, "coach_message", requestKey).catch((releaseError) =>
+            backendError("coach_usage_rollback_failed", releaseError, { userId: user.id, requestKey }),
+          )
+        }
+        backendError("coach_history_save_failed", historyError, { userId: user.id, requestKey })
+        return Response.json({ error: "Weaver answered, but the conversation could not be saved. Try again." }, { status: 500 })
+      }
+
       return Response.json({ reply, usage: reservation }, { headers: { "Cache-Control": "no-store" } })
     } catch (error) {
       if (reservation && !reservation.alreadyReserved) {

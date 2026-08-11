@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useId, type MouseEvent, type ReactNode } from "react"
+import { useEffect, useId, useState, type MouseEvent, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 import { AlertTriangle, CheckCircle2, X } from "lucide-react"
 
 function DialogFrame({
@@ -16,6 +17,13 @@ function DialogFrame({
   onClose: () => void
   children: ReactNode
 }) {
+  const [portalReady, setPortalReady] = useState(false)
+
+  useEffect(() => {
+    setPortalReady(true)
+    return () => setPortalReady(false)
+  }, [])
+
   useEffect(() => {
     if (!open) return
     const previous = document.body.style.overflow
@@ -30,9 +38,9 @@ function DialogFrame({
     }
   }, [busy, onClose, open])
 
-  if (!open) return null
+  if (!open || !portalReady) return null
 
-  return (
+  return createPortal(
     <div
       className="app-dialog-overlay"
       role="presentation"
@@ -43,7 +51,8 @@ function DialogFrame({
       <section role="dialog" aria-modal="true" aria-labelledby={labelledBy} className="app-dialog-panel max-w-sm">
         {children}
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

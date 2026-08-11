@@ -44,7 +44,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
     setError("")
     setLoading(true)
     const supabase = createClient()
-    const callback = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+    const callback = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}&intent=${isSignUp ? "sign-up" : "sign-in"}`
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callback },

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Trash2, Volume2 } from "lucide-react"
 import { Weaver } from "@/components/weaver"
 import { RichText } from "@/components/rich-text"
@@ -37,16 +37,40 @@ export function CoachClient() {
   const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null)
   const [listening, setListening] = useState(false)
   const [serverRemaining, setServerRemaining] = useState<number | null>(null)
+  const [archivedMessages, setArchivedMessages] = useState<CoachMessage[]>([])
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const endRef = useRef<HTMLDivElement | null>(null)
   const requestKeyRef = useRef<string | null>(null)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
 
-  const safeMessages = useMemo(() => state.coach.messages.filter((message) => Boolean(message) && (message.role === "user" || message.role === "assistant") && typeof message.id === "string" && typeof message.content === "string"), [state.coach.messages])
+  const localMessages = useMemo(() => state.coach.messages.filter((message) => Boolean(message) && (message.role === "user" || message.role === "assistant") && typeof message.id === "string" && typeof message.content === "string"), [state.coach.messages])
+  const safeMessages = historyLoaded ? archivedMessages : localMessages
   const localRemaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
   const remaining = state.premium ? Number.POSITIVE_INFINITY : Math.max(0, Math.min(FREE_COACH_LIMIT, serverRemaining ?? localRemaining))
   const blocked = !state.premium && remaining === 0
   const used = state.premium ? 0 : Math.max(0, FREE_COACH_LIMIT - remaining)
   const recording = useMemo(() => state.recordings.find((item) => item.id === recordingId), [recordingId, state.recordings])
+
+
+  const loadCoachHistory = useCallback(async () => {
+    try {
+      const response = await fetch("/api/coach/history", { cache: "no-store" })
+      if (!response.ok) return false
+      const data = await response.json() as { messages?: CoachMessage[] }
+      const messages = Array.isArray(data.messages)
+        ? data.messages.filter((message) => message && (message.role === "user" || message.role === "assistant") && typeof message.id === "string" && typeof message.content === "string")
+        : []
+      setArchivedMessages(messages)
+      setHistoryLoaded(true)
+      return true
+    } catch {
+      return false
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadCoachHistory()
+  }, [loadCoachHistory])
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("recording")
@@ -102,6 +126,7 @@ export function CoachClient() {
         throw new Error(typeof data.error === "string" ? data.error : "Weaver could not respond.")
       }
       addCoachExchange(clean, reply)
+      await loadCoachHistory()
       requestKeyRef.current = null
       setPendingUserMessage(null)
       if (speakReply) speakText(reply)
