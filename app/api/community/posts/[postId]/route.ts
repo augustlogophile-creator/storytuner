@@ -2,6 +2,8 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
+import { backendError } from "@/lib/backend-log"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { countActiveRenderableReplies } from "@/lib/community/visible-replies"
 
 export const dynamic = "force-dynamic"
@@ -28,9 +30,14 @@ type OwnedPostRow = {
 export async function PATCH(request: Request, routeContext: RouteContext) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const oversized = rejectLargeRequest(request, 15000)
+  if (oversized) return oversized
+  const limited = rateLimitResponse(rateLimitUser(context.userId, "community_post_mutation", [{ limit: 20, windowMs: 10 * 60 * 1000, label: "20/10m" }]), "Too many Community changes. Wait a few minutes and try again.")
+  if (limited) return limited
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That post could not be found." }, { status: 404 })
+  const { postId } = parsedParams.data
 
   const parsedBody = editSchema.safeParse(await request.json().catch(() => null))
   if (!parsedBody.success) {
@@ -44,7 +51,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     .maybeSingle<OwnedPostRow>()
 
   if (existingError) {
-    console.error("Community post edit lookup failed", existingError)
+    backendError("community_post_edit_lookup_failed", existingError, { userId: context.userId, postId })
     return noStoreJson({ error: "The post could not be updated." }, { status: 500 })
   }
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That post is no longer available." }, { status: 404 })
@@ -55,7 +62,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   try {
     moderation = await moderateCommunityText(parsedBody.data.body)
   } catch (moderationError) {
-    console.error("Community post edit AI moderation unavailable", moderationError)
+    backendError("community_post_edit_moderation_unavailable", moderationError, { userId: context.userId, postId })
     return noStoreJson(
       { error: "Community safety checks are temporarily unavailable. Please try saving again in a moment." },
       { status: 503 },
@@ -73,7 +80,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     .single<OwnedPostRow>()
 
   if (updateError) {
-    console.error("Community post edit failed", updateError)
+    backendError("community_post_edit_failed", updateError, { userId: context.userId, postId })
     return noStoreJson({ error: "The post could not be updated." }, { status: 500 })
   }
 
@@ -86,7 +93,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
         moderation,
       })
     } catch (reportError) {
-      console.error("AI moderation report creation failed for edited post", reportError)
+      backendError("community_post_edit_ai_report_create_failed", reportError, { userId: context.userId, postId })
       await context.admin
         .from("community_posts")
         .update({ body: existing.body, edited_at: existing.edited_at, status: "active" })
@@ -104,7 +111,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       .eq("post_id", updated.id)
       .returns<Array<{ id: string; parent_reply_id: string | null; status: string }>>(),
   ])
-  if (repliesResult.error) console.error("Community post edit reply-count refresh failed", repliesResult.error)
+  if (repliesResult.error) backendError("community_post_reply_count_refresh_failed", repliesResult.error, { userId: context.userId, postId })
   const replyCount = countActiveRenderableReplies(repliesResult.data ?? [])
 
   const post: CommunityFeedPost = {
@@ -142,9 +149,12 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 export async function DELETE(_request: Request, routeContext: RouteContext) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const limited = rateLimitResponse(rateLimitUser(context.userId, "community_post_mutation", [{ limit: 20, windowMs: 10 * 60 * 1000, label: "20/10m" }]), "Too many Community changes. Wait a few minutes and try again.")
+  if (limited) return limited
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That post could not be found." }, { status: 404 })
+  const { postId } = parsedParams.data
 
   const { data: existing, error: existingError } = await context.admin
     .from("community_posts")
@@ -153,7 +163,7 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
     .maybeSingle<{ id: string; author_id: string; status: string }>()
 
   if (existingError) {
-    console.error("Community post deletion lookup failed", existingError)
+    backendError("community_post_delete_lookup_failed", existingError, { userId: context.userId, postId })
     return noStoreJson({ error: "The post could not be deleted." }, { status: 500 })
   }
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That post is no longer available." }, { status: 404 })
@@ -165,7 +175,7 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
     .eq("post_id", existing.id)
     .maybeSingle<{ storage_path: string }>()
 
-  if (audioLookupError) console.error("Community audio deletion lookup failed", audioLookupError)
+  if (audioLookupError) backendError("community_audio_delete_lookup_failed", audioLookupError, { userId: context.userId, postId })
 
   const deletedAt = new Date().toISOString()
   const { error: deleteError } = await context.admin
@@ -176,7 +186,7 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
     .eq("status", "active")
 
   if (deleteError) {
-    console.error("Community post deletion failed", deleteError)
+    backendError("community_post_delete_failed", deleteError, { userId: context.userId, postId })
     return noStoreJson({ error: "The post could not be deleted." }, { status: 500 })
   }
 
@@ -188,10 +198,10 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
       .from("storytuner-community-audio")
       .remove([sharedAudio.storage_path])
     if (storageDeleteError) {
-      console.error("Community audio storage cleanup failed", storageDeleteError)
+      backendError("community_audio_storage_cleanup_failed", storageDeleteError, { userId: context.userId, postId })
     } else {
       const { error: audioRowDeleteError } = await context.admin.from("community_audio").delete().eq("post_id", existing.id)
-      if (audioRowDeleteError) console.error("Community audio metadata cleanup failed", audioRowDeleteError)
+      if (audioRowDeleteError) backendError("community_audio_metadata_cleanup_failed", audioRowDeleteError, { userId: context.userId, postId })
     }
   }
 

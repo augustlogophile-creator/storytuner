@@ -2,6 +2,8 @@ import { getSubscriptionByUserId, isMembershipActive } from "@/lib/membership-se
 import { getAuthenticatedUser } from "@/lib/require-auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripePost } from "@/lib/stripe-rest"
+import { backendError, backendLog } from "@/lib/backend-log"
+import { rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 
 type CheckoutSession = { id: string; url: string | null; customer: string | null }
 type StripeCustomer = { id: string }
@@ -9,6 +11,8 @@ type StripeCustomer = { id: string }
 export async function POST(request: Request) {
   const user = await getAuthenticatedUser()
   if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
+  const limited = rateLimitResponse(rateLimitUser(user.id, "stripe_checkout", [{ limit: 4, windowMs: 10 * 60 * 1000, label: "4/10m" }]), "Too many checkout attempts. Wait a few minutes and try again.")
+  if (limited) return limited
 
   try {
     const existing = await getSubscriptionByUserId(user.id)
@@ -52,9 +56,10 @@ export async function POST(request: Request) {
     })
 
     if (!session.url) throw new Error("Stripe did not return a checkout URL.")
-    return Response.json({ url: session.url })
+    backendLog("info", "stripe_checkout_created", { userId: user.id, customerId })
+    return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
-    console.error("Stripe checkout error", error)
+    backendError("stripe_checkout_failed", error, { userId: user.id })
     return Response.json({ error: error instanceof Error ? error.message : "Could not start checkout." }, { status: 500 })
   }
 }

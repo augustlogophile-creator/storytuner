@@ -2,6 +2,8 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -36,6 +38,12 @@ type InsertedPost = { id: string; created_at: string }
 export async function POST(request: Request) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const oversized = rejectLargeRequest(request, 30_000)
+  if (oversized) return oversized
+  const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_recording_share", [
+    { limit: 6, windowMs: 10 * 60 * 1000, label: "6/10min" },
+  ]), "You have shared several stories recently. Wait a few minutes before sharing again.")
+  if (blocked) return blocked
 
   let uploadedCommunityPath: string | null = null
   let createdPostId: string | null = null
@@ -96,7 +104,7 @@ export async function POST(request: Request) {
     try {
       moderation = await moderateCommunityText(moderationInput)
     } catch (error) {
-      console.error("Community recording moderation unavailable", error)
+      backendError("community_recording_moderation_unavailable", error, { userId: context.userId })
       return noStoreJson({ error: "Community safety checks are temporarily unavailable. Try again in a moment." }, { status: 503 })
     }
 
@@ -201,7 +209,7 @@ export async function POST(request: Request) {
 
     return noStoreJson({ post: responsePost }, { status: 201 })
   } catch (error) {
-    console.error("Community recording share failed", error)
+    backendError("community_recording_share_failed", error, { userId: context.userId })
     if (uploadedCommunityPath) {
       await context.admin.storage.from(COMMUNITY_BUCKET).remove([uploadedCommunityPath]).catch(() => undefined)
     }

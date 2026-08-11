@@ -6,6 +6,7 @@ import type {
   ModerationReportsResponse,
 } from "@/lib/admin/community-types"
 import type { CommunityReportReason } from "@/lib/community/types"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -66,7 +67,7 @@ export async function GET(request: Request) {
     .returns<ReportRow[]>()
 
   if (reportsResult.error) {
-    console.error("Moderation reports loading failed", reportsResult.error)
+    backendError("moderation_reports_load_failed", reportsResult.error, { adminId: context.userId, status })
     return Response.json({ error: "Reports could not be loaded." }, { status: 500 })
   }
 
@@ -99,7 +100,7 @@ export async function GET(request: Request) {
   ])
 
   if (postsResult.error || repliesResult.error) {
-    console.error("Moderation content lookup failed", postsResult.error || repliesResult.error)
+    backendError("moderation_content_lookup_failed", postsResult.error || repliesResult.error, { adminId: context.userId })
   }
 
   const postRows: PostRow[] = postsResult.data ?? []
@@ -142,9 +143,9 @@ export async function GET(request: Request) {
       : Promise.resolve({ data: [] as ActionRow[], error: null }),
   ])
 
-  if (profilesResult.error) console.error("Moderation profile lookup failed", profilesResult.error)
-  if (statusesResult.error) console.error("Moderation status lookup failed", statusesResult.error)
-  if (actionsResult.error) console.error("Moderation action lookup failed", actionsResult.error)
+  if (profilesResult.error) backendError("moderation_profile_lookup_failed", profilesResult.error, { adminId: context.userId })
+  if (statusesResult.error) backendError("moderation_status_list_failed", statusesResult.error, { adminId: context.userId })
+  if (actionsResult.error) backendError("moderation_action_list_failed", actionsResult.error, { adminId: context.userId })
 
   const profileRows: ProfileRow[] = profilesResult.data ?? []
   const statusRows: ModerationStatusRow[] = statusesResult.data ?? []

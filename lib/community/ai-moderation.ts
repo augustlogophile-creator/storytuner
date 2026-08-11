@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { CommunityReportReason } from "@/lib/community/types"
+import { backendError, backendLog } from "@/lib/backend-log"
 
 const DEFAULT_MODEL = "omni-moderation-latest"
 
@@ -67,20 +68,26 @@ function recommendation(categories: Record<string, boolean>, topCategory: string
 
 export async function moderateCommunityText(input: string): Promise<CommunityAiModerationResult> {
   const model = process.env.OPENAI_MODERATION_MODEL || DEFAULT_MODEL
-  const response = await fetch("https://api.openai.com/v1/moderations", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${openAiKey()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ model, input }),
-  })
+  const startedAt = Date.now()
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 20_000)
+  try {
+    const response = await fetch("https://api.openai.com/v1/moderations", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${openAiKey()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ model, input }),
+      signal: controller.signal,
+      cache: "no-store",
+    })
 
-  const data = (await response.json().catch(() => ({}))) as ModerationApiResponse
-  if (!response.ok) throw new Error(data.error?.message || "OpenAI moderation request failed")
+    const data = (await response.json().catch(() => ({}))) as ModerationApiResponse
+    if (!response.ok) throw new Error(data.error?.message || "OpenAI moderation request failed")
 
-  const result = data.results?.[0]
-  if (!result) throw new Error("OpenAI moderation returned no result")
+    const result = data.results?.[0]
+    if (!result) throw new Error("OpenAI moderation returned no result")
 
   const categories = Object.fromEntries(
     Object.entries(result.categories ?? {}).map(([key, value]) => [key, Boolean(value)]),
@@ -95,15 +102,29 @@ export async function moderateCommunityText(input: string): Promise<CommunityAiM
     .filter(([name]) => categories[name])
     .sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 
-  return {
-    model: data.model || model,
-    flagged: Boolean(result.flagged),
-    categories,
-    categoryScores,
-    topCategory,
-    topScore,
-    reason: moderationReason(topFlaggedCategory ?? topCategory),
-    recommendedAction: recommendation(categories, topCategory),
+    const moderation = {
+      model: data.model || model,
+      flagged: Boolean(result.flagged),
+      categories,
+      categoryScores,
+      topCategory,
+      topScore,
+      reason: moderationReason(topFlaggedCategory ?? topCategory),
+      recommendedAction: recommendation(categories, topCategory),
+    }
+    backendLog("info", "community_ai_moderation_completed", {
+      model: moderation.model,
+      flagged: moderation.flagged,
+      topCategory: moderation.topCategory,
+      durationMs: Date.now() - startedAt,
+      inputChars: input.length,
+    })
+    return moderation
+  } catch (error) {
+    backendError("community_ai_moderation_failed", error, { model, durationMs: Date.now() - startedAt, inputChars: input.length })
+    throw error
+  } finally {
+    clearTimeout(timeout)
   }
 }
 

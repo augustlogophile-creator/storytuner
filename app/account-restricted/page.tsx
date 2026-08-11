@@ -1,5 +1,5 @@
-import { Ban, Clock3, Mail } from "lucide-react"
-import { SwitchAccountButton } from "@/components/auth/switch-account-button"
+import { Ban, Clock3 } from "lucide-react"
+import { RestrictedAccountActions } from "@/components/moderation/restricted-account-actions"
 import { MobileShell } from "@/components/mobile-shell"
 import { RestrictionStatusWatcher } from "@/components/moderation/restriction-status-watcher"
 import { Eyebrow } from "@/components/eyebrow"
@@ -58,13 +58,7 @@ export default async function AccountRestrictedPage() {
             </p>
           )}
 
-          <a
-            href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Account%20Review"
-            className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
-          >
-            <Mail className="h-4 w-4" /> Request a review
-          </a>
-          <SwitchAccountButton />
+          <RestrictedAccountActions />
         </section>
       </div>
     </MobileShell>

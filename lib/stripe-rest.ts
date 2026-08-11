@@ -31,6 +31,21 @@ export async function stripePost<T>(path: string, params: Record<string, string 
   return payload
 }
 
+
+export async function stripeDelete<T>(path: string) {
+  const response = await fetch(`${STRIPE_API}${path}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${secretKey()}`,
+      "Stripe-Version": STRIPE_VERSION,
+    },
+    cache: "no-store",
+  })
+  const payload = await response.json() as T & { error?: { message?: string } }
+  if (!response.ok) throw new Error(payload.error?.message || `Stripe request failed (${response.status}).`)
+  return payload
+}
+
 export async function stripeGet<T>(path: string) {
   const response = await fetch(`${STRIPE_API}${path}`, {
     headers: {

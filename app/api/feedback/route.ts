@@ -1,7 +1,9 @@
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
-import { isUuid, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
+import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -81,6 +83,14 @@ export async function POST(req: Request) {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
+  const oversized = rejectLargeRequest(req, 120_000)
+  if (oversized) return oversized
+  const rate = rateLimitUser(user.id, "feedback", [
+    { limit: 15, windowMs: 60_000, label: "15/min" },
+    { limit: 120, windowMs: 60 * 60 * 1000, label: "120/hour" },
+  ])
+  const blocked = rateLimitResponse(rate, "Too many feedback requests are arriving from this account. Wait a moment and try again.")
+  if (blocked) return blocked
   try {
     const body = (await req.json()) as Record<string, unknown>
     const mode = typeof body.mode === "string" ? body.mode : "story"
@@ -102,7 +112,8 @@ export async function POST(req: Request) {
         }, { status: 403 })
       }
 
-      const object = await openAIJson<{ pass: boolean; working: string; fix: string }>({
+      const lessonFingerprint = requestFingerprint(user.id, "lesson", unitIndex, answer, String(body.technique || ""), String(body.prompt || ""))
+      const object = await runIdempotent(`lesson-feedback:${lessonFingerprint}`, () => openAIJson<{ pass: boolean; working: string; fix: string }>({
         name: "lesson_feedback",
         schema: lessonSchema,
         messages: [
@@ -115,8 +126,8 @@ export async function POST(req: Request) {
             content: `Unit: ${String(body.unitTitle || "Storytelling")}\nTechnique: ${String(body.technique || "story craft")}\nExercise: ${String(body.prompt || "")}\n\nStudent response:\n${answer}`,
           },
         ],
-      })
-      return Response.json(object)
+      }), 90_000)
+      return Response.json(object, { headers: { "Cache-Control": "no-store" } })
     }
 
     if (mode === "arena") {
@@ -153,12 +164,23 @@ export async function POST(req: Request) {
             code: "ARENA_LIMIT_REACHED",
             error: "You have used both free spoken story reviews. Membership unlocks unlimited practice.",
             usage: reservation,
-          }, { status: 403 })
+          }, { status: 403, headers: { "Cache-Control": "no-store" } })
         }
+      } else {
+        await recordUsageEvent(user.id, "arena_review", requestKey)
+      }
+
+      const durableRate = await enforceDurableUsageRate(user.id, "arena_review", [
+        { limit: 40, windowMs: 60 * 60 * 1000, label: "40/hour" },
+        { limit: 120, windowMs: 24 * 60 * 60 * 1000, label: "120/day" },
+      ])
+      if (!durableRate.allowed) {
+        if (reservation && !reservation.alreadyReserved) await releaseUsage(user.id, "arena_review", requestKey).catch(() => undefined)
+        return Response.json({ code: "RATE_LIMITED", error: "Arena has received unusually many AI review requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
       }
 
       try {
-        const object = await openAIJson<{
+        const object = await runIdempotent(`arena-feedback:${user.id}:${requestKey}`, () => openAIJson<{
         hook: number
         development: number
         landing: number
@@ -185,12 +207,12 @@ Then write a revised version of the full story. Preserve every real event, the s
             content: `Practice mode: ${String(body.context || "Open story")}\nInstruction or prompt: ${String(body.prompt || "Tell a story of your choice")}\nTarget length: ${Number(body.targetSeconds || body.seconds || 0)} seconds\nActual length: ${Number(body.seconds || 0)} seconds\n\nClean transcript:\n${transcript}`,
           },
         ],
-        })
-        return Response.json({ ...object, usage: reservation })
+        }), 2 * 60 * 1000)
+        return Response.json({ ...object, usage: reservation }, { headers: { "Cache-Control": "no-store" } })
       } catch (error) {
         if (reservation && !reservation.alreadyReserved) {
           await releaseUsage(user.id, "arena_review", requestKey).catch((releaseError) =>
-            console.error("Arena usage rollback failed", releaseError),
+            backendError("arena_usage_rollback_failed", releaseError, { userId: user.id, requestKey }),
           )
         }
         throw error
@@ -199,17 +221,18 @@ Then write a revised version of the full story. Preserve every real event, the s
 
     const story = typeof body.story === "string" ? body.story.trim() : ""
     if (story.length < 20) return Response.json({ error: "Please share a little more of the story." }, { status: 400 })
-    const object = await openAIJson({
+    const writtenFingerprint = requestFingerprint(user.id, "written-story", story, String(body.title || ""))
+    const object = await runIdempotent(`written-feedback:${writtenFingerprint}`, () => openAIJson({
       name: "written_story_feedback",
       schema: writtenStorySchema,
       messages: [
         { role: "system", content: "You are Weaver, a warm, specific storytelling coach. Focus on structure, vivid detail, emotional truth, and a clean landing. Avoid generic praise and never invent details." },
         { role: "user", content: `Title: ${String(body.title || "Untitled")}\n\nStory:\n${story}` },
       ],
-    })
-    return Response.json(object)
+    }), 90_000)
+    return Response.json(object, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
-    console.error("StoryTuner feedback error", error)
+    backendError("feedback_route_failed", error, { userId: user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
       ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
       : "Weaver could not review this right now. Your work is still saved on this device."

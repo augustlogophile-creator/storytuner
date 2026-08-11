@@ -1,5 +1,7 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
+import { rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -10,6 +12,10 @@ type RouteContext = { params: Promise<{ replyId: string }> }
 async function handleLike(routeContext: RouteContext, liked: boolean) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_like", [
+    { limit: 60, windowMs: 60_000, label: "60/min" },
+  ]), "Too many reactions are being sent at once. Wait a moment and try again.")
+  if (blocked) return blocked
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That reply could not be found." }, { status: 404 })
@@ -23,7 +29,7 @@ async function handleLike(routeContext: RouteContext, liked: boolean) {
     .maybeSingle<{ id: string }>()
 
   if (visibilityError) {
-    console.error("Community reply-like visibility check failed", visibilityError)
+    backendError("community_reply_like_visibility_failed", visibilityError, { userId: context.userId, replyId })
     return noStoreJson({ error: "The reply could not be updated." }, { status: 500 })
   }
   if (!visibleReply) return noStoreJson({ error: "That reply is no longer available." }, { status: 404 })
@@ -41,7 +47,7 @@ async function handleLike(routeContext: RouteContext, liked: boolean) {
 
   const { error: mutationError } = await mutation
   if (mutationError) {
-    console.error("Community reply-like mutation failed", mutationError)
+    backendError("community_reply_like_mutation_failed", mutationError, { userId: context.userId, replyId, liked })
     return noStoreJson({ error: "The like could not be updated." }, { status: 500 })
   }
 
@@ -51,7 +57,7 @@ async function handleLike(routeContext: RouteContext, liked: boolean) {
     .eq("reply_id", replyId)
 
   if (countError) {
-    console.error("Community reply-like count failed", countError)
+    backendError("community_reply_like_count_failed", countError, { userId: context.userId, replyId })
     return noStoreJson({ error: "The like was saved, but its count could not be refreshed." }, { status: 500 })
   }
 

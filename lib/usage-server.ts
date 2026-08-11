@@ -71,3 +71,40 @@ export async function releaseUsage(userId: string, feature: UsageFeature, reques
 export function isUuid(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
+
+export async function recordUsageEvent(userId: string, feature: UsageFeature, requestKey: string) {
+  const admin = createAdminClient()
+  const { error } = await admin.from("user_usage_events").upsert({
+    user_id: userId,
+    feature,
+    request_key: requestKey,
+  }, { onConflict: "user_id,feature,request_key", ignoreDuplicates: true })
+  if (error) throw error
+}
+
+export async function getRecentUsageCount(userId: string, feature: UsageFeature, since: Date) {
+  const admin = createAdminClient()
+  const { count, error } = await admin
+    .from("user_usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("feature", feature)
+    .gte("created_at", since.toISOString())
+  if (error) throw error
+  return Math.max(0, count ?? 0)
+}
+
+export async function enforceDurableUsageRate(
+  userId: string,
+  feature: UsageFeature,
+  rules: Array<{ limit: number; windowMs: number; label: string }>,
+) {
+  const now = Date.now()
+  for (const rule of rules) {
+    const count = await getRecentUsageCount(userId, feature, new Date(now - rule.windowMs))
+    if (count > rule.limit) {
+      return { allowed: false as const, label: rule.label }
+    }
+  }
+  return { allowed: true as const, label: null }
+}

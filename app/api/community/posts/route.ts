@@ -2,6 +2,8 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -18,6 +20,12 @@ type InsertedPost = {
 export async function POST(request: Request) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const oversized = rejectLargeRequest(request, 15_000)
+  if (oversized) return oversized
+  const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_post", [
+    { limit: 6, windowMs: 10 * 60 * 1000, label: "6/10min" },
+  ]), "You have published several posts recently. Wait a few minutes before posting again.")
+  if (blocked) return blocked
 
   try {
     const parsed = createPostSchema.safeParse(await request.json())
@@ -47,7 +55,7 @@ export async function POST(request: Request) {
     try {
       moderation = await moderateCommunityText(parsed.data.body)
     } catch (moderationError) {
-      console.error("Community AI moderation unavailable", moderationError)
+      backendError("community_post_moderation_unavailable", moderationError, { userId: context.userId })
       return noStoreJson(
         { error: "Community safety checks are temporarily unavailable. Please try publishing again in a moment." },
         { status: 503 },
@@ -76,7 +84,7 @@ export async function POST(request: Request) {
           moderation,
         })
       } catch (reportError) {
-        console.error("AI moderation report creation failed", reportError)
+        backendError("community_post_ai_report_create_failed", reportError, { userId: context.userId })
         await context.admin.from("community_posts").delete().eq("id", data.id)
         return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
       }
@@ -109,7 +117,7 @@ export async function POST(request: Request) {
 
     return noStoreJson({ post }, { status: 201 })
   } catch (error) {
-    console.error("Community post creation error", error)
+    backendError("community_post_create_failed", error, { userId: context.userId })
     return noStoreJson({ error: "Your post could not be published." }, { status: 500 })
   }
 }

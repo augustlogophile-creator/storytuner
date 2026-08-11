@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripeGet, verifyStripeSignature } from "@/lib/stripe-rest"
+import { backendError, backendLog } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
 
@@ -15,7 +16,10 @@ type StripeSubscription = {
 }
 
 export async function POST(request: Request) {
+  const contentLength = Number(request.headers.get("content-length") || 0)
+  if (Number.isFinite(contentLength) && contentLength > 1_000_000) return new Response("Webhook payload is too large.", { status: 413 })
   const rawBody = await request.text()
+  if (rawBody.length > 1_000_000) return new Response("Webhook payload is too large.", { status: 413 })
   const signature = request.headers.get("stripe-signature")
   const secret = process.env.STRIPE_WEBHOOK_SECRET
   if (!signature || !secret) return new Response("Webhook is not configured.", { status: 400 })
@@ -35,9 +39,10 @@ export async function POST(request: Request) {
       await syncSubscription(event.data.object as unknown as StripeSubscription)
     }
 
-    return Response.json({ received: true })
+    backendLog("info", "stripe_webhook_processed", { type: event.type })
+    return Response.json({ received: true }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
-    console.error("Stripe webhook error", error)
+    backendError("stripe_webhook_failed", error, { type: event.type })
     return new Response("Webhook handler failed.", { status: 500 })
   }
 }
@@ -56,6 +61,12 @@ async function syncSubscription(subscription: StripeSubscription) {
     userId = data?.user_id ?? null
   }
   if (!userId) throw new Error("Could not match Stripe subscription to a StoryTuner user.")
+
+  const { data: authUserResult, error: authUserError } = await admin.auth.admin.getUserById(userId)
+  if (authUserError || !authUserResult.user) {
+    backendLog("info", "stripe_webhook_user_already_deleted", { userId, customerId: subscription.customer, subscriptionId: subscription.id })
+    return
+  }
 
   const firstItem = subscription.items?.data?.[0]
   const periodEnd = subscription.current_period_end ?? firstItem?.current_period_end

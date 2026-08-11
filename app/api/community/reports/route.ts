@@ -1,5 +1,7 @@
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityReportReason } from "@/lib/community/types"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 
@@ -24,6 +26,12 @@ type ReportRequest = {
 export async function POST(request: Request) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const oversized = rejectLargeRequest(request, 8_000)
+  if (oversized) return oversized
+  const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_report", [
+    { limit: 10, windowMs: 60 * 60 * 1000, label: "10/hour" },
+  ]), "Too many reports were submitted recently. Try again later.")
+  if (blocked) return blocked
 
   let payload: ReportRequest
   try {
@@ -94,7 +102,7 @@ export async function POST(request: Request) {
 
   if (error) {
     if (error.code === "23505") return noStoreJson({ reported: true, alreadyReported: true })
-    console.error("Community report creation failed", error)
+    backendError("community_report_create_failed", error, { userId: context.userId })
     return noStoreJson({ error: "The report could not be submitted." }, { status: 500 })
   }
 

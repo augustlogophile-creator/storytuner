@@ -1,5 +1,7 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
+import { rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -11,6 +13,10 @@ type RouteContext = { params: Promise<{ postId: string }> }
 async function handleLike(requestContext: RouteContext, liked: boolean) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_like", [
+    { limit: 60, windowMs: 60_000, label: "60/min" },
+  ]), "Too many reactions are being sent at once. Wait a moment and try again.")
+  if (blocked) return blocked
 
   const parsedParams = paramsSchema.safeParse(await requestContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That post could not be found." }, { status: 404 })
@@ -24,7 +30,7 @@ async function handleLike(requestContext: RouteContext, liked: boolean) {
     .maybeSingle<{ id: string }>()
 
   if (visibilityError) {
-    console.error("Community post-like visibility check failed", visibilityError)
+    backendError("community_post_like_visibility_failed", visibilityError, { userId: context.userId, postId })
     return noStoreJson({ error: "The post could not be updated." }, { status: 500 })
   }
   if (!visiblePost) return noStoreJson({ error: "That post is no longer available." }, { status: 404 })
@@ -42,7 +48,7 @@ async function handleLike(requestContext: RouteContext, liked: boolean) {
 
   const { error: mutationError } = await mutation
   if (mutationError) {
-    console.error("Community post-like mutation failed", mutationError)
+    backendError("community_post_like_mutation_failed", mutationError, { userId: context.userId, postId, liked })
     return noStoreJson({ error: "The like could not be updated." }, { status: 500 })
   }
 
@@ -52,7 +58,7 @@ async function handleLike(requestContext: RouteContext, liked: boolean) {
     .eq("post_id", postId)
 
   if (countError) {
-    console.error("Community post-like count failed", countError)
+    backendError("community_post_like_count_failed", countError, { userId: context.userId, postId })
     return noStoreJson({ error: "The like was saved, but its count could not be refreshed." }, { status: 500 })
   }
 

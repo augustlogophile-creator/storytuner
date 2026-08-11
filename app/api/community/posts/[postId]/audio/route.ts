@@ -1,5 +1,7 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
+import { backendError } from "@/lib/backend-log"
+import { rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -19,6 +21,8 @@ type AudioRow = {
 export async function GET(_request: Request, routeContext: RouteContext) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const limited = rateLimitResponse(rateLimitUser(context.userId, "community_audio_url", [{ limit: 40, windowMs: 60 * 1000, label: "40/min" }]), "Too many audio requests. Wait a moment and try again.")
+  if (limited) return limited
 
   const parsed = paramsSchema.safeParse(await routeContext.params)
   if (!parsed.success) return noStoreJson({ error: "That shared audio could not be found." }, { status: 404 })
@@ -31,7 +35,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
     .maybeSingle<AudioRow>()
 
   if (error) {
-    console.error("Community audio lookup failed", error)
+    backendError("community_audio_lookup_failed", error, { userId: context.userId, postId: parsed.data.postId })
     return noStoreJson({ error: "Shared audio could not be loaded." }, { status: 500 })
   }
   if (!audio) return noStoreJson({ error: "That shared audio is no longer available." }, { status: 404 })
@@ -40,7 +44,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
     .from(COMMUNITY_BUCKET)
     .createSignedUrl(audio.storage_path, 15 * 60)
   if (signError || !signed?.signedUrl) {
-    console.error("Community audio signing failed", signError)
+    backendError("community_audio_signing_failed", signError, { userId: context.userId, postId: parsed.data.postId })
     return noStoreJson({ error: "Shared audio could not be played right now." }, { status: 500 })
   }
 

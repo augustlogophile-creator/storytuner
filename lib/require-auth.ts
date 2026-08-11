@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { safeInternalPath } from "@/lib/auth/redirects"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
+import { writeVerifiedModerationStatus } from "@/lib/community/moderation-status"
+import { backendError } from "@/lib/backend-log"
 
 export type StoryTunerProfile = {
   id: string
@@ -49,20 +51,22 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
   const admin = createAdminClient()
   const { data, error } = await admin
     .from("community_moderation_status")
-    .select("account_status, account_suspended_until, community_suspended_until, public_message, updated_at")
+    .select("account_status, account_suspended_until, community_suspended_until, public_message, internal_note, updated_by, updated_at")
     .eq("user_id", userId)
     .maybeSingle<{
       account_status: "active" | "suspended" | "banned"
       account_suspended_until: string | null
       community_suspended_until: string | null
       public_message: string | null
+      internal_note: string | null
+      updated_by: string | null
       updated_at: string | null
     }>()
 
   if (error) {
     // The moderation migration may not have been run yet. Do not lock users out
     // because a new optional table is temporarily unavailable.
-    console.error("Account restriction lookup failed", error)
+    backendError("account_restriction_lookup_failed", error, { userId })
     return {
       restricted: false,
       accountStatus: "active",
@@ -84,16 +88,47 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
     }
   }
 
+  const now = Date.now()
   const suspendedUntil = data.account_suspended_until ? new Date(data.account_suspended_until).getTime() : null
-  const activeSuspension = data.account_status === "suspended" && (suspendedUntil === null || suspendedUntil > Date.now())
+  const communityUntil = data.community_suspended_until ? new Date(data.community_suspended_until).getTime() : null
+  const accountExpired = data.account_status === "suspended" && suspendedUntil !== null && suspendedUntil <= now
+  const communityExpired = communityUntil !== null && communityUntil <= now
+
+  if (accountExpired || communityExpired) {
+    const nextMessage = accountExpired
+      ? "Your StoryTuner access has been restored automatically because the suspension ended."
+      : "Your Community access has been restored automatically because the suspension ended."
+    try {
+      const normalized = await writeVerifiedModerationStatus(admin, userId, {
+        accountStatus: accountExpired ? "active" : data.account_status,
+        accountSuspendedUntil: accountExpired ? null : data.account_suspended_until,
+        communitySuspendedUntil: communityExpired ? null : data.community_suspended_until,
+        publicMessage: nextMessage,
+        internalNote: data.internal_note,
+        updatedBy: data.updated_by,
+      })
+      return {
+        restricted: normalized.account_status === "banned" || (normalized.account_status === "suspended" && (!normalized.account_suspended_until || new Date(normalized.account_suspended_until).getTime() > now)),
+        accountStatus: normalized.account_status,
+        accountSuspendedUntil: normalized.account_suspended_until,
+        communitySuspendedUntil: normalized.community_suspended_until,
+        publicMessage: normalized.public_message,
+        updatedAt: normalized.updated_at,
+      }
+    } catch (normalizeError) {
+      backendError("moderation_expiry_normalization_failed", normalizeError, { userId })
+    }
+  }
+
+  const activeSuspension = data.account_status === "suspended" && (suspendedUntil === null || suspendedUntil > now)
   const restricted = data.account_status === "banned" || activeSuspension
 
   return {
     restricted,
-    accountStatus: data.account_status,
-    accountSuspendedUntil: data.account_suspended_until,
-    communitySuspendedUntil: data.community_suspended_until,
-    publicMessage: data.public_message,
+    accountStatus: accountExpired ? "active" : data.account_status,
+    accountSuspendedUntil: accountExpired ? null : data.account_suspended_until,
+    communitySuspendedUntil: communityExpired ? null : data.community_suspended_until,
+    publicMessage: (accountExpired || communityExpired) ? (accountExpired ? "Your StoryTuner access has been restored automatically because the suspension ended." : "Your Community access has been restored automatically because the suspension ended.") : data.public_message,
     updatedAt: data.updated_at,
   }
 }
@@ -165,7 +200,7 @@ export async function getAccountRestrictionDecisionContext(
     .maybeSingle<{ report_id: string | null; note: string | null; action_type: "account_suspension" | "account_ban" }>()
 
   if (actionError || !action) {
-    if (actionError) console.error("Restriction decision lookup failed", actionError)
+    if (actionError) backendError("restriction_decision_lookup_failed", actionError, { userId })
     return { content: null, note: null, actionType: null }
   }
 
@@ -178,7 +213,7 @@ export async function getAccountRestrictionDecisionContext(
       .maybeSingle<{ post_id: string | null; reply_id: string | null }>()
 
     if (reportError) {
-      console.error("Restriction report lookup failed", reportError)
+      backendError("restriction_report_lookup_failed", reportError, { userId, reportId: action.report_id })
     } else if (report?.post_id) {
       const { data } = await admin
         .from("community_posts")

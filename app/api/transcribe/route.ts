@@ -1,7 +1,9 @@
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson, transcribeWithOpenAI } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
-import { isUuid, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
+import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -22,6 +24,14 @@ export async function POST(req: Request) {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
+  const oversized = rejectLargeRequest(req, 5 * 1024 * 1024)
+  if (oversized) return oversized
+  const rate = rateLimitUser(user.id, "transcribe", [
+    { limit: 6, windowMs: 10 * 60 * 1000, label: "6/10min" },
+    { limit: 20, windowMs: 60 * 60 * 1000, label: "20/hour" },
+  ])
+  const blocked = rateLimitResponse(rate, "Too many transcription requests are arriving from this account. Wait before trying another recording.")
+  if (blocked) return blocked
   try {
     const form = await req.formData()
     const file = form.get("file")
@@ -46,17 +56,28 @@ export async function POST(req: Request) {
           code: "ARENA_LIMIT_REACHED",
           error: "You have used both free spoken story reviews. Membership unlocks unlimited practice.",
           usage: reservation,
-        }, { status: 403 })
+        }, { status: 403, headers: { "Cache-Control": "no-store" } })
       }
+    } else {
+      await recordUsageEvent(user.id, "arena_review", requestKey)
+    }
+
+    const durableRate = await enforceDurableUsageRate(user.id, "arena_review", [
+      { limit: 40, windowMs: 60 * 60 * 1000, label: "40/hour" },
+      { limit: 120, windowMs: 24 * 60 * 60 * 1000, label: "120/day" },
+    ])
+    if (!durableRate.allowed) {
+      if (reservation && !reservation.alreadyReserved) await releaseUsage(user.id, "arena_review", requestKey).catch(() => undefined)
+      return Response.json({ code: "RATE_LIMITED", error: "Arena has received unusually many transcription requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
     }
 
     let raw: string
     try {
-      raw = await transcribeWithOpenAI(file)
+      raw = await runIdempotent(`transcribe:${user.id}:${requestKey}`, () => transcribeWithOpenAI(file), 2 * 60 * 1000)
     } catch (error) {
       if (reservation && !reservation.alreadyReserved) {
         await releaseUsage(user.id, "arena_review", requestKey).catch((releaseError) =>
-          console.error("Transcription usage rollback failed", releaseError),
+          backendError("transcription_usage_rollback_failed", releaseError, { userId: user.id, requestKey }),
         )
       }
       throw error
@@ -66,7 +87,7 @@ export async function POST(req: Request) {
     if (rawWordCount < 3) {
       if (reservation && !reservation.alreadyReserved) {
         await releaseUsage(user.id, "arena_review", requestKey).catch((releaseError) =>
-          console.error("No-speech usage rollback failed", releaseError),
+          backendError("no_speech_usage_rollback_failed", releaseError, { userId: user.id, requestKey }),
         )
       }
       return Response.json({
@@ -92,11 +113,11 @@ export async function POST(req: Request) {
       const wordCount = meaningfulWordCount(text)
       return Response.json({ text, title: cleaned.title.trim(), wordCount, minimumWords: MIN_STORY_WORDS, usage: reservation })
     } catch (cleanupError) {
-      console.error("StoryTuner transcript cleanup error", cleanupError)
+      backendError("transcript_cleanup_failed", cleanupError, { userId: user.id })
       return Response.json({ text: raw, title: titleFrom(raw), wordCount: rawWordCount, minimumWords: MIN_STORY_WORDS, usage: reservation })
     }
   } catch (error) {
-    console.error("StoryTuner transcription error", error)
+    backendError("transcription_route_failed", error, { userId: user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
       ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
       : "Weaver could not transcribe this recording right now."

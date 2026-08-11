@@ -1,6 +1,7 @@
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types"
 import { renderableCommunityReplies } from "@/lib/community/visible-replies"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -44,12 +45,7 @@ function parsePage(request: Request) {
 }
 
 function logCommunityQueryError(label: string, error: unknown) {
-  if (error && typeof error === "object") {
-    const value = error as { code?: string; message?: string; details?: string; hint?: string }
-    console.error(label, value)
-    return
-  }
-  console.error(label, error)
+  backendError("community_feed_query_failed", error, { query: label })
 }
 
 export async function GET(request: Request) {

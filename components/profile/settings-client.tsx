@@ -8,9 +8,10 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useApp } from "@/lib/app-state"
 import { validateDisplayName } from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
+import { clearMedia } from "@/lib/media-store"
 import { useRouter } from "next/navigation"
 
-type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | null
+type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | "delete-account" | null
 
 export function SettingsClient() {
   const router = useRouter()
@@ -61,6 +62,12 @@ export function SettingsClient() {
       title: "Delete all StoryTuner data?",
       body: <>This erases synced progress, XP, Weaver purchases, settings, recordings, and Community activity across your devices. Your login account will remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
       confirm: "Delete all data",
+      tone: "danger" as const,
+    }
+    if (dialog === "delete-account") return {
+      title: "Permanently delete your account?",
+      body: <>This permanently deletes your StoryTuner login, profile, progress, recordings, Community activity, Planner history, usage history, and linked billing customer. Any active StoryTuner subscription is canceled immediately. <strong className="font-semibold text-foreground">This cannot be undone.</strong></>,
+      confirm: "Delete account permanently",
       tone: "danger" as const,
     }
     return null
@@ -146,6 +153,29 @@ export function SettingsClient() {
         await resetAll()
         setDisplayName("Storyteller")
         setNotice("Your StoryTuner app data was deleted across devices.")
+      }
+      if (dialog === "delete-account") {
+        const response = await fetch("/api/account/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ confirmation: "DELETE" }),
+        })
+        const payload = await response.json() as { deleted?: boolean; error?: string }
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete the account.")
+
+        await clearMedia().catch(() => undefined)
+        try {
+          for (const key of Object.keys(localStorage)) {
+            if (key.startsWith("storytuner")) localStorage.removeItem(key)
+          }
+          sessionStorage.clear()
+        } catch {}
+        const supabase = createClient()
+        await supabase.auth.signOut().catch(() => undefined)
+        setDialog(null)
+        router.replace("/?accountDeleted=1")
+        router.refresh()
+        return
       }
       setDialog(null)
     } catch (error) {
@@ -239,6 +269,11 @@ export function SettingsClient() {
         <Row title="Delete all app data" detail="Erase synced StoryTuner progress and local media across your devices while keeping your login account.">
           <button type="button" onClick={() => setDialog("delete-all")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete all
+          </button>
+        </Row>
+        <Row title="Delete account permanently" detail="Delete your login and all StoryTuner data. Any active StoryTuner subscription is canceled first.">
+          <button type="button" onClick={() => setDialog("delete-account")} className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-destructive/90 active:scale-[0.98]">
+            <Trash2 className="h-3.5 w-3.5" /> Delete account
           </button>
         </Row>
       </Section>

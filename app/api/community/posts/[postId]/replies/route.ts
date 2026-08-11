@@ -3,6 +3,8 @@ import { getCommunityApiContext, noStoreJson, type CommunityApiContext } from "@
 import type { CommunityReply, CommunityContentStatus } from "@/lib/community/types"
 import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -76,8 +78,8 @@ export async function GET(_request: Request, routeContext: RouteContext) {
         : Promise.resolve({ data: [] as ReplyLikeRow[], error: null }),
     ])
 
-    if (profilesResult.error) console.error("Community reply author lookup failed", profilesResult.error)
-    if (likesResult.error) console.error("Community reply-like lookup failed", likesResult.error)
+    if (profilesResult.error) backendError("community_reply_author_lookup_failed", profilesResult.error, { userId: context.userId, postId })
+    if (likesResult.error) backendError("community_reply_like_lookup_failed", likesResult.error, { userId: context.userId, postId })
 
     const profileRows: ProfileRow[] = profilesResult.data ?? []
     const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
@@ -115,7 +117,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
     ).length
     return noStoreJson({ replies, activeReplyCount })
   } catch (error) {
-    console.error("Community replies loading failed", error)
+    backendError("community_replies_load_failed", error, { userId: context.userId, postId })
     return noStoreJson({ error: "Replies could not be loaded." }, { status: 500 })
   }
 }
@@ -123,6 +125,12 @@ export async function GET(_request: Request, routeContext: RouteContext) {
 export async function POST(request: Request, routeContext: RouteContext) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const oversized = rejectLargeRequest(request, 10_000)
+  if (oversized) return oversized
+  const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_reply", [
+    { limit: 12, windowMs: 10 * 60 * 1000, label: "12/10min" },
+  ]), "You have posted several replies recently. Wait a few minutes before replying again.")
+  if (blocked) return blocked
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That post could not be found." }, { status: 404 })
@@ -168,7 +176,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
     try {
       moderation = await moderateCommunityText(parsedBody.data.body)
     } catch (moderationError) {
-      console.error("Community reply AI moderation unavailable", moderationError)
+      backendError("community_reply_moderation_unavailable", moderationError, { userId: context.userId, postId })
       return noStoreJson(
         { error: "Community safety checks are temporarily unavailable. Please try replying again in a moment." },
         { status: 503 },
@@ -198,7 +206,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
           moderation,
         })
       } catch (reportError) {
-        console.error("AI reply moderation report creation failed", reportError)
+        backendError("community_reply_ai_report_create_failed", reportError, { userId: context.userId, postId })
         await context.admin.from("community_replies").delete().eq("id", inserted.id)
         return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
       }
@@ -228,7 +236,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
 
     return noStoreJson({ reply }, { status: 201 })
   } catch (error) {
-    console.error("Community reply creation failed", error)
+    backendError("community_reply_create_failed", error, { userId: context.userId })
     return noStoreJson({ error: "Your reply could not be posted." }, { status: 500 })
   }
 }

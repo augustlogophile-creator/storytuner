@@ -1,7 +1,9 @@
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIText } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
-import { isUuid, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
+import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -12,6 +14,15 @@ export async function POST(req: Request) {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
+  const oversized = rejectLargeRequest(req, 80_000)
+  if (oversized) return oversized
+  const rate = rateLimitUser(user.id, "coach", [
+    { limit: 12, windowMs: 60_000, label: "12/min" },
+    { limit: 120, windowMs: 60 * 60 * 1000, label: "120/hour" },
+  ])
+  const blocked = rateLimitResponse(rate, "Weaver is receiving too many messages from this account. Wait a moment and try again.")
+  if (blocked) return blocked
+
   try {
     const body = (await req.json()) as {
       messages?: IncomingMessage[]
@@ -49,15 +60,26 @@ export async function POST(req: Request) {
           code: "COACH_LIMIT_REACHED",
           error: "You have used all five free Weaver messages. Membership unlocks unlimited coaching.",
           usage: reservation,
-        }, { status: 403 })
+        }, { status: 403, headers: { "Cache-Control": "no-store" } })
       }
+    } else {
+      await recordUsageEvent(user.id, "coach_message", requestKey)
+    }
+
+    const durableRate = await enforceDurableUsageRate(user.id, "coach_message", [
+      { limit: 120, windowMs: 60 * 60 * 1000, label: "120/hour" },
+      { limit: 500, windowMs: 24 * 60 * 60 * 1000, label: "500/day" },
+    ])
+    if (!durableRate.allowed) {
+      if (reservation && !reservation.alreadyReserved) await releaseUsage(user.id, "coach_message", requestKey).catch(() => undefined)
+      return Response.json({ code: "RATE_LIMITED", error: "Weaver has received unusually many requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
     }
 
     try {
-      const reply = await openAIText([
-      {
-        role: "system",
-        content: `You are Weaver, StoryTuner's friendly, sophisticated storytelling coach. Answer the user's exact question directly before adding explanation. Use plain, natural language. Be thorough enough to be genuinely useful, but do not ramble.
+      const reply = await runIdempotent(`coach:${user.id}:${requestKey}`, () => openAIText([
+        {
+          role: "system",
+          content: `You are Weaver, StoryTuner's friendly, sophisticated storytelling coach. Answer the user's exact question directly before adding explanation. Use plain, natural language. Be thorough enough to be genuinely useful, but do not ramble.
 
 When helpful, format your answer with short **bold headings**, bullets, and clear paragraph breaks. Never output raw markdown symbols without using them intentionally. If the user asks why a score was low, explain the score using exact moments from the story and acknowledge what still worked. If the user asks for strengths, give the requested number. If the user asks for a rewrite, preserve their meaning, events, personality, and voice. Do not invent details, dialogue, motivations, or emotions.
 
@@ -71,20 +93,20 @@ ${attachedScore || "No prior score is attached."}
 
 PRIVATE LONG-TERM COACHING CONTEXT:
 ${personalizedHistory || "Personalization from past recordings is disabled or no history was supplied."}`,
-      },
-      ...messages.map((item) => ({ role: item.role, content: item.content })),
-      ])
-      return Response.json({ reply, usage: reservation })
+        },
+        ...messages.map((item) => ({ role: item.role, content: item.content })),
+      ], "coach"), 2 * 60 * 1000)
+      return Response.json({ reply, usage: reservation }, { headers: { "Cache-Control": "no-store" } })
     } catch (error) {
       if (reservation && !reservation.alreadyReserved) {
         await releaseUsage(user.id, "coach_message", requestKey).catch((releaseError) =>
-          console.error("Coach usage rollback failed", releaseError),
+          backendError("coach_usage_rollback_failed", releaseError, { userId: user.id, requestKey }),
         )
       }
       throw error
     }
   } catch (error) {
-    console.error("StoryTuner coach error", error)
+    backendError("coach_route_failed", error, { userId: user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
       ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
       : "Weaver could not respond right now."

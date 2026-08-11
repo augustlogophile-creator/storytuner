@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowUpRight, BarChart3, Mail, Settings, ShieldCheck, Sparkles, Star } from "lucide-react"
+import { Activity, ArrowUpRight, BarChart3, Mail, Settings, ShieldCheck, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { Weaver } from "@/components/weaver"
 import { useApp } from "@/lib/app-state"
@@ -43,11 +43,11 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       </section>
 
       {moderatorRole && (
-        <Link href="/admin/community" className="group flex items-center gap-4 rounded-3xl border border-border bg-card p-4 transition-all duration-200 hover:border-brand/45 hover:shadow-sm active:scale-[0.99]">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><ShieldCheck className="h-5 w-5" /></span>
-          <span className="min-w-0 flex-1"><Eyebrow>Owner tools</Eyebrow><span className="mt-1 block text-sm font-semibold">Community moderation</span><span className="mt-0.5 block text-xs text-muted-foreground">Review reports and account actions</span></span>
-          <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-        </Link>
+        <section className="overflow-hidden rounded-3xl border border-border bg-card px-4">
+          <CompactRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Review reports and account actions" />
+          <div className="h-px bg-border" />
+          <CompactRow href="/admin/system" icon={Activity} title="System health" detail="Backend usage, failures, and maintenance" />
+        </section>
       )}
 
       <section className="rounded-[1.8rem] border border-border bg-card p-5">

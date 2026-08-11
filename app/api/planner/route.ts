@@ -4,6 +4,8 @@ import { openAIJson } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
 import type { StoryPlanOutput, StoryPlanRecord } from "@/lib/planner/types"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
+import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -106,7 +108,7 @@ export async function GET() {
     .returns<PlanRow[]>()
 
   if (error) {
-    console.error("Story plan history loading failed", error)
+    backendError("planner_history_load_failed", error, { userId: auth.user.id })
     return Response.json({ error: "Your saved plans could not be loaded. Run the newest Supabase migration if this is the first time opening Story Planner." }, { status: 500 })
   }
 
@@ -116,6 +118,15 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await activeMember()
   if (!auth.ok) return auth.response
+
+  const oversized = rejectLargeRequest(request, 40_000)
+  if (oversized) return oversized
+  const rate = rateLimitUser(auth.user.id, "planner", [
+    { limit: 5, windowMs: 60_000, label: "5/min" },
+    { limit: 20, windowMs: 60 * 60 * 1000, label: "20/hour" },
+  ])
+  const blocked = rateLimitResponse(rate, "Story Planner is receiving too many requests from this account. Wait a moment and try again.")
+  if (blocked) return blocked
 
   const parsed = inputSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
@@ -132,7 +143,7 @@ export async function POST(request: Request) {
     .gte("created_at", today.toISOString())
 
   if (countError) {
-    console.error("Story Planner usage lookup failed", countError)
+    backendError("planner_usage_lookup_failed", countError, { userId: auth.user.id })
     return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
   }
   if ((count ?? 0) >= 10) {
@@ -141,7 +152,8 @@ export async function POST(request: Request) {
 
   const input = parsed.data
   try {
-    const output = await openAIJson<StoryPlanOutput>({
+    const plannerFingerprint = requestFingerprint(auth.user.id, input.audienceContext, input.goal, input.roughPlan, input.mustInclude, input.nervousAbout)
+    const output = await runIdempotent(`story-planner:${plannerFingerprint}`, () => openAIJson<StoryPlanOutput>({
       name: "storytuner_story_plan",
       schema: outputSchema,
       temperature: 0.35,
@@ -165,7 +177,7 @@ Rules:
           content: `AUDIENCE OR SITUATION:\n${input.audienceContext}\n\nWHAT I WANT TO GET ACROSS:\n${input.goal}\n\nMY BASIC PLAN OR SEQUENCE:\n${input.roughPlan}\n\nFACTS OR DETAILS I WANT TO INCLUDE:\n${input.mustInclude || "None supplied."}\n\nWHAT I AM NERVOUS OR UNCERTAIN ABOUT:\n${input.nervousAbout || "Nothing supplied."}`,
         },
       ],
-    })
+    }), 90_000)
 
     const { data: inserted, error: insertError } = await admin
       .from("story_plans")
@@ -182,9 +194,9 @@ Rules:
       .single<PlanRow>()
 
     if (insertError) throw insertError
-    return Response.json({ plan: toRecord(inserted) }, { status: 201 })
+    return Response.json({ plan: toRecord(inserted) }, { status: 201, headers: { "Cache-Control": "no-store" } })
   } catch (error) {
-    console.error("Story Planner failed", error)
+    backendError("planner_route_failed", error, { userId: auth.user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
       ? "Weaver's AI connection is not configured yet."
       : "Weaver could not build the plan right now."

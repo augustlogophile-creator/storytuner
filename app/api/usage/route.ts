@@ -1,6 +1,7 @@
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { getUsageStatus } from "@/lib/usage-server"
+import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
 
@@ -21,7 +22,7 @@ export async function GET() {
       arena,
     }, { headers: { "Cache-Control": "private, no-store" } })
   } catch (error) {
-    console.error("StoryTuner usage lookup failed", error)
+    backendError("usage_lookup_failed", error, { userId: auth.user.id })
     return Response.json({ error: "Usage could not be verified right now." }, { status: 500 })
   }
 }

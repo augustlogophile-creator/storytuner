@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { getModeratorContext } from "@/lib/community/moderation"
+import { writeVerifiedModerationStatus } from "@/lib/community/moderation-status"
+import { backendError, backendLog } from "@/lib/backend-log"
 import type { ModerationAction } from "@/lib/admin/community-types"
 
 export const dynamic = "force-dynamic"
@@ -87,20 +89,17 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 
   if (action === "reopen") {
     try {
-      await reverseReportEffects(context.admin, report, target.author_id, targetTable, targetId, context.userId)
-      const { error: reopenError } = await context.admin
-        .from("community_reports")
-        .update({
-          status: "open",
-          reviewed_at: null,
-          reviewed_by: null,
-          resolution_note: null,
-        })
-        .eq("id", report.id)
-      if (reopenError) throw reopenError
-      return Response.json({ completed: true, status: "open" })
+      await reverseReportEffects(context.admin, report, target.author_id, targetTable, targetId, context.userId, target.status)
+      await writeReportStatusVerified(context.admin, report.id, {
+        status: "open",
+        reviewedAt: null,
+        reviewedBy: null,
+        resolutionNote: null,
+      })
+      backendLog("info", "moderation_report_reopened", { reportId: report.id, targetUserId: target.author_id })
+      return Response.json({ completed: true, status: "open" }, { headers: { "Cache-Control": "no-store" } })
     } catch (error) {
-      console.error("Moderation decision reopen failed", error)
+      backendError("moderation_decision_reopen_failed", error, { reportId: report.id, targetUserId: target.author_id })
       return Response.json({ error: "The decision could not be undone." }, { status: 500 })
     }
   }
@@ -111,30 +110,26 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       const revisionSummary: string[] = []
 
       if (contentAction === "remove" && target.status === "active") {
-        const { error } = await context.admin.from(targetTable).update({ status: "removed" }).eq("id", targetId)
-        if (error) throw error
+        await writeTargetStatusVerified(context.admin, targetTable, targetId, "removed")
         await logAction(context.admin, target.author_id, context.userId, report.id, "hide_content", null, note || "Decision revised")
         revisionSummary.push("content removed")
       }
 
       if (contentAction === "restore" && target.status === "removed") {
-        const { error } = await context.admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
-        if (error) throw error
+        await writeTargetStatusVerified(context.admin, targetTable, targetId, "active")
         await logAction(context.admin, target.author_id, context.userId, report.id, "restore_content", null, note || "Decision revised")
         revisionSummary.push("content restored")
       }
 
       if (restrictionAction === "clear") {
-        const { error } = await context.admin.from("community_moderation_status").upsert({
-          user_id: target.author_id,
-          account_status: "active",
-          account_suspended_until: null,
-          community_suspended_until: null,
-          public_message: restorationPublicMessage(note),
-          internal_note: note || null,
-          updated_by: context.userId,
-        }, { onConflict: "user_id" })
-        if (error) throw error
+        await writeVerifiedModerationStatus(context.admin, target.author_id, {
+          accountStatus: "active",
+          accountSuspendedUntil: null,
+          communitySuspendedUntil: null,
+          publicMessage: restorationPublicMessage(note),
+          internalNote: note || null,
+          updatedBy: context.userId,
+        })
         await logAction(context.admin, target.author_id, context.userId, report.id, "restriction_cleared", null, note || "Decision revised")
         revisionSummary.push("restrictions removed")
       }
@@ -142,16 +137,14 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       if (restrictionAction === "suspend_community") {
         const days = durationDays ?? 7
         const publicMessage = (note || defaultPublicMessage("suspend_community", days)).slice(0, 500)
-        const { error } = await context.admin.from("community_moderation_status").upsert({
-          user_id: target.author_id,
-          account_status: "active",
-          account_suspended_until: null,
-          community_suspended_until: futureDate(days),
-          public_message: publicMessage,
-          internal_note: note || null,
-          updated_by: context.userId,
-        }, { onConflict: "user_id" })
-        if (error) throw error
+        await writeVerifiedModerationStatus(context.admin, target.author_id, {
+          accountStatus: "active",
+          accountSuspendedUntil: null,
+          communitySuspendedUntil: futureDate(days),
+          publicMessage,
+          internalNote: note || null,
+          updatedBy: context.userId,
+        })
         await logAction(context.admin, target.author_id, context.userId, report.id, "community_suspension", days, note || "Decision revised")
         revisionSummary.push(`Community suspended ${days}d`)
       }
@@ -159,32 +152,28 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       if (restrictionAction === "suspend_account") {
         const days = durationDays ?? 7
         const publicMessage = (note || defaultPublicMessage("suspend_account", days)).slice(0, 500)
-        const { error } = await context.admin.from("community_moderation_status").upsert({
-          user_id: target.author_id,
-          account_status: "suspended",
-          account_suspended_until: futureDate(days),
-          community_suspended_until: null,
-          public_message: publicMessage,
-          internal_note: note || null,
-          updated_by: context.userId,
-        }, { onConflict: "user_id" })
-        if (error) throw error
+        await writeVerifiedModerationStatus(context.admin, target.author_id, {
+          accountStatus: "suspended",
+          accountSuspendedUntil: futureDate(days),
+          communitySuspendedUntil: null,
+          publicMessage,
+          internalNote: note || null,
+          updatedBy: context.userId,
+        })
         await logAction(context.admin, target.author_id, context.userId, report.id, "account_suspension", days, note || "Decision revised")
         revisionSummary.push(`account suspended ${days}d`)
       }
 
       if (restrictionAction === "ban_account") {
         const publicMessage = (note || defaultPublicMessage("ban_account", null)).slice(0, 500)
-        const { error } = await context.admin.from("community_moderation_status").upsert({
-          user_id: target.author_id,
-          account_status: "banned",
-          account_suspended_until: null,
-          community_suspended_until: null,
-          public_message: publicMessage,
-          internal_note: note || null,
-          updated_by: context.userId,
-        }, { onConflict: "user_id" })
-        if (error) throw error
+        await writeVerifiedModerationStatus(context.admin, target.author_id, {
+          accountStatus: "banned",
+          accountSuspendedUntil: null,
+          communitySuspendedUntil: null,
+          publicMessage,
+          internalNote: note || null,
+          updatedBy: context.userId,
+        })
         await logAction(context.admin, target.author_id, context.userId, report.id, "account_ban", null, note || "Decision revised")
         revisionSummary.push("account banned")
       }
@@ -194,16 +183,12 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       }
 
       const resolutionNote = note || (revisionSummary.length ? `Decision revised: ${revisionSummary.join(", ")}` : "Decision note updated")
-      const { error: updateError } = await context.admin
-        .from("community_reports")
-        .update({
-          status: "resolved",
-          reviewed_at: now,
-          reviewed_by: context.userId,
-          resolution_note: resolutionNote,
-        })
-        .eq("id", report.id)
-      if (updateError) throw updateError
+      await writeReportStatusVerified(context.admin, report.id, {
+        status: "resolved",
+        reviewedAt: now,
+        reviewedBy: context.userId,
+        resolutionNote,
+      })
 
       await logAction(
         context.admin,
@@ -215,9 +200,10 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
         resolutionNote,
       )
 
-      return Response.json({ completed: true, status: "resolved" })
+      backendLog("info", "moderation_decision_revised", { reportId: report.id, targetUserId: target.author_id, restrictionAction, contentAction })
+      return Response.json({ completed: true, status: "resolved" }, { headers: { "Cache-Control": "no-store" } })
     } catch (error) {
-      console.error("Moderation decision revision failed", error)
+      backendError("moderation_decision_revision_failed", error, { reportId: report.id, targetUserId: target.author_id })
       return Response.json({ error: "The decision could not be revised." }, { status: 500 })
     }
   }
@@ -227,8 +213,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 
   try {
     if (shouldHide && target.status === "active") {
-      const { error } = await context.admin.from(targetTable).update({ status: "removed" }).eq("id", targetId)
-      if (error) throw error
+      await writeTargetStatusVerified(context.admin, targetTable, targetId, "removed")
       await logAction(context.admin, target.author_id, context.userId, report.id, "hide_content", durationDays ?? null, note)
     } else if (shouldHide && target.status === "removed" && report.source === "ai") {
       // The AI already held this content before it became visible. Record the
@@ -237,8 +222,10 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     }
 
     if (action === "restore_content") {
-      const { error } = await context.admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
-      if (error) throw error
+      if (target.status === "deleted") {
+        return Response.json({ error: "Content deleted by its author cannot be restored by moderation." }, { status: 409 })
+      }
+      await writeTargetStatusVerified(context.admin, targetTable, targetId, "active")
       await logAction(context.admin, target.author_id, context.userId, report.id, "restore_content", null, note)
     }
 
@@ -248,76 +235,66 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 
     if (action === "suspend_community") {
       const days = durationDays ?? 7
-      const { error } = await context.admin.from("community_moderation_status").upsert({
-        user_id: target.author_id,
-        community_suspended_until: futureDate(days),
-        public_message: publicMessage,
-        internal_note: note || null,
-        updated_by: context.userId,
-      }, { onConflict: "user_id" })
-      if (error) throw error
+      await writeVerifiedModerationStatus(context.admin, target.author_id, {
+        accountStatus: "active",
+        accountSuspendedUntil: null,
+        communitySuspendedUntil: futureDate(days),
+        publicMessage,
+        internalNote: note || null,
+        updatedBy: context.userId,
+      })
       await logAction(context.admin, target.author_id, context.userId, report.id, "community_suspension", days, note)
     }
 
     if (action === "suspend_account") {
       const days = durationDays ?? 7
-      const { error } = await context.admin.from("community_moderation_status").upsert({
-        user_id: target.author_id,
-        account_status: "suspended",
-        account_suspended_until: futureDate(days),
-        public_message: publicMessage,
-        internal_note: note || null,
-        updated_by: context.userId,
-      }, { onConflict: "user_id" })
-      if (error) throw error
+      await writeVerifiedModerationStatus(context.admin, target.author_id, {
+        accountStatus: "suspended",
+        accountSuspendedUntil: futureDate(days),
+        communitySuspendedUntil: null,
+        publicMessage,
+        internalNote: note || null,
+        updatedBy: context.userId,
+      })
       await logAction(context.admin, target.author_id, context.userId, report.id, "account_suspension", days, note)
     }
 
     if (action === "ban_account") {
-      const { error } = await context.admin.from("community_moderation_status").upsert({
-        user_id: target.author_id,
-        account_status: "banned",
-        account_suspended_until: null,
-        community_suspended_until: null,
-        public_message: publicMessage,
-        internal_note: note || null,
-        updated_by: context.userId,
-      }, { onConflict: "user_id" })
-      if (error) throw error
+      await writeVerifiedModerationStatus(context.admin, target.author_id, {
+        accountStatus: "banned",
+        accountSuspendedUntil: null,
+        communitySuspendedUntil: null,
+        publicMessage,
+        internalNote: note || null,
+        updatedBy: context.userId,
+      })
       await logAction(context.admin, target.author_id, context.userId, report.id, "account_ban", null, note)
     }
 
     if (action === "clear_restrictions") {
-      const { error } = await context.admin.from("community_moderation_status").upsert({
-        user_id: target.author_id,
-        account_status: "active",
-        account_suspended_until: null,
-        community_suspended_until: null,
-        public_message: restorationPublicMessage(note),
-        internal_note: note || null,
-        updated_by: context.userId,
-      }, { onConflict: "user_id" })
-      if (error) throw error
+      await writeVerifiedModerationStatus(context.admin, target.author_id, {
+        accountStatus: "active",
+        accountSuspendedUntil: null,
+        communitySuspendedUntil: null,
+        publicMessage: restorationPublicMessage(note),
+        internalNote: note || null,
+        updatedBy: context.userId,
+      })
       await logAction(context.admin, target.author_id, context.userId, report.id, "restriction_cleared", null, note)
     }
 
     const dismissed = action === "dismiss"
     if (dismissed && report.source === "ai" && target.status === "removed") {
-      const { error: restoreError } = await context.admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
-      if (restoreError) throw restoreError
+      await writeTargetStatusVerified(context.admin, targetTable, targetId, "active")
       await logAction(context.admin, target.author_id, context.userId, report.id, "restore_content", null, note || "AI flag dismissed")
     }
     const resolutionStatus = dismissed ? "dismissed" : "resolved"
-    const { error: updateError } = await context.admin
-      .from("community_reports")
-      .update({
-        status: resolutionStatus,
-        reviewed_at: now,
-        reviewed_by: context.userId,
-        resolution_note: note || actionLabel(action),
-      })
-      .eq("id", report.id)
-    if (updateError) throw updateError
+    await writeReportStatusVerified(context.admin, report.id, {
+      status: resolutionStatus,
+      reviewedAt: now,
+      reviewedBy: context.userId,
+      resolutionNote: note || actionLabel(action),
+    })
 
     await logAction(
       context.admin,
@@ -329,9 +306,10 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       note || actionLabel(action),
     )
 
-    return Response.json({ completed: true, status: resolutionStatus })
+    backendLog("info", "moderation_decision_saved", { reportId: report.id, targetUserId: target.author_id, action, status: resolutionStatus })
+    return Response.json({ completed: true, status: resolutionStatus }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
-    console.error("Moderation action failed", error)
+    backendError("moderation_action_failed", error, { reportId: report.id, targetUserId: target.author_id, action })
     return Response.json({ error: "The moderation action could not be completed." }, { status: 500 })
   }
 }
@@ -345,19 +323,87 @@ async function logAction(
   durationDays: number | null,
   note: string,
 ) {
-  const { error } = await admin.from("community_moderation_actions").insert({
+  const payload = {
     user_id: userId,
     moderator_id: moderatorId,
     report_id: reportId,
     action_type: actionType,
     duration_days: durationDays,
     note: note || null,
-  })
-  if (error) throw error
+  }
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const { error } = await admin.from("community_moderation_actions").insert(payload)
+    if (!error) return true
+    if (attempt === 2) {
+      backendError("moderation_audit_log_failed", error, { userId, moderatorId, reportId, actionType })
+      return false
+    }
+  }
+  return false
+}
+
+type ReportStatusWrite = {
+  status: "open" | "resolved" | "dismissed"
+  reviewedAt: string | null
+  reviewedBy: string | null
+  resolutionNote: string | null
+}
+
+async function writeReportStatusVerified(admin: SupabaseClient, reportId: string, next: ReportStatusWrite) {
+  const payload = {
+    status: next.status,
+    reviewed_at: next.reviewedAt,
+    reviewed_by: next.reviewedBy,
+    resolution_note: next.resolutionNote,
+  }
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const { error } = await admin.from("community_reports").update(payload).eq("id", reportId)
+    if (error) {
+      if (attempt === 2) throw error
+      continue
+    }
+    const { data, error: readError } = await admin
+      .from("community_reports")
+      .select("status,reviewed_at,reviewed_by,resolution_note")
+      .eq("id", reportId)
+      .single<{ status: string; reviewed_at: string | null; reviewed_by: string | null; resolution_note: string | null }>()
+    if (!readError && data && data.status === next.status
+      && normalizeTimestamp(data.reviewed_at) === normalizeTimestamp(next.reviewedAt)
+      && (data.reviewed_by ?? null) === (next.reviewedBy ?? null)
+      && (data.resolution_note ?? null) === (next.resolutionNote ?? null)) return
+    if (attempt === 2) throw readError || new Error("The moderation report did not match the saved decision after verification.")
+    backendLog("warn", "moderation_report_verify_retry", { reportId })
+  }
+}
+
+async function writeTargetStatusVerified(
+  admin: SupabaseClient,
+  table: "community_posts" | "community_replies",
+  id: string | null,
+  status: "active" | "removed",
+) {
+  if (!id) throw new Error("The reported content no longer exists.")
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const { error } = await admin.from(table).update({ status }).eq("id", id)
+    if (error) {
+      if (attempt === 2) throw error
+      continue
+    }
+    const { data, error: readError } = await admin.from(table).select("status").eq("id", id).single<{ status: string }>()
+    if (!readError && data?.status === status) return
+    if (attempt === 2) throw readError || new Error("The reported content state could not be verified after saving.")
+    backendLog("warn", "moderation_content_verify_retry", { id, table, status })
+  }
+}
+
+function normalizeTimestamp(value: string | null) {
+  if (!value) return null
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) ? time : value
 }
 
 function actionLabel(action: ModerationAction) {
-  return ({
+  const labels: Record<ModerationAction, string> = {
     dismiss: "Report dismissed",
     hide: "Content removed",
     warn: "Internal warning recorded",
@@ -368,7 +414,8 @@ function actionLabel(action: ModerationAction) {
     restore_content: "Content restored",
     reopen: "Decision undone and report reopened",
     revise: "Decision revised",
-  } satisfies Record<ModerationAction, string>)[action]
+  }
+  return labels[action]
 }
 
 
@@ -392,6 +439,7 @@ async function reverseReportEffects(
   targetTable: "community_posts" | "community_replies",
   targetId: string | null,
   moderatorId: string,
+  currentTargetStatus: string,
 ) {
   const { data: reportActions, error: reportActionsError } = await admin
     .from("community_moderation_actions")
@@ -402,7 +450,7 @@ async function reverseReportEffects(
 
   const actionTypes = new Set((reportActions ?? []).map((item: { action_type: string }) => item.action_type))
 
-  if (targetId && actionTypes.has("hide_content")) {
+  if (targetId && currentTargetStatus !== "deleted" && actionTypes.has("hide_content")) {
     const sameTargetQuery = admin.from("community_reports").select("id")
     const sameTargetResult = report.post_id
       ? await sameTargetQuery.eq("post_id", targetId).returns<{ id: string }[]>()
@@ -421,8 +469,7 @@ async function reverseReportEffects(
         .maybeSingle<{ report_id: string | null; action_type: string }>()
       if (latestContentActionError) throw latestContentActionError
       if (latestContentAction?.report_id === report.id && latestContentAction.action_type === "hide_content") {
-        const { error: restoreError } = await admin.from(targetTable).update({ status: "active" }).eq("id", targetId)
-        if (restoreError) throw restoreError
+        await writeTargetStatusVerified(admin, targetTable, targetId, "active")
         await logAction(admin, userId, moderatorId, report.id, "restore_content", null, "Decision undone")
       }
     }
@@ -441,19 +488,25 @@ async function reverseReportEffects(
 
   if (latestRestrictionAction?.report_id === report.id) {
     if (latestRestrictionAction.action_type === "community_suspension") {
-      const { error } = await admin
-        .from("community_moderation_status")
-        .update({ community_suspended_until: null, public_message: "Your Community access has been restored after review.", updated_by: moderatorId })
-        .eq("user_id", userId)
-      if (error) throw error
+      await writeVerifiedModerationStatus(admin, userId, {
+        accountStatus: "active",
+        accountSuspendedUntil: null,
+        communitySuspendedUntil: null,
+        publicMessage: "Your Community access has been restored after review.",
+        internalNote: "Community suspension undone",
+        updatedBy: moderatorId,
+      })
       await logAction(admin, userId, moderatorId, report.id, "restriction_cleared", null, "Community suspension undone")
     }
     if (["account_suspension", "account_ban"].includes(latestRestrictionAction.action_type)) {
-      const { error } = await admin
-        .from("community_moderation_status")
-        .update({ account_status: "active", account_suspended_until: null, public_message: restorationPublicMessage(""), updated_by: moderatorId })
-        .eq("user_id", userId)
-      if (error) throw error
+      await writeVerifiedModerationStatus(admin, userId, {
+        accountStatus: "active",
+        accountSuspendedUntil: null,
+        communitySuspendedUntil: null,
+        publicMessage: restorationPublicMessage(""),
+        internalNote: "Account restriction undone",
+        updatedBy: moderatorId,
+      })
       await logAction(admin, userId, moderatorId, report.id, "restriction_cleared", null, "Account restriction undone")
     }
   }

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
+import { backendError } from "@/lib/backend-log"
 
 export type CommunityProfile = {
   id: string
@@ -69,12 +70,7 @@ export async function getCommunityApiContext() {
     .maybeSingle<CommunityProfile>()
 
   if (profileError) {
-    console.error("Community profile lookup failed", {
-      code: profileError.code,
-      message: profileError.message,
-      details: profileError.details,
-      hint: profileError.hint,
-    })
+backendError("community_profile_lookup_failed", profileError, { userId: authenticated.id })
     return {
       ok: false as const,
       response: Response.json(

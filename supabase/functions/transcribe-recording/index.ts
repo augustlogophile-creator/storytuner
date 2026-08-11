@@ -13,6 +13,14 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+
+function edgeLog(level: "info" | "warn" | "error", event: string, data: Record<string, unknown> = {}) {
+  const line = JSON.stringify({ source: "storytuner-edge", event, at: new Date().toISOString(), ...data });
+  if (level === "error") console.error(line);
+  else if (level === "warn") console.warn(line);
+  else console.info(line);
+}
+
 function getPublishableKey() {
   const currentKeys = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS");
   if (currentKeys) {
@@ -32,6 +40,8 @@ function getPublishableKey() {
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return jsonResponse({ error: "Method not allowed." }, 405);
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (Number.isFinite(contentLength) && contentLength > 10_000) return jsonResponse({ error: "Request is too large." }, 413);
 
   let recordingId: string | null = null;
   let userClient: ReturnType<typeof createClient> | null = null;
@@ -70,7 +80,7 @@ Deno.serve(async (request: Request) => {
         .maybeSingle();
 
       if (moderationError) {
-        console.error("Transcription restriction lookup failed:", moderationError.message);
+        edgeLog("error", "transcription_restriction_lookup_failed", { userId: user.id, message: moderationError.message.slice(0, 500) });
       } else if (moderation) {
         const suspendedUntil = moderation.account_suspended_until
           ? new Date(moderation.account_suspended_until).getTime()
@@ -137,6 +147,28 @@ Deno.serve(async (request: Request) => {
         }, 403);
       }
       usageReservedNow = !Boolean(usage.alreadyReserved);
+    } else {
+      const { error: paidUsageError } = await adminClient.from("user_usage_events").upsert({
+        user_id: user.id,
+        feature: "arena_review",
+        request_key: recordingId,
+      }, { onConflict: "user_id,feature,request_key", ignoreDuplicates: true });
+      if (paidUsageError) throw new Error(`Could not record Arena usage: ${paidUsageError.message}`);
+    }
+
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const [{ count: hourCount, error: hourCountError }, { count: dayCount, error: dayCountError }] = await Promise.all([
+      adminClient.from("user_usage_events").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "arena_review").gte("created_at", hourAgo),
+      adminClient.from("user_usage_events").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "arena_review").gte("created_at", dayAgo),
+    ]);
+    if (hourCountError || dayCountError) throw new Error(`Could not verify Arena request rate: ${(hourCountError || dayCountError)?.message}`);
+    if ((hourCount ?? 0) > 40 || (dayCount ?? 0) > 120) {
+      if (usageReservedNow) {
+        await adminClient.from("user_usage_events").delete().eq("user_id", user.id).eq("feature", "arena_review").eq("request_key", recordingId);
+        usageReservedNow = false;
+      }
+      return jsonResponse({ code: "RATE_LIMITED", error: "Arena has received unusually many transcription requests from this account. Wait and try again later." }, 429);
     }
 
     const { error: statusError } = await userClient
@@ -162,6 +194,7 @@ Deno.serve(async (request: Request) => {
       method: "POST",
       headers: { Authorization: `Bearer ${openAIKey}` },
       body: transcriptionForm,
+      signal: AbortSignal.timeout(55_000),
     });
 
     if (!openAIResponse.ok) {
@@ -195,8 +228,8 @@ Deno.serve(async (request: Request) => {
         .eq("feature", "arena_review")
         .eq("request_key", recordingId);
     }
-    console.error("Transcription error:", message);
-    return jsonResponse({ error: "Transcription failed.", details: message }, 500);
+    edgeLog("error", "transcription_failed", { userId, recordingId, message: message.slice(0, 800) });
+    return jsonResponse({ error: "Transcription failed." }, 500);
   }
 });
 

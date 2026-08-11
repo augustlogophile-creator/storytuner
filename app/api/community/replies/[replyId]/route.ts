@@ -2,6 +2,8 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityReply, CommunityContentStatus } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
+import { backendError } from "@/lib/backend-log"
+import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -26,9 +28,14 @@ type ReplyRow = {
 export async function PATCH(request: Request, routeContext: RouteContext) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const oversized = rejectLargeRequest(request, 10000)
+  if (oversized) return oversized
+  const limited = rateLimitResponse(rateLimitUser(context.userId, "community_reply_mutation", [{ limit: 20, windowMs: 10 * 60 * 1000, label: "20/10m" }]), "Too many Community changes. Wait a few minutes and try again.")
+  if (limited) return limited
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That reply could not be found." }, { status: 404 })
+  const { replyId } = parsedParams.data
   const parsedBody = editSchema.safeParse(await request.json().catch(() => null))
   if (!parsedBody.success) {
     return noStoreJson({ error: parsedBody.error.issues[0]?.message ?? "The update is not valid." }, { status: 400 })
@@ -41,7 +48,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     .maybeSingle<ReplyRow>()
 
   if (existingError) {
-    console.error("Community reply edit lookup failed", existingError)
+    backendError("community_reply_edit_lookup_failed", existingError, { userId: context.userId, replyId })
     return noStoreJson({ error: "The reply could not be updated." }, { status: 500 })
   }
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That reply is no longer available." }, { status: 404 })
@@ -51,7 +58,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   try {
     moderation = await moderateCommunityText(parsedBody.data.body)
   } catch (moderationError) {
-    console.error("Community reply edit AI moderation unavailable", moderationError)
+    backendError("community_reply_edit_moderation_unavailable", moderationError, { userId: context.userId, replyId })
     return noStoreJson(
       { error: "Community safety checks are temporarily unavailable. Please try saving again in a moment." },
       { status: 503 },
@@ -69,7 +76,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     .single<ReplyRow>()
 
   if (updateError) {
-    console.error("Community reply edit failed", updateError)
+    backendError("community_reply_edit_failed", updateError, { userId: context.userId, replyId })
     return noStoreJson({ error: "The reply could not be updated." }, { status: 500 })
   }
 
@@ -82,7 +89,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
         moderation,
       })
     } catch (reportError) {
-      console.error("AI moderation report creation failed for edited reply", reportError)
+      backendError("community_reply_edit_ai_report_create_failed", reportError, { userId: context.userId, replyId })
       await context.admin
         .from("community_replies")
         .update({ body: existing.body, edited_at: existing.edited_at, status: "active" })
@@ -121,9 +128,12 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 export async function DELETE(_request: Request, routeContext: RouteContext) {
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
+  const limited = rateLimitResponse(rateLimitUser(context.userId, "community_reply_mutation", [{ limit: 20, windowMs: 10 * 60 * 1000, label: "20/10m" }]), "Too many Community changes. Wait a few minutes and try again.")
+  if (limited) return limited
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That reply could not be found." }, { status: 404 })
+  const { replyId } = parsedParams.data
 
   const { data: existing, error: existingError } = await context.admin
     .from("community_replies")
@@ -132,7 +142,7 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
     .maybeSingle<{ id: string; author_id: string; status: string }>()
 
   if (existingError) {
-    console.error("Community reply deletion lookup failed", existingError)
+    backendError("community_reply_delete_lookup_failed", existingError, { userId: context.userId, replyId })
     return noStoreJson({ error: "The reply could not be deleted." }, { status: 500 })
   }
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That reply is no longer available." }, { status: 404 })
@@ -146,7 +156,7 @@ export async function DELETE(_request: Request, routeContext: RouteContext) {
     .eq("status", "active")
 
   if (deleteError) {
-    console.error("Community reply deletion failed", deleteError)
+    backendError("community_reply_delete_failed", deleteError, { userId: context.userId, replyId })
     return noStoreJson({ error: "The reply could not be deleted." }, { status: 500 })
   }
 
