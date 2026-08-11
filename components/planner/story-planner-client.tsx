@@ -59,6 +59,7 @@ export function StoryPlannerClient() {
   const [error, setError] = useState("")
   const [copied, setCopied] = useState(false)
   const [planExpanded, setPlanExpanded] = useState(false)
+  const [planOrigin, setPlanOrigin] = useState<"new" | "saved" | null>(null)
 
   const ready = useMemo(() => (
     form.audienceContext.trim().length >= 3
@@ -88,8 +89,12 @@ export function StoryPlannerClient() {
   async function buildPlan() {
     if (!ready || building) return
     setBuilding(true)
+    setPlan(null)
+    setPlanOrigin(null)
+    setPlanExpanded(false)
     setError("")
     setCopied(false)
+    window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 25)
     try {
       const response = await fetch("/api/planner", {
         method: "POST",
@@ -101,6 +106,7 @@ export function StoryPlannerClient() {
         throw new Error(payload.error || "Weaver could not build the plan.")
       }
       setPlan(payload.plan)
+      setPlanOrigin("new")
       setPlanExpanded(false)
       setHistory((current) => [payload.plan!, ...current.filter((item) => item.id !== payload.plan!.id)].slice(0, 8))
       window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
@@ -113,14 +119,9 @@ export function StoryPlannerClient() {
 
   function openSaved(item: StoryPlanRecord) {
     setPlan(item)
+    setPlanOrigin("saved")
     setPlanExpanded(false)
-    setForm({
-      audienceContext: item.audienceContext,
-      goal: item.goal,
-      roughPlan: item.roughPlan,
-      mustInclude: item.mustInclude,
-      nervousAbout: item.nervousAbout,
-    })
+    setError("")
     window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 25)
   }
 
@@ -176,99 +177,103 @@ export function StoryPlannerClient() {
         </div>
       </header>
 
-      <section>
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <Eyebrow>Build your plan</Eyebrow>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight">Start with what you already know</h2>
+      {!building && !plan && (
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-4">
+            <div>
+              <Eyebrow>Build your plan</Eyebrow>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">Start with what you already know</h2>
+            </div>
+            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">About 3 minutes</span>
           </div>
-          <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">About 3 minutes</span>
-        </div>
 
-        <div className="flex flex-col gap-4">
-          <PlannerField
-            number={1}
-            icon={Target}
-            title="Where will you tell this story?"
-            help="Name the audience and situation, such as an interview, class, difficult conversation, speech, or casual conversation."
-            value={form.audienceContext}
-            onChange={(value) => update("audienceContext", value)}
-            placeholder="I am answering an interview question about a challenge I handled..."
-            maxLength={1000}
-            rows={3}
-            required
-          />
-          <PlannerField
-            number={2}
-            icon={Lightbulb}
-            title="What do you want the listener to understand or feel?"
-            help="This becomes the story's throughline. It is not a formal lesson, just the point beneath the events."
-            value={form.goal}
-            onChange={(value) => update("goal", value)}
-            placeholder="I want them to see that I can stay calm and solve problems when something goes wrong..."
-            maxLength={1500}
-            rows={3}
-            required
-          />
-          <PlannerField
-            number={3}
-            icon={ListChecks}
-            title="What basically happens?"
-            help="List the events in rough order. Fragments are fine. Weaver will help shape them."
-            value={form.roughPlan}
-            onChange={(value) => update("roughPlan", value)}
-            placeholder="First..., then..., the turning point was..., after that..., it ended when..."
-            maxLength={5000}
-            rows={6}
-            required
-          />
-          <PlannerField
-            number={4}
-            icon={FileText}
-            title="Which facts or details must stay?"
-            help="Add names, sensory details, exact moments, context, or boundaries that Weaver must preserve."
-            value={form.mustInclude}
-            onChange={(value) => update("mustInclude", value)}
-            placeholder="The keyboard was sticky, it was finals week, and I do not want the story to make my brother look careless..."
-            maxLength={3000}
-            rows={4}
-          />
-          <PlannerField
-            number={5}
-            icon={ShieldQuestion}
-            title="What are you nervous or uncertain about?"
-            help="Mention anything that makes the telling difficult, confusing, too long, too personal, or hard to deliver."
-            value={form.nervousAbout}
-            onChange={(value) => update("nervousAbout", value)}
-            placeholder="I am worried the beginning is boring and that I will forget what comes next..."
-            maxLength={2000}
-            rows={4}
-          />
-        </div>
-
-        {error && (
-          <div className="mt-4 rounded-2xl bg-destructive/8 px-4 py-3" role="alert">
-            <p className="text-sm text-destructive">{error}</p>
+          <div className="flex flex-col gap-4">
+            <PlannerField
+              number={1}
+              icon={Target}
+              title="Where will you tell this story?"
+              help="Name the audience and situation, such as an interview, class, difficult conversation, speech, or casual conversation."
+              value={form.audienceContext}
+              onChange={(value) => update("audienceContext", value)}
+              placeholder="I am answering an interview question about a challenge I handled..."
+              maxLength={1000}
+              rows={3}
+              required
+            />
+            <PlannerField
+              number={2}
+              icon={Lightbulb}
+              title="What do you want the listener to understand or feel?"
+              help="This becomes the story's throughline. It is not a formal lesson, just the point beneath the events."
+              value={form.goal}
+              onChange={(value) => update("goal", value)}
+              placeholder="I want them to see that I can stay calm and solve problems when something goes wrong..."
+              maxLength={1500}
+              rows={3}
+              required
+            />
+            <PlannerField
+              number={3}
+              icon={ListChecks}
+              title="What basically happens?"
+              help="List the events in rough order. Fragments are fine. Weaver will help shape them."
+              value={form.roughPlan}
+              onChange={(value) => update("roughPlan", value)}
+              placeholder="First..., then..., the turning point was..., after that..., it ended when..."
+              maxLength={5000}
+              rows={6}
+              required
+            />
+            <PlannerField
+              number={4}
+              icon={FileText}
+              title="Which facts or details must stay?"
+              help="Add names, sensory details, exact moments, context, or boundaries that Weaver must preserve."
+              value={form.mustInclude}
+              onChange={(value) => update("mustInclude", value)}
+              placeholder="The keyboard was sticky, it was finals week, and I do not want the story to make my brother look careless..."
+              maxLength={3000}
+              rows={4}
+            />
+            <PlannerField
+              number={5}
+              icon={ShieldQuestion}
+              title="What are you nervous or uncertain about?"
+              help="Mention anything that makes the telling difficult, confusing, too long, too personal, or hard to deliver."
+              value={form.nervousAbout}
+              onChange={(value) => update("nervousAbout", value)}
+              placeholder="I am worried the beginning is boring and that I will forget what comes next..."
+              maxLength={2000}
+              rows={4}
+            />
           </div>
-        )}
-        <button
-          type="button"
-          onClick={buildPlan}
-          disabled={!ready || building}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {building ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {building ? "Weaver is shaping your plan..." : "Build my story plan"}
-        </button>
-        <p className="mt-2 text-center text-xs text-muted-foreground">Plans are private and saved to your account. Membership includes up to 10 plans per day.</p>
-      </section>
+
+          {error && (
+            <div className="mt-4 rounded-2xl bg-destructive/8 px-4 py-3" role="alert">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={buildPlan}
+            disabled={!ready}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Sparkles className="h-4 w-4" />
+            Build my story plan
+          </button>
+          <p className="mt-2 text-center text-xs text-muted-foreground">Plans are private and saved to your account. Membership includes up to 10 plans per day.</p>
+        </section>
+      )}
+
+      {building && <PlanReadySkeleton />}
 
       {plan && (
         <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/35 bg-card shadow-sm">
           <div className="p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <Eyebrow>Plan ready</Eyebrow>
+                <Eyebrow>{planOrigin === "saved" ? "Saved plan" : "Plan ready"}</Eyebrow>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{plan.output.title}</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{secondPersonDirection(plan.output.throughline)}</p>
               </div>
@@ -330,7 +335,7 @@ export function StoryPlannerClient() {
               <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
                 <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
               </Link>
-              <button type="button" onClick={() => { setPlan(null); setPlanExpanded(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
+              <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
                 <RefreshCw className="h-4 w-4" /> Start another plan
               </button>
             </div>
@@ -365,6 +370,33 @@ export function StoryPlannerClient() {
         )}
       </section>
     </div>
+  )
+}
+
+function PlanReadySkeleton() {
+  return (
+    <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/25 bg-card shadow-sm" aria-label="Weaver is building your story plan" aria-busy="true">
+      <div className="animate-pulse p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="h-3 w-24 rounded-full bg-secondary" />
+            <div className="mt-4 h-8 w-2/5 rounded-xl bg-secondary" />
+            <div className="mt-3 h-4 w-4/5 rounded-full bg-secondary" />
+            <div className="mt-2 h-4 w-3/5 rounded-full bg-secondary" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-9 w-20 rounded-full bg-secondary" />
+            <div className="h-9 w-28 rounded-full bg-secondary" />
+          </div>
+        </div>
+        <div className="mt-6 h-12 w-full rounded-2xl bg-secondary/80" />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="h-12 rounded-full bg-brand-soft/70" />
+          <div className="h-12 rounded-full bg-secondary/80" />
+        </div>
+      </div>
+      <div className="border-t border-border/70 px-5 py-3 text-center text-xs font-medium text-muted-foreground">Weaver is shaping your plan...</div>
+    </section>
   )
 }
 

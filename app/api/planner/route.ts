@@ -22,7 +22,7 @@ const inputSchema = z.object({
 const outputSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["title", "throughline", "opening", "beats", "ending", "keep", "clarify", "deliveryTips", "revisedPlan", "reassurance"],
+  required: ["title", "throughline", "opening", "beats", "ending", "keep", "clarify", "deliveryTips", "reassurance"],
   properties: {
     title: { type: "string" },
     throughline: { type: "string" },
@@ -46,7 +46,6 @@ const outputSchema = {
     keep: { type: "array", minItems: 1, maxItems: 5, items: { type: "string" } },
     clarify: { type: "array", minItems: 1, maxItems: 5, items: { type: "string" } },
     deliveryTips: { type: "array", minItems: 2, maxItems: 3, items: { type: "string" } },
-    revisedPlan: { type: "string" },
     reassurance: { type: "string" },
   },
 } as const
@@ -171,7 +170,6 @@ Rules:
 - Point out missing information as questions or clarification needs, not invented answers.
 - Keep every section concise, specific, supportive, and usable immediately.
 - Write ALL coaching directions in second person. Say "you" and "your," not "I," "my," "we," or "our," unless you are repeating a literal fact or phrase the user supplied. For example, say "Open with a memory of you and Tidal playing together," not "Open with a memory of Tidal and me playing together."
-- The revisedPlan should be a compact, numbered second-person rehearsal outline with one step per line. It is for practice, not a finished script.
 - deliveryTips should contain only the two or three most useful general telling tips for this specific plan.`,
         },
         {

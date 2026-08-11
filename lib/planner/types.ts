@@ -13,7 +13,6 @@ export type StoryPlanOutput = {
   keep: string[]
   clarify: string[]
   deliveryTips: string[]
-  revisedPlan: string
   reassurance: string
 }
 
