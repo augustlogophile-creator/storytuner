@@ -5,8 +5,10 @@ import { useEffect, useMemo, useState } from "react"
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   Clipboard,
   Clock3,
+  Download,
   FileText,
   History,
   Lightbulb,
@@ -21,6 +23,8 @@ import {
 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import type { StoryPlanRecord } from "@/lib/planner/types"
+import { downloadStoryPlanPdf } from "@/lib/planner/plan-pdf"
+import { secondPersonDirection } from "@/lib/planner/voice"
 
 const emptyForm = {
   audienceContext: "",
@@ -54,6 +58,7 @@ export function StoryPlannerClient() {
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState("")
   const [copied, setCopied] = useState(false)
+  const [planExpanded, setPlanExpanded] = useState(false)
 
   const ready = useMemo(() => (
     form.audienceContext.trim().length >= 3
@@ -96,6 +101,7 @@ export function StoryPlannerClient() {
         throw new Error(payload.error || "Weaver could not build the plan.")
       }
       setPlan(payload.plan)
+      setPlanExpanded(false)
       setHistory((current) => [payload.plan!, ...current.filter((item) => item.id !== payload.plan!.id)].slice(0, 8))
       window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
     } catch (caught) {
@@ -107,6 +113,7 @@ export function StoryPlannerClient() {
 
   function openSaved(item: StoryPlanRecord) {
     setPlan(item)
+    setPlanExpanded(false)
     setForm({
       audienceContext: item.audienceContext,
       goal: item.goal,
@@ -131,12 +138,20 @@ export function StoryPlannerClient() {
       window.sessionStorage.setItem("storytuner:planner-plan", JSON.stringify({
         id: plan.id,
         title: plan.output.title,
-        plan: plan.output.revisedPlan,
-        throughline: plan.output.throughline,
+        throughline: secondPersonDirection(plan.output.throughline),
+        opening: secondPersonDirection(plan.output.opening),
+        ending: secondPersonDirection(plan.output.ending),
+        beats: plan.output.beats.map((beat) => ({ ...beat, purpose: secondPersonDirection(beat.purpose), suggestion: secondPersonDirection(beat.suggestion) })),
+        tips: plan.output.deliveryTips.slice(0, 2).map(secondPersonDirection),
       }))
     } catch {
       // The Arena link still works when session storage is unavailable.
     }
+  }
+
+  function exportPdf() {
+    if (!plan) return
+    downloadStoryPlanPdf(plan)
   }
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -249,65 +264,76 @@ export function StoryPlannerClient() {
       </section>
 
       {plan && (
-        <section id="planner-result" className="scroll-mt-20 rounded-[2rem] border border-brand/35 bg-card p-5 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <Eyebrow>Weaver's plan</Eyebrow>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{plan.output.title}</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">{plan.output.throughline}</p>
+        <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/35 bg-card shadow-sm">
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <Eyebrow>Plan ready</Eyebrow>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{plan.output.title}</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{secondPersonDirection(plan.output.throughline)}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button type="button" onClick={copyPlan} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold hover:bg-secondary/60">
+                  {copied ? <Check className="h-3.5 w-3.5 text-brand" /> : <Clipboard className="h-3.5 w-3.5" />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+                <button type="button" onClick={exportPdf} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold hover:bg-secondary/60">
+                  <Download className="h-3.5 w-3.5" /> Export PDF
+                </button>
+              </div>
             </div>
-            <button type="button" onClick={copyPlan} className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold">
-              {copied ? <Check className="h-3.5 w-3.5 text-brand" /> : <Clipboard className="h-3.5 w-3.5" />}
-              {copied ? "Copied" : "Copy plan"}
+
+            <button type="button" onClick={() => setPlanExpanded((value) => !value)} className="mt-5 flex w-full items-center justify-between rounded-2xl bg-secondary/55 px-4 py-3.5 text-left text-sm font-semibold hover:bg-secondary">
+              <span>{planExpanded ? "Hide full plan" : "View full plan"}</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${planExpanded ? "rotate-180" : ""}`} />
             </button>
-          </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <PlanBlock eyebrow="Opening direction" text={plan.output.opening} />
-            <PlanBlock eyebrow="Ending direction" text={plan.output.ending} />
-          </div>
+            {planExpanded && (
+              <div className="planner-expand-in mt-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <PlanBlock eyebrow="Opening" text={secondPersonDirection(plan.output.opening)} />
+                  <PlanBlock eyebrow="Landing" text={secondPersonDirection(plan.output.ending)} />
+                </div>
 
-          <div className="mt-5">
-            <Eyebrow>Story beats</Eyebrow>
-            <ol className="mt-3 flex flex-col gap-3">
-              {plan.output.beats.map((beat, index) => (
-                <li key={`${beat.label}-${index}`} className="flex gap-3 rounded-2xl bg-secondary/55 p-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">{index + 1}</span>
-                  <div>
-                    <p className="text-sm font-semibold">{beat.label}</p>
-                    <p className="mt-1 text-xs font-semibold text-accent-foreground">{beat.purpose}</p>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{beat.suggestion}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
+                <div className="mt-5">
+                  <Eyebrow>Story beats</Eyebrow>
+                  <ol className="mt-3 flex flex-col gap-3">
+                    {plan.output.beats.map((beat, index) => (
+                      <li key={`${beat.label}-${index}`} className="flex gap-3 rounded-2xl border border-border bg-background p-4">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-brand-foreground">{index + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold">{beat.label}</p>
+                          <p className="mt-1 text-xs font-semibold text-accent-foreground">{secondPersonDirection(beat.purpose)}</p>
+                          <p className="mt-1 text-sm leading-6 text-muted-foreground">{secondPersonDirection(beat.suggestion)}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <ListBlock title="Keep these" items={plan.output.keep} />
-            <ListBlock title="Clarify before telling" items={plan.output.clarify} />
-          </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <ListBlock title="Keep these" items={plan.output.keep.map(secondPersonDirection)} />
+                  <ListBlock title="Clarify before telling" items={plan.output.clarify.map(secondPersonDirection)} />
+                </div>
 
-          <div className="mt-5 rounded-3xl bg-primary p-5 text-primary-foreground">
-            <Eyebrow className="text-primary-foreground/60">Rehearsal outline</Eyebrow>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-primary-foreground/85">{plan.output.revisedPlan}</p>
-          </div>
+                <div className="mt-5 rounded-3xl border border-border bg-background p-5">
+                  <Eyebrow>Two things to remember</Eyebrow>
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                    {plan.output.deliveryTips.slice(0, 2).map(secondPersonDirection).map((tip) => <li key={tip} className="flex gap-2"><Check className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" />{tip}</li>)}
+                  </ul>
+                  <p className="mt-4 rounded-2xl bg-brand-soft/55 px-4 py-3 text-sm leading-6 text-foreground">{secondPersonDirection(plan.output.reassurance)}</p>
+                </div>
+              </div>
+            )}
 
-          <div className="mt-5 rounded-3xl border border-border p-5">
-            <Eyebrow>Delivery guidance</Eyebrow>
-            <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
-              {plan.output.deliveryTips.map((tip) => <li key={tip} className="flex gap-2"><Check className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" />{tip}</li>)}
-            </ul>
-            <p className="mt-4 rounded-2xl bg-brand-soft/55 px-4 py-3 text-sm leading-6 text-foreground">{plan.output.reassurance}</p>
-          </div>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
-              <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
-            </Link>
-            <button type="button" onClick={() => { setPlan(null); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
-              <RefreshCw className="h-4 w-4" /> Start another plan
-            </button>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
+                <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
+              </Link>
+              <button type="button" onClick={() => { setPlan(null); setPlanExpanded(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
+                <RefreshCw className="h-4 w-4" /> Start another plan
+              </button>
+            </div>
           </div>
         </section>
       )}
@@ -370,20 +396,17 @@ function formatPlan(plan: StoryPlanRecord) {
   const lines = [
     plan.output.title,
     "",
-    `Throughline: ${plan.output.throughline}`,
+    `Throughline: ${secondPersonDirection(plan.output.throughline)}`,
     "",
-    `Opening: ${plan.output.opening}`,
+    `Opening: ${secondPersonDirection(plan.output.opening)}`,
     "",
     "Story beats:",
-    ...plan.output.beats.map((beat, index) => `${index + 1}. ${beat.label}: ${beat.suggestion}`),
+    ...plan.output.beats.map((beat, index) => `${index + 1}. ${beat.label}: ${secondPersonDirection(beat.suggestion)}`),
     "",
-    `Ending: ${plan.output.ending}`,
+    `Landing: ${secondPersonDirection(plan.output.ending)}`,
     "",
-    "Rehearsal outline:",
-    plan.output.revisedPlan,
-    "",
-    "Delivery tips:",
-    ...plan.output.deliveryTips.map((tip) => `- ${tip}`),
+    "Two things to remember:",
+    ...plan.output.deliveryTips.slice(0, 2).map((tip, index) => `${index + 1}. ${secondPersonDirection(tip)}`),
   ]
   return lines.join("\n")
 }

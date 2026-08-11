@@ -37,6 +37,7 @@ import {
   type CloudTranscriptionStage,
 } from "@/lib/recording-cloud"
 import { cn } from "@/lib/utils"
+import { secondPersonDirection } from "@/lib/planner/voice"
 
 type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
 type StoryMode = "free" | "scenario"
@@ -53,6 +54,16 @@ type Feedback = {
   improvements: string[]
   levelUp: string
   revisedStory: string
+}
+
+type PlannerPlan = {
+  title: string
+  throughline: string
+  opening?: string
+  ending?: string
+  beats?: Array<{ label: string; purpose: string; suggestion: string }>
+  tips?: string[]
+  plan?: string
 }
 
 type Scenario = {
@@ -145,7 +156,7 @@ export function ArenaClient() {
   const [cameraOn, setCameraOn] = useState(true)
   const [targetSeconds, setTargetSeconds] = useState(90)
   const [showDurationOptions, setShowDurationOptions] = useState(false)
-  const [plannerPlan, setPlannerPlan] = useState<{ title: string; plan: string; throughline: string } | null>(null)
+  const [plannerPlan, setPlannerPlan] = useState<PlannerPlan | null>(null)
   const [confirmAction, setConfirmAction] = useState<ArenaConfirmAction>(null)
   const [pendingHref, setPendingHref] = useState("")
   const [extraSeconds, setExtraSeconds] = useState(0)
@@ -203,9 +214,17 @@ export function ArenaClient() {
       try {
         const stored = window.sessionStorage.getItem("storytuner:planner-plan")
         if (stored) {
-          const parsed = JSON.parse(stored) as { title?: string; plan?: string; throughline?: string }
-          if (parsed.title && parsed.plan && parsed.throughline) {
-            setPlannerPlan({ title: parsed.title, plan: parsed.plan, throughline: parsed.throughline })
+          const parsed = JSON.parse(stored) as Partial<PlannerPlan>
+          if (parsed.title && parsed.throughline && (parsed.beats?.length || parsed.plan)) {
+            setPlannerPlan({
+              title: parsed.title,
+              throughline: secondPersonDirection(parsed.throughline),
+              opening: parsed.opening ? secondPersonDirection(parsed.opening) : undefined,
+              ending: parsed.ending ? secondPersonDirection(parsed.ending) : undefined,
+              beats: Array.isArray(parsed.beats) ? parsed.beats.map((beat) => ({ ...beat, purpose: secondPersonDirection(beat.purpose), suggestion: secondPersonDirection(beat.suggestion) })) : undefined,
+              tips: Array.isArray(parsed.tips) ? parsed.tips.slice(0, 2).map(secondPersonDirection) : undefined,
+              plan: parsed.plan ? secondPersonDirection(parsed.plan) : undefined,
+            })
           }
         }
       } catch {
@@ -809,18 +828,36 @@ export function ArenaClient() {
           )}
 
           {plannerPlan ? (
-            <section className="rounded-3xl border border-brand/35 bg-brand-soft/45 p-5">
+            <section className="rounded-3xl border border-brand/35 bg-brand-soft/40 p-5 shadow-sm">
               <div className="flex items-start justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                   <Eyebrow>Plan ready</Eyebrow>
                   <h2 className="mt-2 text-base font-semibold">{plannerPlan.title}</h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">{plannerPlan.throughline}</p>
                 </div>
                 <button type="button" onClick={() => setPlannerPlan(null)} className="rounded-full p-2 text-muted-foreground hover:bg-background" aria-label="Hide story plan"><X className="h-4 w-4" /></button>
               </div>
-              <details className="mt-4 rounded-2xl bg-background/75 px-4 py-3">
-                <summary className="cursor-pointer text-sm font-semibold">View rehearsal outline</summary>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{plannerPlan.plan}</p>
+              <details className="mt-4 overflow-hidden rounded-2xl border border-border/70 bg-background/80">
+                <summary className="cursor-pointer px-4 py-3.5 text-sm font-semibold">View practice outline</summary>
+                <div className="border-t border-border/70 px-4 py-4">
+                  {plannerPlan.opening && <div className="rounded-xl bg-secondary/55 px-3 py-2.5"><p className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Open</p><p className="mt-1 text-sm leading-6 text-foreground">{plannerPlan.opening}</p></div>}
+                  {plannerPlan.beats?.length ? (
+                    <ol className="mt-3 space-y-3">
+                      {plannerPlan.beats.map((beat, index) => (
+                        <li key={`${beat.label}-${index}`} className="flex gap-3">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[0.65rem] font-semibold text-brand-foreground">{index + 1}</span>
+                          <div className="min-w-0"><p className="text-sm font-semibold">{beat.label}</p><p className="mt-0.5 text-sm leading-6 text-muted-foreground">{beat.suggestion}</p></div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : plannerPlan.plan ? (
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{plannerPlan.plan}</p>
+                  ) : null}
+                  {plannerPlan.ending && <div className="mt-3 rounded-xl bg-secondary/55 px-3 py-2.5"><p className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Land</p><p className="mt-1 text-sm leading-6 text-foreground">{plannerPlan.ending}</p></div>}
+                  {plannerPlan.tips?.length ? (
+                    <div className="mt-4 border-t border-border/70 pt-3"><p className="text-xs font-semibold">Two things to remember</p><ul className="mt-2 space-y-1.5 text-xs leading-5 text-muted-foreground">{plannerPlan.tips.slice(0, 2).map((tip) => <li key={tip} className="flex gap-2"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand" />{tip}</li>)}</ul></div>
+                  ) : null}
+                </div>
               </details>
             </section>
           ) : (

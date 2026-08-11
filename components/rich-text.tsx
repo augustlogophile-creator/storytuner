@@ -59,11 +59,20 @@ export function RichText({ markdown }: { markdown: string }) {
       output.push(<ul key={`ul-${index}`} className="space-y-2 pl-5 text-sm leading-relaxed text-foreground/90">{items.map((item, i) => <li key={i} className="list-disc pl-1 marker:text-brand">{inline(item)}</li>)}</ul>)
       continue
     }
-    if (/^\d+\. /.test(line)) {
+    if (/^\d+\.\s+/.test(line)) {
       const items: string[] = []
-      while (index < lines.length && /^\d+\. /.test(lines[index].trim())) {
-        items.push(lines[index].trim().replace(/^\d+\. /, ""))
-        index += 1
+      while (index < lines.length) {
+        const current = lines[index].trim()
+        if (/^\d+\.\s+/.test(current)) {
+          items.push(current.replace(/^\d+\.\s+/, ""))
+          index += 1
+          continue
+        }
+        if (!current && index + 1 < lines.length && /^\d+\.\s+/.test(lines[index + 1].trim())) {
+          index += 1
+          continue
+        }
+        break
       }
       output.push(<ol key={`ol-${index}`} className="space-y-3 pl-5 text-sm leading-relaxed text-foreground/90">{items.map((item, i) => <li key={i} className="list-decimal pl-1 marker:font-semibold marker:text-accent-foreground">{inline(item)}</li>)}</ol>)
       continue

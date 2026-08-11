@@ -45,7 +45,7 @@ const outputSchema = {
     ending: { type: "string" },
     keep: { type: "array", minItems: 1, maxItems: 5, items: { type: "string" } },
     clarify: { type: "array", minItems: 1, maxItems: 5, items: { type: "string" } },
-    deliveryTips: { type: "array", minItems: 2, maxItems: 5, items: { type: "string" } },
+    deliveryTips: { type: "array", minItems: 2, maxItems: 3, items: { type: "string" } },
     revisedPlan: { type: "string" },
     reassurance: { type: "string" },
   },
@@ -170,7 +170,9 @@ Rules:
 - Address what the user is nervous about with practical, calm delivery advice.
 - Point out missing information as questions or clarification needs, not invented answers.
 - Keep every section concise, specific, supportive, and usable immediately.
-- The revisedPlan should be a first-person outline the user can rehearse from, not a finished script.`,
+- Write ALL coaching directions in second person. Say "you" and "your," not "I," "my," "we," or "our," unless you are repeating a literal fact or phrase the user supplied. For example, say "Open with a memory of you and Tidal playing together," not "Open with a memory of Tidal and me playing together."
+- The revisedPlan should be a compact, numbered second-person rehearsal outline with one step per line. It is for practice, not a finished script.
+- deliveryTips should contain only the two or three most useful general telling tips for this specific plan.`,
         },
         {
           role: "user",

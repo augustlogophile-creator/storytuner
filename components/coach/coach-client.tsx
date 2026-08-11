@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
-import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Volume2 } from "lucide-react"
+import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Volume2, VolumeX } from "lucide-react"
 import { Weaver } from "@/components/weaver"
 import { RichText } from "@/components/rich-text"
 import { FREE_COACH_LIMIT, useApp, type CoachMessage, type Recording } from "@/lib/app-state"
@@ -39,6 +39,7 @@ export function CoachClient() {
   const [serverRemaining, setServerRemaining] = useState<number | null>(null)
   const [archivedMessages, setArchivedMessages] = useState<CoachMessage[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement | null>(null)
   const requestKeyRef = useRef<string | null>(null)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
@@ -188,11 +189,20 @@ export function CoachClient() {
     recognition.start()
   }
 
-  function speakText(text: string) {
+  function toggleSpeech(messageId: string, text: string) {
     if (!("speechSynthesis" in window)) return
+    if (speakingMessageId === messageId) {
+      window.speechSynthesis.cancel()
+      setSpeakingMessageId(null)
+      return
+    }
+
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(stripMarkdown(text))
     utterance.rate = 1
+    utterance.onend = () => setSpeakingMessageId((current) => current === messageId ? null : current)
+    utterance.onerror = () => setSpeakingMessageId((current) => current === messageId ? null : current)
+    setSpeakingMessageId(messageId)
     window.speechSynthesis.speak(utterance)
   }
 
@@ -231,7 +241,7 @@ export function CoachClient() {
               {safeMessages.map((message: CoachMessage) => message.role === "user" ? (
                 <div key={message.id} className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{message.content}</div>
               ) : (
-                <div key={message.id} className="coach-message-in group flex items-start gap-3"><Weaver size={28} className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><button type="button" onClick={() => speakText(message.content)} className="mt-2 inline-flex items-center gap-1 text-[0.68rem] font-semibold text-muted-foreground opacity-70 transition-opacity hover:opacity-100"><Volume2 className="h-3.5 w-3.5" /> Listen</button></div></div>
+                <div key={message.id} className="coach-message-in group flex items-start gap-3"><Weaver size={28} className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.68rem] font-semibold text-muted-foreground opacity-75 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button></div></div>
               ))}
               {pendingUserMessage && <div className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{pendingUserMessage}</div>}
               {loading && <div className="coach-message-in flex items-center gap-3"><Weaver size={28} /><div className="flex items-center gap-1.5 rounded-2xl bg-secondary/55 px-4 py-3" aria-label="Weaver is thinking"><span className="weaver-thinking-dot" /><span className="weaver-thinking-dot [animation-delay:120ms]" /><span className="weaver-thinking-dot [animation-delay:240ms]" /></div></div>}

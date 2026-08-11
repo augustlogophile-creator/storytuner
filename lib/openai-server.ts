@@ -80,7 +80,7 @@ export async function openAIText(messages: ChatMessage[], operation = "coach") {
       body: JSON.stringify({
         model: model(),
         temperature: 0.45,
-        max_tokens: 1800,
+        max_tokens: 900,
         messages,
       }),
       signal: AbortSignal.timeout(35_000),

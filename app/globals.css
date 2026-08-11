@@ -483,3 +483,14 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .coach-message-in, .weaver-thinking-dot { animation: none !important; }
 }
+
+@keyframes planner-expand-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.planner-expand-in { animation: planner-expand-in 180ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-expand-in { animation: none !important; }
+}
