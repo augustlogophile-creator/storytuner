@@ -106,16 +106,15 @@ ${personalizedHistory || "Personalization from past recordings is disabled or no
       }, { onConflict: "user_id,request_key" })
 
       if (historyError) {
-        if (reservation && !reservation.alreadyReserved) {
-          await releaseUsage(user.id, "coach_message", requestKey).catch((releaseError) =>
-            backendError("coach_usage_rollback_failed", releaseError, { userId: user.id, requestKey }),
-          )
-        }
+        // The user already received a valid AI response, so a secondary archive failure
+        // must never turn the successful coaching request into an error. The client
+        // immediately stores the exchange in user_app_state, and /api/coach/history
+        // also reads that state as a fallback.
         backendError("coach_history_save_failed", historyError, { userId: user.id, requestKey })
-        return Response.json({ error: "Weaver answered, but the conversation could not be saved. Try again." }, { status: 500 })
+        return Response.json({ reply, usage: reservation, historySaved: false }, { headers: { "Cache-Control": "no-store" } })
       }
 
-      return Response.json({ reply, usage: reservation }, { headers: { "Cache-Control": "no-store" } })
+      return Response.json({ reply, usage: reservation, historySaved: true }, { headers: { "Cache-Control": "no-store" } })
     } catch (error) {
       if (reservation && !reservation.alreadyReserved) {
         await releaseUsage(user.id, "coach_message", requestKey).catch((releaseError) =>

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
-import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Trash2, Volume2 } from "lucide-react"
+import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Volume2 } from "lucide-react"
 import { Weaver } from "@/components/weaver"
 import { RichText } from "@/components/rich-text"
 import { FREE_COACH_LIMIT, useApp, type CoachMessage, type Recording } from "@/lib/app-state"
@@ -29,7 +29,7 @@ declare global {
 }
 
 export function CoachClient() {
-  const { state, addCoachExchange, clearCoach } = useApp()
+  const { state, addCoachExchange } = useApp()
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -44,7 +44,7 @@ export function CoachClient() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
 
   const localMessages = useMemo(() => state.coach.messages.filter((message) => Boolean(message) && (message.role === "user" || message.role === "assistant") && typeof message.id === "string" && typeof message.content === "string"), [state.coach.messages])
-  const safeMessages = historyLoaded ? archivedMessages : localMessages
+  const safeMessages = useMemo(() => mergeCoachMessages(archivedMessages, localMessages), [archivedMessages, localMessages])
   const localRemaining = Math.max(0, FREE_COACH_LIMIT - state.coach.sent)
   const remaining = state.premium ? Number.POSITIVE_INFINITY : Math.max(0, Math.min(FREE_COACH_LIMIT, serverRemaining ?? localRemaining))
   const blocked = !state.premium && remaining === 0
@@ -95,7 +95,7 @@ export function CoachClient() {
 
   useEffect(() => () => { recognitionRef.current?.stop(); window.speechSynthesis?.cancel() }, [])
 
-  async function send(override?: string, speakReply = false) {
+  async function send(override?: string) {
     const clean = (override ?? input).trim()
     if (!clean || loading || blocked) return
     setLoading(true)
@@ -118,7 +118,7 @@ export function CoachClient() {
           requestKey,
         }),
       })
-      const data = await response.json().catch(() => ({})) as { reply?: unknown; error?: unknown; code?: unknown; usage?: { remaining?: unknown } }
+      const data = await response.json().catch(() => ({})) as { reply?: unknown; error?: unknown; code?: unknown; historySaved?: unknown; usage?: { remaining?: unknown } }
       if (Number.isFinite(data.usage?.remaining)) setServerRemaining(Math.max(0, Math.min(FREE_COACH_LIMIT, Number(data.usage?.remaining))))
       const reply = typeof data.reply === "string" ? data.reply.trim() : ""
       if (!response.ok || !reply) {
@@ -126,10 +126,13 @@ export function CoachClient() {
         throw new Error(typeof data.error === "string" ? data.error : "Weaver could not respond.")
       }
       addCoachExchange(clean, reply)
-      await loadCoachHistory()
+      setArchivedMessages((current) => mergeCoachMessages(current, [
+        { id: `${requestKey}:user`, role: "user", content: clean, createdAt: new Date().toISOString() },
+        { id: `${requestKey}:assistant`, role: "assistant", content: reply, createdAt: new Date().toISOString() },
+      ]))
+      if (data.historySaved !== false) void loadCoachHistory()
       requestKeyRef.current = null
       setPendingUserMessage(null)
-      if (speakReply) speakText(reply)
     } catch (caught) {
       setPendingUserMessage(null)
       setInput(clean)
@@ -175,7 +178,10 @@ export function CoachClient() {
       recognitionRef.current = null
       setListening(false)
       const clean = (finalText.trim() || latestText.trim())
-      if (clean) void send(clean, true)
+      if (clean) {
+        requestKeyRef.current = null
+        setInput(clean)
+      }
     }
     recognitionRef.current = recognition
     setListening(true)
@@ -213,7 +219,7 @@ export function CoachClient() {
 
       <div className="flex items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
         <span>{state.premium ? "Unlimited coaching with Membership" : `${used} of ${FREE_COACH_LIMIT} free messages used`}</span>
-        {state.premium && safeMessages.length > 0 && <button type="button" onClick={clearCoach} className="inline-flex items-center gap-1 font-semibold hover:text-foreground"><Trash2 className="h-3.5 w-3.5" /> Clear</button>}
+        <span className="hidden sm:inline">{recording ? `Talking about: ${recording.title}` : "General coaching"}</span>
       </div>
 
       <section className="flex min-h-[30rem] flex-1 flex-col overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">
@@ -234,7 +240,7 @@ export function CoachClient() {
           )}
         </div>
 
-        {error && <p className="mx-4 mb-3 rounded-2xl bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</p>}
+        {error && <div className="mx-4 mb-3 flex items-start justify-between gap-3 rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive"><span>{error}</span><button type="button" onClick={() => setError("")} className="shrink-0 font-semibold opacity-70 hover:opacity-100">Dismiss</button></div>}
 
         {blocked ? (
           <div className="border-t border-border p-5 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="mt-2 text-sm font-semibold">Your five free messages are used.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Your five exchanges stay here so you can revisit Weaver’s advice. Membership includes unlimited coaching.</p><Link href="/membership" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link></div>
@@ -242,15 +248,41 @@ export function CoachClient() {
           <div className="border-t border-border bg-background/75 p-3 backdrop-blur-sm">
             <div className="flex items-end gap-2 rounded-[1.45rem] border border-border bg-card px-2.5 py-2 shadow-sm focus-within:border-brand">
               <button type="button" onClick={startVoice} disabled={loading} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${listening ? "bg-destructive text-destructive-foreground" : "bg-secondary text-foreground hover:bg-brand-soft"}`} aria-label={listening ? "Stop voice input" : "Speak to Weaver"}>{listening ? <Square className="h-3.5 w-3.5" fill="currentColor" /> : <Mic className="h-4 w-4" />}</button>
-              <textarea value={input} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { requestKeyRef.current = null; setInput(event.target.value) }} onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send() } }} rows={1} placeholder={listening ? "Listening…" : "Message Weaver…"} className="max-h-36 min-h-10 flex-1 resize-none bg-transparent px-1 py-2 text-sm leading-relaxed outline-none placeholder:text-muted-foreground" />
+              <textarea value={input} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { requestKeyRef.current = null; setInput(event.target.value) }} onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send() } }} rows={1} placeholder={listening ? "Listening… speak naturally" : recording ? `Ask Weaver about ${recording.title}…` : "Message Weaver…"} className="max-h-36 min-h-10 flex-1 resize-none bg-transparent px-1 py-2 text-sm leading-relaxed outline-none placeholder:text-muted-foreground" />
               <button type="button" disabled={!input.trim() || loading} onClick={() => void send()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground transition-transform active:scale-95 disabled:opacity-30" aria-label="Send message"><ArrowUp className="h-4 w-4" /></button>
             </div>
-            <p className="mt-2 px-2 text-[0.62rem] leading-4 text-muted-foreground">Press Enter to send. Use the microphone for voice input. Voice replies are read aloud automatically.</p>
+            <p className="mt-2 px-2 text-[0.62rem] leading-4 text-muted-foreground">Press Enter to send. The microphone fills your message so you can review it before sending.</p>
           </div>
         )}
       </section>
     </div>
   )
+}
+
+function mergeCoachMessages(...sources: CoachMessage[][]) {
+  const all = sources.flat().filter((message) =>
+    message &&
+    (message.role === "user" || message.role === "assistant") &&
+    typeof message.content === "string" &&
+    message.content.trim().length > 0,
+  )
+
+  const pairs: Array<{ user: CoachMessage; assistant: CoachMessage; sortKey: string }> = []
+  for (let index = 0; index < all.length; index += 1) {
+    const user = all[index]
+    const assistant = all[index + 1]
+    if (user?.role !== "user" || assistant?.role !== "assistant") continue
+    const signature = `${user.content.trim()}\u0000${assistant.content.trim()}`
+    if (!pairs.some((pair) => `${pair.user.content.trim()}\u0000${pair.assistant.content.trim()}` === signature)) {
+      pairs.push({ user, assistant, sortKey: user.createdAt || assistant.createdAt || "" })
+    }
+    index += 1
+  }
+
+  return pairs
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .slice(-15)
+    .flatMap((pair) => [pair.user, pair.assistant])
 }
 
 function storyContext(recording: Recording) {
