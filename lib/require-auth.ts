@@ -17,6 +17,7 @@ export type AccountRestriction = {
   accountSuspendedUntil: string | null
   communitySuspendedUntil: string | null
   publicMessage: string | null
+  updatedAt: string | null
 }
 
 export async function getAuthenticatedUser() {
@@ -48,13 +49,14 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
   const admin = createAdminClient()
   const { data, error } = await admin
     .from("community_moderation_status")
-    .select("account_status, account_suspended_until, community_suspended_until, public_message")
+    .select("account_status, account_suspended_until, community_suspended_until, public_message, updated_at")
     .eq("user_id", userId)
     .maybeSingle<{
       account_status: "active" | "suspended" | "banned"
       account_suspended_until: string | null
       community_suspended_until: string | null
       public_message: string | null
+      updated_at: string | null
     }>()
 
   if (error) {
@@ -67,6 +69,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
       accountSuspendedUntil: null,
       communitySuspendedUntil: null,
       publicMessage: null,
+      updatedAt: null,
     }
   }
 
@@ -77,6 +80,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
       accountSuspendedUntil: null,
       communitySuspendedUntil: null,
       publicMessage: null,
+      updatedAt: null,
     }
   }
 
@@ -90,6 +94,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
     accountSuspendedUntil: data.account_suspended_until,
     communitySuspendedUntil: data.community_suspended_until,
     publicMessage: data.public_message,
+    updatedAt: data.updated_at,
   }
 }
 

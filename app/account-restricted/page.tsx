@@ -1,12 +1,16 @@
 import { Ban, Clock3, Mail } from "lucide-react"
 import { SwitchAccountButton } from "@/components/auth/switch-account-button"
 import { MobileShell } from "@/components/mobile-shell"
+import { RestrictionStatusWatcher } from "@/components/moderation/restriction-status-watcher"
 import { Eyebrow } from "@/components/eyebrow"
 import {
   getAccountRestriction,
   getAccountRestrictionDecisionContext,
   getAuthenticatedUser,
 } from "@/lib/require-auth"
+
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export default async function AccountRestrictedPage() {
   const authenticated = await getAuthenticatedUser()
@@ -20,6 +24,7 @@ export default async function AccountRestrictedPage() {
 
   return (
     <MobileShell nav={false}>
+      <RestrictionStatusWatcher />
       <div className="flex min-h-[75vh] flex-col justify-center">
         <section className="rounded-[2rem] border border-destructive/25 bg-card p-7 text-center">
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">

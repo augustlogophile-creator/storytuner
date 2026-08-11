@@ -407,3 +407,79 @@ header {
     }
   }
 }
+
+
+/* Subtle app-wide motion and surface polish. */
+@keyframes storytuner-page-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes storytuner-dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-shell {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 45%, transparent);
+}
+
+.app-page-enter {
+  animation: storytuner-page-in 320ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+.app-surface {
+  box-shadow: 0 1px 2px rgba(39, 34, 29, 0.025);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-surface:hover {
+    border-color: color-mix(in oklch, var(--border) 58%, var(--brand) 42%);
+    box-shadow: 0 10px 28px rgba(39, 34, 29, 0.055);
+    transform: translateY(-1px);
+  }
+}
+
+.app-dialog-overlay {
+  animation: storytuner-page-in 160ms ease-out both;
+}
+
+.app-dialog-panel {
+  animation: storytuner-dialog-in 220ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .app-page-enter,
+  .app-dialog-overlay,
+  .app-dialog-panel { animation: none !important; }
+  .app-surface { transition: none !important; }
+}
+
+@keyframes coach-message-in {
+  from { opacity: 0; transform: translateY(7px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes weaver-thinking-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .38; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.coach-message-in { animation: coach-message-in 220ms ease-out both; }
+.weaver-thinking-dot { width: .38rem; height: .38rem; border-radius: 999px; background: currentColor; color: var(--muted-foreground); animation: weaver-thinking-bounce 900ms ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .coach-message-in, .weaver-thinking-dot { animation: none !important; }
+}

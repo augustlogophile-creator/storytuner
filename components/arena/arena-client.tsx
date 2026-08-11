@@ -784,13 +784,7 @@ export function ArenaClient() {
             </div>
           </section>
 
-          {storyMode === "free" ? (
-            <section className="rounded-3xl border border-brand/35 bg-brand-soft/45 p-5">
-              <Eyebrow>Your instruction</Eyebrow>
-              <p className="mt-2 text-lg font-semibold">Tell a story of your choice.</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Choose any real experience with a beginning, a meaningful turn, and an ending.</p>
-            </section>
-          ) : (
+          {storyMode === "scenario" && (
             <>
               <section>
                 <div className="mb-3 flex items-baseline justify-between"><p className="text-sm font-semibold">Choose a storytelling situation</p><span className="text-xs text-muted-foreground">All included</span></div>

@@ -5,10 +5,11 @@ import { ArrowRight, Check, Flame, Map, MessageCircle, Mic2, Play, Shuffle } fro
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { Weaver } from "@/components/weaver"
+import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
 import { courseProgress, freeLessonLimitReached, nextLesson, useApp, weaverColors } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
-export function HomeDashboard() {
+export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
   const { state, ready } = useApp()
   const progress = courseProgress(state)
   const next = nextLesson(state)
@@ -21,6 +22,7 @@ export function HomeDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
+      {accountNotice && <AccountRestoredNotice message={accountNotice} updatedAt={accountNoticeUpdatedAt} />}
       <header className="flex items-start justify-between gap-4">
         <div>
           <Eyebrow>{today()}</Eyebrow>

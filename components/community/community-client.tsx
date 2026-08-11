@@ -222,7 +222,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
   if (membershipRequired) return <MembershipLock />
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-7">
       <header>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Eyebrow>Community</Eyebrow>
@@ -230,45 +230,46 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
             <CheckCircle2 className="h-3.5 w-3.5" /> Membership active
           </span>
         </div>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share, listen, respond.</h1>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share stories. Help each other improve.</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
-          Post something you are shaping, then respond to what other storytellers chose to share.
-          Private recordings never appear here automatically.
-        </p>
-        <p className="mt-4 rounded-2xl bg-secondary/60 px-4 py-3 text-xs leading-5 text-muted-foreground">
-          <strong className="font-semibold text-foreground">Community principle:</strong> Respond to what landed. Lead with curiosity instead of correction.
+          Community is built around stories people intentionally choose to share. Listen or read, then respond to what actually landed.
         </p>
       </header>
+
+      <section className="rounded-[2rem] border border-brand/35 bg-brand-soft/45 p-5 shadow-sm">
+        <div className="flex items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
+            <Headphones className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <Eyebrow>Share a story</Eyebrow>
+            <h2 className="mt-1 text-lg font-semibold">Choose a recording to share</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Share either the audio or the transcript, then add an optional note asking for the kind of feedback you want.
+            </p>
+          </div>
+        </div>
+        <Link href="/arena/recordings" className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
+          <Headphones className="h-4 w-4" /> Choose a story
+        </Link>
+        <p className="mt-3 text-center text-[0.68rem] leading-5 text-muted-foreground">Private recordings never appear here unless you choose to share them.</p>
+      </section>
 
       <section aria-labelledby="share-heading" className="rounded-3xl border border-border bg-card p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="share-heading" className="text-base font-semibold">Share something</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Posting as @{currentUsername}</p>
+            <h2 id="share-heading" className="text-sm font-semibold">Post a note</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Reflections, storytelling tips, questions, or something you want to improve · @{currentUsername}</p>
           </div>
           <CharacterCount value={draft.length} maximum={5000} warningAt={4500} />
         </div>
-        <textarea
-          value={draft}
-          maxLength={5000}
-          rows={3}
-          onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)}
-          placeholder="A story, reflection, or moment you are working through…"
-          className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand"
-        />
+        <textarea value={draft} maxLength={5000} rows={3} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)} placeholder="Share a reflection, a storytelling tip, a question, or something you want to get better at…" className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
         <div className="mt-3 flex items-center justify-between gap-3">
-          <Link href="/arena/recordings" className="inline-flex items-center gap-1.5 rounded-full px-2 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground">
-            <Headphones className="h-3.5 w-3.5" /> Share a recording
-          </Link>
-          <button
-            type="button"
-            onClick={publishPost}
-            disabled={!draft.trim() || publishing}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-          >
+          <p className="hidden text-[0.68rem] text-muted-foreground sm:block">Lead with curiosity. Be specific about what helped.</p>
+          <button type="button" onClick={publishPost} disabled={!draft.trim() || publishing} className="ml-auto inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40">
             {publishing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {publishing ? "Publishing…" : "Publish"}
+            {publishing ? "Publishing…" : "Post note"}
           </button>
         </div>
       </section>

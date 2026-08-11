@@ -130,7 +130,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
           account_status: "active",
           account_suspended_until: null,
           community_suspended_until: null,
-          public_message: null,
+          public_message: restorationPublicMessage(note),
           internal_note: note || null,
           updated_by: context.userId,
         }, { onConflict: "user_id" })
@@ -293,7 +293,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
         account_status: "active",
         account_suspended_until: null,
         community_suspended_until: null,
-        public_message: null,
+        public_message: restorationPublicMessage(note),
         internal_note: note || null,
         updated_by: context.userId,
       }, { onConflict: "user_id" })
@@ -371,6 +371,12 @@ function actionLabel(action: ModerationAction) {
   } satisfies Record<ModerationAction, string>)[action]
 }
 
+
+function restorationPublicMessage(note: string) {
+  const clean = note.trim()
+  return `Your StoryTuner access has been restored after review.${clean ? ` ${clean}` : ""}`.slice(0, 500)
+}
+
 function defaultPublicMessage(action: ModerationAction, days: number | null) {
   if (action === "suspend_community") return `Community access was suspended for ${days ?? 7} days after a moderation review.`
   if (action === "suspend_account") return `StoryTuner access was suspended for ${days ?? 7} days after a moderation review.`
@@ -437,7 +443,7 @@ async function reverseReportEffects(
     if (latestRestrictionAction.action_type === "community_suspension") {
       const { error } = await admin
         .from("community_moderation_status")
-        .update({ community_suspended_until: null, public_message: null, updated_by: moderatorId })
+        .update({ community_suspended_until: null, public_message: "Your Community access has been restored after review.", updated_by: moderatorId })
         .eq("user_id", userId)
       if (error) throw error
       await logAction(admin, userId, moderatorId, report.id, "restriction_cleared", null, "Community suspension undone")
@@ -445,7 +451,7 @@ async function reverseReportEffects(
     if (["account_suspension", "account_ban"].includes(latestRestrictionAction.action_type)) {
       const { error } = await admin
         .from("community_moderation_status")
-        .update({ account_status: "active", account_suspended_until: null, public_message: null, updated_by: moderatorId })
+        .update({ account_status: "active", account_suspended_until: null, public_message: restorationPublicMessage(""), updated_by: moderatorId })
         .eq("user_id", userId)
       if (error) throw error
       await logAction(admin, userId, moderatorId, report.id, "restriction_cleared", null, "Account restriction undone")

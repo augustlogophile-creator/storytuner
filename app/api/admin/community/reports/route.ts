@@ -238,8 +238,11 @@ export async function GET(request: Request) {
 }
 
 function moderationPostBody(post: PostRow) {
-  if (post.shared_transcript?.trim()) return post.shared_transcript.trim()
-  if (post.body.trim()) return post.body.trim()
+  const message = post.body.trim()
+  const transcript = post.shared_transcript?.trim() || ""
+  if (message && transcript) return `${message}\n\nTranscript:\n${transcript}`
+  if (transcript) return transcript
+  if (message) return message
   if (post.post_type === "audio" || post.post_type === "audio_transcript") {
     return `[Shared audio] ${post.title?.trim() || "Untitled recording"}`
   }

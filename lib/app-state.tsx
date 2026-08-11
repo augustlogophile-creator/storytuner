@@ -483,7 +483,7 @@ export function AppProvider({
     next.lastOpen = new Date().toISOString()
     next.accountOwnerId = userId
     next.premium = premium
-    if (displayName && next.profile.name === "Storyteller") next.profile = { ...next.profile, name: displayName }
+    if (displayName) next.profile = { ...next.profile, name: displayName }
     return next
   }, [])
 

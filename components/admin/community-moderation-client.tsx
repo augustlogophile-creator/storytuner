@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { CheckCircle2, Loader2, RefreshCw, RotateCcw, ShieldAlert } from "lucide-react"
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { Eyebrow } from "@/components/eyebrow"
@@ -116,7 +116,7 @@ export function CommunityModerationClient({ role: _role }: { role: "admin" }) {
           {reports.map((report) => (
             status === "open"
               ? <OpenReportCard key={report.id} report={report} onMoved={moveReport} />
-              : <PastDecisionCard key={report.id} report={report} onMoved={moveReport} onChanged={() => void load()} />
+              : <PastDecisionCard key={report.id} report={report} onMoved={moveReport} onChanged={load} />
           ))}
         </div>
       )}
@@ -301,17 +301,17 @@ function PastDecisionCard({
 }: {
   report: ModerationReportItem
   onMoved: (id: string, status: ModerationReportStatus) => void
-  onChanged: () => void
+  onChanged: () => Promise<void>
 }) {
   const [busy, setBusy] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [error, setError] = useState("")
+  const [notice, setNotice] = useState("")
   const [restrictionAction, setRestrictionAction] = useState<"keep" | "clear" | "suspend_community" | "suspend_account" | "ban_account">("keep")
   const [contentAction, setContentAction] = useState<"keep" | "remove" | "restore">("keep")
   const [durationDays, setDurationDays] = useState(7)
-  const [note, setNote] = useState(report.resolutionNote ?? "")
-  const decisionLabels = useMemo(() => summarizeActions(report), [report])
+  const [note, setNote] = useState("")
   const needsDuration = restrictionAction === "suspend_community" || restrictionAction === "suspend_account"
 
   async function reopen() {
@@ -331,9 +331,7 @@ function PastDecisionCard({
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The decision could not be reopened.")
       setConfirmOpen(false)
-    } finally {
-      setBusy(false)
-    }
+    } finally { setBusy(false) }
   }
 
   async function revise() {
@@ -344,14 +342,7 @@ function PastDecisionCard({
       const response = await fetch(`/api/admin/community/reports/${report.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          action: "revise",
-          restrictionAction,
-          contentAction,
-          durationDays: needsDuration ? durationDays : null,
-          note,
-          hideContent: false,
-        }),
+        body: JSON.stringify({ action: "revise", restrictionAction, contentAction, durationDays: needsDuration ? durationDays : null, note, hideContent: false }),
       })
       const payload = await response.json() as { completed?: boolean; status?: ModerationReportStatus; error?: string }
       if (!response.ok || !payload.completed || payload.status !== "resolved") throw new Error(payload.error || "The decision could not be changed.")
@@ -359,43 +350,26 @@ function PastDecisionCard({
       setEditing(false)
       setRestrictionAction("keep")
       setContentAction("keep")
-      onChanged()
+      setNote("")
+      await onChanged()
+      setNotice("The moderation decision is updated and the new access state is active now.")
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The decision could not be changed.")
       setConfirmOpen(false)
-    } finally {
-      setBusy(false)
-    }
+    } finally { setBusy(false) }
   }
 
   if (report.status === "dismissed") {
     return (
       <article className="rounded-3xl border border-border bg-card p-5">
         <ReportSummary report={report} />
-        <div className="mt-4 rounded-2xl bg-secondary/60 p-4">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Dismissed</p>
-          <p className="mt-1 text-sm font-semibold">Report dismissed</p>
-          {report.resolutionNote && <p className="mt-2 text-xs leading-5 text-muted-foreground">{report.resolutionNote}</p>}
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-secondary/55 px-4 py-3">
+          <div><p className="text-xs font-semibold">Dismissed</p><p className="mt-0.5 text-xs text-muted-foreground">No enforcement was applied.</p></div>
+          <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-        <button
-          type="button"
-          onClick={() => setConfirmOpen(true)}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold"
-        >
-          <RotateCcw className="h-4 w-4" /> Reopen report
-        </button>
-        <ConfirmDialog
-          open={confirmOpen}
-          title="Reopen this report?"
-          confirmLabel="Reopen"
-          tone="brand"
-          busy={busy}
-          onCancel={() => { if (!busy) setConfirmOpen(false) }}
-          onConfirm={() => void reopen()}
-        >
-          The report will return to New so you can review it again.
-        </ConfirmDialog>
+        <button type="button" onClick={() => setConfirmOpen(true)} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold"><RotateCcw className="h-4 w-4" /> Reopen report</button>
+        <ConfirmDialog open={confirmOpen} title="Reopen this report?" confirmLabel="Reopen" tone="brand" busy={busy} onCancel={() => { if (!busy) setConfirmOpen(false) }} onConfirm={() => void reopen()}>The report will return to New so you can review it again.</ConfirmDialog>
       </article>
     )
   }
@@ -404,69 +378,62 @@ function PastDecisionCard({
     <article className="rounded-3xl border border-border bg-card p-5">
       <ReportSummary report={report} />
 
-      <div className="mt-4 grid gap-2 rounded-2xl bg-secondary/60 p-4 sm:grid-cols-2">
-        <div>
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Last decision</p>
-          <p className="mt-1 text-sm font-semibold">{decisionLabels.join(" · ") || "Decision saved"}</p>
+      <div className="mt-4 rounded-2xl border border-border bg-background p-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Current outcome</p>
+          <span className="rounded-full bg-secondary px-2.5 py-1 text-[0.62rem] font-semibold text-muted-foreground">Saved</span>
         </div>
-        <div>
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Current enforcement</p>
-          <p className="mt-1 text-sm font-semibold">{currentEnforcementLabel(report)}</p>
+        <div className="mt-3 divide-y divide-border">
+          <StateRow label="Account access" value={currentEnforcementLabel(report)} />
+          <StateRow label="Reported content" value={currentContentLabel(report.content.status)} />
+          <StateRow label="Last change" value={latestDecisionActionLabel(report)} />
         </div>
-        <div>
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Content</p>
-          <p className="mt-1 text-sm font-semibold">{currentContentLabel(report.content.status)}</p>
-        </div>
-        {(report.resolutionNote || report.actions.findLast((item) => item.note)?.note) && (
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Moderator note</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{report.resolutionNote || report.actions.findLast((item) => item.note)?.note}</p>
-          </div>
+        {report.actions.length > 0 && (
+          <details className="mt-3 border-t border-border pt-3">
+            <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">View audit history · {report.actions.length}</summary>
+            <div className="mt-3 space-y-2">
+              {[...report.actions].reverse().slice(0, 12).map((action, index) => (
+                <div key={`${action.createdAt}-${index}`} className="flex items-start justify-between gap-3 text-xs">
+                  <span className="font-medium">{historyActionLabel(action.actionType, action.durationDays)}</span>
+                  <span className="shrink-0 text-muted-foreground">{new Date(action.createdAt).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
       </div>
 
       {editing ? (
-        <div className="mt-4 rounded-2xl border border-border bg-background p-4">
-          <p className="text-sm font-semibold">Change this decision</p>
-          <p className="mt-1 text-xs text-muted-foreground">Only the settings you change below will be updated. Earlier actions stay in the audit history.</p>
+        <div className="mt-4 rounded-2xl border border-brand/25 bg-brand-soft/20 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div><p className="text-sm font-semibold">Update decision</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Change only what needs to change. Updates take effect immediately.</p></div>
+            <button type="button" onClick={() => { setEditing(false); setError("") }} className="text-xs font-semibold text-muted-foreground">Cancel</button>
+          </div>
 
           <label className="mt-4 block">
-            <span className="text-xs font-semibold text-muted-foreground">Account access</span>
-            <select
-              value={restrictionAction}
-              onChange={(event) => setRestrictionAction(event.target.value as typeof restrictionAction)}
-              className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand"
-            >
-              <option value="keep">Keep current restriction</option>
-              <option value="clear">Remove all restrictions</option>
+            <span className="text-xs font-semibold">Account access</span>
+            <select value={restrictionAction} onChange={(event) => setRestrictionAction(event.target.value as typeof restrictionAction)} className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand">
+              <option value="keep">Keep current access</option>
+              <option value="clear">Restore full access now</option>
               <option value="suspend_community">Suspend Community only</option>
               <option value="suspend_account">Suspend entire account</option>
-              <option value="ban_account">Permanently ban account</option>
+              <option value="ban_account">Permanently disable account</option>
             </select>
           </label>
 
           {needsDuration && (
             <label className="mt-3 block">
-              <span className="text-xs font-semibold text-muted-foreground">New duration in days</span>
-              <input
-                type="number"
-                min={1}
-                max={3650}
-                value={durationDays}
-                onChange={(event) => setDurationDays(Math.min(3650, Math.max(1, Number(event.target.value) || 1)))}
-                className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand"
-              />
-              <p className="mt-1 text-[0.68rem] text-muted-foreground">Examples: 1 day, 7 days, 30 days, 365 days.</p>
+              <span className="text-xs font-semibold">Duration</span>
+              <div className="mt-2 grid grid-cols-4 gap-2">
+                {[1, 7, 30, 365].map((days) => <button key={days} type="button" onClick={() => setDurationDays(days)} className={cn("rounded-xl border px-2 py-2 text-xs font-semibold", durationDays === days ? "border-brand bg-brand-soft" : "border-border bg-card")}>{days === 365 ? "1 year" : `${days}d`}</button>)}
+              </div>
+              <input type="number" min={1} max={3650} value={durationDays} onChange={(event) => setDurationDays(Math.min(3650, Math.max(1, Number(event.target.value) || 1)))} className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand" aria-label="Custom suspension duration in days" />
             </label>
           )}
 
           <label className="mt-3 block">
-            <span className="text-xs font-semibold text-muted-foreground">Reported content</span>
-            <select
-              value={contentAction}
-              onChange={(event) => setContentAction(event.target.value as typeof contentAction)}
-              className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand"
-            >
+            <span className="text-xs font-semibold">Reported content</span>
+            <select value={contentAction} onChange={(event) => setContentAction(event.target.value as typeof contentAction)} className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand">
               <option value="keep">Keep current content state</option>
               <option value="remove">Remove content</option>
               <option value="restore">Restore content</option>
@@ -474,62 +441,38 @@ function PastDecisionCard({
           </label>
 
           <label className="mt-3 block">
-            <span className="text-xs font-semibold text-muted-foreground">Updated moderator note, optional</span>
-            <textarea
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              maxLength={2000}
-              rows={2}
-              className="mt-2 w-full resize-y rounded-2xl border border-border bg-card px-3 py-3 text-sm leading-6 outline-none focus:border-brand"
-            />
+            <span className="text-xs font-semibold">Message to member <span className="font-normal text-muted-foreground">optional</span></span>
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={2000} rows={2} placeholder={restrictionAction === "clear" ? "For example: We reviewed this again and restored your access." : "Add a concise explanation if the member should see one."} className="mt-2 w-full resize-y rounded-2xl border border-border bg-card px-3 py-3 text-sm leading-6 outline-none focus:border-brand" />
           </label>
 
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-          <div className="mt-4 flex gap-2">
-            <button type="button" onClick={() => { setEditing(false); setError("") }} className="flex-1 rounded-full border border-border px-4 py-3 text-sm font-semibold">Cancel</button>
-            <button type="button" onClick={() => setConfirmOpen(true)} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">Save changes</button>
-          </div>
+          <button type="button" onClick={() => setConfirmOpen(true)} className="mt-4 w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">Apply update</button>
         </div>
       ) : (
         <>
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="mt-4 w-full rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold"
-          >
-            Change decision
-          </button>
+          <button type="button" onClick={() => setEditing(true)} className="mt-4 w-full rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold transition-colors hover:border-brand/45">Edit decision</button>
         </>
       )}
 
-      <ConfirmDialog
-        open={confirmOpen}
-        title="Update this decision?"
-        confirmLabel="Save changes"
-        tone={restrictionAction === "ban_account" ? "danger" : "brand"}
-        busy={busy}
-        onCancel={() => { if (!busy) setConfirmOpen(false) }}
-        onConfirm={() => void revise()}
-      >
-        The new enforcement will take effect immediately. The original decision will remain in the moderation history.
-      </ConfirmDialog>
+      <ConfirmDialog open={confirmOpen} title="Apply this moderation update?" confirmLabel="Apply update" tone={restrictionAction === "ban_account" ? "danger" : "brand"} busy={busy} onCancel={() => { if (!busy) setConfirmOpen(false) }} onConfirm={() => void revise()}>The new access and content settings will take effect immediately. The audit history will be preserved.</ConfirmDialog>
+      <NoticeDialog open={Boolean(notice)} title="Decision updated" onClose={() => setNotice("")}>{notice}</NoticeDialog>
     </article>
   )
 }
 
+function StateRow({ label, value }: { label: string; value: string }) {
+  return <div className="flex items-start justify-between gap-4 py-2.5 first:pt-0 last:pb-0"><span className="text-xs text-muted-foreground">{label}</span><span className="max-w-[62%] text-right text-xs font-semibold leading-5">{value}</span></div>
+}
+
 function currentEnforcementLabel(report: ModerationReportItem) {
   const now = Date.now()
-  if (report.targetUser.accountStatus === "banned") return "Permanent account ban"
+  if (report.targetUser.accountStatus === "banned") return "Account disabled"
   if (report.targetUser.accountStatus === "suspended" && (!report.targetUser.accountSuspendedUntil || new Date(report.targetUser.accountSuspendedUntil).getTime() > now)) {
-    return report.targetUser.accountSuspendedUntil
-      ? `Account suspended until ${new Date(report.targetUser.accountSuspendedUntil).toLocaleDateString()}`
-      : "Account suspended"
+    return report.targetUser.accountSuspendedUntil ? `Suspended until ${new Date(report.targetUser.accountSuspendedUntil).toLocaleDateString()}` : "Account suspended"
   }
-  if (report.targetUser.communitySuspendedUntil && new Date(report.targetUser.communitySuspendedUntil).getTime() > now) {
-    return `Community suspended until ${new Date(report.targetUser.communitySuspendedUntil).toLocaleDateString()}`
-  }
-  return "No active restriction"
+  if (report.targetUser.communitySuspendedUntil && new Date(report.targetUser.communitySuspendedUntil).getTime() > now) return `Community suspended until ${new Date(report.targetUser.communitySuspendedUntil).toLocaleDateString()}`
+  return "Full access"
 }
 
 function currentContentLabel(status: string) {
@@ -538,28 +481,23 @@ function currentContentLabel(status: string) {
   return "Visible"
 }
 
-function summarizeActions(report: ModerationReportItem) {
-  const metaIndexes = report.actions
-    .map((action, index) => (["report_resolved", "report_dismissed"].includes(action.actionType) ? index : -1))
-    .filter((index) => index >= 0)
-  const latestMeta = metaIndexes.at(-1) ?? report.actions.length
-  const previousMeta = metaIndexes.length > 1 ? metaIndexes.at(-2)! : -1
-  const currentDecisionActions = report.actions.slice(previousMeta + 1, latestMeta)
+function latestDecisionActionLabel(report: ModerationReportItem) {
+  const action = [...report.actions].reverse().find((item) => !["report_resolved", "report_dismissed"].includes(item.actionType))
+  return action ? historyActionLabel(action.actionType, action.durationDays) : report.resolutionNote || "Decision saved"
+}
 
-  const labels: string[] = []
-  for (const action of currentDecisionActions) {
-    const label = ({
-      warning: "Warning recorded",
-      hide_content: "Content removed",
-      community_suspension: action.durationDays ? `Community suspended ${action.durationDays}d` : "Community suspended",
-      account_suspension: action.durationDays ? `Account suspended ${action.durationDays}d` : "Account suspended",
-      account_ban: "Account banned",
-      restore_content: "Content restored",
-      restriction_cleared: "Restrictions removed",
-    } as Record<string, string | undefined>)[action.actionType]
-    if (label && !labels.includes(label)) labels.push(label)
-  }
-  return labels
+function historyActionLabel(actionType: string, durationDays: number | null) {
+  return ({
+    warning: "Warning recorded",
+    hide_content: "Content removed",
+    restore_content: "Content restored",
+    community_suspension: durationDays ? `Community suspended for ${durationDays} days` : "Community suspended",
+    account_suspension: durationDays ? `Account suspended for ${durationDays} days` : "Account suspended",
+    account_ban: "Account disabled",
+    restriction_cleared: "Access restored",
+    report_resolved: "Report resolved",
+    report_dismissed: "Report dismissed",
+  } as Record<string, string>)[actionType] || actionType.replaceAll("_", " ")
 }
 
 function reasonLabel(reason: string) {

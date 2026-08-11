@@ -12,10 +12,11 @@ const MAX_COMMUNITY_AUDIO_BYTES = 12 * 1024 * 1024
 const MAX_COMMUNITY_AUDIO_SECONDS = 300
 
 const schema = z.object({
-  mode: z.enum(["transcript", "audio", "audio_transcript"]),
+  mode: z.enum(["transcript", "audio"]),
   recordingId: z.string().uuid().nullable().optional(),
   title: z.string().trim().max(120).optional().default(""),
   transcript: z.string().trim().max(12000).optional().default(""),
+  message: z.string().trim().max(1000).optional().default(""),
 })
 
 type RecordingRow = {
@@ -46,8 +47,8 @@ export async function POST(request: Request) {
     }
 
     const { mode } = parsed.data
-    const needsAudio = mode === "audio" || mode === "audio_transcript"
-    const includesTranscript = mode === "transcript" || mode === "audio_transcript"
+    const needsAudio = mode === "audio"
+    const includesTranscript = mode === "transcript"
 
     let source: RecordingRow | null = null
     if (parsed.data.recordingId) {
@@ -87,11 +88,13 @@ export async function POST(request: Request) {
       return noStoreJson({ error: "This recording needs a transcript before it can be shared." }, { status: 400 })
     }
 
-    // Even audio-only shares are screened using the private transcript. The
-    // transcript is not published unless the user explicitly chose it.
+    // Every share is screened using the story transcript plus the optional
+    // public message. Audio-only shares still keep the transcript private.
+    const publicMessage = parsed.data.message.trim()
+    const moderationInput = publicMessage ? `${transcript}\n\nMember message: ${publicMessage}` : transcript
     let moderation
     try {
-      moderation = await moderateCommunityText(transcript)
+      moderation = await moderateCommunityText(moderationInput)
     } catch (error) {
       console.error("Community recording moderation unavailable", error)
       return noStoreJson({ error: "Community safety checks are temporarily unavailable. Try again in a moment." }, { status: 503 })
@@ -116,7 +119,7 @@ export async function POST(request: Request) {
         author_id: context.userId,
         post_type: postType,
         title,
-        body: "",
+        body: publicMessage,
         shared_transcript: includesTranscript ? transcript : null,
         status: moderation.flagged ? "removed" : "active",
       })
@@ -179,7 +182,7 @@ export async function POST(request: Request) {
       id: post.id,
       postType,
       title,
-      body: "",
+      body: publicMessage,
       sharedTranscript: includesTranscript ? transcript : null,
       hasAudio: needsAudio,
       audioDurationSeconds: needsAudio && source ? source.duration_seconds : null,
