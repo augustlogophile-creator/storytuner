@@ -170,7 +170,7 @@ export function StoryPlannerClient() {
           </span>
           <div>
             <Eyebrow className="text-primary-foreground/60">AI Story Planner</Eyebrow>
-            <h1 className="text-title mt-2 text-[1.7rem] text-balance">Know where your story is headed before you tell it.</h1>
+            <h1 className="text-title mt-3 text-[2.35rem] leading-[0.98] text-balance">Know where your story is headed before you tell it.</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-primary-foreground/70">
               Tell Weaver the situation, your goal, the facts, and what feels hard. You'll get a clear shape, a stronger plan, and delivery notes that still sound like you.
             </p>
@@ -183,7 +183,7 @@ export function StoryPlannerClient() {
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <Eyebrow>Build your plan</Eyebrow>
-              <h2 className="text-title mt-2 text-xl">Start with what you already know</h2>
+              <h2 className="text-title mt-3 text-[1.7rem]">Start with what you already know</h2>
             </div>
             <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">About 3 minutes</span>
           </div>
@@ -360,7 +360,7 @@ export function StoryPlannerClient() {
         ) : history.length === 0 ? (
           <div className="mt-3 rounded-3xl border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">Your finished plans will appear here.</div>
         ) : (
-          <div className="mt-3 overflow-hidden rounded-3xl border border-border bg-card">
+          <div className="mt-3 overflow-hidden rounded-[1.9rem] border border-border bg-card">
             {history.map((item, index) => (
               <button key={item.id} type="button" onClick={() => openSaved(item)} className={`flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/60 ${index === history.length - 1 ? "" : "border-b border-border"}`}>
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Clock3 className="h-4 w-4" /></span>
@@ -415,7 +415,7 @@ function PlanReadySkeleton() {
 
 function PlannerField({ number, icon: Icon, title, help, value, onChange, placeholder, maxLength, rows = 3, required = false }: FieldProps) {
   return (
-    <label className="rounded-3xl border border-border bg-card p-5">
+    <label className="rounded-[1.9rem] border border-border bg-card p-5">
       <span className="flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Icon className="h-4 w-4" /></span>
         <span className="min-w-0 flex-1">

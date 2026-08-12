@@ -61,7 +61,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     return (
       <div className="flex flex-col gap-5">
         <BackLink href="/activities" label="Curriculum" />
-        <section className="app-page-enter rounded-3xl border border-border bg-card px-6 py-10 text-center">
+        <section className="app-page-enter rounded-[1.9rem] border border-border bg-card px-6 py-10 text-center">
           <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
           <h1 className="text-title mt-4 text-xl">One step at a time.</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Finish the step before this one and it opens automatically.</p>
@@ -83,7 +83,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
           </p>
           <span className="font-mono text-[0.62rem] text-muted-foreground">{course.percent}% course</span>
         </div>
-        <h1 className="text-title mt-2 text-[1.7rem] text-balance">
+        <h1 className="text-title mt-3 text-[2.25rem] leading-[1.0] text-balance">
           {stage === "read" ? unit.title : stage === "drill" ? unit.drill.title : `${unit.title}: Check`}
         </h1>
       </header>
@@ -203,7 +203,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
 
   return (
     <>
-      <section className="rounded-3xl border border-border bg-card p-5">
+      <section className="rounded-[1.9rem] border border-border bg-card p-5">
         <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">Your exercise</p>
         {unit.drill.prompt && <p className="mt-3 text-sm leading-7 text-foreground text-pretty">{unit.drill.prompt}</p>}
         {unit.drill.steps.length > 0 && (
@@ -212,7 +212,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
           </ol>
         )}
       </section>
-      <section className="rounded-3xl border border-border bg-card p-5">
+      <section className="rounded-[1.9rem] border border-border bg-card p-5">
         <textarea value={response} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setResponse(event.target.value); setFeedback(null) }} rows={9} placeholder="Work through the exercise here…" className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-[0.95rem] leading-7 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         <div className="mt-2 flex items-center justify-between px-1 text-xs text-muted-foreground">
           <span>{response.trim() ? response.trim().split(/\s+/).length : 0} words</span>
@@ -266,7 +266,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
         <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground"><span>Question {index + 1} of {unit.quiz.length}</span><span>{score} correct so far</span></div>
         <ProgressBar value={((index + (answered ? 1 : 0)) / unit.quiz.length) * 100} />
       </div>
-      <section className="rounded-3xl border border-border bg-card p-5">
+      <section className="rounded-[1.9rem] border border-border bg-card p-5">
         <h2 className="text-lg font-semibold leading-snug text-balance">{question.question}</h2>
         <div className="mt-5 flex flex-col gap-2.5">
           {question.options.map((option, optionIndex) => {
@@ -302,7 +302,7 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
   const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
   const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
-    <div className="app-page-enter flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
+    <div className="app-page-enter flex flex-col items-center gap-5 rounded-[1.9rem] border border-border bg-card px-6 py-10 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-[0_12px_28px_-12px_color-mix(in_oklch,var(--brand)_75%,transparent)]"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-title text-xl">Nicely done.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
       <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-accent-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? `+${stageXp[stage]} XP earned` : "Progress already saved"}</div>

@@ -758,7 +758,7 @@ export function ArenaClient() {
       <div className="flex min-w-0 flex-col gap-6">
         <header className="min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-2 break-words text-[1.7rem]">That's both of your free story reviews.</h1></div>
+            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-3 break-words text-[2.25rem] leading-[1.0]">That's both of your free story reviews.</h1></div>
             <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold">{recordingCountLabel(state.recordings.length)}</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. Membership unlocks unlimited spoken story reviews.</p>
@@ -778,26 +778,26 @@ export function ArenaClient() {
     <div className="flex min-w-0 flex-col gap-6">
       <header className="min-w-0">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-2 text-[1.7rem] text-balance">Tell it out loud. See what lands.</h1></div>
+          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-3 text-[2.35rem] leading-[0.98] text-balance">Tell it out loud. See what lands.</h1></div>
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
+        <p className="mt-4 text-[0.98rem] leading-7 text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
         <span className="mt-3 inline-flex rounded-full bg-brand-soft px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
       </header>
 
       {phase === "setup" && (
         <>
-          <section className="rounded-3xl border border-border bg-card p-4">
-            <p className="px-1 text-sm font-semibold">Choose how you want to practice</p>
+          <section className="rounded-[1.9rem] border border-border bg-card p-5">
+            <p className="section-editorial px-1">Choose how you want to practice</p>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-brand bg-brand-soft/55" : "border-border bg-background hover:border-brand/50")}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-brand-foreground"><Mic2 className="h-4 w-4" /></span>
-                <p className="mt-3 text-sm font-semibold">Tell any story</p>
+              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-[1.65rem] border p-5 text-left transition-colors", storyMode === "free" ? "border-brand/35 bg-brand-soft" : "border-border bg-background hover:border-brand/50")}>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-brand"><Mic2 className="h-4 w-4" /></span>
+                <p className="text-title mt-4 text-[1.25rem]">Tell any story</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-brand bg-brand-soft/55" : "border-border bg-background hover:border-brand/50")}>
+              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-[1.65rem] border p-5 text-left transition-colors", storyMode === "scenario" ? "border-brand/35 bg-brand-soft" : "border-border bg-background hover:border-brand/50")}>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-foreground"><Video className="h-4 w-4" /></span>
-                <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
+                <p className="text-title mt-4 text-[1.25rem]">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
               </button>
             </div>
@@ -819,7 +819,7 @@ export function ArenaClient() {
                   })}
                 </div>
               </section>
-              <section className="rounded-3xl border border-border bg-card p-5">
+              <section className="rounded-[1.9rem] border border-border bg-card p-5">
                 <div className="flex items-center justify-between gap-3"><Eyebrow>Your prompt</Eyebrow><button type="button" onClick={() => setPromptIndex((value) => (value + 1) % scenario.prompts.length)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground"><RotateCcw className="h-3.5 w-3.5" />New prompt</button></div>
                 <p className="mt-3 text-base font-semibold leading-relaxed text-balance">{prompt}</p>
                 {isOpenResponse && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Unprompted. Choose what you want to talk about.</p>}
@@ -870,8 +870,8 @@ export function ArenaClient() {
             </div>
           )}
 
-          <section className="rounded-3xl border border-border bg-card p-5">
-            <p className="text-sm font-semibold">Choose your target length</p>
+          <section className="rounded-[1.9rem] border border-border bg-card p-5">
+            <p className="section-editorial">Choose your target length</p>
             <div className="mt-3 grid grid-cols-4 gap-2">
               {durationOptions.map((duration) => (
                 <button
@@ -965,12 +965,12 @@ export function ArenaClient() {
 
       {phase === "review" && (
         <>
-          <section className="rounded-3xl border border-border bg-card p-5">
+          <section className="rounded-[1.9rem] border border-border bg-card p-5">
             <Eyebrow>Review your take</Eyebrow>
             {mediaUrl && mediaKind !== "none" && <ReviewMediaPlayer src={mediaUrl} kind={mediaKind} duration={Math.max(1, seconds)} />}
             {!mediaUrl && <div className="mt-4 flex h-28 items-center justify-center rounded-2xl bg-secondary text-sm text-muted-foreground">Text-only review</div>}
           </section>
-          <section className="rounded-3xl border border-border bg-card p-5">
+          <section className="rounded-[1.9rem] border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3">
               <div><Eyebrow>Prepared by Weaver</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
@@ -1215,7 +1215,7 @@ function DurationOptionsDialog({
 }
 
 function Control({ label, onClick, icon: Icon, large, tone = "default" }: { label: string; onClick: () => void; icon: typeof Camera; large?: boolean; tone?: "default" | "success" | "brand" }) {
-  return <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform active:scale-95", large ? "h-16 w-16" : "h-14 w-14", tone === "success" && "bg-emerald-500", tone === "brand" && "bg-blue-500")}><Icon className="h-5 w-5" /></span><span className="max-w-16 truncate text-[0.66rem] font-semibold">{label}</span></button>
+  return <button type="button" onClick={onClick} className="flex min-w-0 flex-col items-center gap-2"><span className={cn("flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md transition-transform active:scale-95", large ? "h-16 w-16" : "h-14 w-14", tone === "success" && "bg-emerald-500", tone === "brand" && "bg-brand")}><Icon className="h-5 w-5" /></span><span className="max-w-16 truncate text-[0.66rem] font-semibold">{label}</span></button>
 }
 
 function ReviewMediaPlayer({ src, kind, duration }: { src: string; kind: "video" | "audio"; duration: number }) {
@@ -1306,12 +1306,12 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
   return (
     <>
       <div className="flex flex-col gap-5">
-        <section className="flex items-center gap-5 rounded-3xl border border-border bg-card p-5"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-lg font-semibold leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
+        <section className="flex items-center gap-5 rounded-[1.9rem] border border-border bg-card p-5"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-lg font-semibold leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
         <section className="grid grid-cols-3 gap-3"><SubScore label="Hook" value={feedback.hook} /><SubScore label="Development" value={feedback.development} /><SubScore label="Landing" value={feedback.landing} /></section>
         <FeedbackList tone="good" title={`What is working · ${strongest}`} items={feedback.strengths} />
         <FeedbackList tone="bad" title={`What to improve · ${weakest}`} items={feedback.improvements} />
         <section className="rounded-3xl border border-brand/35 bg-brand-soft p-5"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-accent-foreground">One change for your next take</p><p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{feedback.levelUp}</p></section>
-        <section className="rounded-3xl border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-sm font-semibold">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
+        <section className="rounded-[1.9rem] border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-sm font-semibold">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
         <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground"><MessageCircle className="h-4 w-4" />Ask Weaver about this grade</Link>
         <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
         {sharedPostId ? (

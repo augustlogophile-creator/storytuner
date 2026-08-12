@@ -27,21 +27,21 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       <header className="rise-in flex items-start justify-between gap-4" style={rise(0)}>
         <div className="min-w-0">
           <Eyebrow>{today()}</Eyebrow>
-          <h1 className="text-title mt-2 text-[1.7rem] text-balance">
+          <h1 className="text-title mt-3 text-[2.35rem] leading-[0.98] text-balance">
             {greeting()}, {state.profile.name}.
           </h1>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground text-pretty">
+          <p className="mt-3 text-[0.98rem] leading-7 text-muted-foreground text-pretty">
             One idea at a time. Learn it, then tell a story that makes it yours.
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-center rounded-2xl bg-streak-soft px-3 py-2.5">
+        <div className="flex shrink-0 flex-col items-center rounded-[1.5rem] border border-brand/15 bg-streak-soft px-3.5 py-3">
           <Flame className="h-5 w-5 text-streak" strokeWidth={2.2} />
           <span className="mt-0.5 text-lg font-bold leading-none text-foreground">{state.streak}</span>
           <span className="font-mono text-[0.58rem] uppercase tracking-wider text-muted-foreground">days</span>
         </div>
       </header>
 
-      <section className="rise-in relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground shadow-[0_20px_50px_-24px_color-mix(in_oklch,var(--primary)_80%,transparent)]" style={rise(1)}>
+      <section className="rise-in relative overflow-hidden rounded-[2rem] bg-primary p-6 text-primary-foreground shadow-[0_20px_50px_-24px_color-mix(in_oklch,var(--primary)_80%,transparent)]" style={rise(1)}>
         <div className="hatch-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
         <div className="relative">
           <div className="flex items-center justify-between gap-3">
@@ -52,7 +52,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
               {next ? `Unit ${next.unit.index}` : freeLimitReached ? "5 of 15" : "15 of 15"}
             </span>
           </div>
-          <h2 className="text-title mt-3 text-[1.35rem] text-balance">
+          <h2 className="text-title mt-4 text-[1.65rem] text-balance">
             {next ? next.unit.title : freeLimitReached ? "You've finished your five free lessons" : "Your full storytelling path is complete"}
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-primary-foreground/70 text-pretty">
@@ -61,7 +61,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           <div className="mt-4">
             <ProgressBar value={progress.percent} className="bg-primary-foreground/15" barClassName="bg-brand" />
           </div>
-          <Link href={next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"} className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105">
+          <Link href={next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"} className="press mt-6 flex items-center justify-center gap-2 rounded-full bg-background px-5 py-3.5 text-sm font-bold text-foreground shadow-[0_10px_26px_rgb(0_0_0_/_0.14)] hover:brightness-105">
             <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />
             {next ? "Pick up where you left off" : freeLimitReached ? "Unlock all 15 lessons" : "Review the course"}
             <ArrowRight className="h-4 w-4" />
@@ -71,32 +71,32 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
       <section className="rise-in" style={rise(2)}>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-bold tracking-tight">Practice</h2>
+          <h2 className="section-editorial">Practice</h2>
           <Link href="/arena/recordings" className="text-xs font-semibold text-brand transition-colors hover:text-foreground">Past recordings</Link>
         </div>
-        <Link href="/planner" className="app-surface press mb-3 flex items-center gap-4 rounded-3xl border border-brand/35 bg-brand-soft/45 p-4">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground"><Map className="h-5 w-5" /></span>
+        <Link href="/planner" className="app-surface press mb-3 flex items-center gap-4 rounded-[1.9rem] border border-brand/25 bg-brand-soft p-5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background text-brand"><Map className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">Plan a story with Weaver</span>
+            <span className="block text-title text-[1.15rem]">Plan a story with Weaver</span>
             <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">Turn scattered ideas, key facts, and first-take nerves into a plan you can rehearse.</span>
           </span>
           <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
         </Link>
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/arena?mode=free" className="app-surface press rounded-3xl border border-border bg-card p-4">
+          <Link href="/arena?mode=free" className="app-surface press rounded-[1.9rem] border border-border bg-card p-5">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Mic2 className="h-4.5 w-4.5" /></span>
-            <p className="mt-3 text-sm font-semibold">Tell your own story</p>
+            <p className="text-title mt-4 text-[1.15rem]">Tell your own story</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Pick any moment worth telling.</p>
           </Link>
-          <Link href="/arena?mode=scenario" className="app-surface press rounded-3xl border border-border bg-card p-4">
+          <Link href="/arena?mode=scenario" className="app-surface press rounded-[1.9rem] border border-border bg-card p-5">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Shuffle className="h-4.5 w-4.5" /></span>
-            <p className="mt-3 text-sm font-semibold">Try a scenario</p>
+            <p className="text-title mt-4 text-[1.15rem]">Try a scenario</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">An interview, a tough question, a real moment.</p>
           </Link>
         </div>
       </section>
 
-      <section className="rise-in rounded-3xl border border-border bg-card p-5" style={rise(3)}>
+      <section className="rise-in rounded-[1.9rem] border border-border bg-card p-5" style={rise(3)}>
         <div className="flex items-baseline justify-between">
           <p className="text-sm font-bold tracking-tight text-foreground">This week</p>
           <p className="text-xs text-muted-foreground">{week.filter((day) => day.active).length} of 7 days</p>
@@ -117,7 +117,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         <Weaver size={52} />
         <div className="min-w-0 flex-1">
           <Eyebrow>Weaver shop</Eyebrow>
-          <p className="mt-1 text-sm font-semibold text-foreground">Wearing {activeColor.name}</p>
+          <p className="text-title mt-1.5 text-[1.12rem] text-foreground">Wearing {activeColor.name}</p>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">{state.xpBalance} XP ready to spend on a new palette.</p>
         </div>
         <Chevron />
@@ -128,7 +128,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><MessageCircle className="h-5 w-5" /></span>
           <div className="min-w-0 flex-1">
             <Eyebrow>Recent feedback</Eyebrow>
-            <p className="mt-1 text-sm font-semibold text-foreground">What to work on now</p>
+            <p className="text-title mt-1.5 text-[1.12rem] text-foreground">What to work on now</p>
             <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{latest.levelUp || latest.nextTake || latest.fix}</p>
           </div>
           <Chevron />
@@ -139,7 +139,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary"><MessageCircle className="h-5 w-5 text-foreground" /></span>
         <div className="min-w-0 flex-1">
           <Eyebrow>AI story coach</Eyebrow>
-          <p className="mt-1 text-sm font-semibold text-foreground">Ask Weaver</p>
+          <p className="text-title mt-1.5 text-[1.12rem] text-foreground">Ask Weaver</p>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">Find material, shape a story, sharpen your delivery, or figure out what to practice next.</p>
         </div>
         <Chevron />

@@ -40,7 +40,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
       <BackLink href="/activities" label="Curriculum" />
       <header className="rise-in min-w-0">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : `Unit ${unit.index} · ${unit.skill}`}</p>
-        <h1 className="text-title mt-2 break-words text-[1.7rem] text-balance">{unit.title}</h1>
+        <h1 className="text-title mt-3 break-words text-[2.25rem] leading-[1.0] text-balance">{unit.title}</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">{unit.description}</p>
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground"><span>{progress.done} / 3 steps complete</span><span>{progress.percent}%</span></div>

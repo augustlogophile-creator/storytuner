@@ -48,13 +48,13 @@ export function ShopClient() {
       <BackLink href="/home" label="Today" />
       <header className="app-page-enter">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Weaver shop</p>
-        <h1 className="text-title mt-2 text-[1.7rem]">Give Weaver a fresh look.</h1>
+        <h1 className="text-title mt-3 text-[2.25rem] leading-[1.0]">Give Weaver a fresh look.</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           Trade XP for a new color. Your lifetime XP never drops — only your spendable balance does.
         </p>
       </header>
 
-      <section className="app-surface flex items-center gap-6 rounded-3xl border border-border bg-card p-6">
+      <section className="app-surface flex items-center gap-6 rounded-[1.9rem] border border-border bg-card p-6">
         <Weaver size={104} />
         <div>
           <p className="text-sm font-semibold">{active.name}</p>
@@ -79,7 +79,7 @@ export function ShopClient() {
                   ? "flex items-center gap-4 rounded-3xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-card p-4"
                   : color.featured === "goat"
                     ? "flex items-center gap-4 rounded-3xl border border-stone-400/60 bg-gradient-to-r from-stone-100 to-card p-4"
-                    : "flex items-center gap-4 rounded-3xl border border-border bg-card p-4"
+                    : "flex items-center gap-4 rounded-[1.9rem] border border-border bg-card p-4"
               }
             >
               <Weaver size={75} colorId={color.id} />

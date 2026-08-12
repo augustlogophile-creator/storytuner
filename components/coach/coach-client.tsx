@@ -210,7 +210,7 @@ export function CoachClient() {
     <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col gap-4">
       <header className="app-page-enter">
         <Link href="/home" className="group inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"><ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" /> Home</Link>
-        <div className="mt-4 flex items-center gap-3"><Weaver size={48} /><div><p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">AI story coach</p><h1 className="text-title mt-1 text-2xl">Ask Weaver</h1></div></div>
+        <div className="mt-4 flex items-center gap-3"><Weaver size={48} /><div><p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">AI story coach</p><h1 className="text-title mt-2 text-[2rem]">Ask Weaver</h1></div></div>
       </header>
 
       <section className="rounded-3xl border border-border bg-card p-4">
@@ -235,7 +235,7 @@ export function CoachClient() {
       <section className="flex min-h-[30rem] flex-1 flex-col overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-5 sm:px-5">
           {safeMessages.length === 0 && !pendingUserMessage ? (
-            <div className="m-auto max-w-xs text-center"><Weaver size={44} className="mx-auto" /><p className="text-title mt-4 text-base">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">A story, an opening, an ending, your feedback, or what to practice next. Start anywhere.</p></div>
+            <div className="m-auto max-w-xs text-center"><Weaver size={44} className="mx-auto" /><p className="text-title mt-4 text-[1.35rem]">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">A story, an opening, an ending, your feedback, or what to practice next. Start anywhere.</p></div>
           ) : (
             <>
               {safeMessages.map((message: CoachMessage) => message.role === "user" ? (

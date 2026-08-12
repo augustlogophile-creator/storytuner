@@ -198,7 +198,7 @@ export function SettingsClient() {
       <BackLink href="/profile" label="Profile" />
       <header className="app-page-enter">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Settings and privacy</p>
-        <h1 className="text-title mt-2 text-[1.7rem]">Every control in plain sight.</h1>
+        <h1 className="text-title mt-3 text-[2.25rem] leading-[1.0]">Every control in plain sight.</h1>
       </header>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
@@ -286,7 +286,7 @@ export function SettingsClient() {
         </Row>
       </Section>
 
-      <Link href="/membership" className="app-surface press flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
+      <Link href="/membership" className="app-surface press flex items-center gap-3 rounded-[1.9rem] border border-border bg-card p-5">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>
           <p className="mt-1 text-xs text-muted-foreground">See the $11.99/year founding offer and your current status.</p>
@@ -324,8 +324,8 @@ export function SettingsClient() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="relative overflow-visible rounded-3xl border border-border bg-card p-5">
-      <h2 className="text-base font-bold tracking-tight">{title}</h2>
+    <section className="relative overflow-visible rounded-[1.9rem] border border-border bg-card p-5">
+      <h2 className="text-title text-[1.4rem]">{title}</h2>
       <div className="mt-3 divide-y divide-border">{children}</div>
     </section>
   )
@@ -335,8 +335,8 @@ function Row({ title, detail, children }: { title: string; detail: string; child
   return (
     <div className="relative flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="mt-1 max-w-lg text-xs leading-relaxed text-muted-foreground">{detail}</p>
+        <p className="text-sm font-bold">{title}</p>
+        <p className="mt-1.5 max-w-lg text-[0.78rem] leading-5 text-muted-foreground">{detail}</p>
       </div>
       <div className="shrink-0">{children}</div>
     </div>

@@ -40,7 +40,7 @@ export function RecordingsClient() {
         <header className="app-page-enter">
           <Link href="/arena" className="group inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Arena</Link>
           <div className="mt-4 flex items-start justify-between gap-4">
-            <div><Eyebrow>Private archive</Eyebrow><h1 className="text-title mt-2 text-[1.7rem]">Your recordings</h1></div>
+            <div><Eyebrow>Private archive</Eyebrow><h1 className="text-title mt-3 text-[2.25rem] leading-[1.0]">Your recordings</h1></div>
             <Link href="/arena" className="press rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private audio, transcripts, scores, and revisions stay with your account across devices. Full video stays on the device where you recorded it.</p>
@@ -56,7 +56,7 @@ export function RecordingsClient() {
         {state.recordings.length === 0 ? (
           <section className="app-surface rounded-3xl border border-dashed border-border bg-card/65 p-8 text-center">
             <Mic2 className="mx-auto h-7 w-7 text-muted-foreground" />
-            <h2 className="mt-3 text-base font-semibold">No recordings yet</h2>
+            <h2 className="text-title mt-4 text-[1.4rem]">No recordings yet</h2>
             <p className="mt-1 text-sm text-muted-foreground">Record a story and it will appear here.</p>
             <Link href="/arena" className="press mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Open Arena</Link>
           </section>
@@ -67,10 +67,10 @@ export function RecordingsClient() {
               const strengths = recording.strengths?.length ? recording.strengths : recording.praise ? [recording.praise] : []
               const improvements = recording.improvements?.length ? recording.improvements : recording.weakness || recording.fix ? [recording.weakness || recording.fix] : []
               return (
-                <article key={recording.id} className="app-surface rounded-3xl border border-border bg-card p-5">
+                <article key={recording.id} className="app-surface rounded-[1.9rem] border border-border bg-card p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-semibold leading-snug">{recording.title}</p>
+                      <p className="text-title text-[1.2rem] leading-snug">{recording.title}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{recording.context} · {new Date(recording.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {formatTime(recording.duration)}</p>
                     </div>
                     <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{hasGrade ? recording.overall : "Saved"}</span>

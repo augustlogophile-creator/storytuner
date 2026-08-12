@@ -86,7 +86,7 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Unlock the complete StoryTuner experience for {FOUNDING_PRICE} a year. Founding members keep that price as long as the membership stays active.</p>
       </header>
 
-      <section className="overflow-hidden rounded-3xl border border-brand/30 bg-brand-soft/35 p-5">
+      <section className="overflow-hidden rounded-[2rem] border border-brand/20 bg-brand-soft p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-accent-foreground">Founding offer</p>
@@ -97,7 +97,7 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-border bg-card">
+      <section className="overflow-hidden rounded-[2rem] border border-border bg-card">
         <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] gap-2 border-b border-border px-4 py-3 text-[0.65rem] text-muted-foreground"><span>Feature</span><span className="text-center">Free</span><span className="text-center">Member</span></div>
         {rows.map((row) => (
           <div key={row.feature} className="grid min-w-0 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] items-center gap-2 border-b border-border px-4 py-4 last:border-b-0">
@@ -108,7 +108,7 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
         ))}
       </section>
 
-      <section className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground shadow-[0_24px_60px_-30px_color-mix(in_oklch,var(--primary)_85%,transparent)]">
+      <section className="relative overflow-hidden rounded-[2rem] bg-primary p-6 text-primary-foreground shadow-[0_24px_60px_-30px_color-mix(in_oklch,var(--primary)_85%,transparent)]">
         <div className="hatch-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
         <div className="relative">
         <h2 className="text-title text-lg">StoryTuner Membership</h2>

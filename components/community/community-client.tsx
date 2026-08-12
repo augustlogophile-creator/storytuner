@@ -80,20 +80,20 @@ function MembershipLock() {
     <div className="flex min-w-0 flex-col gap-6">
       <header className="app-page-enter">
         <Eyebrow>Members feature</Eyebrow>
-        <h1 className="text-title mt-2 text-[1.7rem] text-balance">
+        <h1 className="text-title mt-3 text-[2.4rem] leading-[1.0] text-balance">
           Community is part of Membership.
         </h1>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+        <p className="mt-4 text-[0.98rem] leading-7 text-muted-foreground text-pretty">
           Reading posts, sharing stories, replying, and liking all live inside the paid plan.
         </p>
       </header>
 
-      <section className="rounded-3xl border border-brand/35 bg-brand-soft/40 px-6 py-9">
+      <section className="corner-hatch-card rounded-[2.2rem] border border-brand/20 bg-brand-soft px-6 py-10">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
             <LockKeyhole className="h-6 w-6 text-accent-foreground" />
           </div>
-          <h2 className="text-title mt-4 text-lg">Step into the Community</h2>
+          <h2 className="text-title mt-6 text-[1.75rem]">Step into the Community</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Share the text, transcripts, or audio you choose, and talk it through with other storytellers.
             Your private recordings stay private unless you post them yourself.
@@ -232,20 +232,20 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
             <CheckCircle2 className="h-3.5 w-3.5" /> Membership active
           </span>
         </div>
-        <h1 className="text-display mt-3 text-[2rem] text-balance">Share stories. Grow together.</h1>
+        <h1 className="text-display mt-3 text-[2.45rem] text-balance">Share stories. Grow together.</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
           Everything here is shared on purpose. Listen or read, then say what actually landed for you.
         </p>
       </header>
 
-      <section className="rounded-[2rem] border border-brand/35 bg-brand-soft/45 p-5 shadow-sm">
+      <section className="rounded-[2rem] border border-brand/20 bg-brand-soft p-5 shadow-sm">
         <div className="flex items-center gap-4">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
             <Headphones className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
             <Eyebrow>Share a story</Eyebrow>
-            <h2 className="mt-1 text-lg font-semibold">Choose a recording to share</h2>
+            <h2 className="text-title mt-2 text-[1.3rem]">Choose a recording to share</h2>
           </div>
         </div>
         <Link href="/arena/recordings" className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">
