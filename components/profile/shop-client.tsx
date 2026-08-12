@@ -46,15 +46,15 @@ export function ShopClient() {
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/home" label="Today" />
-      <header>
+      <header className="app-page-enter">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Weaver shop</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Choose a new look for Weaver.</h1>
+        <h1 className="text-title mt-2 text-[1.7rem]">Give Weaver a fresh look.</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Spend XP on a vivid new color for Weaver. Lifetime XP stays intact, only your spendable balance changes.
+          Trade XP for a new color. Your lifetime XP never drops — only your spendable balance does.
         </p>
       </header>
 
-      <section className="flex items-center gap-6 rounded-3xl border border-border bg-card p-6">
+      <section className="app-surface flex items-center gap-6 rounded-3xl border border-border bg-card p-6">
         <Weaver size={104} />
         <div>
           <p className="text-sm font-semibold">{active.name}</p>
@@ -91,7 +91,7 @@ export function ShopClient() {
                 type="button"
                 disabled={equipped}
                 onClick={() => choose(color.id)}
-                className="flex min-w-20 items-center justify-center gap-1 rounded-full border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                className="press flex min-w-20 items-center justify-center gap-1 rounded-full border border-border px-3 py-2 text-xs font-semibold transition-colors hover:border-brand/50 disabled:opacity-50"
               >
                 {equipped ? (
                   <><Check className="h-3.5 w-3.5" />Active</>

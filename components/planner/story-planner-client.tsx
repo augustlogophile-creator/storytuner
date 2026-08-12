@@ -162,16 +162,17 @@ export function StoryPlannerClient() {
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
-      <header className="rounded-[2rem] bg-primary p-6 text-primary-foreground">
-        <div className="flex items-start gap-4">
+      <header className="app-page-enter relative overflow-hidden rounded-[2rem] bg-primary p-6 text-primary-foreground shadow-[0_20px_50px_-24px_color-mix(in_oklch,var(--primary)_80%,transparent)]">
+        <div className="hatch-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
+        <div className="relative flex items-start gap-4">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
             <Map className="h-5 w-5" />
           </span>
           <div>
             <Eyebrow className="text-primary-foreground/60">AI Story Planner</Eyebrow>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Know where your story is going before you tell it.</h1>
+            <h1 className="text-title mt-2 text-[1.7rem] text-balance">Know where your story is headed before you tell it.</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-primary-foreground/70">
-              Give Weaver the situation, your goal, the facts, and what feels difficult. You will get a clear structure, a stronger plan, and practical delivery guidance without losing your voice.
+              Tell Weaver the situation, your goal, the facts, and what feels hard. You'll get a clear shape, a stronger plan, and delivery notes that still sound like you.
             </p>
           </div>
         </div>
@@ -182,7 +183,7 @@ export function StoryPlannerClient() {
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <Eyebrow>Build your plan</Eyebrow>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight">Start with what you already know</h2>
+              <h2 className="text-title mt-2 text-xl">Start with what you already know</h2>
             </div>
             <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">About 3 minutes</span>
           </div>
@@ -257,7 +258,7 @@ export function StoryPlannerClient() {
             type="button"
             onClick={buildPlan}
             disabled={!ready}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="press mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Sparkles className="h-4 w-4" />
             Build my story plan
@@ -271,21 +272,22 @@ export function StoryPlannerClient() {
       {plan && (
         <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/35 bg-card shadow-sm">
           <div className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <Eyebrow>{planOrigin === "saved" ? "Saved plan" : "Plan ready"}</Eyebrow>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">{plan.output.title}</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{secondPersonDirection(plan.output.throughline)}</p>
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Eyebrow>{planOrigin === "saved" ? "Saved plan" : "Plan ready"}</Eyebrow>
               <div className="flex shrink-0 items-center gap-2">
-                <button type="button" onClick={copyPlan} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold hover:bg-secondary/60">
+                <button type="button" onClick={copyPlan} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold transition-colors hover:bg-secondary/60">
                   {copied ? <Check className="h-3.5 w-3.5 text-brand" /> : <Clipboard className="h-3.5 w-3.5" />}
                   {copied ? "Copied" : "Copy"}
                 </button>
-                <button type="button" onClick={exportPdf} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold hover:bg-secondary/60">
+                <button type="button" onClick={exportPdf} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold transition-colors hover:bg-secondary/60">
                   <Download className="h-3.5 w-3.5" /> Export PDF
                 </button>
               </div>
+            </div>
+
+            <div className="mt-4 w-full text-left">
+              <h2 className="text-title max-w-none text-2xl text-pretty sm:text-[1.7rem]">{plan.output.title}</h2>
+              <p className="mt-2 w-full max-w-none text-sm leading-6 text-muted-foreground sm:text-[0.95rem]">{secondPersonDirection(plan.output.throughline)}</p>
             </div>
 
             <button type="button" onClick={() => setPlanExpanded((value) => !value)} className="mt-5 flex w-full items-center justify-between rounded-2xl bg-secondary/55 px-4 py-3.5 text-left text-sm font-semibold hover:bg-secondary">
@@ -332,7 +334,7 @@ export function StoryPlannerClient() {
             )}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
+              <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="press flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105">
                 <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
               </Link>
               <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
@@ -376,26 +378,37 @@ export function StoryPlannerClient() {
 function PlanReadySkeleton() {
   return (
     <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/25 bg-card shadow-sm" aria-label="Weaver is building your story plan" aria-busy="true">
-      <div className="animate-pulse p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="h-3 w-24 rounded-full bg-secondary" />
-            <div className="mt-4 h-8 w-2/5 rounded-xl bg-secondary" />
-            <div className="mt-3 h-4 w-4/5 rounded-full bg-secondary" />
-            <div className="mt-2 h-4 w-3/5 rounded-full bg-secondary" />
+      <div className="p-5 sm:p-6">
+        <div className="animate-pulse">
+          <div className="flex items-center justify-between gap-3">
+            <div className="h-3 w-24 rounded-full bg-secondary/80" />
+            <div className="flex gap-2">
+              <div className="h-9 w-[4.75rem] rounded-full bg-secondary/70" />
+              <div className="h-9 w-[6.5rem] rounded-full bg-secondary/70" />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <div className="h-9 w-20 rounded-full bg-secondary" />
-            <div className="h-9 w-28 rounded-full bg-secondary" />
+
+          <div className="mt-5 space-y-2.5">
+            <div className="h-7 w-[68%] rounded-lg bg-secondary/85" />
+            <div className="h-4 w-full rounded-full bg-secondary/65" />
+            <div className="h-4 w-[82%] rounded-full bg-secondary/65" />
           </div>
-        </div>
-        <div className="mt-6 h-12 w-full rounded-2xl bg-secondary/80" />
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="h-12 rounded-full bg-brand-soft/70" />
-          <div className="h-12 rounded-full bg-secondary/80" />
+
+          <div className="mt-6 flex h-12 w-full items-center justify-between rounded-2xl bg-secondary/55 px-4">
+            <div className="h-4 w-28 rounded-full bg-secondary" />
+            <div className="h-4 w-4 rounded-full bg-secondary" />
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="h-12 rounded-full bg-brand-soft/70" />
+            <div className="h-12 rounded-full bg-secondary/65" />
+          </div>
         </div>
       </div>
-      <div className="border-t border-border/70 px-5 py-3 text-center text-xs font-medium text-muted-foreground">Weaver is shaping your plan...</div>
+      <div className="flex items-center justify-center gap-2 border-t border-border/70 px-5 py-3 text-xs font-medium text-muted-foreground">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
+        Weaver is shaping your plan
+      </div>
     </section>
   )
 }

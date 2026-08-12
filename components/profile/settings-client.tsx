@@ -196,9 +196,9 @@ export function SettingsClient() {
   return (
     <div className="flex flex-col gap-6">
       <BackLink href="/profile" label="Profile" />
-      <header>
+      <header className="app-page-enter">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Settings and privacy</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Clear controls, no hidden defaults.</h1>
+        <h1 className="text-title mt-2 text-[1.7rem]">Every control in plain sight.</h1>
       </header>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
@@ -286,10 +286,10 @@ export function SettingsClient() {
         </Row>
       </Section>
 
-      <Link href="/membership" className="flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
+      <Link href="/membership" className="app-surface press flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Review the $11.99/year founding offer and demo status.</p>
+          <p className="mt-1 text-xs text-muted-foreground">See the $11.99/year founding offer and your current status.</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
@@ -325,7 +325,7 @@ export function SettingsClient() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="relative overflow-visible rounded-3xl border border-border bg-card p-5">
-      <h2 className="text-base font-semibold">{title}</h2>
+      <h2 className="text-base font-bold tracking-tight">{title}</h2>
       <div className="mt-3 divide-y divide-border">{children}</div>
     </section>
   )

@@ -1,5 +1,6 @@
 "use client"
 
+import type { CSSProperties } from "react"
 import Link from "next/link"
 import { Activity, ArrowUpRight, BarChart3, Mail, Settings, ShieldCheck, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
@@ -12,12 +13,12 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="app-surface overflow-hidden rounded-[2rem] border border-border bg-card p-5">
+      <section className="app-surface rise-in overflow-hidden rounded-[2rem] border border-border bg-card p-5" style={rise(0)}>
         <div className="flex items-center gap-4">
           <div className="shrink-0 rounded-[1.35rem] bg-secondary/60 p-2"><Weaver size={62} /></div>
           <div className="min-w-0 flex-1">
             <Eyebrow>Your profile</Eyebrow>
-            <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">{name}</h1>
+            <h1 className="text-title mt-1 truncate text-2xl">{name}</h1>
             <p className="mt-0.5 truncate text-sm text-muted-foreground">@{username}</p>
           </div>
         </div>
@@ -28,7 +29,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </div>
       </section>
 
-      <section>
+      <section className="rise-in" style={rise(1)}>
         <Eyebrow className="mb-3">Your StoryTuner</Eyebrow>
         <div className="grid grid-cols-2 gap-3">
           <QuickCard href="/progress" icon={BarChart3} title="Progress" detail="Lessons and growth" />
@@ -36,7 +37,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border bg-card px-4">
+      <section className="rise-in rounded-3xl border border-border bg-card px-4" style={rise(2)}>
         <CompactRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
         <div className="h-px bg-border" />
         <CompactRow href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
@@ -50,16 +51,20 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </section>
       )}
 
-      <section className="rounded-[1.8rem] border border-border bg-card p-5">
+      <section className="rise-in rounded-[1.8rem] border border-border bg-card p-5" style={rise(3)}>
         <Eyebrow>Support</Eyebrow>
-        <h2 className="mt-2 text-lg font-semibold tracking-tight">Questions, issues, or feedback?</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">Reach out anytime about StoryTuner, your account, or something that is not working as expected.</p>
-        <a href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
+        <h2 className="text-title mt-2 text-lg">Got a question or an idea?</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">Write to us anytime about StoryTuner, your account, or anything that isn't behaving the way it should.</p>
+        <a href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support" className="press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
           <Mail className="h-4 w-4" /> Contact StoryTuner
         </a>
       </section>
     </div>
   )
+}
+
+function rise(index: number) {
+  return { "--rise-delay": `${index * 70}ms` } as CSSProperties
 }
 
 function Stat({ value, label }: { value: number; label: string }) {

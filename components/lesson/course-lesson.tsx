@@ -47,11 +47,11 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     return (
       <div className="flex min-w-0 flex-col gap-5">
         <BackLink href="/activities" label="Curriculum" />
-        <section className="rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
+        <section className="app-page-enter rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
           <Lock className="mx-auto h-8 w-8 text-accent-foreground" />
-          <h1 className="mt-4 text-xl font-semibold">Unlock the rest of the course.</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">The free plan includes five complete lessons. Founding Membership unlocks all fifteen.</p>
-          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See Membership<ArrowRight className="h-4 w-4" /></Link>
+          <h1 className="text-title mt-4 text-xl">There's more of the craft ahead.</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your free plan covers five full lessons. Founding Membership opens all fifteen.</p>
+          <Link href="/membership" className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See Membership<ArrowRight className="h-4 w-4" /></Link>
         </section>
       </div>
     )
@@ -61,11 +61,11 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     return (
       <div className="flex flex-col gap-5">
         <BackLink href="/activities" label="Curriculum" />
-        <section className="rounded-3xl border border-border bg-card px-6 py-10 text-center">
+        <section className="app-page-enter rounded-3xl border border-border bg-card px-6 py-10 text-center">
           <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
-          <h1 className="mt-4 text-xl font-semibold">This step is still locked.</h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Complete the preceding course step first. Your progress will update automatically.</p>
-          <Link href={`/activities/${unit.id}`} className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">Return to the unit<ArrowRight className="h-4 w-4" /></Link>
+          <h1 className="text-title mt-4 text-xl">One step at a time.</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Finish the step before this one and it opens automatically.</p>
+          <Link href={`/activities/${unit.id}`} className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">Back to the unit<ArrowRight className="h-4 w-4" /></Link>
         </section>
       </div>
     )
@@ -83,7 +83,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
           </p>
           <span className="font-mono text-[0.62rem] text-muted-foreground">{course.percent}% course</span>
         </div>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
+        <h1 className="text-title mt-2 text-[1.7rem] text-balance">
           {stage === "read" ? unit.title : stage === "drill" ? unit.drill.title : `${unit.title}: Check`}
         </h1>
       </header>
@@ -143,12 +143,12 @@ function ReadStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: () => v
           <button
             type="button"
             onClick={() => { setActive((value) => Math.min(groups.length - 1, value + 1)); window.scrollTo({ top: 0, behavior: "smooth" }) }}
-            className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground"
+            className="press flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground"
           >
             Next <ArrowRight className="h-4 w-4" />
           </button>
         ) : (
-          <button type="button" onClick={onFinish} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
+          <button type="button" onClick={onFinish} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground">
             Complete <ArrowRight className="h-4 w-4" />
           </button>
         )}
@@ -228,11 +228,11 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
         </section>
       )}
       {!feedback ? (
-        <button type="button" disabled={!canSubmit || loading} onClick={getFeedback} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:opacity-40">
+        <button type="button" disabled={!canSubmit || loading} onClick={getFeedback} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-40">
           {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Reading your response…</> : <><Sparkles className="h-4 w-4" /> Get focused feedback</>}
         </button>
       ) : (
-        <button type="button" onClick={() => onFinish(response)} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
+        <button type="button" onClick={() => onFinish(response)} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">
           Save and complete <ArrowRight className="h-4 w-4" />
         </button>
       )}
@@ -286,7 +286,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
           <p className="mt-3 text-sm leading-relaxed text-foreground/90">{question.explanation}</p>
         </section>
       )}
-      <button type="button" disabled={!answered} onClick={next} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:opacity-40">
+      <button type="button" disabled={!answered} onClick={next} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-40">
         {index === unit.quiz.length - 1 ? "Finish check" : "Next question"}<ArrowRight className="h-4 w-4" />
       </button>
     </>
@@ -302,13 +302,13 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
   const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
   const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
-    <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
-      <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
+    <div className="app-page-enter flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-[0_12px_28px_-12px_color-mix(in_oklch,var(--brand)_75%,transparent)]"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
+      <div><h1 className="text-title text-xl">Nicely done.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
       <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-accent-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? `+${stageXp[stage]} XP earned` : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is {coursePercent}% complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
-        <Link href={primaryHref} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>
+        <Link href={primaryHref} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>
         <button type="button" onClick={onReview} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold"><Sparkles className="h-4 w-4" />Review or try again</button>
         <Link href={`/activities/${unit.id}`} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" />Back to the unit</Link>
       </div>

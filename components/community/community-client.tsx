@@ -78,13 +78,13 @@ export function CommunityClient({ membershipActive, currentUsername }: Community
 function MembershipLock() {
   return (
     <div className="flex min-w-0 flex-col gap-6">
-      <header>
-        <Eyebrow>Paid feature</Eyebrow>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
-          Community requires a paid StoryTuner Membership.
+      <header className="app-page-enter">
+        <Eyebrow>Members feature</Eyebrow>
+        <h1 className="text-title mt-2 text-[1.7rem] text-balance">
+          Community is part of Membership.
         </h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-          Free accounts cannot read posts, publish stories, reply, or like content in Community.
+          Reading posts, sharing stories, replying, and liking all live inside the paid plan.
         </p>
       </header>
 
@@ -93,14 +93,14 @@ function MembershipLock() {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
             <LockKeyhole className="h-6 w-6 text-accent-foreground" />
           </div>
-          <h2 className="mt-4 text-lg font-semibold">Unlock the full Community</h2>
+          <h2 className="text-title mt-4 text-lg">Step into the Community</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Membership lets you share selected text, transcripts, and audio, then respond to other storytellers.
-            Nothing from your private recordings is shared automatically.
+            Share the text, transcripts, or audio you choose, and talk it through with other storytellers.
+            Your private recordings stay private unless you post them yourself.
           </p>
           <Link
             href="/membership"
-            className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
+            className="press mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
           >
             View Membership
           </Link>
@@ -225,16 +225,16 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
-      <header>
+      <header className="app-page-enter">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Eyebrow>Community</Eyebrow>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-[0.68rem] font-semibold text-muted-foreground">
             <CheckCircle2 className="h-3.5 w-3.5" /> Membership active
           </span>
         </div>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share stories. Help each other improve.</h1>
+        <h1 className="text-display mt-3 text-[2rem] text-balance">Share stories. Grow together.</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
-          Community is built around stories people intentionally choose to share. Listen or read, then respond to what actually landed.
+          Everything here is shared on purpose. Listen or read, then say what actually landed for you.
         </p>
       </header>
 
@@ -248,7 +248,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
             <h2 className="mt-1 text-lg font-semibold">Choose a recording to share</h2>
           </div>
         </div>
-        <Link href="/arena/recordings" className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
+        <Link href="/arena/recordings" className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">
           <Headphones className="h-4 w-4" /> Choose a story
         </Link>
       </section>
@@ -274,7 +274,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
       <section id="community-feed" aria-labelledby="community-feed-heading" aria-live="polite" className="scroll-mt-20 pt-2">
         <div className="mb-4">
           <Eyebrow>Community feed</Eyebrow>
-          <h2 id="community-feed-heading" className="mt-2 text-xl font-semibold tracking-tight">Top stories</h2>
+          <h2 id="community-feed-heading" className="text-title mt-2 text-xl">Top stories</h2>
           <p className="mt-1 text-xs text-muted-foreground">Ranked by likes, with newer stories breaking ties.</p>
         </div>
 

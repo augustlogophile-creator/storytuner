@@ -758,7 +758,7 @@ export function ArenaClient() {
       <div className="flex min-w-0 flex-col gap-6">
         <header className="min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight">Your two free story reviews are complete.</h1></div>
+            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-2 break-words text-[1.7rem]">That's both of your free story reviews.</h1></div>
             <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold">{recordingCountLabel(state.recordings.length)}</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. Membership unlocks unlimited spoken story reviews.</p>
@@ -778,7 +778,7 @@ export function ArenaClient() {
     <div className="flex min-w-0 flex-col gap-6">
       <header className="min-w-0">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
+          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-2 text-[1.7rem] text-balance">Tell it out loud. See what lands.</h1></div>
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
@@ -912,7 +912,7 @@ export function ArenaClient() {
             </div>
           </section>
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+          <button type="button" onClick={enterRecordingRoom} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
           <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
       )}
@@ -995,7 +995,7 @@ export function ArenaClient() {
             </section>
           )}
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
+          <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
           <button type="button" onClick={() => setConfirmAction("discard")} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground"><RotateCcw className="h-4 w-4" />Discard and start again</button>
         </>
       )}

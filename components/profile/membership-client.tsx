@@ -80,18 +80,18 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <BackLink href="/profile" label="Profile" />
-      <header>
+      <header className="app-page-enter">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Founding membership</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">A lower price for the people who join first.</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">The first StoryTuner members can unlock the full app for {FOUNDING_PRICE} a year and keep that founding price.</p>
+        <h1 className="text-editorial mt-3 text-[2.65rem] text-balance sm:text-[3rem]">Full StoryTuner. Founding price.</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Unlock the complete StoryTuner experience for {FOUNDING_PRICE} a year. Founding members keep that price as long as the membership stays active.</p>
       </header>
 
       <section className="overflow-hidden rounded-3xl border border-brand/30 bg-brand-soft/35 p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-accent-foreground">Founding offer</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{FOUNDING_PRICE}<span className="ml-1 text-sm font-medium text-muted-foreground">/ year</span></p>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Later public price: {FUTURE_PRICE} per year. Founding members keep the lower price.</p>
+            <p className="text-display mt-2 text-[2.5rem] text-foreground">{FOUNDING_PRICE}<span className="ml-1 text-sm font-medium text-muted-foreground">/ year</span></p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Planned public price: {FUTURE_PRICE} per year. Founding members keep the lower annual rate.</p>
           </div>
           <Clock3 className="h-5 w-5 shrink-0 text-accent-foreground" />
         </div>
@@ -108,8 +108,10 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
         ))}
       </section>
 
-      <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
-        <h2 className="text-lg font-semibold">StoryTuner Membership</h2>
+      <section className="relative overflow-hidden rounded-3xl bg-primary p-5 text-primary-foreground shadow-[0_24px_60px_-30px_color-mix(in_oklch,var(--primary)_85%,transparent)]">
+        <div className="hatch-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
+        <div className="relative">
+        <h2 className="text-title text-lg">StoryTuner Membership</h2>
         <div className="mt-4 space-y-2.5">
           {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Weaver craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
         </div>
@@ -119,17 +121,18 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
             <p className="mt-5 rounded-2xl bg-white/10 p-4 text-sm">
               Membership is active{status.cancelAtPeriodEnd ? renewalDate ? ` until ${renewalDate}.` : "." : renewalDate ? ` and renews on ${renewalDate}.` : "."}
             </p>
-            <button type="button" onClick={openPortal} disabled={busy !== null} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-background px-5 py-3 text-sm font-semibold text-foreground disabled:opacity-60">
+            <button type="button" onClick={openPortal} disabled={busy !== null} className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-background px-5 py-3 text-sm font-semibold text-foreground disabled:opacity-60">
               {busy === "portal" && <Loader2 className="h-4 w-4 animate-spin" />} Manage billing
             </button>
           </>
         ) : (
-          <button type="button" onClick={openCheckout} disabled={busy !== null} className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground disabled:opacity-60">
+          <button type="button" onClick={openCheckout} disabled={busy !== null} className="press mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105 disabled:opacity-60">
             {busy === "checkout" && <Loader2 className="h-4 w-4 animate-spin" />} Join for {FOUNDING_PRICE}/year
           </button>
         )}
         {message && <p className="mt-3 rounded-2xl bg-red-500/15 px-4 py-3 text-sm text-red-100">{message}</p>}
         <p className="mt-3 text-center text-xs text-primary-foreground/55">Secure checkout and billing are handled by Stripe.</p>
+        </div>
       </section>
     </div>
   )

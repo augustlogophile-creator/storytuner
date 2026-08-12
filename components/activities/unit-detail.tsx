@@ -25,11 +25,11 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
     return (
       <div className="flex min-w-0 flex-col gap-5">
         <BackLink href="/activities" label="Curriculum" />
-        <section className="rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
+        <section className="app-surface rounded-3xl border border-brand/30 bg-brand-soft/45 px-6 py-10 text-center">
           <Lock className="mx-auto h-8 w-8 text-accent-foreground" />
-          <h1 className="mt-4 text-xl font-semibold">This lesson is part of Membership.</h1>
+          <h1 className="text-title mt-4 text-xl">This lesson is part of Membership.</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">The free plan includes the first five complete lessons. Membership unlocks all fifteen.</p>
-          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding offer<ChevronRight className="h-4 w-4" /></Link>
+          <Link href="/membership" className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding offer<ChevronRight className="h-4 w-4" /></Link>
         </section>
       </div>
     )
@@ -38,9 +38,9 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <BackLink href="/activities" label="Curriculum" />
-      <header className="min-w-0">
+      <header className="rise-in min-w-0">
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : `Unit ${unit.index} · ${unit.skill}`}</p>
-        <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-balance">{unit.title}</h1>
+        <h1 className="text-title mt-2 break-words text-[1.7rem] text-balance">{unit.title}</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">{unit.description}</p>
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground"><span>{progress.done} / 3 steps complete</span><span>{progress.percent}%</span></div>
@@ -56,7 +56,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
           const unlocked = unitUnlocked && priorDone
           const Icon = stageMeta[stage].icon
           const row = (
-            <div className={cn("flex items-center gap-4 rounded-2xl border p-4 transition-colors", unlocked ? "border-border bg-card hover:border-brand/50" : "border-border/70 bg-card/60 opacity-75")}>
+            <div className={cn("app-surface flex items-center gap-4 rounded-2xl border p-4 transition-colors", unlocked ? "border-border bg-card hover:border-brand/50" : "border-border/70 bg-card/60 opacity-75")}>
               <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", done ? "bg-brand text-brand-foreground" : unlocked ? "bg-brand-soft text-accent-foreground" : "bg-secondary text-muted-foreground")}>
                 {done ? <Check className="h-4 w-4" strokeWidth={2.6} /> : unlocked ? <Icon className="h-4 w-4" /> : <Lock className="h-3.5 w-3.5" />}
               </span>
@@ -68,7 +68,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
               {unlocked && <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />}
             </div>
           )
-          return <li key={stage}>{unlocked ? <Link href={`/lesson/${key}`}>{row}</Link> : row}</li>
+          return <li key={stage} className="press">{unlocked ? <Link href={`/lesson/${key}`}>{row}</Link> : row}</li>
         })}
       </ol>
     </div>

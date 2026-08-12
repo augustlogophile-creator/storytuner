@@ -37,13 +37,13 @@ export function RecordingsClient() {
   return (
     <>
       <div className="flex min-w-0 flex-col gap-6">
-        <header>
-          <Link href="/arena" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Arena</Link>
+        <header className="app-page-enter">
+          <Link href="/arena" className="group inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"><ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" /> Arena</Link>
           <div className="mt-4 flex items-start justify-between gap-4">
-            <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
-            <Link href="/arena" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
+            <div><Eyebrow>Private archive</Eyebrow><h1 className="text-title mt-2 text-[1.7rem]">Your recordings</h1></div>
+            <Link href="/arena" className="press rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private audio, transcripts, scores, and revisions follow your account across devices. Full video remains on the device where it was recorded.</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private audio, transcripts, scores, and revisions stay with your account across devices. Full video stays on the device where you recorded it.</p>
         </header>
 
         {deleteError && (
@@ -54,11 +54,11 @@ export function RecordingsClient() {
         )}
 
         {state.recordings.length === 0 ? (
-          <section className="rounded-3xl border border-dashed border-border p-8 text-center">
+          <section className="app-surface rounded-3xl border border-dashed border-border bg-card/65 p-8 text-center">
             <Mic2 className="mx-auto h-7 w-7 text-muted-foreground" />
             <h2 className="mt-3 text-base font-semibold">No recordings yet</h2>
             <p className="mt-1 text-sm text-muted-foreground">Record a story and it will appear here.</p>
-            <Link href="/arena" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Open Arena</Link>
+            <Link href="/arena" className="press mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Open Arena</Link>
           </section>
         ) : (
           <div className="flex flex-col gap-4">
@@ -67,7 +67,7 @@ export function RecordingsClient() {
               const strengths = recording.strengths?.length ? recording.strengths : recording.praise ? [recording.praise] : []
               const improvements = recording.improvements?.length ? recording.improvements : recording.weakness || recording.fix ? [recording.weakness || recording.fix] : []
               return (
-                <article key={recording.id} className="rounded-3xl border border-border bg-card p-5">
+                <article key={recording.id} className="app-surface rounded-3xl border border-border bg-card p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm font-semibold leading-snug">{recording.title}</p>
@@ -104,16 +104,16 @@ export function RecordingsClient() {
                     </div>
                   </details>
                   <div className="mt-4 grid grid-cols-2 gap-2">
-                    <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Weaver</Link>
-                    <Link href="/arena" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
+                    <Link href={`/coach?recording=${recording.id}`} className="press flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Weaver</Link>
+                    <Link href="/arena" className="press flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
                     {sharedPosts[recording.id] ? (
-                      <Link href={`/community#${sharedPosts[recording.id]}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
+                      <Link href={`/community#${sharedPosts[recording.id]}`} className="press flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
                     ) : state.premium ? (
-                      <button type="button" onClick={() => setShareTarget(recording)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share to Community</button>
+                      <button type="button" onClick={() => setShareTarget(recording)} className="press flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share to Community</button>
                     ) : (
-                      <Link href="/membership" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
+                      <Link href="/membership" className="press flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
                     )}
-                    <button type="button" onClick={() => setPendingDelete(recording.id)} disabled={deletingId === recording.id} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" />Delete</button>
+                    <button type="button" onClick={() => setPendingDelete(recording.id)} disabled={deletingId === recording.id} className="press flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" />Delete</button>
                   </div>
                 </article>
               )

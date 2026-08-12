@@ -51,7 +51,7 @@ export function ProgressClient() {
   const days = lastThirtyDays(state.activityDates)
   return <div className="flex flex-col gap-6">
     <BackLink href="/profile" label="Profile" />
-    <header><p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Progress</p><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your work, accurately counted.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground">Every figure below comes from completed lessons, recorded takes, and active days on this device.</p></header>
+    <header className="app-page-enter"><p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Progress</p><h1 className="text-title mt-2 text-[1.7rem]">Every bit of it counts.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground">These numbers come straight from your finished lessons, recorded takes, and the days you showed up.</p></header>
     <section className="grid grid-cols-2 gap-3">
       <BigStat value={`${course.percent}%`} label="Course complete" />
       <BigStat value={state.xpLifetime.toLocaleString()} label="Lifetime XP" />
@@ -64,6 +64,6 @@ export function ProgressClient() {
     <section><p className="mb-3 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Unit completion</p><div className="flex flex-col gap-3">{curriculum.map((unit) => { const progress=unitProgress(state,unit.id); const Icon=unitIcons[unit.index] ?? BookOpenCheck; return <div key={unit.id} className="rounded-3xl border border-border bg-card p-4"><div className="flex items-center gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${progress.done===3?"bg-brand text-brand-foreground":"bg-brand-soft text-accent-foreground"}`}>{progress.done===3?<Check className="h-4.5 w-4.5" strokeWidth={2.6} />:<Icon className="h-5 w-5" strokeWidth={1.9} />}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{unit.index}. {unit.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{progress.done} of 3 steps</p></div><span className="text-xs text-muted-foreground">{progress.percent}%</span></div><div className="mt-3"><ProgressBar value={progress.percent} /></div></div>})}</div></section>
   </div>
 }
-function BigStat({value,label}:{value:string|number;label:string}){return <div className="rounded-3xl border border-border bg-card p-5"><p className="text-2xl font-semibold">{value}</p><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>}
+function BigStat({value,label}:{value:string|number;label:string}){return <div className="app-surface rounded-3xl border border-border bg-card p-5"><p className="text-display text-[1.85rem] text-foreground">{value}</p><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>}
 function lastThirtyDays(active:string[]){const out=[];const now=new Date();for(let i=29;i>=0;i--){const date=new Date(now);date.setDate(now.getDate()-i);const key=localDateKey(date);out.push({key,active:active.includes(key)})}return out}
 function localDateKey(date:Date){const year=date.getFullYear();const month=String(date.getMonth()+1).padStart(2,"0");const day=String(date.getDate()).padStart(2,"0");return `${year}-${month}-${day}`}

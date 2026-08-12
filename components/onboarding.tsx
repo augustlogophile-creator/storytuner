@@ -8,23 +8,23 @@ import { Weaver } from "@/components/weaver"
 
 const pages = [
   {
-    title: "Learn the craft, one decision at a time.",
-    copy: "StoryTuner turns a complete storytelling course into short readings, quick checks, and focused practice that build on each other.",
+    title: "Learn the craft, one choice at a time.",
+    copy: "A complete storytelling course, shaped into short reads, quick checks, and focused practice that build naturally.",
     icon: BookOpen,
   },
   {
-    title: "Practice the way stories are actually told.",
-    copy: "Use the Arena to record a real take, review the transcript, and get specific feedback on your hook, development, and landing.",
+    title: "Practice the way stories are really told.",
+    copy: "Record a real take in the Arena, read it back, and get specific notes on your hook, your middle, and how you land it.",
     icon: Mic2,
   },
   {
-    title: "Your recordings stay private by default.",
-    copy: "Community is included with Membership, and a story only appears there when you deliberately share it. You can remove your recordings and posts at any time.",
+    title: "What you record stays yours.",
+    copy: "Your recordings are private by default. A story only reaches Community when you choose to share it — and you can pull it back anytime.",
     icon: LockKeyhole,
   },
   {
-    title: "Save your progress",
-    copy: "Create a secure account for your StoryTuner profile. Your current lessons, recordings, and XP still stay on this device for now.",
+    title: "Keep your progress",
+    copy: "Create a secure account so your work follows you. Your lessons, recordings, and XP will be here when you come back.",
     icon: ShieldCheck,
   },
 ]
@@ -64,19 +64,19 @@ export function Onboarding() {
         </header>
 
         <div className="flex flex-1 items-center justify-center px-5 py-8 sm:py-10">
-          <div className="w-full text-center">
+          <div key={page} className="app-page-enter w-full text-center">
             <div className="flex min-h-28 items-center justify-center sm:min-h-32">
               {page === 0 ? (
                 <Weaver colorId="classic" size={112} />
               ) : (
-                <span className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_12px_32px_rgba(21,93,183,0.10)]">
+                <span className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_12px_32px_-14px_color-mix(in_oklch,var(--brand)_60%,transparent)]">
                   <Icon className="h-7 w-7" strokeWidth={1.8} />
                 </span>
               )}
             </div>
 
-            <p className="mt-5 font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Welcome to StoryTuner</p>
-            <h1 className="mx-auto mt-3 max-w-sm text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance sm:text-[2.35rem]">
+            <p className="reference-chip mx-auto mt-5 font-mono text-[0.61rem] uppercase tracking-[0.16em] text-muted-foreground">Storytelling, tuned</p>
+            <h1 className="text-editorial mx-auto mt-4 max-w-sm text-[2.55rem] text-balance sm:text-[3.05rem]">
               {item.title}
             </h1>
             <p className="mx-auto mt-4 max-w-sm text-[0.95rem] leading-7 text-muted-foreground text-pretty sm:text-base">

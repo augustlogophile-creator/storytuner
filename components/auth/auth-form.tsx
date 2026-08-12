@@ -59,13 +59,13 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
     <div className="w-full">
       <div className="text-center">
         <p className="font-mono text-[0.62rem] uppercase tracking-[0.17em] text-muted-foreground">StoryTuner account</p>
-        <h1 className="mt-3 text-[2rem] font-semibold leading-[1.06] tracking-[-0.05em] text-balance">
-          {isSignUp ? "Create your account" : "Welcome back"}
+        <h1 className="text-editorial mt-4 text-[2.65rem] text-balance sm:text-[3rem]">
+          {isSignUp ? "Start telling better stories" : "Welcome back"}
         </h1>
         <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted-foreground text-pretty">
           {isSignUp
-            ? "Save your progress and continue securely with Google."
-            : "Return to your lessons, recordings, and Weaver coaching."}
+            ? "Keep your progress safe and pick up right where you leave off."
+            : "Your lessons, recordings, and Weaver coaching are waiting."}
         </p>
       </div>
 
@@ -84,7 +84,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         type="button"
         onClick={continueWithGoogle}
         disabled={loading}
-        className="mt-7 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-sm font-semibold shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
+        className="press mt-7 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-sm font-semibold shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
