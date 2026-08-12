@@ -57,3 +57,11 @@ test("Stripe failures are not echoed directly from upstream checkout errors", ()
   assert.doesNotMatch(source, /error instanceof Error \? error\.message/)
   assert.match(source, /could not start checkout right now/i)
 })
+
+test("account data reset tolerates absent optional feature resources", async () => {
+  const source = await read("app/api/account/data/route.ts")
+  assert.match(source, /deleteOptionalRows\(admin, "coach_exchanges"/)
+  assert.match(source, /deleteOptionalRows\(admin, "story_plans"/)
+  assert.match(source, /isMissingResourceError/)
+  assert.match(source, /isMissingBucketError/)
+})

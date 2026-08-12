@@ -14,6 +14,7 @@ const COMMUNITY_AUDIO_BUCKET = "storytuner-community-audio"
 const DELETED_POST_PLACEHOLDER = "Deleted by account reset."
 
 type StorageRow = { storage_path: string | null }
+type SupabaseLikeError = { code?: string; message?: string; statusCode?: string | number; error?: string }
 
 export async function POST(request: Request) {
   const crossSite = requireSameOrigin(request)
@@ -37,17 +38,28 @@ export async function POST(request: Request) {
   const userId = authenticated.id
 
   try {
-    const [recordingsResult, audioResult] = await Promise.all([
-      admin.from("recording_uploads").select("storage_path").eq("user_id", userId).returns<StorageRow[]>(),
-      admin.from("community_audio").select("storage_path").eq("owner_id", userId).returns<StorageRow[]>(),
-    ])
-    if (recordingsResult.error) throw recordingsResult.error
-    if (audioResult.error) throw audioResult.error
+    const recordingsResult = await admin
+      .from("recording_uploads")
+      .select("storage_path")
+      .eq("user_id", userId)
+      .returns<StorageRow[]>()
+    if (recordingsResult.error && !isMissingResourceError(recordingsResult.error)) throw recordingsResult.error
 
+    const audioResult = await admin
+      .from("community_audio")
+      .select("storage_path")
+      .eq("owner_id", userId)
+      .returns<StorageRow[]>()
+    if (audioResult.error && !isMissingResourceError(audioResult.error)) throw audioResult.error
+
+    // Storage enumeration catches abandoned objects that never received a DB row.
+    // A missing bucket is safe to treat as empty, and transient list failures get
+    // one retry before the request fails rather than silently leaving user files.
     const [recordingFolderPaths, communityFolderPaths] = await Promise.all([
       listUserStoragePaths(admin, RECORDINGS_BUCKET, userId),
       listUserStoragePaths(admin, COMMUNITY_AUDIO_BUCKET, userId),
     ])
+
     await removeStorage(admin, RECORDINGS_BUCKET, uniquePaths([
       ...(recordingsResult.data ?? []).map((row: StorageRow) => row.storage_path),
       ...recordingFolderPaths,
@@ -60,32 +72,35 @@ export async function POST(request: Request) {
     const deletedAt = new Date().toISOString()
     await hideRecordingDerivedPosts(admin, userId, deletedAt)
 
-    const { error: recordingsDeleteError } = await admin.from("recording_uploads").delete().eq("user_id", userId)
-    if (recordingsDeleteError) throw recordingsDeleteError
-    const { error: audioDeleteError } = await admin.from("community_audio").delete().eq("owner_id", userId)
-    if (audioDeleteError) throw audioDeleteError
+    await deleteRequiredRows(admin, "recording_uploads", "user_id", userId)
+    await deleteOptionalRows(admin, "community_audio", "owner_id", userId)
 
     if (parsed.data.scope === "app_data") {
-      const likeResults = await Promise.all([
-        admin.from("community_post_likes").delete().eq("user_id", userId),
-        admin.from("community_reply_likes").delete().eq("user_id", userId),
+      await Promise.all([
+        deleteOptionalRows(admin, "community_post_likes", "user_id", userId),
+        deleteOptionalRows(admin, "community_reply_likes", "user_id", userId),
       ])
-      const failedLikeDelete = likeResults.find((result: { error: unknown }) => result.error)
-      if (failedLikeDelete?.error) throw failedLikeDelete.error
 
-      // Keep safety/audit foreign keys valid while removing the user's public
-      // text. The hidden placeholder rows can later be purged only when they
-      // are not referenced by a report.
+      // Keep moderation/report foreign keys valid while removing the user's public
+      // text. If Community is not installed on an older database, there is simply
+      // no Community content to remove and the reset can continue safely.
       await hideAllUserCommunityContent(admin, userId, deletedAt)
 
-      const results = await Promise.all([
-        admin.from("story_plans").delete().eq("user_id", userId),
-        admin.from("coach_exchanges").delete().eq("user_id", userId),
-        admin.from("user_app_state").delete().eq("user_id", userId),
-        admin.from("profiles").update({ ai_personalization_enabled: false }).eq("id", userId),
+      // Planner and the dedicated Coach archive were added later than the core
+      // account-state table. Their absence must not make an otherwise valid account
+      // reset fail. Any real database error still fails closed.
+      await Promise.all([
+        deleteOptionalRows(admin, "story_plans", "user_id", userId),
+        deleteOptionalRows(admin, "coach_exchanges", "user_id", userId),
       ])
-      const failed = results.find((result: { error: unknown }) => result.error)
-      if (failed?.error) throw failed.error
+
+      await deleteRequiredRows(admin, "user_app_state", "user_id", userId)
+
+      const profileResult = await admin
+        .from("profiles")
+        .update({ ai_personalization_enabled: false })
+        .eq("id", userId)
+      if (profileResult.error && !isMissingResourceError(profileResult.error)) throw profileResult.error
     }
 
     backendLog("info", "account_data_deleted", { userId, scope: parsed.data.scope })
@@ -98,19 +113,25 @@ export async function POST(request: Request) {
     }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     backendError("account_data_delete_failed", error, { userId, scope: parsed.data.scope })
-    return Response.json({ error: "StoryTuner could not finish deleting that data. Try again." }, { status: 500, headers: { "Cache-Control": "no-store" } })
+    return Response.json(
+      {
+        code: "ACCOUNT_DATA_DELETE_FAILED",
+        error: "StoryTuner could not finish deleting that data. Try again.",
+      },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    )
   }
 }
 
 async function hideRecordingDerivedPosts(admin: ReturnType<typeof createAdminClient>, userId: string, deletedAt: string) {
   const common = { status: "deleted", title: null, deleted_at: deletedAt, edited_at: deletedAt }
-  const updates = [
+  const results = await Promise.all([
     admin.from("community_posts").update({ ...common, body: "", shared_transcript: DELETED_POST_PLACEHOLDER }).eq("author_id", userId).in("post_type", ["transcript", "audio_transcript"]),
     admin.from("community_posts").update({ ...common, body: "", shared_transcript: null }).eq("author_id", userId).eq("post_type", "audio"),
-  ]
-  const results = await Promise.all(updates)
-  const failed = results.find((result: { error: unknown }) => result.error)
-  if (failed?.error) throw failed.error
+  ])
+  for (const result of results) {
+    if (result.error && !isMissingResourceError(result.error)) throw result.error
+  }
 }
 
 async function hideAllUserCommunityContent(admin: ReturnType<typeof createAdminClient>, userId: string, deletedAt: string) {
@@ -121,8 +142,34 @@ async function hideAllUserCommunityContent(admin: ReturnType<typeof createAdminC
     admin.from("community_posts").update({ ...common, body: "", shared_transcript: null }).eq("author_id", userId).eq("post_type", "audio"),
     admin.from("community_replies").update({ status: "deleted", body: "Reply deleted.", deleted_at: deletedAt, edited_at: deletedAt }).eq("author_id", userId),
   ])
-  const failed = results.find((result: { error: unknown }) => result.error)
-  if (failed?.error) throw failed.error
+  for (const result of results) {
+    if (result.error && !isMissingResourceError(result.error)) throw result.error
+  }
+}
+
+async function deleteRequiredRows(
+  admin: ReturnType<typeof createAdminClient>,
+  table: string,
+  column: string,
+  userId: string,
+) {
+  const { error } = await admin.from(table).delete().eq(column, userId)
+  if (error) throw error
+}
+
+async function deleteOptionalRows(
+  admin: ReturnType<typeof createAdminClient>,
+  table: string,
+  column: string,
+  userId: string,
+) {
+  const { error } = await admin.from(table).delete().eq(column, userId)
+  if (!error) return
+  if (isMissingResourceError(error)) {
+    backendLog("warn", "account_data_optional_resource_missing", { userId, table, code: error.code ?? null })
+    return
+  }
+  throw error
 }
 
 function uniquePaths(paths: Array<string | null | undefined>) {
@@ -134,22 +181,57 @@ async function removeStorage(admin: ReturnType<typeof createAdminClient>, bucket
     const batch = paths.slice(index, index + 500)
     if (!batch.length) continue
     const { error } = await admin.storage.from(bucket).remove(batch)
-    if (error) throw error
+    if (error && !isMissingBucketError(error)) throw error
   }
 }
 
 async function listUserStoragePaths(admin: ReturnType<typeof createAdminClient>, bucket: string, userId: string) {
   const paths: string[] = []
   for (let offset = 0; offset < 5000; offset += 1000) {
-    const { data, error } = await admin.storage.from(bucket).list(userId, {
+    const first = await admin.storage.from(bucket).list(userId, {
       limit: 1000,
       offset,
       sortBy: { column: "name", order: "asc" },
     })
-    if (error) throw error
+
+    let data = first.data
+    let error = first.error
+    if (error && !isMissingBucketError(error)) {
+      await new Promise((resolve) => setTimeout(resolve, 150))
+      const retry = await admin.storage.from(bucket).list(userId, {
+        limit: 1000,
+        offset,
+        sortBy: { column: "name", order: "asc" },
+      })
+      data = retry.data
+      error = retry.error
+    }
+
+    if (error) {
+      if (isMissingBucketError(error)) return paths
+      throw error
+    }
+
     const rows = data ?? []
     paths.push(...rows.filter((item: { id?: string | null }) => Boolean(item.id)).map((item: { name: string }) => `${userId}/${item.name}`))
     if (rows.length < 1000) break
   }
   return paths
+}
+
+function isMissingResourceError(error: SupabaseLikeError | null | undefined) {
+  if (!error) return false
+  const code = String(error.code ?? "").toUpperCase()
+  const message = `${error.message ?? ""} ${error.error ?? ""}`.toLowerCase()
+  return code === "42P01"
+    || code === "PGRST205"
+    || message.includes("relation") && message.includes("does not exist")
+    || message.includes("could not find the table")
+}
+
+function isMissingBucketError(error: SupabaseLikeError | null | undefined) {
+  if (!error) return false
+  const status = String(error.statusCode ?? "")
+  const message = `${error.message ?? ""} ${error.error ?? ""}`.toLowerCase()
+  return status === "404" || message.includes("bucket not found") || message.includes("not found") && message.includes("bucket")
 }
