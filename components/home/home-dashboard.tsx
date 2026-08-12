@@ -1,12 +1,12 @@
 "use client"
 
+import type { ReactNode } from "react"
 import Link from "next/link"
-import { ArrowRight, Check, Flame, Map, MessageCircle, Mic2, Play, Shuffle } from "lucide-react"
+import { ArrowRight, Check, Flame, Map, Mic2, Shuffle } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
-import { Weaver } from "@/components/weaver"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
-import { courseProgress, freeLessonLimitReached, nextLesson, useApp, weaverColors } from "@/lib/app-state"
+import { courseProgress, freeLessonLimitReached, nextLesson, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
@@ -14,139 +14,190 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
   const progress = courseProgress(state)
   const next = nextLesson(state)
   const freeLimitReached = freeLessonLimitReached(state) && progress.done < progress.total
-  const activeColor = weaverColors.find((item) => item.id === state.activeWeaver) ?? weaverColors[0]
   const week = getCurrentWeek(state.activityDates)
-  const latest = state.recordings[0]
 
   if (!ready) return <HomeSkeleton />
 
+  const courseTitle = next
+    ? next.unit.title
+    : freeLimitReached
+      ? "You finished your five free lessons"
+      : "Your storytelling course is complete"
+
+  const courseSubtitle = next
+    ? `Unit ${next.unit.index} · ${stageLabels[next.stage]} · ${next.unit.skill}`
+    : freeLimitReached
+      ? "Founding Membership unlocks the remaining ten lessons."
+      : "Review any lesson or record a complete story in the Arena."
+
+  const courseHref = next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"
+  const courseAction = next ? "Continue learning" : freeLimitReached ? "Unlock lessons" : "Review course"
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-7">
       {accountNotice && <AccountRestoredNotice message={accountNotice} updatedAt={accountNoticeUpdatedAt} />}
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <Eyebrow>{today()}</Eyebrow>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
-            {greeting()}, {state.profile.name}.
+
+      <header className="flex items-start justify-between gap-5">
+        <div className="min-w-0 pt-1">
+          <Eyebrow className="text-[0.68rem] tracking-[0.2em]">{today()}</Eyebrow>
+          <h1 className="mt-3 text-[2rem] font-semibold leading-[1.16] tracking-[-0.035em] text-balance">
+            {greeting()},<br />{state.profile.name}.
           </h1>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+          <p className="mt-3 max-w-[19rem] text-[0.92rem] leading-relaxed text-muted-foreground text-pretty">
             Learn one idea, then test it in a story of your own.
           </p>
         </div>
-        <div className="flex shrink-0 flex-col items-center rounded-2xl bg-streak-soft px-3 py-2">
-          <Flame className="h-5 w-5 text-streak" strokeWidth={2.2} />
-          <span className="mt-0.5 text-lg font-semibold leading-none text-foreground">{state.streak}</span>
-          <span className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">days</span>
+
+        <div className="flex w-[4.7rem] shrink-0 flex-col items-center rounded-[1.7rem] bg-brand-soft/55 px-2 py-3.5">
+          <Flame className="h-5 w-5 text-brand" strokeWidth={2.1} />
+          <span className="mt-1 text-[1.55rem] font-semibold leading-none text-foreground">{state.streak}</span>
+          <span className="mt-1.5 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-muted-foreground">days</span>
         </div>
       </header>
 
-      <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
-        <div className="flex items-center justify-between gap-3">
-          <Eyebrow className="text-primary-foreground/60">
-            {next ? `${progress.percent}% through the course` : freeLimitReached ? "Free lessons complete" : "Course complete"}
-          </Eyebrow>
-          <span className="font-mono text-[0.7rem] text-primary-foreground/60">
-            {next ? `Unit ${next.unit.index}` : freeLimitReached ? "5 of 15" : "15 of 15"}
-          </span>
-        </div>
-        <h2 className="mt-3 text-xl font-semibold tracking-tight text-balance">
-          {next ? next.unit.title : freeLimitReached ? "You finished your five free lessons" : "Your full storytelling path is complete"}
+      <section className="rounded-[1.9rem] border border-brand/10 bg-brand-soft/20 px-5 py-5 shadow-[0_10px_32px_rgba(22,74,130,0.035)]">
+        <Eyebrow>Your course</Eyebrow>
+        <h2 className="mt-3 text-[1.48rem] font-semibold leading-tight tracking-[-0.025em] text-balance">
+          {courseTitle}
         </h2>
-        <p className="mt-1 text-sm leading-relaxed text-primary-foreground/70 text-pretty">
-          {next ? `${stageLabels[next.stage]} · ${next.unit.skill}` : freeLimitReached ? "Founding Membership unlocks the remaining ten lessons." : "Review any lesson, or record a complete story in the Arena."}
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground text-pretty">
+          {courseSubtitle}
         </p>
-        <div className="mt-4">
-          <ProgressBar value={progress.percent} className="bg-primary-foreground/15" barClassName="bg-brand" />
+
+        <div className="mt-5">
+          <ProgressBar value={progress.percent} className="h-2 bg-foreground/[0.08]" />
         </div>
-        <Link href={next ? `/lesson/${next.id}` : freeLimitReached ? "/membership" : "/activities"} className="mt-5 flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground transition-transform active:scale-[0.98]">
-          <Play className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-          {next ? "Continue learning" : freeLimitReached ? "Unlock all 15 lessons" : "Review the course"}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <span className="font-mono text-[0.66rem] uppercase tracking-[0.12em] text-muted-foreground">
+            {progress.percent}% complete
+          </span>
+          <Link
+            href={courseHref}
+            className="flex shrink-0 items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground transition-transform active:scale-[0.98]"
+          >
+            {courseAction}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </section>
 
       <section>
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold">Practice</h2>
-          <Link href="/arena/recordings" className="text-xs font-semibold text-brand">Past recordings</Link>
-        </div>
-        <Link href="/planner" className="mb-3 flex items-center gap-4 rounded-3xl border border-brand/35 bg-brand-soft/45 p-4 transition-colors hover:border-brand">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground"><Map className="h-5 w-5" /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">Plan a story with Weaver</span>
-            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">Turn rough ideas, important facts, and nerves into a clear rehearsal plan before you record.</span>
+        <h2 className="mb-3 text-[1.05rem] font-semibold tracking-[-0.015em]">Practice</h2>
+
+        <Link
+          href="/planner"
+          className="mb-3 flex min-h-[6.2rem] items-center gap-4 rounded-[1.8rem] border border-border bg-card px-4 py-4 transition-colors hover:border-brand/40"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-soft/65 text-brand">
+            <Map className="h-5 w-5" strokeWidth={2} />
           </span>
-          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-[0.98rem] font-semibold tracking-[-0.015em]">Plan a story with Weaver</span>
+            <span className="mt-1 block text-[0.78rem] leading-relaxed text-muted-foreground">
+              Turn rough ideas into a clear rehearsal plan before you record.
+            </span>
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" strokeWidth={1.8} />
         </Link>
+
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/arena?mode=free" className="rounded-3xl border border-border bg-card p-4 transition-colors hover:border-brand/50">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Mic2 className="h-4.5 w-4.5" /></span>
-            <p className="mt-3 text-sm font-semibold">Tell your own story</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose any moment you want to tell.</p>
-          </Link>
-          <Link href="/arena?mode=scenario" className="rounded-3xl border border-border bg-card p-4 transition-colors hover:border-brand/50">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Shuffle className="h-4.5 w-4.5" /></span>
-            <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice an interview, personal question, or real situation.</p>
-          </Link>
+          <PracticeCard
+            href="/arena?mode=free"
+            icon={<Mic2 className="h-[1.15rem] w-[1.15rem]" strokeWidth={2} />}
+            title="Tell your own story"
+            description="No prompt. Choose any moment you want to tell."
+          />
+          <PracticeCard
+            href="/arena?mode=scenario"
+            icon={<Shuffle className="h-[1.15rem] w-[1.15rem]" strokeWidth={2} />}
+            title="Choose a scenario"
+            description="Practice an interview, personal question, or real situation."
+          />
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border bg-card p-5">
-        <div className="flex items-baseline justify-between">
-          <p className="text-sm font-semibold text-foreground">This week</p>
-          <p className="text-xs text-muted-foreground">{week.filter((day) => day.active).length} of 7 days</p>
+      <section>
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-[1.05rem] font-semibold tracking-[-0.015em]">This week</h2>
+          <p className="text-sm text-muted-foreground">{week.filter((day) => day.active).length} of 7 days</p>
         </div>
-        <ul className="mt-4 flex items-center justify-between">
+
+        <ul className="mt-4 flex items-start justify-between gap-1">
           {week.map((day) => (
-            <li key={day.key} className="flex flex-col items-center gap-2">
-              <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium ${day.active ? "border-transparent bg-brand text-brand-foreground" : day.today ? "border-dashed border-brand text-brand" : "border-border text-muted-foreground"}`}>
+            <li key={day.key} className="flex flex-1 flex-col items-center gap-2">
+              <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-medium ${day.active ? "border-transparent bg-brand text-brand-foreground" : day.today ? "border-dashed border-brand text-brand" : "border-border bg-card text-muted-foreground"}`}>
                 {day.active ? <Check className="h-4 w-4" strokeWidth={2.6} /> : day.label}
               </span>
-              <span className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{day.label}</span>
+              <span className="font-mono text-[0.58rem] uppercase tracking-wider text-muted-foreground">{day.label}</span>
             </li>
           ))}
         </ul>
       </section>
-
-      <Link href="/shop" className="flex items-center gap-4 rounded-3xl border border-border bg-card p-5 transition-colors hover:border-brand/50">
-        <Weaver size={52} />
-        <div className="min-w-0 flex-1">
-          <Eyebrow>Weaver shop</Eyebrow>
-          <p className="mt-1 text-sm font-semibold text-foreground">Current color: {activeColor.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{state.xpBalance} XP available for a new palette.</p>
-        </div>
-        <Chevron />
-      </Link>
-
-      {latest && (
-        <Link href={`/coach?recording=${latest.id}`} className="flex items-center gap-4 rounded-3xl border border-border bg-card p-5 transition-colors hover:border-brand/50">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><MessageCircle className="h-5 w-5" /></span>
-          <div className="min-w-0 flex-1">
-            <Eyebrow>Recent feedback</Eyebrow>
-            <p className="mt-1 text-sm font-semibold text-foreground">Your current focus</p>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{latest.levelUp || latest.nextTake || latest.fix}</p>
-          </div>
-          <Chevron />
-        </Link>
-      )}
-
-      <Link href="/coach" className="flex items-center gap-4 rounded-3xl border border-border bg-card p-5 transition-colors hover:border-brand/50">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary"><MessageCircle className="h-5 w-5 text-foreground" /></span>
-        <div className="min-w-0 flex-1">
-          <Eyebrow>AI story coach</Eyebrow>
-          <p className="mt-1 text-sm font-semibold text-foreground">Ask Weaver</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">Find material, shape a story, strengthen your delivery, or understand what to practice next.</p>
-        </div>
-        <Chevron />
-      </Link>
     </div>
   )
 }
 
-function Chevron() { return <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" /> }
-function HomeSkeleton() { return <div className="flex flex-col gap-5"><div className="h-20 animate-pulse rounded-3xl bg-secondary" /><div className="h-64 animate-pulse rounded-3xl bg-secondary" /><div className="h-32 animate-pulse rounded-3xl bg-secondary" /></div> }
-function greeting() { const hour = new Date().getHours(); if (hour < 12) return "Good morning"; if (hour < 18) return "Good afternoon"; return "Good evening" }
-function today() { return new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) }
-function getCurrentWeek(activityDates: string[]) { const now = new Date(); const day = now.getDay() || 7; const monday = new Date(now); monday.setHours(0,0,0,0); monday.setDate(now.getDate() - day + 1); return Array.from({ length: 7 }, (_, index) => { const date = new Date(monday); date.setDate(monday.getDate() + index); const key = localDateKey(date); return { key, label: ["M","T","W","T","F","S","S"][index], active: activityDates.includes(key), today: key === localDateKey(now) } }) }
-function localDateKey(date: Date) { const year=date.getFullYear(); const month=String(date.getMonth()+1).padStart(2,"0"); const day=String(date.getDate()).padStart(2,"0"); return `${year}-${month}-${day}` }
+function PracticeCard({ href, icon, title, description }: { href: string; icon: ReactNode; title: string; description: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-[12.5rem] flex-col rounded-[1.8rem] border border-border bg-card p-4 transition-colors hover:border-brand/40"
+    >
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft/65 text-brand">{icon}</span>
+      <div className="mt-5">
+        <p className="text-[0.98rem] font-semibold leading-snug tracking-[-0.015em]">{title}</p>
+        <p className="mt-2 text-[0.78rem] leading-relaxed text-muted-foreground">{description}</p>
+      </div>
+      <ArrowRight className="mt-auto ml-auto h-5 w-5 text-muted-foreground" strokeWidth={1.8} />
+    </Link>
+  )
+}
+
+function HomeSkeleton() {
+  return (
+    <div className="flex flex-col gap-7">
+      <div className="h-28 animate-pulse rounded-[1.8rem] bg-secondary" />
+      <div className="h-64 animate-pulse rounded-[1.9rem] bg-secondary" />
+      <div className="h-80 animate-pulse rounded-[1.8rem] bg-secondary" />
+    </div>
+  )
+}
+
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+}
+
+function today() {
+  return new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
+}
+
+function getCurrentWeek(activityDates: string[]) {
+  const now = new Date()
+  const day = now.getDay() || 7
+  const monday = new Date(now)
+  monday.setHours(0, 0, 0, 0)
+  monday.setDate(now.getDate() - day + 1)
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + index)
+    const key = localDateKey(date)
+    return {
+      key,
+      label: ["M", "T", "W", "T", "F", "S", "S"][index],
+      active: activityDates.includes(key),
+      today: key === localDateKey(now),
+    }
+  })
+}
+
+function localDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}
