@@ -755,19 +755,19 @@ export function ArenaClient() {
 
   if (phase === "setup" && !canRecord) {
     return (
-      <div className="flex min-w-0 flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-5">
         <header className="min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-3 break-words text-[2.25rem] leading-[1.0]">That's both of your free story reviews.</h1></div>
+            <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-2.5 break-words text-[1.75rem] leading-[1.03]">That's both of your free story reviews.</h1></div>
             <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold">{recordingCountLabel(state.recordings.length)}</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. Membership unlocks unlimited spoken story reviews.</p>
         </header>
-        <section className="rounded-3xl border border-border bg-card p-6 text-center">
+        <section className="rounded-[1.4rem] border border-border bg-card p-5 text-center">
           <Clock3 className="mx-auto h-8 w-8 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-semibold">Two free spoken stories total</h2>
+          <h2 className="mt-4 text-[1rem] font-medium">Two free spoken stories total</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Each free story includes recording, transcription, a full grade, and a revised version. Membership removes the limit.</p>
-          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding membership<ArrowRight className="h-4 w-4" /></Link>
+          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground">See the founding membership<ArrowRight className="h-4 w-4" /></Link>
           <Link href="/arena/recordings" className="mt-2 flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium text-muted-foreground">View past recordings</Link>
         </section>
       </div>
@@ -775,29 +775,29 @@ export function ArenaClient() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5">
       <header className="min-w-0">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-3 text-[2.35rem] leading-[0.98] text-balance">Tell it out loud. See what lands.</h1></div>
+          <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="text-title mt-2.5 text-[1.72rem] leading-[1.02] text-balance">Tell it out loud. See what lands.</h1></div>
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
-        <p className="mt-4 text-[0.98rem] leading-7 text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
-        <span className="mt-3 inline-flex rounded-full bg-brand-soft px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
+        <p className="mt-2.5 max-w-[23rem] text-[0.85rem] leading-6 text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
+        <span className="mt-2.5 inline-flex rounded-full border border-brand/15 bg-brand-soft/65 px-2.5 py-1 text-[0.56rem] font-medium uppercase tracking-[0.09em] text-accent-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
       </header>
 
       {phase === "setup" && (
         <>
-          <section className="rounded-[1.9rem] border border-border bg-card p-5">
-            <p className="section-editorial px-1">Choose how you want to practice</p>
+          <section className="rounded-[1.35rem] border border-border bg-card p-4">
+            <p className="section-editorial">Choose how you want to practice</p>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-[1.65rem] border p-5 text-left transition-colors", storyMode === "free" ? "border-brand/35 bg-brand-soft" : "border-border bg-background hover:border-brand/50")}>
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-brand"><Mic2 className="h-4 w-4" /></span>
-                <p className="text-title mt-4 text-[1.25rem]">Tell any story</p>
+              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-[1.2rem] border p-4 text-left transition-colors", storyMode === "free" ? "border-brand/35 bg-brand-soft" : "border-border bg-background hover:border-brand/50")}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background text-brand"><Mic2 className="h-4 w-4" /></span>
+                <p className="text-title mt-3 text-[1.04rem]">Tell any story</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-[1.65rem] border p-5 text-left transition-colors", storyMode === "scenario" ? "border-brand/35 bg-brand-soft" : "border-border bg-background hover:border-brand/50")}>
+              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-[1.2rem] border p-4 text-left transition-colors", storyMode === "scenario" ? "border-brand/35 bg-brand-soft" : "border-border bg-background hover:border-brand/50")}>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-foreground"><Video className="h-4 w-4" /></span>
-                <p className="text-title mt-4 text-[1.25rem]">Choose a scenario</p>
+                <p className="text-title mt-3 text-[1.04rem]">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
               </button>
             </div>
@@ -806,39 +806,39 @@ export function ArenaClient() {
           {storyMode === "scenario" && (
             <>
               <section>
-                <div className="mb-3 flex items-baseline justify-between"><p className="text-sm font-semibold">Choose a storytelling situation</p><span className="text-xs text-muted-foreground">All included</span></div>
+                <div className="mb-3 flex items-baseline justify-between"><p className="text-[0.82rem] font-medium">Choose a storytelling situation</p><span className="text-xs text-muted-foreground">All included</span></div>
                 <div className="grid grid-cols-2 gap-3">
                   {scenarios.map((item) => {
                     const selected = item.id === scenarioId
                     return (
-                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-brand bg-brand-soft/45" : "border-border bg-card hover:border-brand/50")}>
-                        <p className="text-sm font-semibold leading-snug">{item.name}</p>
+                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-[1.25rem] border p-3.5 text-left transition-colors", selected ? "border-brand bg-brand-soft/45" : "border-border bg-card hover:border-brand/50")}>
+                        <p className="text-[0.82rem] font-medium leading-snug">{item.name}</p>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</p>
                       </button>
                     )
                   })}
                 </div>
               </section>
-              <section className="rounded-[1.9rem] border border-border bg-card p-5">
+              <section className="rounded-[1.35rem] border border-border bg-card p-4">
                 <div className="flex items-center justify-between gap-3"><Eyebrow>Your prompt</Eyebrow><button type="button" onClick={() => setPromptIndex((value) => (value + 1) % scenario.prompts.length)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground"><RotateCcw className="h-3.5 w-3.5" />New prompt</button></div>
-                <p className="mt-3 text-base font-semibold leading-relaxed text-balance">{prompt}</p>
+                <p className="mt-3 text-[0.9rem] font-medium leading-relaxed text-balance">{prompt}</p>
                 {isOpenResponse && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Unprompted. Choose what you want to talk about.</p>}
               </section>
             </>
           )}
 
           {plannerPlan ? (
-            <section className="rounded-3xl border border-brand/35 bg-brand-soft/40 p-5 shadow-sm">
+            <section className="rounded-[1.3rem] border border-brand/20 bg-brand-soft/55 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <Eyebrow>Plan ready</Eyebrow>
-                  <h2 className="mt-2 text-base font-semibold">{plannerPlan.title}</h2>
+                  <h2 className="mt-2 text-[0.9rem] font-medium">{plannerPlan.title}</h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">{plannerPlan.throughline}</p>
                 </div>
                 <button type="button" onClick={() => setPlannerPlan(null)} className="rounded-full p-2 text-muted-foreground hover:bg-background" aria-label="Hide story plan"><X className="h-4 w-4" /></button>
               </div>
-              <details className="mt-4 overflow-hidden rounded-2xl border border-border/70 bg-background/80">
-                <summary className="cursor-pointer px-4 py-3.5 text-sm font-semibold">View practice outline</summary>
+              <details className="mt-4 overflow-hidden rounded-xl border border-border bg-background/75">
+                <summary className="cursor-pointer px-4 py-2.5 text-[0.78rem] font-medium">View practice outline</summary>
                 <div className="border-t border-border/70 px-4 py-4">
                   {plannerPlan.opening && <div className="rounded-xl bg-secondary/55 px-3 py-2.5"><p className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Open</p><p className="mt-1 text-sm leading-6 text-foreground">{plannerPlan.opening}</p></div>}
                   {plannerPlan.beats?.length ? (
@@ -846,7 +846,7 @@ export function ArenaClient() {
                       {plannerPlan.beats.map((beat, index) => (
                         <li key={`${beat.label}-${index}`} className="flex gap-3">
                           <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[0.65rem] font-semibold text-brand-foreground">{index + 1}</span>
-                          <div className="min-w-0"><p className="text-sm font-semibold">{beat.label}</p><p className="mt-0.5 text-sm leading-6 text-muted-foreground">{beat.suggestion}</p></div>
+                          <div className="min-w-0"><p className="text-[0.82rem] font-medium">{beat.label}</p><p className="mt-0.5 text-sm leading-6 text-muted-foreground">{beat.suggestion}</p></div>
                         </li>
                       ))}
                     </ol>
@@ -870,7 +870,7 @@ export function ArenaClient() {
             </div>
           )}
 
-          <section className="rounded-[1.9rem] border border-border bg-card p-5">
+          <section className="rounded-[1.35rem] border border-border bg-card p-4">
             <p className="section-editorial">Choose your target length</p>
             <div className="mt-3 grid grid-cols-4 gap-2">
               {durationOptions.map((duration) => (
@@ -879,7 +879,7 @@ export function ArenaClient() {
                   type="button"
                   onClick={() => { setTargetSeconds(duration); setExtraSeconds(0) }}
                   className={cn(
-                    "rounded-2xl border px-2 py-3 text-sm font-semibold tabular-nums transition",
+                    "rounded-2xl border px-2 py-3 text-[0.82rem] font-medium tabular-nums transition",
                     targetSeconds === duration ? "border-brand bg-brand-soft text-accent-foreground" : "border-border bg-background text-muted-foreground hover:border-brand/45",
                   )}
                 >
@@ -896,7 +896,7 @@ export function ArenaClient() {
               )}
             >
               <span className="min-w-0">
-                <span className="block text-sm font-semibold">See other options</span>
+                <span className="block text-[0.82rem] font-medium">See other options</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">
                   {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "10 minutes, 20 minutes, or a custom target"}
                 </span>
@@ -907,28 +907,28 @@ export function ArenaClient() {
               </span>
             </button>
             <div className="mt-5 flex items-center justify-between gap-4 border-t border-border pt-5">
-              <div><p className="text-sm font-semibold">Camera</p><p className="mt-0.5 text-xs text-muted-foreground">Turn it off for an audio-only take.</p></div>
+              <div><p className="text-[0.82rem] font-medium">Camera</p><p className="mt-0.5 text-xs text-muted-foreground">Turn it off for an audio-only take.</p></div>
               <button type="button" onClick={() => setCameraOn((value) => !value)} className={cn("flex h-10 w-16 items-center rounded-full p-1 transition-colors", cameraOn ? "justify-end bg-brand" : "justify-start bg-secondary")}><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">{cameraOn ? <Camera className="h-4 w-4 text-accent-foreground" /> : <CameraOff className="h-4 w-4 text-muted-foreground" />}</span></button>
             </div>
           </section>
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" onClick={enterRecordingRoom} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
-          <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
+          <button type="button" onClick={enterRecordingRoom} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+          <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-[0.78rem] font-medium"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
       )}
 
       {phase === "ready" && (
-        <section className="relative min-h-[610px] overflow-hidden rounded-[2rem] bg-foreground shadow-xl">
+        <section className="relative min-h-[560px] overflow-hidden rounded-[1.55rem] bg-foreground shadow-xl">
           <video ref={videoRef} muted playsInline className={cn("absolute inset-0 h-full w-full scale-x-[-1] object-cover", !cameraOn && "opacity-0")} />
-          {!cameraOn && <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-foreground to-primary p-8 text-center text-primary-foreground"><Mic2 className="h-12 w-12" /><p className="mt-4 text-lg font-semibold">Camera off</p><p className="mt-1 text-sm text-primary-foreground/60">Your microphone is ready.</p></div>}
+          {!cameraOn && <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-foreground to-primary p-5 text-center text-primary-foreground"><Mic2 className="h-12 w-12" /><p className="mt-4 text-[1rem] font-medium">Camera off</p><p className="mt-1 text-sm text-primary-foreground/60">Your microphone is ready.</p></div>}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80" />
-          <div className="relative z-10 flex flex-col items-center p-6 text-center text-white">
-            <p className="max-w-sm text-sm font-semibold leading-relaxed">{prompt}</p>
+          <div className="relative z-10 flex flex-col items-center p-5 text-center text-white">
+            <p className="max-w-sm text-[0.82rem] font-medium leading-relaxed">{prompt}</p>
             {isOpenResponse && <p className="mt-1 text-xs text-white/60">Unprompted. Choose what you want to talk about.</p>}
             <p className="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-white/65">Ready when you are</p>
-            <p className="mt-2 text-sm font-semibold tabular-nums">Target · {formatTime(limitSeconds)}</p>
+            <p className="mt-2 text-[0.82rem] font-medium tabular-nums">Target · {formatTime(limitSeconds)}</p>
           </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-7 p-7 text-white">
+          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-5 p-5 text-white">
             <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
             <Control label="Start" onClick={startRecording} icon={Play} large tone="brand" />
             <Control label="Setup" onClick={reset} icon={RotateCcw} />
@@ -937,12 +937,12 @@ export function ArenaClient() {
       )}
 
       {phase === "recording" && (
-        <section className="relative min-h-[610px] overflow-hidden rounded-[2rem] bg-foreground shadow-xl">
+        <section className="relative min-h-[560px] overflow-hidden rounded-[1.55rem] bg-foreground shadow-xl">
           <video ref={videoRef} muted playsInline className={cn("absolute inset-0 h-full w-full scale-x-[-1] object-cover", !cameraOn && "opacity-0")} />
-          {!cameraOn && <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-foreground to-primary p-8 text-center text-primary-foreground"><Mic2 className="h-12 w-12" /><p className="mt-4 text-lg font-semibold">Camera off</p><p className="mt-1 text-sm text-primary-foreground/60">Your microphone is still recording.</p></div>}
+          {!cameraOn && <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-foreground to-primary p-5 text-center text-primary-foreground"><Mic2 className="h-12 w-12" /><p className="mt-4 text-[1rem] font-medium">Camera off</p><p className="mt-1 text-sm text-primary-foreground/60">Your microphone is still recording.</p></div>}
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80" />
-          <div className="relative z-10 flex flex-col items-center p-6 text-center text-white">
-            <p className="max-w-sm text-sm font-semibold leading-relaxed">{prompt}</p>
+          <div className="relative z-10 flex flex-col items-center p-5 text-center text-white">
+            <p className="max-w-sm text-[0.82rem] font-medium leading-relaxed">{prompt}</p>
             <p className="mt-4 font-mono text-3xl font-semibold tabular-nums">{formatTime(seconds)}</p>
             <div className="mt-3 w-full max-w-xs">
               <div className="flex items-center justify-between text-[0.68rem] font-semibold text-white/75"><span>{paused ? "Paused" : "Recording"}</span><span>{formatTime(Math.max(0, limitSeconds - seconds))} left</span></div>
@@ -965,42 +965,42 @@ export function ArenaClient() {
 
       {phase === "review" && (
         <>
-          <section className="rounded-[1.9rem] border border-border bg-card p-5">
+          <section className="rounded-[1.35rem] border border-border bg-card p-4">
             <Eyebrow>Review your take</Eyebrow>
             {mediaUrl && mediaKind !== "none" && <ReviewMediaPlayer src={mediaUrl} kind={mediaKind} duration={Math.max(1, seconds)} />}
             {!mediaUrl && <div className="mt-4 flex h-28 items-center justify-center rounded-2xl bg-secondary text-sm text-muted-foreground">Text-only review</div>}
           </section>
-          <section className="rounded-[1.9rem] border border-border bg-card p-5">
+          <section className="rounded-[1.35rem] border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
-              <div><Eyebrow>Prepared by Weaver</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
+              <div><Eyebrow>Prepared by Weaver</Eyebrow><h2 className="mt-1 text-[0.9rem] font-medium">Title and clean transcript</h2></div>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Weaver creates a readable transcript while preserving your voice and events. Edit anything before grading."}</p>
-            <label className="mt-5 block text-sm font-semibold" htmlFor="arena-title">Title</label>
+            <label className="mt-5 block text-[0.82rem] font-medium" htmlFor="arena-title">Title</label>
             <input id="arena-title" value={title} onChange={(event: ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} placeholder={transcribing ? "Preparing your story…" : "Give this story a title"} className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand" />
             <div className="mt-5 flex items-center justify-between gap-3">
-              <label className="block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
+              <label className="block text-[0.82rem] font-medium" htmlFor="arena-transcript">Clean transcript</label>
               <span className={cn("text-xs font-medium tabular-nums", transcriptWordCount >= MIN_STORY_WORDS ? "text-emerald-600" : "text-muted-foreground")}>{transcriptWordCount} / {MIN_STORY_WORDS} words</span>
             </div>
             <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} rows={10} placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
           </section>
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
-            <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-              <p className="text-sm font-semibold text-amber-950">{transcriptWordCount === 0 ? "Weaver could not hear a story." : "Your story needs a little more before grading."}</p>
+            <section className="rounded-[1.4rem] border border-border bg-secondary/55 p-5">
+              <p className="text-[0.82rem] font-medium text-amber-950">{transcriptWordCount === 0 ? "Weaver could not hear a story." : "Your story needs a little more before grading."}</p>
               <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `Weaver caught ${transcriptWordCount} ${transcriptWordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again. This will not use one of your free stories.`}</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
-                <button type="button" onClick={() => transcriptRef.current?.focus()} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-semibold"><FileText className="h-4 w-4" />Review transcript</button>
+                <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-[0.82rem] font-medium text-primary-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
+                <button type="button" onClick={() => transcriptRef.current?.focus()} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-[0.82rem] font-medium"><FileText className="h-4 w-4" />Review transcript</button>
               </div>
             </section>
           )}
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
+          <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
           <button type="button" onClick={() => setConfirmAction("discard")} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground"><RotateCcw className="h-4 w-4" />Discard and start again</button>
         </>
       )}
 
-      {phase === "scoring" && <div className="flex min-h-96 flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center"><Loader2 className="h-8 w-8 animate-spin text-brand" /><h2 className="mt-5 text-lg font-semibold">Weaver is grading your story</h2><p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">Reviewing the hook, development, landing, and the clearest next revision.</p></div>}
+      {phase === "scoring" && <div className="flex min-h-96 flex-col items-center justify-center rounded-[1.4rem] border border-border bg-card p-5 text-center"><Loader2 className="h-8 w-8 animate-spin text-brand" /><h2 className="mt-5 text-[1rem] font-medium">Weaver is grading your story</h2><p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">Reviewing the hook, development, landing, and the clearest next revision.</p></div>}
 
       {phase === "result" && feedback && savedId && (
         <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onAgain={reset} premium={state.premium} />
@@ -1116,7 +1116,7 @@ function DurationOptionsDialog({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Target length</p>
-            <h2 id="duration-options-title" className="mt-1.5 text-lg font-semibold tracking-[-0.025em]">Choose a longer time</h2>
+            <h2 id="duration-options-title" className="mt-1.5 text-[1rem] font-medium tracking-[-0.025em]">Choose a longer time</h2>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">Member targets can run up to 30 minutes.</p>
           </div>
           <button type="button" onClick={onClose} className="app-dialog-close" aria-label="Close target length options">
@@ -1139,7 +1139,7 @@ function DurationOptionsDialog({
                   premium ? "hover:border-brand/50" : "cursor-not-allowed opacity-80",
                 )}
               >
-                <span className="text-base font-semibold tabular-nums">{duration === 600 ? "10 minutes" : "20 minutes"}</span>
+                <span className="text-[0.9rem] font-medium tabular-nums">{duration === 600 ? "10 minutes" : "20 minutes"}</span>
                 <span className="mt-0.5 text-xs text-muted-foreground">Long-form practice</span>
                 {!premium && <LockKeyhole className="absolute right-3 top-3 h-3.5 w-3.5 text-muted-foreground" />}
               </button>
@@ -1150,7 +1150,7 @@ function DurationOptionsDialog({
         <div className={cn("mt-2.5 rounded-2xl border p-3.5", customSelected ? "border-brand bg-brand-soft/45" : "border-border bg-background", !premium && "opacity-80")}>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold">Custom time</p>
+              <p className="text-[0.82rem] font-medium">Custom time</p>
               <p className="mt-0.5 text-xs text-muted-foreground">From 1:00 to 30:00</p>
             </div>
             {!premium && <LockKeyhole className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
@@ -1167,11 +1167,11 @@ function DurationOptionsDialog({
                 value={minutes}
                 disabled={!premium}
                 onChange={(event) => { setMinutes(event.target.value.slice(0, 2)); setError("") }}
-                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-center text-[0.82rem] font-medium tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed"
                 aria-label="Minutes"
               />
             </label>
-            <span className="text-sm font-semibold text-muted-foreground">:</span>
+            <span className="text-[0.82rem] font-medium text-muted-foreground">:</span>
             <label className="min-w-0 flex-1">
               <span className="sr-only">Seconds</span>
               <input
@@ -1182,7 +1182,7 @@ function DurationOptionsDialog({
                 value={seconds}
                 disabled={!premium}
                 onChange={(event) => { setSeconds(event.target.value.slice(0, 2)); setError("") }}
-                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-center text-sm font-semibold tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed"
+                className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-center text-[0.82rem] font-medium tabular-nums outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:cursor-not-allowed"
                 aria-label="Seconds"
               />
             </label>
@@ -1288,7 +1288,7 @@ function ReviewMediaPlayer({ src, kind, duration }: { src: string; kind: "video"
           <div className="h-1 overflow-hidden rounded-full bg-white/30"><span className="block h-full rounded-full bg-white transition-[width] duration-100" style={{ width: `${progress}%` }} /></div>
         </div>
         <div className="mt-1 flex items-center gap-3">
-          <button type="button" onClick={togglePlayback} className="flex h-10 w-10 items-center justify-center rounded-full bg-white/18 backdrop-blur-md" aria-label={playing ? "Pause recording" : "Play recording"}>{playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}</button>
+          <button type="button" onClick={togglePlayback} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/18 backdrop-blur-md" aria-label={playing ? "Pause recording" : "Play recording"}>{playing ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}</button>
           <span className="text-xs font-semibold tabular-nums">{formatTime(Math.floor(currentTime))}</span>
           <span className="text-xs text-white/60">/ {formatTime(safeDuration)}</span>
         </div>
@@ -1306,22 +1306,22 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
   return (
     <>
       <div className="flex flex-col gap-5">
-        <section className="flex items-center gap-5 rounded-[1.9rem] border border-border bg-card p-5"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-lg font-semibold leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
+        <section className="flex items-center gap-5 rounded-[1.35rem] border border-border bg-card p-4"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-[1rem] font-medium leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
         <section className="grid grid-cols-3 gap-3"><SubScore label="Hook" value={feedback.hook} /><SubScore label="Development" value={feedback.development} /><SubScore label="Landing" value={feedback.landing} /></section>
         <FeedbackList tone="good" title={`What is working · ${strongest}`} items={feedback.strengths} />
         <FeedbackList tone="bad" title={`What to improve · ${weakest}`} items={feedback.improvements} />
-        <section className="rounded-3xl border border-brand/35 bg-brand-soft p-5"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-accent-foreground">One change for your next take</p><p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{feedback.levelUp}</p></section>
-        <section className="rounded-[1.9rem] border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-sm font-semibold">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
-        <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground"><MessageCircle className="h-4 w-4" />Ask Weaver about this grade</Link>
-        <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
+        <section className="rounded-[1.4rem] border border-brand/35 bg-brand-soft p-5"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-accent-foreground">One change for your next take</p><p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{feedback.levelUp}</p></section>
+        <section className="rounded-[1.35rem] border border-border bg-card p-4"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-[0.82rem] font-medium">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
+        <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2.5 text-[0.78rem] font-medium text-brand-foreground"><MessageCircle className="h-4 w-4" />Ask Weaver about this grade</Link>
+        <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
         {sharedPostId ? (
-          <Link href={`/community#${sharedPostId}`} className="flex items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-5 py-3.5 text-sm font-semibold text-accent-foreground"><Share2 className="h-4 w-4" />View shared story</Link>
+          <Link href={`/community#${sharedPostId}`} className="flex items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-5 py-2.5 text-[0.78rem] font-medium text-accent-foreground"><Share2 className="h-4 w-4" />View shared story</Link>
         ) : premium ? (
-          <button type="button" onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Share to Community</button>
+          <button type="button" onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-[0.78rem] font-medium"><Share2 className="h-4 w-4" />Share to Community</button>
         ) : (
-          <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
+          <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-[0.78rem] font-medium"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
         )}
-        <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
+        <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-[0.78rem] font-medium"><Play className="h-4 w-4" />Open all recordings</Link>
         <p className="text-center text-xs leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>
       </div>
       <ShareRecordingDialog
@@ -1336,16 +1336,16 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
 
 function FeedbackList({ tone, title, items }: { tone: "good" | "bad"; title: string; items: string[] }) {
   return (
-    <section className={cn("rounded-3xl border p-5", tone === "good" ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50")}>
-      <p className={cn("font-mono text-[0.6rem] uppercase tracking-[0.16em]", tone === "good" ? "text-emerald-700" : "text-red-700")}>{title}</p>
-      <ul className="mt-3 space-y-2.5 pl-5 text-sm leading-relaxed text-foreground">
+    <section className={cn("rounded-[1.25rem] border p-4", tone === "good" ? "border-brand/20 bg-brand-soft/55" : "border-border bg-secondary/60")}>
+      <p className={cn("text-[0.56rem] font-semibold uppercase tracking-[0.11em]", tone === "good" ? "text-accent-foreground" : "text-foreground/70")}>{title}</p>
+      <ul className="mt-2.5 space-y-2 pl-4 text-[0.82rem] leading-6 text-foreground">
         {items.map((item, index) => <li key={index} className="list-disc pl-1">{item}</li>)}
       </ul>
     </section>
   )
 }
 
-function SubScore({ label, value }: { label: string; value: number }) { return <div className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card px-2 py-4"><span className="text-lg font-semibold">{value}</span><span className="font-mono text-[0.54rem] uppercase tracking-wider text-muted-foreground">{label}</span></div> }
+function SubScore({ label, value }: { label: string; value: number }) { return <div className="flex flex-col items-center gap-1 rounded-xl border border-border bg-card px-2 py-3"><span className="text-[1rem] font-medium">{value}</span><span className="text-[0.5rem] font-medium uppercase tracking-[0.09em] text-muted-foreground">{label}</span></div> }
 function meaningfulWordCount(text: string) {
   const fillerWords = new Set(["um", "uh", "erm", "hmm", "mhm", "ah", "eh"])
   const words = text.toLowerCase().match(/[a-z0-9]+(?:['’][a-z0-9]+)*/g) ?? []

@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
-import { DM_Serif_Display, Manrope, Geist_Mono } from "next/font/google"
+import { EB_Garamond, Manrope, Geist_Mono } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAuthenticatedUser } from "@/lib/require-auth"
@@ -11,7 +11,7 @@ const manrope = Manrope({
   variable: "--font-geist-sans",
   weight: ["400", "500", "600", "700", "800"],
 })
-const editorial = DM_Serif_Display({ subsets: ["latin"], variable: "--font-editorial", weight: "400" })
+const editorial = EB_Garamond({ subsets: ["latin"], variable: "--font-editorial", weight: ["400", "500"] })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#f8f3e9",
+  themeColor: "#f7f6f1",
   maximumScale: 1,
   userScalable: false,
 }

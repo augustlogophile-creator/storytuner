@@ -14,17 +14,17 @@ export function ActivitiesClient() {
   const course = courseProgress(state)
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-3.5">
       <header className="rise-in min-w-0" style={rise(0)}>
         <Eyebrow>Curriculum</Eyebrow>
-        <h1 className="text-title mt-3 break-words text-[2.35rem] leading-[0.98] text-balance">The craft of true storytelling</h1>
-        <p className="mt-3 text-[0.98rem] leading-7 text-muted-foreground text-pretty">
+        <h1 className="text-title mt-2.5 max-w-[22rem] break-words text-[1.78rem] leading-[1.02] text-balance">The craft of true storytelling</h1>
+        <p className="mt-2.5 max-w-[23rem] text-[0.86rem] leading-6 text-muted-foreground text-pretty">
           Fourteen focused units and a capstone, carrying you from choosing a story to telling it with confidence.
         </p>
       </header>
 
-      <section className="rise-in min-w-0 rounded-[1.9rem] border border-border bg-card p-5" style={rise(1)}>
-        <div className="mb-2 flex min-w-0 items-center justify-between gap-3 text-sm">
+      <section className="rise-in min-w-0 rounded-[1.35rem] border border-border bg-card p-4" style={rise(1)}>
+        <div className="mb-2 flex min-w-0 items-center justify-between gap-3 text-[0.8rem]">
           <span className="font-semibold text-foreground">Your journey</span>
           <span className="shrink-0 text-muted-foreground">{course.done} of {course.total} steps</span>
         </div>
@@ -43,18 +43,18 @@ export function ActivitiesClient() {
           const progress = unitProgress(state, unit.id)
           const complete = progress.done === progress.total
           const content = (
-            <article className={cn("group flex min-w-0 flex-col gap-4 rounded-[1.9rem] border bg-card p-5 transition-all duration-200", unlocked ? "app-surface press border-border hover:border-brand/50" : "border-border/70 opacity-75")}> 
-              <div className="flex min-w-0 items-start gap-4">
-                <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-sans text-sm font-bold transition-colors", complete ? "bg-brand text-brand-foreground" : unlocked ? "bg-brand-soft text-accent-foreground" : "bg-secondary text-muted-foreground")}> 
+            <article className={cn("group flex min-w-0 flex-col gap-3 rounded-[1.35rem] border bg-card p-4 transition-all duration-200", unlocked ? "app-surface press border-border hover:border-brand/50" : "border-border/70 opacity-75")}> 
+              <div className="flex min-w-0 items-start gap-3">
+                <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-sans text-xs font-medium transition-colors", complete ? "bg-brand text-brand-foreground" : unlocked ? "bg-brand-soft text-accent-foreground" : "bg-secondary text-muted-foreground")}> 
                   {complete ? <Check className="h-5 w-5" strokeWidth={2.6} /> : unit.index}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
-                    <p className="min-w-0 truncate font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : unit.skill}</p>
+                    <p className="min-w-0 truncate font-mono text-[0.58rem] uppercase tracking-[0.13em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : unit.skill}</p>
                     {!planAccess && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-1 text-[0.58rem] font-semibold text-accent-foreground">Membership</span>}
                   </div>
-                  <h2 className="text-title mt-1.5 break-words text-[1.25rem] text-foreground">{unit.title}</h2>
-                  <p className="mt-2 break-words text-[0.92rem] leading-6 text-muted-foreground text-pretty">{unit.description}</p>
+                  <h2 className="text-title mt-1.5 break-words text-[1.08rem] text-foreground">{unit.title}</h2>
+                  <p className="mt-1.5 break-words text-[0.82rem] leading-[1.55] text-muted-foreground text-pretty">{unit.description}</p>
                 </div>
                 {unlocked ? <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" /> : <Lock className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />}
               </div>
@@ -73,7 +73,7 @@ export function ActivitiesClient() {
       </div>
 
       {!state.premium && (
-        <Link href="/membership" className="app-surface press flex min-w-0 items-center gap-3 rounded-[1.9rem] border border-brand/30 bg-brand-soft/35 p-5">
+        <Link href="/membership" className="app-surface press flex min-w-0 items-center gap-3 rounded-[1.35rem] border border-brand/20 bg-brand-soft/55 p-4">
           <Sparkles className="h-5 w-5 shrink-0 text-accent-foreground" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">Open the remaining ten lessons</p>
@@ -87,5 +87,5 @@ export function ActivitiesClient() {
 }
 
 function rise(index: number) {
-  return { "--rise-delay": `${index * 60}ms` } as CSSProperties
+  return { "--rise-delay": `${index * 38}ms` } as CSSProperties
 }

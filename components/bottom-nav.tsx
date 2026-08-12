@@ -15,12 +15,13 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname()
+
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 bg-transparent px-3 pb-[max(.6rem,env(safe-area-inset-bottom))] sm:bottom-4 sm:px-0"
+      className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(.55rem,env(safe-area-inset-bottom))] sm:bottom-3 sm:px-0"
     >
-      <ul className="mx-auto flex max-w-[29.5rem] items-stretch justify-between rounded-[2rem] border border-primary/90 bg-primary p-2 shadow-[0_18px_45px_rgb(29_27_20_/_0.2)]">
+      <ul className="mx-auto flex max-w-[27.5rem] items-center justify-between rounded-[1.45rem] border border-white/8 bg-[#22251f]/[0.97] p-1.5 shadow-[0_14px_38px_rgb(28_31_26_/_0.16)] backdrop-blur-xl">
         {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/home" ? pathname === "/home" : pathname.startsWith(href)
           return (
@@ -29,21 +30,17 @@ export function BottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "press group flex flex-col items-center gap-1 rounded-[1.5rem] px-1 py-1.5 text-[0.62rem] font-bold tracking-tight transition-all duration-200",
-                  active ? "bg-background text-foreground" : "text-primary-foreground/55 hover:text-primary-foreground",
+                  "press group flex min-h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-[1.05rem] px-1 py-1 text-[0.54rem] font-medium tracking-[-0.01em] transition-[background-color,color,transform] duration-200",
+                  active
+                    ? "nav-active bg-[#f7f6f1] text-[#242620]"
+                    : "text-[#d6d6cf]/55 hover:bg-white/[0.045] hover:text-[#f7f6f1]",
                 )}
               >
-                <span
-                  className={cn(
-                    "flex h-7 w-11 items-center justify-center rounded-full transition-all duration-300 ease-out",
-                    active
-                      ? "scale-100 bg-transparent text-foreground"
-                      : "scale-95 bg-transparent group-hover:bg-white/10",
-                  )}
-                >
-                  <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={active ? 2.4 : 1.9} />
-                </span>
-                <span className="truncate">{label}</span>
+                <Icon
+                  className={cn("h-[0.98rem] w-[0.98rem] transition-transform duration-200", active && "-translate-y-px")}
+                  strokeWidth={active ? 2 : 1.7}
+                />
+                <span className="max-w-full truncate leading-none">{label}</span>
               </Link>
             </li>
           )

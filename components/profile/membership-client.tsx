@@ -78,55 +78,55 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
     : null
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-4">
       <BackLink href="/profile" label="Profile" />
       <header className="app-page-enter">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Founding membership</p>
-        <h1 className="text-editorial mt-3 text-[2.65rem] text-balance sm:text-[3rem]">Full StoryTuner. Founding price.</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Unlock the complete StoryTuner experience for {FOUNDING_PRICE} a year. Founding members keep that price as long as the membership stays active.</p>
+        <p className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Founding membership</p>
+        <h1 className="text-title mt-2.5 text-[1.78rem] leading-[1.03] text-balance">Full StoryTuner. Founding price.</h1>
+        <p className="mt-2 max-w-[24rem] text-[0.82rem] leading-6 text-muted-foreground text-pretty">Unlock the complete StoryTuner experience for {FOUNDING_PRICE} a year. Founding members keep that price as long as the membership stays active.</p>
       </header>
 
-      <section className="overflow-hidden rounded-[2rem] border border-brand/20 bg-brand-soft p-6">
+      <section className="overflow-hidden rounded-[1.35rem] border border-brand/15 bg-brand-soft/65 p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-accent-foreground">Founding offer</p>
-            <p className="text-display mt-2 text-[2.5rem] text-foreground">{FOUNDING_PRICE}<span className="ml-1 text-sm font-medium text-muted-foreground">/ year</span></p>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Planned public price: {FUTURE_PRICE} per year. Founding members keep the lower annual rate.</p>
+            <p className="text-[0.56rem] font-semibold uppercase tracking-[0.11em] text-accent-foreground">Founding offer</p>
+            <p className="text-display mt-1.5 text-[1.72rem] text-foreground">{FOUNDING_PRICE}<span className="ml-1 text-sm font-medium text-muted-foreground">/ year</span></p>
+            <p className="mt-2 max-w-[24rem] text-[0.82rem] leading-6 text-muted-foreground">Planned public price: {FUTURE_PRICE} per year. Founding members keep the lower annual rate.</p>
           </div>
           <Clock3 className="h-5 w-5 shrink-0 text-accent-foreground" />
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-[2rem] border border-border bg-card">
+      <section className="overflow-hidden rounded-[1.3rem] border border-border bg-card">
         <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] gap-2 border-b border-border px-4 py-3 text-[0.65rem] text-muted-foreground"><span>Feature</span><span className="text-center">Free</span><span className="text-center">Member</span></div>
         {rows.map((row) => (
-          <div key={row.feature} className="grid min-w-0 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] items-center gap-2 border-b border-border px-4 py-4 last:border-b-0">
-            <div className="min-w-0 pr-1"><p className="text-sm font-medium text-foreground">{row.feature}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{row.detail}</p></div>
+          <div key={row.feature} className="grid min-w-0 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] items-center gap-2 border-b border-border px-3.5 py-3 last:border-b-0">
+            <div className="min-w-0 pr-1"><p className="text-[0.8rem] font-medium text-foreground">{row.feature}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{row.detail}</p></div>
             <p className="text-center text-xs leading-snug text-muted-foreground"><strong className="font-semibold text-foreground">{row.free}</strong></p>
             <p className="text-center text-xs leading-snug text-muted-foreground"><strong className="font-semibold text-accent-foreground">{row.member}</strong></p>
           </div>
         ))}
       </section>
 
-      <section className="relative overflow-hidden rounded-[2rem] bg-primary p-6 text-primary-foreground shadow-[0_24px_60px_-30px_color-mix(in_oklch,var(--primary)_85%,transparent)]">
+      <section className="relative overflow-hidden rounded-[1.35rem] bg-primary p-4 text-primary-foreground shadow-[0_24px_60px_-30px_color-mix(in_oklch,var(--primary)_85%,transparent)]">
         <div className="hatch-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
         <div className="relative">
-        <h2 className="text-title text-lg">StoryTuner Membership</h2>
+        <h2 className="text-title text-[1.15rem]">StoryTuner Membership</h2>
         <div className="mt-4 space-y-2.5">
-          {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Weaver craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
+          {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Weaver craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-[0.8rem] text-primary-foreground/75"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
         </div>
 
         {active ? (
           <>
-            <p className="mt-5 rounded-2xl bg-white/10 p-4 text-sm">
+            <p className="mt-5 rounded-xl bg-white/[0.07] p-3.5 text-[0.78rem]">
               Membership is active{status.cancelAtPeriodEnd ? renewalDate ? ` until ${renewalDate}.` : "." : renewalDate ? ` and renews on ${renewalDate}.` : "."}
             </p>
-            <button type="button" onClick={openPortal} disabled={busy !== null} className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-background px-5 py-3 text-sm font-semibold text-foreground disabled:opacity-60">
+            <button type="button" onClick={openPortal} disabled={busy !== null} className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-background px-4 py-2.5 text-[0.76rem] font-medium text-foreground disabled:opacity-60">
               {busy === "portal" && <Loader2 className="h-4 w-4 animate-spin" />} Manage billing
             </button>
           </>
         ) : (
-          <button type="button" onClick={openCheckout} disabled={busy !== null} className="press mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105 disabled:opacity-60">
+          <button type="button" onClick={openCheckout} disabled={busy !== null} className="press mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[0.76rem] font-medium text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105 disabled:opacity-60">
             {busy === "checkout" && <Loader2 className="h-4 w-4 animate-spin" />} Join for {FOUNDING_PRICE}/year
           </button>
         )}

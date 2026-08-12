@@ -44,20 +44,20 @@ export function ShopClient() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <BackLink href="/home" label="Today" />
       <header className="app-page-enter">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Weaver shop</p>
-        <h1 className="text-title mt-3 text-[2.25rem] leading-[1.0]">Give Weaver a fresh look.</h1>
+        <p className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Weaver shop</p>
+        <h1 className="text-title mt-2.5 text-[1.72rem] leading-[1.03]">Give Weaver a fresh look.</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
           Trade XP for a new color. Your lifetime XP never drops — only your spendable balance does.
         </p>
       </header>
 
-      <section className="app-surface flex items-center gap-6 rounded-[1.9rem] border border-border bg-card p-6">
+      <section className="app-surface flex items-center gap-4 rounded-[1.3rem] border border-border bg-card p-4">
         <Weaver size={104} />
         <div>
-          <p className="text-sm font-semibold">{active.name}</p>
+          <p className="text-[0.8rem] font-medium">{active.name}</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{active.description}</p>
           <p className="mt-3 inline-flex items-center gap-1 rounded-full bg-brand-soft px-3 py-1.5 text-xs font-semibold text-accent-foreground">
             <Sparkles className="h-3.5 w-3.5" />
@@ -76,15 +76,15 @@ export function ShopClient() {
               key={color.id}
               className={
                 color.featured === "gold"
-                  ? "flex items-center gap-4 rounded-3xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-card p-4"
+                  ? "flex items-center gap-4 rounded-[1.4rem] border border-amber-300/70 bg-gradient-to-r from-amber-50 to-card p-4"
                   : color.featured === "goat"
-                    ? "flex items-center gap-4 rounded-3xl border border-stone-400/60 bg-gradient-to-r from-stone-100 to-card p-4"
-                    : "flex items-center gap-4 rounded-[1.9rem] border border-border bg-card p-4"
+                    ? "flex items-center gap-4 rounded-[1.4rem] border border-stone-400/60 bg-gradient-to-r from-stone-100 to-card p-4"
+                    : "flex items-center gap-4 rounded-[1.45rem] border border-border bg-card p-4"
               }
             >
               <Weaver size={75} colorId={color.id} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">{color.name}</p>
+                <p className="text-[0.8rem] font-medium">{color.name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{color.description}</p>
               </div>
               <button

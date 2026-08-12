@@ -41,17 +41,17 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  if (!ready) return <div className="h-72 animate-pulse rounded-3xl bg-secondary" />
+  if (!ready) return <div className="h-72 animate-pulse rounded-[1.4rem] bg-secondary" />
 
   if (!planAccess) {
     return (
       <div className="flex min-w-0 flex-col gap-5">
         <BackLink href="/activities" label="Curriculum" />
-        <section className="app-page-enter rounded-3xl border border-brand/30 bg-brand-soft/35 px-6 py-10 text-center">
+        <section className="app-page-enter rounded-[1.3rem] border border-brand/15 bg-brand-soft/55 px-4 py-6 text-center">
           <Lock className="mx-auto h-8 w-8 text-accent-foreground" />
           <h1 className="text-title mt-4 text-xl">There's more of the craft ahead.</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your free plan covers five full lessons. Founding Membership opens all fifteen.</p>
-          <Link href="/membership" className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See Membership<ArrowRight className="h-4 w-4" /></Link>
+          <Link href="/membership" className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground">See Membership<ArrowRight className="h-4 w-4" /></Link>
         </section>
       </div>
     )
@@ -61,11 +61,11 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     return (
       <div className="flex flex-col gap-5">
         <BackLink href="/activities" label="Curriculum" />
-        <section className="app-page-enter rounded-[1.9rem] border border-border bg-card px-6 py-10 text-center">
+        <section className="app-page-enter rounded-[1.3rem] border border-border bg-card px-4 py-6 text-center">
           <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
           <h1 className="text-title mt-4 text-xl">One step at a time.</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Finish the step before this one and it opens automatically.</p>
-          <Link href={`/activities/${unit.id}`} className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">Back to the unit<ArrowRight className="h-4 w-4" /></Link>
+          <Link href={`/activities/${unit.id}`} className="press mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground">Back to the unit<ArrowRight className="h-4 w-4" /></Link>
         </section>
       </div>
     )
@@ -74,16 +74,16 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-5">
       <BackLink href={`/activities/${unit.id}`} label={unit.title} />
       <header>
         <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             {stageLabels[stage]} · {alreadyDone ? "Review anytime" : `+${stageXp[stage]} XP`}
           </p>
           <span className="font-mono text-[0.62rem] text-muted-foreground">{course.percent}% course</span>
         </div>
-        <h1 className="text-title mt-3 text-[2.25rem] leading-[1.0] text-balance">
+        <h1 className="text-title mt-2.5 text-[1.72rem] leading-[1.03] text-balance">
           {stage === "read" ? unit.title : stage === "drill" ? unit.drill.title : `${unit.title}: Check`}
         </h1>
       </header>
@@ -122,8 +122,8 @@ function ReadStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: () => v
 
       <div className="flex flex-col gap-5">
         {group.sections.map((section, index) => (
-          <section key={section.heading} className={cn("rounded-3xl border p-5", active === 0 && index === 0 ? "border-brand/40 bg-brand-soft/35" : "border-border bg-card")}>
-            <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">{group.label}</p>
+          <section key={section.heading} className={cn("rounded-[1.25rem] border p-4", active === 0 && index === 0 ? "border-brand/40 bg-brand-soft/35" : "border-border bg-card")}>
+            <p className="text-[0.56rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground">{group.label}</p>
             <h2 className="mt-2 text-lg font-semibold tracking-tight">{section.heading}</h2>
             <div className="mt-4"><RichText markdown={section.body} /></div>
           </section>
@@ -135,7 +135,7 @@ function ReadStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: () => v
           type="button"
           disabled={active === 0}
           onClick={() => { setActive((value) => Math.max(0, value - 1)); window.scrollTo({ top: 0, behavior: "smooth" }) }}
-          className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3.5 text-sm font-semibold disabled:opacity-35"
+          className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-[0.78rem] font-medium disabled:opacity-35"
         >
           <ChevronLeft className="h-4 w-4" /> Previous
         </button>
@@ -143,12 +143,12 @@ function ReadStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: () => v
           <button
             type="button"
             onClick={() => { setActive((value) => Math.min(groups.length - 1, value + 1)); window.scrollTo({ top: 0, behavior: "smooth" }) }}
-            className="press flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground"
+            className="press flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.78rem] font-medium text-primary-foreground"
           >
             Next <ArrowRight className="h-4 w-4" />
           </button>
         ) : (
-          <button type="button" onClick={onFinish} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-semibold text-primary-foreground">
+          <button type="button" onClick={onFinish} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.78rem] font-medium text-primary-foreground">
             Complete <ArrowRight className="h-4 w-4" />
           </button>
         )}
@@ -203,17 +203,17 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
 
   return (
     <>
-      <section className="rounded-[1.9rem] border border-border bg-card p-5">
-        <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">Your exercise</p>
-        {unit.drill.prompt && <p className="mt-3 text-sm leading-7 text-foreground text-pretty">{unit.drill.prompt}</p>}
+      <section className="rounded-[1.3rem] border border-border bg-card p-4">
+        <p className="text-[0.56rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground">Your exercise</p>
+        {unit.drill.prompt && <p className="mt-3 text-[0.82rem] leading-6 text-foreground text-pretty">{unit.drill.prompt}</p>}
         {unit.drill.steps.length > 0 && (
           <ol className="mt-4 space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
             {unit.drill.steps.map((step, index) => <li key={index} className="list-decimal pl-1 marker:font-semibold marker:text-accent-foreground">{step}</li>)}
           </ol>
         )}
       </section>
-      <section className="rounded-[1.9rem] border border-border bg-card p-5">
-        <textarea value={response} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setResponse(event.target.value); setFeedback(null) }} rows={9} placeholder="Work through the exercise here…" className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-[0.95rem] leading-7 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
+      <section className="rounded-[1.3rem] border border-border bg-card p-4">
+        <textarea value={response} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setResponse(event.target.value); setFeedback(null) }} rows={9} placeholder="Work through the exercise here…" className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-[0.89rem] leading-7 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         <div className="mt-2 flex items-center justify-between px-1 text-xs text-muted-foreground">
           <span>{response.trim() ? response.trim().split(/\s+/).length : 0} words</span>
           <span>Your response saves on this device.</span>
@@ -221,18 +221,18 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
       </section>
       {error && <p className="rounded-2xl bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</p>}
       {feedback && (
-        <section className="flex flex-col gap-3 rounded-3xl border border-brand/40 bg-brand-soft/35 p-5">
-          <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent-foreground" /><h2 className="text-sm font-semibold">Coach's read</h2></div>
-          <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What is working</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.working}</p></div>
-          <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">One useful revision</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.fix}</p></div>
+        <section className="flex flex-col gap-3 rounded-[1.25rem] border border-brand/20 bg-brand-soft/55 p-4">
+          <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent-foreground" /><h2 className="text-[0.82rem] font-medium">Coach's read</h2></div>
+          <div><p className="text-[0.54rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground">What is working</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.working}</p></div>
+          <div><p className="text-[0.54rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground">One useful revision</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.fix}</p></div>
         </section>
       )}
       {!feedback ? (
-        <button type="button" disabled={!canSubmit || loading} onClick={getFeedback} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+        <button type="button" disabled={!canSubmit || loading} onClick={getFeedback} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground disabled:opacity-40">
           {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Reading your response…</> : <><Sparkles className="h-4 w-4" /> Get focused feedback</>}
         </button>
       ) : (
-        <button type="button" onClick={() => onFinish(response)} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">
+        <button type="button" onClick={() => onFinish(response)} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground">
           Save and complete <ArrowRight className="h-4 w-4" />
         </button>
       )}
@@ -266,7 +266,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
         <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground"><span>Question {index + 1} of {unit.quiz.length}</span><span>{score} correct so far</span></div>
         <ProgressBar value={((index + (answered ? 1 : 0)) / unit.quiz.length) * 100} />
       </div>
-      <section className="rounded-[1.9rem] border border-border bg-card p-5">
+      <section className="rounded-[1.3rem] border border-border bg-card p-4">
         <h2 className="text-lg font-semibold leading-snug text-balance">{question.question}</h2>
         <div className="mt-5 flex flex-col gap-2.5">
           {question.options.map((option, optionIndex) => {
@@ -281,12 +281,12 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
         </div>
       </section>
       {answered && (
-        <section className={cn("rounded-3xl border p-5", correct ? "border-brand/40 bg-brand-soft/40" : "border-streak/30 bg-streak-soft/50")}>
-          <div className="flex items-center gap-2"><span className={cn("flex h-7 w-7 items-center justify-center rounded-full", correct ? "bg-brand text-brand-foreground" : "bg-destructive text-destructive-foreground")}>{correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" strokeWidth={2.8} />}</span><h3 className="text-sm font-semibold">{correct ? "Exactly." : "Not quite."}</h3></div>
+        <section className={cn("rounded-[1.25rem] border p-4", correct ? "border-brand/40 bg-brand-soft/40" : "border-streak/30 bg-streak-soft/50")}>
+          <div className="flex items-center gap-2"><span className={cn("flex h-7 w-7 items-center justify-center rounded-full", correct ? "bg-brand text-brand-foreground" : "bg-destructive text-destructive-foreground")}>{correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" strokeWidth={2.8} />}</span><h3 className="text-[0.82rem] font-medium">{correct ? "Exactly." : "Not quite."}</h3></div>
           <p className="mt-3 text-sm leading-relaxed text-foreground/90">{question.explanation}</p>
         </section>
       )}
-      <button type="button" disabled={!answered} onClick={next} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+      <button type="button" disabled={!answered} onClick={next} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground disabled:opacity-40">
         {index === unit.quiz.length - 1 ? "Finish check" : "Next question"}<ArrowRight className="h-4 w-4" />
       </button>
     </>
@@ -302,14 +302,14 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
   const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
   const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
-    <div className="app-page-enter flex flex-col items-center gap-5 rounded-[1.9rem] border border-border bg-card px-6 py-10 text-center">
+    <div className="app-page-enter flex flex-col items-center gap-5 rounded-[1.3rem] border border-border bg-card px-4 py-6 text-center">
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-[0_12px_28px_-12px_color-mix(in_oklch,var(--brand)_75%,transparent)]"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-title text-xl">Nicely done.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
-      <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-accent-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? `+${stageXp[stage]} XP earned` : "Progress already saved"}</div>
+      <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-[0.82rem] font-medium text-accent-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? `+${stageXp[stage]} XP earned` : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is {coursePercent}% complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
-        <Link href={primaryHref} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>
-        <button type="button" onClick={onReview} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold"><Sparkles className="h-4 w-4" />Review or try again</button>
+        <Link href={primaryHref} className="press flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>
+        <button type="button" onClick={onReview} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-[0.78rem] font-medium"><Sparkles className="h-4 w-4" />Review or try again</button>
         <Link href={`/activities/${unit.id}`} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" />Back to the unit</Link>
       </div>
     </div>

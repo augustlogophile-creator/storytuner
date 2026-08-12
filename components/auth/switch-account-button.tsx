@@ -26,7 +26,7 @@ export function SwitchAccountButton() {
       type="button"
       onClick={() => void switchAccount()}
       disabled={busy}
-      className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold disabled:opacity-60"
+      className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-[0.8rem] font-medium disabled:opacity-60"
     >
       {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
       Use another account

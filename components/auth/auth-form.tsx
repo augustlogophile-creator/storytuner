@@ -58,8 +58,8 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   return (
     <div className="w-full">
       <div className="text-center">
-        <p className="font-mono text-[0.62rem] uppercase tracking-[0.17em] text-muted-foreground">StoryTuner account</p>
-        <h1 className="text-editorial mt-4 text-[2.65rem] text-balance sm:text-[3rem]">
+        <p className="text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">StoryTuner account</p>
+        <h1 className="text-editorial mt-4 text-[1.72rem] leading-[1.04] text-balance sm:text-[1.86rem]">
           {isSignUp ? "Start telling better stories" : "Welcome back"}
         </h1>
         <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted-foreground text-pretty">
@@ -69,7 +69,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         </p>
       </div>
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-4 flex justify-center">
         <div className="account-mode-switch" role="tablist" aria-label="Choose whether to sign up or log in">
           <button type="button" role="tab" aria-selected={isSignUp} onClick={() => chooseMode("sign-up")} className={isSignUp ? "is-active" : ""}>
             Sign up
@@ -84,12 +84,12 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         type="button"
         onClick={continueWithGoogle}
         disabled={loading}
-        className="press mt-7 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-sm font-semibold shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 disabled:cursor-not-allowed disabled:opacity-50"
+        className="press mt-5 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-2.5 text-[0.78rem] font-medium shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-white text-xs font-bold text-[#4285f4]">G</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-white text-xs font-semibold text-[#4285f4]">G</span>
         )}
         Continue with Google
       </button>

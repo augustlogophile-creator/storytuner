@@ -161,17 +161,17 @@ export function StoryPlannerClient() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-7">
-      <header className="app-page-enter relative overflow-hidden rounded-[2rem] bg-primary p-6 text-primary-foreground shadow-[0_20px_50px_-24px_color-mix(in_oklch,var(--primary)_80%,transparent)]">
+    <div className="flex min-w-0 flex-col gap-4">
+      <header className="app-page-enter relative overflow-hidden rounded-[1.4rem] bg-primary p-4 text-primary-foreground shadow-[0_20px_50px_-24px_color-mix(in_oklch,var(--primary)_80%,transparent)]">
         <div className="hatch-texture pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
-        <div className="relative flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
+        <div className="relative flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-foreground">
             <Map className="h-5 w-5" />
           </span>
           <div>
             <Eyebrow className="text-primary-foreground/60">AI Story Planner</Eyebrow>
-            <h1 className="text-title mt-3 text-[2.35rem] leading-[0.98] text-balance">Know where your story is headed before you tell it.</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-primary-foreground/70">
+            <h1 className="text-title mt-2.5 text-[1.64rem] leading-[1.03] text-balance">Know where your story is headed before you tell it.</h1>
+            <p className="mt-2 max-w-2xl text-[0.82rem] leading-6 text-primary-foreground/70">
               Tell Weaver the situation, your goal, the facts, and what feels hard. You'll get a clear shape, a stronger plan, and delivery notes that still sound like you.
             </p>
           </div>
@@ -180,15 +180,15 @@ export function StoryPlannerClient() {
 
       {!building && !plan && (
         <section>
-          <div className="mb-4 flex items-end justify-between gap-4">
+          <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <Eyebrow>Build your plan</Eyebrow>
-              <h2 className="text-title mt-3 text-[1.7rem]">Start with what you already know</h2>
+              <h2 className="text-title mt-2 text-[1.32rem]">Start with what you already know</h2>
             </div>
-            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">About 3 minutes</span>
+            <span className="rounded-full bg-secondary px-3 py-1.5 text-[0.68rem] font-medium text-muted-foreground">About 3 minutes</span>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <PlannerField
               number={1}
               icon={Target}
@@ -258,7 +258,7 @@ export function StoryPlannerClient() {
             type="button"
             onClick={buildPlan}
             disabled={!ready}
-            className="press mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.78rem] font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Sparkles className="h-4 w-4" />
             Build my story plan
@@ -270,27 +270,27 @@ export function StoryPlannerClient() {
       {building && <PlanReadySkeleton />}
 
       {plan && (
-        <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/35 bg-card shadow-sm">
-          <div className="p-5 sm:p-6">
+        <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[1.35rem] border border-border bg-card">
+          <div className="p-4 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Eyebrow>{planOrigin === "saved" ? "Saved plan" : "Plan ready"}</Eyebrow>
               <div className="flex shrink-0 items-center gap-2">
-                <button type="button" onClick={copyPlan} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold transition-colors hover:bg-secondary/60">
+                <button type="button" onClick={copyPlan} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-2.5 text-[0.7rem] font-medium transition-colors hover:bg-secondary/60">
                   {copied ? <Check className="h-3.5 w-3.5 text-brand" /> : <Clipboard className="h-3.5 w-3.5" />}
                   {copied ? "Copied" : "Copy"}
                 </button>
-                <button type="button" onClick={exportPdf} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-semibold transition-colors hover:bg-secondary/60">
+                <button type="button" onClick={exportPdf} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-2.5 text-[0.7rem] font-medium transition-colors hover:bg-secondary/60">
                   <Download className="h-3.5 w-3.5" /> Export PDF
                 </button>
               </div>
             </div>
 
             <div className="mt-4 w-full text-left">
-              <h2 className="text-title max-w-none text-2xl text-pretty sm:text-[1.7rem]">{plan.output.title}</h2>
-              <p className="mt-2 w-full max-w-none text-sm leading-6 text-muted-foreground sm:text-[0.95rem]">{secondPersonDirection(plan.output.throughline)}</p>
+              <h2 className="text-title max-w-none text-[1.42rem] text-pretty sm:text-[1.48rem]">{plan.output.title}</h2>
+              <p className="mt-1.5 w-full max-w-none text-[0.82rem] leading-6 text-muted-foreground sm:text-[0.89rem]">{secondPersonDirection(plan.output.throughline)}</p>
             </div>
 
-            <button type="button" onClick={() => setPlanExpanded((value) => !value)} className="mt-5 flex w-full items-center justify-between rounded-2xl bg-secondary/55 px-4 py-3.5 text-left text-sm font-semibold hover:bg-secondary">
+            <button type="button" onClick={() => setPlanExpanded((value) => !value)} className="mt-4 flex w-full items-center justify-between rounded-xl bg-secondary/65 px-3.5 py-2.5 text-left text-[0.78rem] font-medium hover:bg-secondary">
               <span>{planExpanded ? "Hide full plan" : "View full plan"}</span>
               <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${planExpanded ? "rotate-180" : ""}`} />
             </button>
@@ -318,26 +318,26 @@ export function StoryPlannerClient() {
                   </ol>
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <ListBlock title="Keep these" items={plan.output.keep.map(secondPersonDirection)} />
                   <ListBlock title="Clarify before telling" items={plan.output.clarify.map(secondPersonDirection)} />
                 </div>
 
-                <div className="mt-5 rounded-3xl border border-border bg-background p-5">
+                <div className="mt-5 rounded-[1.25rem] border border-border bg-background p-4">
                   <Eyebrow>Two things to remember</Eyebrow>
                   <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
                     {plan.output.deliveryTips.slice(0, 2).map(secondPersonDirection).map((tip) => <li key={tip} className="flex gap-2"><Check className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" />{tip}</li>)}
                   </ul>
-                  <p className="mt-4 rounded-2xl bg-brand-soft/55 px-4 py-3 text-sm leading-6 text-foreground">{secondPersonDirection(plan.output.reassurance)}</p>
+                  <p className="mt-4 rounded-xl bg-brand-soft/55 px-4 py-3 text-sm leading-6 text-foreground">{secondPersonDirection(plan.output.reassurance)}</p>
                 </div>
               </div>
             )}
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="press flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="press flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[0.78rem] font-medium text-brand-foreground shadow-[0_10px_24px_-10px_color-mix(in_oklch,var(--brand)_75%,transparent)] hover:brightness-105">
                 <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
               </Link>
-              <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
+              <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-4 py-2.5 text-[0.78rem] font-medium">
                 <RefreshCw className="h-4 w-4" /> Start another plan
               </button>
             </div>
@@ -349,21 +349,21 @@ export function StoryPlannerClient() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <Eyebrow>Saved privately</Eyebrow>
-            <h2 className="mt-2 text-lg font-semibold tracking-tight">Recent plans</h2>
+            <h2 className="mt-1.5 text-[1rem] font-medium tracking-tight">Recent plans</h2>
           </div>
           <History className="h-5 w-5 text-muted-foreground" />
         </div>
         {loadingHistory ? (
-          <div className="mt-3 flex items-center rounded-3xl border border-border px-5 py-7 text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading saved plans...</div>
+          <div className="mt-3 flex items-center rounded-[1.4rem] border border-border px-5 py-7 text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading saved plans...</div>
         ) : historyError ? (
-          <div className="mt-3 rounded-3xl border border-destructive/25 p-5"><p className="text-sm text-destructive">{historyError}</p><button type="button" onClick={() => void loadHistory()} className="mt-3 text-sm font-semibold">Try again</button></div>
+          <div className="mt-3 rounded-[1.4rem] border border-destructive/25 p-5"><p className="text-sm text-destructive">{historyError}</p><button type="button" onClick={() => void loadHistory()} className="mt-3 text-sm font-semibold">Try again</button></div>
         ) : history.length === 0 ? (
-          <div className="mt-3 rounded-3xl border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">Your finished plans will appear here.</div>
+          <div className="mt-3 rounded-[1.4rem] border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">Your finished plans will appear here.</div>
         ) : (
-          <div className="mt-3 overflow-hidden rounded-[1.9rem] border border-border bg-card">
+          <div className="mt-3 overflow-hidden rounded-[1.3rem] border border-border bg-card">
             {history.map((item, index) => (
               <button key={item.id} type="button" onClick={() => openSaved(item)} className={`flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/60 ${index === history.length - 1 ? "" : "border-b border-border"}`}>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Clock3 className="h-4 w-4" /></span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-accent-foreground"><Clock3 className="h-4 w-4" /></span>
                 <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{item.output.title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {item.audienceContext}</span></span>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               </button>
@@ -377,8 +377,8 @@ export function StoryPlannerClient() {
 
 function PlanReadySkeleton() {
   return (
-    <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/25 bg-card shadow-sm" aria-label="Weaver is building your story plan" aria-busy="true">
-      <div className="p-5 sm:p-6">
+    <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[1.55rem] border border-brand/25 bg-card shadow-sm" aria-label="Weaver is building your story plan" aria-busy="true">
+      <div className="p-4 sm:p-4">
         <div className="animate-pulse">
           <div className="flex items-center justify-between gap-3">
             <div className="h-3 w-24 rounded-full bg-secondary/80" />
@@ -399,7 +399,7 @@ function PlanReadySkeleton() {
             <div className="h-4 w-4 rounded-full bg-secondary" />
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="h-12 rounded-full bg-brand-soft/70" />
             <div className="h-12 rounded-full bg-secondary/65" />
           </div>
@@ -415,26 +415,26 @@ function PlanReadySkeleton() {
 
 function PlannerField({ number, icon: Icon, title, help, value, onChange, placeholder, maxLength, rows = 3, required = false }: FieldProps) {
   return (
-    <label className="rounded-[1.9rem] border border-border bg-card p-5">
+    <label className="rounded-[1.3rem] border border-border bg-card p-4">
       <span className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Icon className="h-4 w-4" /></span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-accent-foreground"><Icon className="h-4 w-4" /></span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold"><span className="mr-2 font-mono text-xs text-muted-foreground">{number}</span>{title}{required ? <span className="ml-1 text-brand">*</span> : null}</span>
+          <span className="block text-[0.84rem] font-medium"><span className="mr-2 font-mono text-xs text-muted-foreground">{number}</span>{title}{required ? <span className="ml-1 text-brand">*</span> : null}</span>
           <span className="mt-1 block text-xs leading-5 text-muted-foreground">{help}</span>
         </span>
       </span>
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} maxLength={maxLength} rows={rows} placeholder={placeholder} className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none placeholder:text-muted-foreground focus:border-brand" />
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} maxLength={maxLength} rows={rows} placeholder={placeholder} className="mt-3.5 w-full resize-y rounded-xl border border-border bg-[#fbfaf7] px-3.5 py-2.5 text-[0.82rem] leading-6 outline-none placeholder:text-muted-foreground focus:border-brand" />
       <span className="mt-1 block text-right font-mono text-[0.6rem] text-muted-foreground">{value.length}/{maxLength}</span>
     </label>
   )
 }
 
 function PlanBlock({ eyebrow, text }: { eyebrow: string; text: string }) {
-  return <div className="rounded-3xl bg-brand-soft/45 p-5"><Eyebrow>{eyebrow}</Eyebrow><p className="mt-2 text-sm leading-7 text-foreground">{text}</p></div>
+  return <div className="rounded-[1.25rem] bg-brand-soft/55 p-4"><Eyebrow>{eyebrow}</Eyebrow><p className="mt-2 text-sm leading-7 text-foreground">{text}</p></div>
 }
 
 function ListBlock({ title, items }: { title: string; items: string[] }) {
-  return <div className="rounded-3xl border border-border p-5"><p className="text-sm font-semibold">{title}</p><ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">{items.map((item) => <li key={item} className="flex gap-2"><Check className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" />{item}</li>)}</ul></div>
+  return <div className="rounded-[1.25rem] border border-border p-4"><p className="text-sm font-semibold">{title}</p><ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">{items.map((item) => <li key={item} className="flex gap-2"><Check className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" />{item}</li>)}</ul></div>
 }
 
 function formatPlan(plan: StoryPlanRecord) {

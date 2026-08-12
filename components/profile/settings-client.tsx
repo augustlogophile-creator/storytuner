@@ -194,11 +194,11 @@ export function SettingsClient() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <BackLink href="/profile" label="Profile" />
       <header className="app-page-enter">
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Settings and privacy</p>
-        <h1 className="text-title mt-3 text-[2.25rem] leading-[1.0]">Every control in plain sight.</h1>
+        <p className="text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Settings and privacy</p>
+        <h1 className="text-title mt-2.5 text-[1.72rem] leading-[1.03]">Every control in plain sight.</h1>
       </header>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
@@ -206,7 +206,7 @@ export function SettingsClient() {
         <span>{syncStatus === "syncing" ? "Syncing progress…" : syncStatus === "saved" ? "Progress saved across devices" : syncStatus === "offline" ? "Offline. Changes will sync later." : syncStatus === "error" ? "Progress sync needs attention" : "Progress is saved on this device"}</span>
       </div>
 
-      {notice && <p role="status" className="rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground">{notice}</p>}
+      {notice && <p role="status" className="rounded-xl border border-brand/15 bg-brand-soft/55 px-3.5 py-2.5 text-[0.8rem] leading-relaxed text-foreground">{notice}</p>}
 
       <Section title="Profile">
         <Row title="Display name" detail="Used on your profile and on Community posts you choose to share.">
@@ -216,13 +216,13 @@ export function SettingsClient() {
               onChange={(event: ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value.slice(0, 40))}
               maxLength={40}
               aria-label="Display name"
-              className="w-32 rounded-2xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 sm:w-40"
+              className="w-32 rounded-xl border border-border bg-[#fbfaf7] px-3 py-2 text-[0.8rem] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 sm:w-40"
             />
             <button
               type="button"
               disabled={!nameChanged}
               onClick={() => setDialog("save-name")}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-foreground transition active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-brand-foreground transition active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted-foreground"
               aria-label="Confirm display name change"
             >
               <Check className="h-5 w-5" strokeWidth={2.7} />
@@ -251,9 +251,9 @@ export function SettingsClient() {
       </Section>
 
       <Section title="Privacy and data">
-        <div className="flex gap-3 rounded-2xl bg-brand-soft/45 p-4">
+        <div className="flex gap-3 rounded-xl bg-brand-soft/55 p-3.5">
           <LockKeyhole className="h-5 w-5 shrink-0 text-accent-foreground" />
-          <p className="text-sm leading-relaxed">Recordings are private by default. A story only appears in Community when you deliberately share it.</p>
+          <p className="text-[0.8rem] leading-5">Recordings are private by default. A story only appears in Community when you deliberately share it.</p>
         </div>
         <Row
           title="Personalize Weaver with past recordings"
@@ -286,9 +286,9 @@ export function SettingsClient() {
         </Row>
       </Section>
 
-      <Link href="/membership" className="app-surface press flex items-center gap-3 rounded-[1.9rem] border border-border bg-card p-5">
+      <Link href="/membership" className="app-surface press flex items-center gap-3 rounded-[1.3rem] border border-border bg-card p-4">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>
+          <p className="text-[0.8rem] font-medium">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>
           <p className="mt-1 text-xs text-muted-foreground">See the $11.99/year founding offer and your current status.</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -324,8 +324,8 @@ export function SettingsClient() {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="relative overflow-visible rounded-[1.9rem] border border-border bg-card p-5">
-      <h2 className="text-title text-[1.4rem]">{title}</h2>
+    <section className="relative overflow-visible rounded-[1.3rem] border border-border bg-card p-4">
+      <h2 className="text-title text-[1.16rem]">{title}</h2>
       <div className="mt-3 divide-y divide-border">{children}</div>
     </section>
   )
@@ -333,10 +333,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 function Row({ title, detail, children }: { title: string; detail: string; children: ReactNode }) {
   return (
-    <div className="relative flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
+    <div className="relative flex items-center justify-between gap-3 py-3.5 first:pt-1 last:pb-1">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold">{title}</p>
-        <p className="mt-1.5 max-w-lg text-[0.78rem] leading-5 text-muted-foreground">{detail}</p>
+        <p className="text-[0.8rem] font-medium">{title}</p>
+        <p className="mt-1 max-w-lg text-[0.72rem] leading-[1.45] text-muted-foreground">{detail}</p>
       </div>
       <div className="shrink-0">{children}</div>
     </div>

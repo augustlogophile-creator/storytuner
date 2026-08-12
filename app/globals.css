@@ -56,46 +56,45 @@
 
 :root {
   color-scheme: light;
-  /* Warm editorial paper, oatmeal surfaces, one restrained sage accent. */
-  --background: #f8f3e9;
-  --foreground: #211f18;
-  --card: #f1e8d8;
-  --card-foreground: #211f18;
-  --popover: #fbf7ef;
-  --popover-foreground: #211f18;
-  --primary: #1d1b14;
-  --primary-foreground: #faf5eb;
-  --secondary: #ebe2d2;
-  --secondary-foreground: #211f18;
-  --muted: #eee7da;
-  --muted-foreground: #6b6456;
-  --accent: #deeadf;
-  --accent-foreground: #45634e;
-  --destructive: #a4493f;
-  --border: #dccfb8;
-  --input: #d6c9b2;
-  --ring: #52745b;
-  --chart-1: #52745b;
-  --chart-2: #718b75;
-  --chart-3: #96aa98;
-  --chart-4: #3f5e49;
-  --chart-5: #283b2f;
-  --radius: 0.95rem;
-  --brand: #52745b;
-  --brand-foreground: #fbf7ef;
-  --brand-soft: #deeadf;
-  --streak: #52745b;
-  --streak-soft: #deeadf;
-  --sidebar: #f4eddf;
-  --sidebar-foreground: #211f18;
-  --sidebar-primary: #1d1b14;
-  --sidebar-primary-foreground: #faf5eb;
-  --sidebar-accent: #deeadf;
-  --sidebar-accent-foreground: #45634e;
-  --sidebar-border: #dccfb8;
-  --sidebar-ring: #52745b;
+  /* Quiet editorial neutrals with one desaturated sage accent. */
+  --background: #f7f6f1;
+  --foreground: #242620;
+  --card: #efede6;
+  --card-foreground: #242620;
+  --popover: #fbfaf7;
+  --popover-foreground: #242620;
+  --primary: #22251f;
+  --primary-foreground: #faf9f5;
+  --secondary: #ebe9e2;
+  --secondary-foreground: #292b26;
+  --muted: #eeece6;
+  --muted-foreground: #71736b;
+  --accent: #e3e9e2;
+  --accent-foreground: #4f6755;
+  --destructive: #a64c45;
+  --border: #dcd9d0;
+  --input: #d6d3ca;
+  --ring: #657d6b;
+  --chart-1: #657d6b;
+  --chart-2: #829486;
+  --chart-3: #a3aea4;
+  --chart-4: #4f6755;
+  --chart-5: #35453a;
+  --radius: 0.78rem;
+  --brand: #657d6b;
+  --brand-foreground: #fbfaf7;
+  --brand-soft: #e3e9e2;
+  --streak: #657d6b;
+  --streak-soft: #e3e9e2;
+  --sidebar: #f3f1eb;
+  --sidebar-foreground: #242620;
+  --sidebar-primary: #22251f;
+  --sidebar-primary-foreground: #faf9f5;
+  --sidebar-accent: #e3e9e2;
+  --sidebar-accent-foreground: #4f6755;
+  --sidebar-border: #dcd9d0;
+  --sidebar-ring: #657d6b;
 }
-
 
 .dark {
   color-scheme: dark;
@@ -176,10 +175,15 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-weight: 400;
+    letter-spacing: -0.008em;
   }
   h1, h2, h3, h4 {
-    letter-spacing: -0.02em;
+    letter-spacing: -0.018em;
     text-wrap: balance;
+  }
+  @media (max-width: 639px) {
+    html { font-size: 15px; }
   }
 }
 
@@ -187,21 +191,21 @@
   /* Tight, confident display headings matching the reference set. */
   .text-display {
     font-family: var(--font-editorial), Georgia, "Times New Roman", serif;
-    letter-spacing: -0.032em;
-    line-height: 1.01;
-    font-weight: 400;
+    letter-spacing: -0.022em;
+    line-height: 1.02;
+    font-weight: 500;
   }
   .text-title {
     font-family: var(--font-editorial), Georgia, "Times New Roman", serif;
-    letter-spacing: -0.028em;
-    line-height: 1.04;
-    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.06;
+    font-weight: 500;
   }
   .text-editorial {
     font-family: var(--font-editorial), Georgia, "Times New Roman", serif;
-    font-weight: 400;
-    letter-spacing: -0.038em;
-    line-height: 0.98;
+    font-weight: 500;
+    letter-spacing: -0.024em;
+    line-height: 1.02;
     text-wrap: balance;
   }
   .reference-chip {
@@ -263,16 +267,14 @@ header {
 
 @layer components {
   .auth-input {
-    @apply w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/15;
+    @apply w-full rounded-xl border border-border bg-[#fbfaf7] px-3.5 py-2.5 text-[0.84rem] outline-none transition placeholder:text-muted-foreground/65 focus:border-brand focus:ring-2 focus:ring-brand/10;
   }
 }
 
 @layer components {
   .entry-shell {
     min-height: 100svh;
-    background:
-      radial-gradient(circle at 50% -10%, color-mix(in oklch, var(--brand-soft) 62%, transparent) 0%, transparent 36%),
-      var(--background);
+    background: #f1f0eb;
   }
 
   .intro-canvas,
@@ -281,7 +283,7 @@ header {
     width: 100%;
     max-width: 28rem;
     margin-inline: auto;
-    background: var(--card);
+    background: #fbfaf7;
   }
 
   .intro-canvas {
@@ -314,8 +316,8 @@ header {
   }
 
   .intro-primary-button {
-    @apply flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition duration-200 active:scale-[0.985];
-    box-shadow: 0 10px 24px rgba(38, 34, 29, 0.12);
+    @apply flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-[0.82rem] font-medium text-primary-foreground transition duration-200 active:scale-[0.992];
+    box-shadow: 0 7px 18px rgba(35, 38, 31, 0.10);
   }
 
   .intro-primary-button:hover {
@@ -462,8 +464,8 @@ header {
 
 /* Subtle app-wide motion and surface polish. */
 @keyframes storytuner-page-in {
-  from { opacity: 0; transform: translateY(7px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(4px); filter: blur(1.5px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 @keyframes storytuner-dialog-in {
@@ -481,26 +483,26 @@ html {
 }
 
 .app-page-enter {
-  animation: storytuner-page-in 320ms cubic-bezier(.2,.75,.25,1) both;
+  animation: storytuner-page-in 360ms cubic-bezier(.22,.72,.22,1) both;
 }
 
 /* Staggered list/section entrances. Set --rise-delay inline per item. */
 @keyframes storytuner-rise-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .rise-in {
-  animation: storytuner-rise-in 460ms cubic-bezier(.2,.75,.25,1) both;
+  animation: storytuner-rise-in 380ms cubic-bezier(.22,.72,.22,1) both;
   animation-delay: var(--rise-delay, 0ms);
 }
 
 /* Tactile press feedback for interactive surfaces. */
 .press {
-  transition: transform 160ms cubic-bezier(.2,.75,.25,1), box-shadow 180ms ease, filter 180ms ease;
+  transition: transform 180ms cubic-bezier(.22,.72,.22,1), box-shadow 220ms ease, background-color 220ms ease, border-color 220ms ease, filter 220ms ease;
 }
 .press:active {
-  transform: scale(0.985);
+  transform: scale(0.992);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -509,15 +511,15 @@ html {
 }
 
 .app-surface {
-  box-shadow: 0 1px 0 rgb(48 45 42 / 0.025);
+  box-shadow: 0 1px 0 rgb(35 38 31 / 0.018);
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .app-surface:hover {
     border-color: color-mix(in oklch, var(--border) 58%, var(--brand) 42%);
-    box-shadow: 0 12px 30px rgb(48 45 42 / 0.06);
-    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgb(35 38 31 / 0.045);
+    transform: translateY(-0.5px);
   }
 }
 
@@ -579,11 +581,11 @@ a {
 
 @media (min-width: 640px) {
   body {
-    background-color: #eee8da;
+    background-color: #efeee9;
     background-image: repeating-linear-gradient(
       -45deg,
-      rgb(62 55 42 / 0.035) 0,
-      rgb(62 55 42 / 0.035) 1px,
+      rgb(48 52 45 / 0.025) 0,
+      rgb(48 52 45 / 0.025) 1px,
       transparent 1px,
       transparent 10px
     );
@@ -610,16 +612,16 @@ select:focus-visible {
   .story-card {
     border: 1px solid var(--border);
     background: var(--card);
-    border-radius: 1.85rem;
+    border-radius: 1.4rem;
   }
   .story-card-soft {
     border: 1px solid color-mix(in oklch, var(--brand) 28%, var(--border));
     background: var(--brand-soft);
-    border-radius: 1.85rem;
+    border-radius: 1.4rem;
   }
   .section-editorial {
     font-family: var(--font-editorial), Georgia, "Times New Roman", serif;
-    font-size: 1.55rem;
+    font-size: 1.32rem;
     line-height: 1.05;
     letter-spacing: -0.025em;
   }
@@ -639,4 +641,18 @@ select:focus-visible {
   }
   .corner-hatch-card::before { top: -2.7rem; left: -2.7rem; }
   .corner-hatch-card::after { right: -2.7rem; bottom: -2.7rem; }
+}
+
+/* Small, deliberate route feedback instead of a heavy nav bounce. */
+@keyframes storytuner-nav-select {
+  from { opacity: .72; transform: scale(.965); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.nav-active {
+  animation: storytuner-nav-select 220ms cubic-bezier(.22,.72,.22,1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-active { animation: none !important; }
 }
