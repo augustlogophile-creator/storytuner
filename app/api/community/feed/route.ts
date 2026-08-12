@@ -116,11 +116,16 @@ export async function GET(request: Request) {
     const audioByPost = new Map(audioRows.map((audio) => [audio.post_id, audio]))
     const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
     const likedByViewer = new Set<string>(viewerLikeRows.map((like: ViewerLikeRow) => like.post_id))
+    const repliesByPost = new Map<string, VisibleReplyRow[]>()
+    for (const reply of visibleReplyRows) {
+      const list = repliesByPost.get(reply.post_id) ?? []
+      list.push(reply)
+      repliesByPost.set(reply.post_id, list)
+    }
     const visibleReplyCounts = new Map<string, number>()
     for (const postId of postIds) {
-      const rowsForPost = visibleReplyRows.filter((reply) => reply.post_id === postId)
-      const renderableRows = renderableCommunityReplies(rowsForPost)
-      const activeCount = renderableRows.filter((reply) => reply.status === "active").length
+      const renderableRows = renderableCommunityReplies(repliesByPost.get(postId) ?? [])
+      const activeCount = renderableRows.reduce((count, reply) => count + (reply.status === "active" ? 1 : 0), 0)
       visibleReplyCounts.set(postId, activeCount)
     }
 

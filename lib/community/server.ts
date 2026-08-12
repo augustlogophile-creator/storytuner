@@ -29,6 +29,15 @@ export async function getCommunityApiContext() {
   }
 
   const restriction = await getAccountRestriction(authenticated.id)
+  if (restriction.lookupFailed) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "ACCOUNT_STATUS_UNAVAILABLE", error: "Community could not verify your account status right now. Try again in a moment." },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
   if (restriction.restricted) {
     return {
       ok: false as const,
@@ -52,7 +61,19 @@ export async function getCommunityApiContext() {
     }
   }
 
-  const membership = await getMembershipByUserId(authenticated.id)
+  let membership
+  try {
+    membership = await getMembershipByUserId(authenticated.id)
+  } catch (error) {
+    backendError("community_membership_lookup_failed", error, { userId: authenticated.id })
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "Community could not verify your membership right now. Try again in a moment." },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
   if (!membership.active) {
     return {
       ok: false as const,
@@ -70,7 +91,7 @@ export async function getCommunityApiContext() {
     .maybeSingle<CommunityProfile>()
 
   if (profileError) {
-backendError("community_profile_lookup_failed", profileError, { userId: authenticated.id })
+    backendError("community_profile_lookup_failed", profileError, { userId: authenticated.id })
     return {
       ok: false as const,
       response: Response.json(

@@ -2,7 +2,7 @@ import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
@@ -80,6 +80,8 @@ const writtenStorySchema = {
 }
 
 export async function POST(req: Request) {
+  const crossSite = requireSameOrigin(req)
+  if (crossSite) return crossSite
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
@@ -92,7 +94,9 @@ export async function POST(req: Request) {
   const blocked = rateLimitResponse(rate, "Too many feedback requests are arriving from this account. Wait a moment and try again.")
   if (blocked) return blocked
   try {
-    const body = (await req.json()) as Record<string, unknown>
+    const json = await readJsonBody(req, 120_000)
+    if (!json.ok) return json.response
+    const body = json.value as Record<string, unknown>
     const mode = typeof body.mode === "string" ? body.mode : "story"
 
     if (mode === "lesson") {
@@ -104,7 +108,13 @@ export async function POST(req: Request) {
       if (!Number.isInteger(unitIndex) || unitIndex < 1 || unitIndex > 15) {
         return Response.json({ error: "This lesson request is missing a valid unit." }, { status: 400 })
       }
-      const membership = await getMembershipByUserId(user.id)
+      let membership
+      try {
+        membership = await getMembershipByUserId(user.id)
+      } catch (error) {
+        backendError("feedback_membership_lookup_failed", error, { userId: user.id })
+        return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+      }
       if (!membership.active && unitIndex > 5) {
         return Response.json({
           code: "LESSON_MEMBERSHIP_REQUIRED",
@@ -148,7 +158,13 @@ export async function POST(req: Request) {
         return Response.json({ error: "This story review is missing a valid request key. Refresh and try again." }, { status: 400 })
       }
 
-      const membership = await getMembershipByUserId(user.id)
+      let membership
+      try {
+        membership = await getMembershipByUserId(user.id)
+      } catch (error) {
+        backendError("feedback_membership_lookup_failed", error, { userId: user.id })
+        return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+      }
       const requestedSeconds = Number(body.targetSeconds ?? body.seconds ?? 0)
       if (!membership.active && Number.isFinite(requestedSeconds) && requestedSeconds > 300) {
         return Response.json({

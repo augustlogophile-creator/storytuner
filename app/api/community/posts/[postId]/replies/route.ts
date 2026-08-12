@@ -3,7 +3,7 @@ import { getCommunityApiContext, noStoreJson, type CommunityApiContext } from "@
 import type { CommunityReply, CommunityContentStatus } from "@/lib/community/types"
 import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
@@ -27,7 +27,7 @@ type ReplyRow = {
   edited_at: string | null
 }
 type ProfileRow = { id: string; username: string; display_name: string }
-type ReplyLikeRow = { reply_id: string; user_id: string }
+type ReplyLikeRow = { reply_id: string }
 
 async function verifyVisiblePost(postId: string, context: CommunityApiContext) {
   const { data, error } = await context.userClient
@@ -59,6 +59,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
       .select("id, post_id, parent_reply_id, author_id, body, status, created_at, edited_at")
       .eq("post_id", postId)
       .order("created_at", { ascending: true })
+      .limit(500)
       .returns<ReplyRow[]>()
 
     if (repliesError) throw repliesError
@@ -67,28 +68,31 @@ export async function GET(_request: Request, routeContext: RouteContext) {
     const authorIds = Array.from(new Set(replyRows.filter((reply: ReplyRow) => reply.status === "active").map((reply: ReplyRow) => reply.author_id)))
     const replyIds = replyRows.map((reply: ReplyRow) => reply.id)
 
-    const [profilesResult, likesResult] = await Promise.all([
+    const [profilesResult, likesResult, viewerLikesResult] = await Promise.all([
       authorIds.length
         ? context.userClient.rpc("community_public_profiles", {
             requested_user_ids: authorIds,
           }) as PromiseLike<{ data: ProfileRow[] | null; error: unknown }>
         : Promise.resolve({ data: [] as ProfileRow[], error: null }),
       replyIds.length
-        ? context.admin.from("community_reply_likes").select("reply_id, user_id").in("reply_id", replyIds).returns<ReplyLikeRow[]>()
+        ? context.admin.from("community_reply_likes").select("reply_id").in("reply_id", replyIds).returns<ReplyLikeRow[]>()
+        : Promise.resolve({ data: [] as ReplyLikeRow[], error: null }),
+      replyIds.length
+        ? context.userClient.from("community_reply_likes").select("reply_id").in("reply_id", replyIds).returns<ReplyLikeRow[]>()
         : Promise.resolve({ data: [] as ReplyLikeRow[], error: null }),
     ])
 
     if (profilesResult.error) backendError("community_reply_author_lookup_failed", profilesResult.error, { userId: context.userId, postId })
     if (likesResult.error) backendError("community_reply_like_lookup_failed", likesResult.error, { userId: context.userId, postId })
+    if (viewerLikesResult.error) backendError("community_reply_viewer_like_lookup_failed", viewerLikesResult.error, { userId: context.userId, postId })
 
     const profileRows: ProfileRow[] = profilesResult.data ?? []
     const profiles = new Map<string, ProfileRow>(profileRows.map((profile: ProfileRow) => [profile.id, profile]))
     const likeCounts = new Map<string, number>()
-    const likedByViewer = new Set<string>()
     for (const like of likesResult.data ?? []) {
       likeCounts.set(like.reply_id, (likeCounts.get(like.reply_id) ?? 0) + 1)
-      if (like.user_id === context.userId) likedByViewer.add(like.reply_id)
     }
+    const likedByViewer = new Set<string>((viewerLikesResult.data ?? []).map((like) => like.reply_id))
 
     const replies: CommunityReply[] = replyRows.map((reply: ReplyRow) => {
       const deleted = reply.status !== "active"
@@ -123,6 +127,8 @@ export async function GET(_request: Request, routeContext: RouteContext) {
 }
 
 export async function POST(request: Request, routeContext: RouteContext) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
   const oversized = rejectLargeRequest(request, 10_000)
@@ -134,7 +140,9 @@ export async function POST(request: Request, routeContext: RouteContext) {
 
   const parsedParams = paramsSchema.safeParse(await routeContext.params)
   if (!parsedParams.success) return noStoreJson({ error: "That post could not be found." }, { status: 404 })
-  const parsedBody = createReplySchema.safeParse(await request.json().catch(() => null))
+  const json = await readJsonBody(request, 10_000)
+  if (!json.ok) return json.response
+  const parsedBody = createReplySchema.safeParse(json.value)
   if (!parsedBody.success) {
     return noStoreJson({ error: parsedBody.error.issues[0]?.message ?? "The reply is not valid." }, { status: 400 })
   }

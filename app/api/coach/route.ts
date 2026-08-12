@@ -2,7 +2,7 @@ import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIText } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { createAdminClient } from "@/lib/supabase/admin"
 
@@ -12,6 +12,8 @@ export const maxDuration = 30
 type IncomingMessage = { role: "user" | "assistant"; content: string }
 
 export async function POST(req: Request) {
+  const crossSite = requireSameOrigin(req)
+  if (crossSite) return crossSite
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
@@ -25,11 +27,14 @@ export async function POST(req: Request) {
   if (blocked) return blocked
 
   try {
-    const body = (await req.json()) as {
+    const json = await readJsonBody(req, 80_000)
+    if (!json.ok) return json.response
+    const body = json.value as {
       messages?: IncomingMessage[]
       storyContext?: string
       scoreContext?: string
       personalizationContext?: string
+      requestKey?: unknown
     }
     const { data: profile } = await user.supabase
       .from("profiles")
@@ -41,18 +46,41 @@ export async function POST(req: Request) {
     const attachedScore = typeof body.scoreContext === "string" ? body.scoreContext.slice(0, 2500) : ""
 
     const messages = Array.isArray(body.messages)
-      ? body.messages.filter((item) => item && (item.role === "user" || item.role === "assistant") && typeof item.content === "string").slice(-12)
+      ? body.messages.filter((item) => item && (item.role === "user" || item.role === "assistant") && typeof item.content === "string")
+          .slice(-12)
+          .map((item) => ({ ...item, content: item.content.slice(0, 5000) }))
       : []
     const latest = messages.at(-1)?.content?.trim() || ""
     if (!latest) return Response.json({ error: "Ask Weaver a question first." }, { status: 400 })
     if (latest.length > 5000) return Response.json({ error: "Keep each Weaver message under 5,000 characters." }, { status: 400 })
 
-    const requestKey = body && typeof (body as { requestKey?: unknown }).requestKey !== "undefined"
-      ? (body as { requestKey?: unknown }).requestKey
-      : null
+    const requestKey = body.requestKey ?? null
     if (!isUuid(requestKey)) return Response.json({ error: "This coaching request is missing a valid request key. Refresh and try again." }, { status: 400 })
 
-    const membership = await getMembershipByUserId(user.id)
+    // Durable replay protection. A serverless retry with the same request key
+    // returns the already-saved answer before reserving usage or calling OpenAI.
+    const admin = createAdminClient()
+    const { data: priorExchange, error: priorExchangeError } = await admin
+      .from("coach_exchanges")
+      .select("assistant_message")
+      .eq("user_id", user.id)
+      .eq("request_key", requestKey)
+      .maybeSingle<{ assistant_message: string }>()
+    if (priorExchangeError) backendError("coach_replay_lookup_failed", priorExchangeError, { userId: user.id, requestKey })
+    if (priorExchange?.assistant_message) {
+      return Response.json(
+        { reply: priorExchange.assistant_message, usage: null, historySaved: true, replayed: true },
+        { headers: { "Cache-Control": "no-store" } },
+      )
+    }
+
+    let membership
+    try {
+      membership = await getMembershipByUserId(user.id)
+    } catch (error) {
+      backendError("coach_membership_lookup_failed", error, { userId: user.id })
+      return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "Weaver could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+    }
     let reservation: UsageReservation | null = null
     if (!membership.active) {
       reservation = await reserveUsage(user.id, "coach_message", requestKey)
@@ -107,7 +135,6 @@ ${personalizedHistory || "Personalization from past recordings is disabled or no
         },
         ...messages.map((item) => ({ role: item.role, content: item.content })),
       ], "coach"), 2 * 60 * 1000)
-      const admin = createAdminClient()
       const { error: historyError } = await admin.from("coach_exchanges").upsert({
         user_id: user.id,
         request_key: requestKey,

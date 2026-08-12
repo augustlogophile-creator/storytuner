@@ -2,7 +2,7 @@ import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson, transcribeWithOpenAI } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
+import { requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
@@ -21,6 +21,8 @@ const cleanupSchema = {
 }
 
 export async function POST(req: Request) {
+  const crossSite = requireSameOrigin(req)
+  if (crossSite) return crossSite
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
@@ -41,7 +43,13 @@ export async function POST(req: Request) {
     if (file.size > 4 * 1024 * 1024) return Response.json({ error: "This recording is too large to transcribe." }, { status: 413 })
     if (!isUuid(requestKey)) return Response.json({ error: "This transcription request is missing a valid request key." }, { status: 400 })
 
-    const membership = await getMembershipByUserId(user.id)
+    let membership
+    try {
+      membership = await getMembershipByUserId(user.id)
+    } catch (error) {
+      backendError("transcription_membership_lookup_failed", error, { userId: user.id })
+      return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+    }
     if (!membership.active && Number.isFinite(durationSeconds) && durationSeconds > 300) {
       return Response.json({
         code: "ARENA_DURATION_MEMBERSHIP_REQUIRED",

@@ -12,6 +12,13 @@ export type SubscriptionRow = {
 
 export function isMembershipActive(row: SubscriptionRow | null | undefined) {
   if (!row || !["active", "trialing"].includes(row.status)) return false
+
+  // When a production price is configured, only that exact Stripe price grants
+  // membership. This prevents an unrelated active subscription row from
+  // accidentally unlocking paid StoryTuner features.
+  const expectedPriceId = process.env.STRIPE_PRICE_ID?.trim()
+  if (expectedPriceId && row.stripe_price_id !== expectedPriceId) return false
+
   if (!row.current_period_end) return true
   return new Date(row.current_period_end).getTime() > Date.now()
 }

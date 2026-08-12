@@ -4,6 +4,7 @@ import { getModeratorContext } from "@/lib/community/moderation"
 import { writeVerifiedModerationStatus } from "@/lib/community/moderation-status"
 import { backendError, backendLog } from "@/lib/backend-log"
 import type { ModerationAction } from "@/lib/admin/community-types"
+import { readJsonBody, requireSameOrigin } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -38,11 +39,15 @@ function futureDate(days: number) {
 }
 
 export async function PATCH(request: Request, routeContext: RouteContext) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getModeratorContext()
   if (!context.ok) return context.response
 
   const params = paramsSchema.safeParse(await routeContext.params)
-  const body = bodySchema.safeParse(await request.json().catch(() => null))
+  const json = await readJsonBody(request, 8_000)
+  if (!json.ok) return json.response
+  const body = bodySchema.safeParse(json.value)
   if (!params.success || !body.success) {
     return Response.json({ error: body.success ? "That report could not be found." : body.error.issues[0]?.message || "The moderation action is invalid." }, { status: 400 })
   }

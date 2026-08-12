@@ -1,6 +1,6 @@
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityReportReason } from "@/lib/community/types"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
@@ -24,6 +24,8 @@ type ReportRequest = {
 }
 
 export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
   const oversized = rejectLargeRequest(request, 8_000)
@@ -33,12 +35,9 @@ export async function POST(request: Request) {
   ]), "Too many reports were submitted recently. Try again later.")
   if (blocked) return blocked
 
-  let payload: ReportRequest
-  try {
-    payload = await request.json() as ReportRequest
-  } catch {
-    return noStoreJson({ error: "The report could not be read." }, { status: 400 })
-  }
+  const json = await readJsonBody(request, 8_000)
+  if (!json.ok) return json.response
+  const payload = json.value as ReportRequest
 
   const postId = typeof payload.postId === "string" ? payload.postId : null
   const replyId = typeof payload.replyId === "string" ? payload.replyId : null

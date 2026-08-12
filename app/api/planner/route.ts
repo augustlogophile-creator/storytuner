@@ -4,7 +4,7 @@ import { openAIJson } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
 import type { StoryPlanOutput, StoryPlanRecord } from "@/lib/planner/types"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const runtime = "nodejs"
@@ -78,10 +78,19 @@ async function activeMember() {
   const user = await getAuthenticatedUser()
   if (!user) return { ok: false as const, response: Response.json({ error: "Authentication required." }, { status: 401 }) }
   const restriction = await getAccountRestriction(user.id)
+  if (restriction.lookupFailed) {
+    return { ok: false as const, response: Response.json({ code: "ACCOUNT_STATUS_UNAVAILABLE", error: "Story Planner could not verify your account status right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } }) }
+  }
   if (restriction.restricted) {
     return { ok: false as const, response: Response.json({ error: restriction.publicMessage || "This account is currently restricted." }, { status: 403 }) }
   }
-  const membership = await getMembershipByUserId(user.id)
+  let membership
+  try {
+    membership = await getMembershipByUserId(user.id)
+  } catch (error) {
+    backendError("planner_membership_lookup_failed", error, { userId: user.id })
+    return { ok: false as const, response: Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "Story Planner could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } }) }
+  }
   if (!membership.active) {
     return {
       ok: false as const,
@@ -115,6 +124,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const auth = await activeMember()
   if (!auth.ok) return auth.response
 
@@ -127,12 +138,37 @@ export async function POST(request: Request) {
   const blocked = rateLimitResponse(rate, "Story Planner is receiving too many requests from this account. Wait a moment and try again.")
   if (blocked) return blocked
 
-  const parsed = inputSchema.safeParse(await request.json().catch(() => null))
+  const json = await readJsonBody(request, 40_000)
+  if (!json.ok) return json.response
+  const parsed = inputSchema.safeParse(json.value)
   if (!parsed.success) {
     return Response.json({ error: parsed.error.issues[0]?.message || "The story plan is incomplete." }, { status: 400 })
   }
 
   const admin = createAdminClient()
+  const input = parsed.data
+
+  // Prevent double-clicks and network retries from creating two plans or two AI
+  // charges. An identical request made within two minutes reuses the saved plan.
+  const duplicateCutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+  const { data: recentDuplicate, error: duplicateError } = await admin
+    .from("story_plans")
+    .select("id, audience_context, goal, rough_plan, must_include, nervous_about, output, created_at")
+    .eq("user_id", auth.user.id)
+    .eq("audience_context", input.audienceContext)
+    .eq("goal", input.goal)
+    .eq("rough_plan", input.roughPlan)
+    .eq("must_include", input.mustInclude)
+    .eq("nervous_about", input.nervousAbout)
+    .gte("created_at", duplicateCutoff)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<PlanRow>()
+  if (duplicateError) backendError("planner_duplicate_lookup_failed", duplicateError, { userId: auth.user.id })
+  if (recentDuplicate) {
+    return Response.json({ plan: toRecord(recentDuplicate), replayed: true }, { headers: { "Cache-Control": "no-store" } })
+  }
+
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
   const { count, error: countError } = await admin
@@ -149,7 +185,6 @@ export async function POST(request: Request) {
     return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Weaver can keep the feature reliable for everyone." }, { status: 429 })
   }
 
-  const input = parsed.data
   try {
     const plannerFingerprint = requestFingerprint(auth.user.id, input.audienceContext, input.goal, input.roughPlan, input.mustInclude, input.nervousAbout)
     const output = await runIdempotent(`story-planner:${plannerFingerprint}`, () => openAIJson<StoryPlanOutput>({

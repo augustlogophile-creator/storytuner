@@ -60,7 +60,7 @@ export function SettingsClient() {
     }
     if (dialog === "delete-all") return {
       title: "Delete all StoryTuner data?",
-      body: <>This erases synced progress, XP, Weaver purchases, settings, recordings, and Community activity across your devices. Your login account will remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
+      body: <>This erases your StoryTuner content, progress, XP, Weaver purchases, settings, recordings, Planner history, and Community activity across devices. Your login, billing connection, free-usage limits, and safety records remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
       confirm: "Delete all data",
       tone: "danger" as const,
     }
@@ -141,18 +141,26 @@ export function SettingsClient() {
     setNotice("")
     try {
       if (dialog === "delete-recordings") {
-        await deleteAllRecordings()
-        setNotice("All recordings were deleted from this device and private cloud storage.")
+        const response = await fetch("/api/account/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ scope: "recordings" }),
+        })
+        const payload = await response.json() as { deleted?: boolean; error?: string }
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete the recordings.")
+        await deleteAllRecordings({ skipCloud: true })
+        setNotice("All recordings and recording-derived Community posts were deleted across devices.")
       }
       if (dialog === "delete-all") {
-        const supabase = createClient()
-        const { data } = await supabase.auth.getUser()
-        if (data.user) {
-          await supabase.from("profiles").update({ ai_personalization_enabled: false }).eq("id", data.user.id)
-        }
-        await resetAll()
-        setDisplayName("Storyteller")
-        setNotice("Your StoryTuner app data was deleted across devices.")
+        const response = await fetch("/api/account/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ scope: "app_data" }),
+        })
+        const payload = await response.json() as { deleted?: boolean; error?: string }
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete your app data.")
+        await resetAll({ skipCloud: true, skipRemoteState: true })
+        setNotice("Your StoryTuner content and progress were deleted across devices. Your login, billing, usage limits, and safety records remain.")
       }
       if (dialog === "delete-account") {
         const response = await fetch("/api/account/delete", {
@@ -266,7 +274,7 @@ export function SettingsClient() {
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
         </Row>
-        <Row title="Delete all app data" detail="Erase synced StoryTuner progress and local media across your devices while keeping your login account.">
+        <Row title="Delete all app data" detail="Erase your StoryTuner content and progress across devices while keeping your login and billing account.">
           <button type="button" onClick={() => setDialog("delete-all")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete all
           </button>

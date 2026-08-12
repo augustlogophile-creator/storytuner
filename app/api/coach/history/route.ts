@@ -37,14 +37,14 @@ export async function GET() {
       .from("coach_exchanges")
       .select("id, user_message, assistant_message, created_at")
       .eq("user_id", auth.user.id)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(30)
       .returns<ExchangeRow[]>()
 
     if (error) {
       backendError("coach_history_archive_lookup_failed", error, { userId: auth.user.id })
     } else {
-      for (const exchange of data ?? []) {
+      for (const exchange of [...(data ?? [])].reverse()) {
         archived.push(
           {
             id: `${exchange.id}:user`,

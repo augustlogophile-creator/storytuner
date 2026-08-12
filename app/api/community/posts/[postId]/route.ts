@@ -3,7 +3,7 @@ import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { backendError } from "@/lib/backend-log"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { countActiveRenderableReplies } from "@/lib/community/visible-replies"
 
 export const dynamic = "force-dynamic"
@@ -28,6 +28,8 @@ type OwnedPostRow = {
 }
 
 export async function PATCH(request: Request, routeContext: RouteContext) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
   const oversized = rejectLargeRequest(request, 15000)
@@ -39,7 +41,9 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   if (!parsedParams.success) return noStoreJson({ error: "That post could not be found." }, { status: 404 })
   const { postId } = parsedParams.data
 
-  const parsedBody = editSchema.safeParse(await request.json().catch(() => null))
+  const json = await readJsonBody(request, 15_000)
+  if (!json.ok) return json.response
+  const parsedBody = editSchema.safeParse(json.value)
   if (!parsedBody.success) {
     return noStoreJson({ error: parsedBody.error.issues[0]?.message ?? "The update is not valid." }, { status: 400 })
   }
@@ -146,7 +150,9 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   return noStoreJson({ post })
 }
 
-export async function DELETE(_request: Request, routeContext: RouteContext) {
+export async function DELETE(request: Request, routeContext: RouteContext) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
   const limited = rateLimitResponse(rateLimitUser(context.userId, "community_post_mutation", [{ limit: 20, windowMs: 10 * 60 * 1000, label: "20/10m" }]), "Too many Community changes. Wait a few minutes and try again.")

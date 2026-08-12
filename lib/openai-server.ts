@@ -1,3 +1,4 @@
+import "server-only"
 import { backendError, backendLog } from "@/lib/backend-log"
 
 type JsonSchema = Record<string, unknown>

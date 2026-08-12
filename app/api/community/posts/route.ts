@@ -2,7 +2,7 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
@@ -18,6 +18,8 @@ type InsertedPost = {
 }
 
 export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
   const oversized = rejectLargeRequest(request, 15_000)
@@ -28,7 +30,9 @@ export async function POST(request: Request) {
   if (blocked) return blocked
 
   try {
-    const parsed = createPostSchema.safeParse(await request.json())
+    const json = await readJsonBody(request, 15_000)
+    if (!json.ok) return json.response
+    const parsed = createPostSchema.safeParse(json.value)
     if (!parsed.success) {
       return noStoreJson(
         { error: parsed.error.issues[0]?.message ?? "The post is not valid." },

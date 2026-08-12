@@ -1,3 +1,4 @@
+import "server-only"
 import { backendError, backendLog } from "@/lib/backend-log"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { writeVerifiedModerationStatus } from "@/lib/community/moderation-status"
@@ -5,9 +6,12 @@ import { writeVerifiedModerationStatus } from "@/lib/community/moderation-status
 const RECORDINGS_BUCKET = "storytuner-recordings"
 const COMMUNITY_BUCKET = "storytuner-community-audio"
 const DAY_MS = 24 * 60 * 60 * 1000
+const DELETED_COMMUNITY_RETENTION_MS = 30 * DAY_MS
 
 type StaleRecording = { id: string; storage_path: string }
 type FailedCommunityAudio = { id: string; storage_path: string }
+type DeletedCommunityPost = { id: string }
+type CommunityAudioForPost = { post_id: string; storage_path: string }
 type ModerationStatus = {
   user_id: string
   account_status: "active" | "suspended" | "banned"
@@ -23,6 +27,7 @@ export type MaintenanceResult = {
   failedCommunityAudioRemoved: number
   expiredAccountSuspensionsCleared: number
   expiredCommunitySuspensionsCleared: number
+  deletedCommunityPostsPurged: number
 }
 
 export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
@@ -34,6 +39,7 @@ export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
     failedCommunityAudioRemoved: 0,
     expiredAccountSuspensionsCleared: 0,
     expiredCommunitySuspensionsCleared: 0,
+    deletedCommunityPostsPurged: 0,
   }
 
   try {
@@ -82,6 +88,70 @@ export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
     }
   } catch (error) {
     backendError("maintenance_community_audio_cleanup_failed", error)
+  }
+
+
+  try {
+    const deletedCutoff = new Date(now.getTime() - DELETED_COMMUNITY_RETENTION_MS).toISOString()
+    const { data: deletedPosts, error: deletedPostsError } = await admin
+      .from("community_posts")
+      .select("id")
+      .eq("status", "deleted")
+      .lt("deleted_at", deletedCutoff)
+      .limit(300)
+      .returns<DeletedCommunityPost[]>()
+    if (deletedPostsError) throw deletedPostsError
+
+    const candidateIds = (deletedPosts ?? []).map((row: DeletedCommunityPost) => row.id)
+    let ids = candidateIds
+    if (candidateIds.length) {
+      const { data: replyRows, error: replyRowsError } = await admin
+        .from("community_replies")
+        .select("id,post_id")
+        .in("post_id", candidateIds)
+        .returns<Array<{ id: string; post_id: string }>>()
+      if (replyRowsError) throw replyRowsError
+
+      const replyIds = (replyRows ?? []).map((row) => row.id)
+      const [postReports, replyReports] = await Promise.all([
+        admin.from("community_reports").select("post_id").in("post_id", candidateIds).returns<Array<{ post_id: string | null }>>(),
+        replyIds.length
+          ? admin.from("community_reports").select("reply_id").in("reply_id", replyIds).returns<Array<{ reply_id: string | null }>>()
+          : Promise.resolve({ data: [] as Array<{ reply_id: string | null }>, error: null }),
+      ])
+      if (postReports.error) throw postReports.error
+      if (replyReports.error) throw replyReports.error
+
+      const protectedPostIds = new Set(
+        (postReports.data ?? []).map((row) => row.post_id).filter((value): value is string => Boolean(value)),
+      )
+      const replyToPost = new Map((replyRows ?? []).map((row) => [row.id, row.post_id]))
+      for (const report of replyReports.data ?? []) {
+        if (report.reply_id) {
+          const postId = replyToPost.get(report.reply_id)
+          if (postId) protectedPostIds.add(postId)
+        }
+      }
+      ids = candidateIds.filter((id) => !protectedPostIds.has(id))
+    }
+    if (ids.length) {
+      const { data: audioRows, error: audioRowsError } = await admin
+        .from("community_audio")
+        .select("post_id,storage_path")
+        .in("post_id", ids)
+        .returns<CommunityAudioForPost[]>()
+      if (audioRowsError) throw audioRowsError
+      const paths = (audioRows ?? []).map((row) => row.storage_path).filter(Boolean)
+      if (paths.length) {
+        const { error: storageError } = await admin.storage.from(COMMUNITY_BUCKET).remove(paths)
+        if (storageError) throw storageError
+      }
+      const { error: deleteError } = await admin.from("community_posts").delete().in("id", ids).eq("status", "deleted")
+      if (deleteError) throw deleteError
+      result.deletedCommunityPostsPurged = ids.length
+    }
+  } catch (error) {
+    backendError("maintenance_deleted_community_purge_failed", error)
   }
 
   try {

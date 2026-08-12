@@ -1,6 +1,7 @@
 import { backendError } from "@/lib/backend-log"
 import { getModeratorContext } from "@/lib/community/moderation"
 import { runStoryTunerMaintenance } from "@/lib/maintenance"
+import { requireSameOrigin } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -44,6 +45,7 @@ export async function GET() {
       activeMembers,
       restrictionRowsResult,
       staleCommunityAudio,
+      deletedPostsAwaitingPurge,
       recentFailures,
     ] = await Promise.all([
       count(context.admin.from("recording_uploads").select("id", { count: "exact", head: true }).eq("status", "failed").gte("updated_at", weekAgo)),
@@ -58,6 +60,7 @@ export async function GET() {
       count(context.admin.from("subscriptions").select("user_id", { count: "exact", head: true }).in("status", ["active", "trialing"])),
       context.admin.from("community_moderation_status").select("user_id,account_status,account_suspended_until,community_suspended_until").limit(5000).returns<RestrictionRow[]>(),
       count(context.admin.from("community_audio").select("id", { count: "exact", head: true }).in("status", ["deleting", "failed"]).lt("created_at", staleCutoff)),
+      count(context.admin.from("community_posts").select("id", { count: "exact", head: true }).eq("status", "deleted")),
       context.admin
         .from("recording_uploads")
         .select("id,user_id,status,error_message,updated_at")
@@ -82,12 +85,14 @@ export async function GET() {
       configuration: {
         openAI: Boolean(process.env.OPENAI_API_KEY),
         supabaseAdmin: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL),
-        stripe: Boolean(process.env.STRIPE_SECRET_KEY),
+        stripe: Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID && process.env.STRIPE_WEBHOOK_SECRET),
+        maintenanceCron: Boolean(process.env.CRON_SECRET),
       },
       metrics: {
         failedRecordings7d: failedRecordings,
         staleRecordings,
         staleCommunityAudio,
+        deletedPostsAwaitingPurge,
         openReports,
         moderationActions24h: actionsToday,
         coachMessages24h: coachToday,
@@ -112,7 +117,9 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getModeratorContext()
   if (!context.ok) return context.response
   try {

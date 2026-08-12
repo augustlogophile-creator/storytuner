@@ -1,3 +1,4 @@
+import "server-only"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export type UsageFeature = "coach_message" | "arena_review"

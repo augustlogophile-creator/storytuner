@@ -434,8 +434,8 @@ type AppContextValue = {
   updateProfileName: (name: string) => void
   setPremium: (value: boolean) => void
   completeOnboarding: (name?: string) => void
-  deleteAllRecordings: () => Promise<void>
-  resetAll: () => Promise<void>
+  deleteAllRecordings: (options?: { skipCloud?: boolean }) => Promise<void>
+  resetAll: (options?: { skipCloud?: boolean; skipRemoteState?: boolean }) => Promise<void>
   addCoachExchange: (user: string, assistant: string) => void
   clearCoach: () => void
 }
@@ -862,22 +862,22 @@ export function AppProvider({
     }))
   }, [])
 
-  const deleteAllRecordings = useCallback(async () => {
+  const deleteAllRecordings = useCallback(async (options?: { skipCloud?: boolean }) => {
     const cloudRecordings = state.recordings
       .filter((recording) => recording.cloudRecordingId && recording.cloudStoragePath)
       .map((recording) => ({ id: recording.cloudRecordingId!, storagePath: recording.cloudStoragePath! }))
-    if (cloudRecordings.length) await deleteCloudRecordings(cloudRecordings)
+    if (!options?.skipCloud && cloudRecordings.length) await deleteCloudRecordings(cloudRecordings)
     await Promise.all(state.recordings.map((recording) => deleteMedia(recording.id).catch(() => undefined)))
     setState((current) => ({ ...current, recordings: [], community: current.community.filter((post) => !post.mine) }))
   }, [state.recordings])
 
-  const resetAll = useCallback(async () => {
+  const resetAll = useCallback(async (options?: { skipCloud?: boolean; skipRemoteState?: boolean }) => {
     const cloudRecordings = state.recordings
       .filter((recording) => recording.cloudRecordingId && recording.cloudStoragePath)
       .map((recording) => ({ id: recording.cloudRecordingId!, storagePath: recording.cloudStoragePath! }))
-    if (cloudRecordings.length) await deleteCloudRecordings(cloudRecordings)
+    if (!options?.skipCloud && cloudRecordings.length) await deleteCloudRecordings(cloudRecordings)
     await Promise.all(state.recordings.map((recording) => deleteMedia(recording.id).catch(() => undefined)))
-    if (syncUserId.current) {
+    if (!options?.skipRemoteState && syncUserId.current) {
       const supabase = createClient()
       try {
         await supabase.from("user_app_state").delete().eq("user_id", syncUserId.current)

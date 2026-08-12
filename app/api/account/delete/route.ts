@@ -4,7 +4,7 @@ import { STORYTUNER_OWNER_EMAIL } from "@/lib/community/moderation"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 import { stripeDelete } from "@/lib/stripe-rest"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -18,6 +18,8 @@ type SubscriptionRow = { stripe_customer_id: string | null }
 type StorageRow = { storage_path: string }
 
 export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const authenticated = await getAuthenticatedUser()
   if (!authenticated) return Response.json({ error: "Authentication required." }, { status: 401 })
 
@@ -27,7 +29,9 @@ export async function POST(request: Request) {
   const blocked = rateLimitResponse(rate, "Too many account-deletion attempts. Wait and try again.")
   if (blocked) return blocked
 
-  const parsed = schema.safeParse(await request.json().catch(() => null))
+  const json = await readJsonBody(request, 10_000)
+  if (!json.ok) return json.response
+  const parsed = schema.safeParse(json.value)
   if (!parsed.success) return Response.json({ error: "Type DELETE to confirm permanent account deletion." }, { status: 400 })
 
   const email = typeof authenticated.claims.email === "string" ? authenticated.claims.email.trim().toLowerCase() : ""

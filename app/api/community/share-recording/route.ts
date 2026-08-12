@@ -2,7 +2,7 @@ import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
-import { rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
@@ -36,6 +36,8 @@ type RecordingRow = {
 type InsertedPost = { id: string; created_at: string }
 
 export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
   const oversized = rejectLargeRequest(request, 30_000)
@@ -49,7 +51,9 @@ export async function POST(request: Request) {
   let createdPostId: string | null = null
 
   try {
-    const parsed = schema.safeParse(await request.json())
+    const json = await readJsonBody(request, 30_000)
+    if (!json.ok) return json.response
+    const parsed = schema.safeParse(json.value)
     if (!parsed.success) {
       return noStoreJson({ error: parsed.error.issues[0]?.message ?? "That recording cannot be shared." }, { status: 400 })
     }

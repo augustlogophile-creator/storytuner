@@ -20,6 +20,7 @@ export type AccountRestriction = {
   communitySuspendedUntil: string | null
   publicMessage: string | null
   updatedAt: string | null
+  lookupFailed: boolean
 }
 
 export async function getAuthenticatedUser() {
@@ -38,6 +39,15 @@ export async function getActiveAuthenticatedUser() {
     return { ok: false as const, response: Response.json({ error: "Authentication required." }, { status: 401 }) }
   }
   const restriction = await getAccountRestriction(authenticated.id)
+  if (restriction.lookupFailed) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "ACCOUNT_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your account status right now. Try again in a moment." },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
   if (restriction.restricted) {
     return {
       ok: false as const,
@@ -74,6 +84,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
       communitySuspendedUntil: null,
       publicMessage: null,
       updatedAt: null,
+      lookupFailed: true,
     }
   }
 
@@ -85,6 +96,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
       communitySuspendedUntil: null,
       publicMessage: null,
       updatedAt: null,
+      lookupFailed: false,
     }
   }
 
@@ -114,6 +126,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
         communitySuspendedUntil: normalized.community_suspended_until,
         publicMessage: normalized.public_message,
         updatedAt: normalized.updated_at,
+        lookupFailed: false,
       }
     } catch (normalizeError) {
       backendError("moderation_expiry_normalization_failed", normalizeError, { userId })
@@ -130,6 +143,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
     communitySuspendedUntil: communityExpired ? null : data.community_suspended_until,
     publicMessage: (accountExpired || communityExpired) ? (accountExpired ? "Your StoryTuner access has been restored automatically because the suspension ended." : "Your Community access has been restored automatically because the suspension ended.") : data.public_message,
     updatedAt: data.updated_at,
+    lookupFailed: false,
   }
 }
 

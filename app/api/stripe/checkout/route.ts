@@ -3,12 +3,17 @@ import { getAuthenticatedUser } from "@/lib/require-auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripePost } from "@/lib/stripe-rest"
 import { backendError, backendLog } from "@/lib/backend-log"
-import { rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 type CheckoutSession = { id: string; url: string | null; customer: string | null }
 type StripeCustomer = { id: string }
 
 export async function POST(request: Request) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   const user = await getAuthenticatedUser()
   if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
   const limited = rateLimitResponse(rateLimitUser(user.id, "stripe_checkout", [{ limit: 4, windowMs: 10 * 60 * 1000, label: "4/10m" }]), "Too many checkout attempts. Wait a few minutes and try again.")
@@ -20,10 +25,10 @@ export async function POST(request: Request) {
       return Response.json({ error: "Membership is already active.", code: "ALREADY_ACTIVE" }, { status: 409 })
     }
 
-    const priceId = process.env.STRIPE_PRICE_ID
+    const priceId = process.env.STRIPE_PRICE_ID?.trim()
     if (!priceId) throw new Error("STRIPE_PRICE_ID is missing.")
 
-    const origin = new URL(request.url).origin
+    const origin = canonicalOrigin(request)
     const email = typeof user.claims.email === "string" ? user.claims.email : undefined
     let customerId = existing?.stripe_customer_id ?? null
 
@@ -31,7 +36,7 @@ export async function POST(request: Request) {
       const customer = await stripePost<StripeCustomer>("/customers", {
         email,
         "metadata[supabase_user_id]": user.id,
-      })
+      }, { idempotencyKey: `storytuner-customer-${user.id}` })
       customerId = customer.id
       const admin = createAdminClient()
       const { error } = await admin.from("subscriptions").upsert({
@@ -60,6 +65,14 @@ export async function POST(request: Request) {
     return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     backendError("stripe_checkout_failed", error, { userId: user.id })
-    return Response.json({ error: error instanceof Error ? error.message : "Could not start checkout." }, { status: 500 })
+    return Response.json({ error: "StoryTuner could not start checkout right now. Try again in a moment." }, { status: 502, headers: { "Cache-Control": "no-store" } })
   }
+}
+
+function canonicalOrigin(request: Request) {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if (configured) {
+    try { return new URL(configured).origin } catch {}
+  }
+  return new URL(request.url).origin
 }

@@ -20,18 +20,26 @@ const idempotent = globalStore.__storytunerIdempotent ?? new Map<string, Idempot
 globalStore.__storytunerRateBuckets = rateBuckets
 globalStore.__storytunerIdempotent = idempotent
 
+/**
+ * Best-effort per-instance limiter. Expensive AI routes also use database-backed
+ * usage checks so limits survive serverless instance changes.
+ */
 export function rateLimitUser(userId: string, action: string, rules: RateRule[]) {
   const now = Date.now()
-  for (const rule of rules) {
+  const prepared = rules.map((rule) => {
     const key = `${action}:${userId}:${rule.windowMs}`
     const cutoff = now - rule.windowMs
     const recent = (rateBuckets.get(key) ?? []).filter((timestamp) => timestamp > cutoff)
-    if (recent.length >= rule.limit) {
-      const retryAfterMs = Math.max(1000, recent[0] + rule.windowMs - now)
+    return { rule, key, recent }
+  })
+
+  for (const item of prepared) {
+    if (item.recent.length >= item.rule.limit) {
+      const retryAfterMs = Math.max(1000, item.recent[0] + item.rule.windowMs - now)
       backendLog("warn", "rate_limit_blocked", {
         action,
         userId,
-        rule: rule.label ?? `${rule.limit}/${rule.windowMs}`,
+        rule: item.rule.label ?? `${item.rule.limit}/${item.rule.windowMs}`,
         retryAfterMs,
       })
       return {
@@ -39,8 +47,13 @@ export function rateLimitUser(userId: string, action: string, rules: RateRule[])
         retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
       }
     }
-    recent.push(now)
-    rateBuckets.set(key, recent)
+  }
+
+  // Record the request only after every rule has passed. This prevents a request
+  // rejected by a long window from consuming capacity in a shorter window too.
+  for (const item of prepared) {
+    item.recent.push(now)
+    rateBuckets.set(item.key, item.recent)
   }
   pruneStores(now)
   return { allowed: true as const, retryAfterSeconds: 0 }
@@ -59,10 +72,67 @@ export function rejectLargeRequest(request: Request, maxBytes: number) {
   if (!raw) return null
   const size = Number(raw)
   if (!Number.isFinite(size) || size <= maxBytes) return null
-  return Response.json(
-    { code: "REQUEST_TOO_LARGE", error: "That request is too large." },
-    { status: 413, headers: { "Cache-Control": "no-store" } },
-  )
+  return requestTooLargeResponse()
+}
+
+/**
+ * Reads JSON while enforcing the limit even when Content-Length is absent or
+ * inaccurate. This closes the common chunked-body gap left by header-only checks.
+ */
+export async function readJsonBody(request: Request, maxBytes: number) {
+  const headerRejection = rejectLargeRequest(request, maxBytes)
+  if (headerRejection) return { ok: false as const, response: headerRejection }
+
+  try {
+    const text = await request.text()
+    const byteLength = new TextEncoder().encode(text).byteLength
+    if (byteLength > maxBytes) {
+      return { ok: false as const, response: requestTooLargeResponse() }
+    }
+    if (!text.trim()) {
+      return {
+        ok: false as const,
+        response: Response.json(
+          { code: "INVALID_JSON", error: "The request body is empty." },
+          { status: 400, headers: { "Cache-Control": "no-store" } },
+        ),
+      }
+    }
+    return { ok: true as const, value: JSON.parse(text) as unknown }
+  } catch {
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "INVALID_JSON", error: "The request body could not be read." },
+        { status: 400, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
+}
+
+/**
+ * Defense-in-depth CSRF protection for browser mutations. Supabase session
+ * cookies are already same-site, but StoryTuner also rejects explicit cross-site
+ * POST/PATCH/DELETE requests before any privileged server work begins.
+ */
+export function requireSameOrigin(request: Request) {
+  const requestOrigin = new URL(request.url).origin
+  const origin = request.headers.get("origin")
+  const fetchSite = request.headers.get("sec-fetch-site")?.toLowerCase() ?? ""
+
+  if (origin) {
+    try {
+      if (new URL(origin).origin !== requestOrigin) return crossSiteResponse()
+    } catch {
+      return crossSiteResponse()
+    }
+  }
+
+  if (fetchSite && !["same-origin", "same-site", "none"].includes(fetchSite)) {
+    return crossSiteResponse()
+  }
+
+  return null
 }
 
 export function runIdempotent<T>(key: string, task: () => Promise<T>, ttlMs = 90_000): Promise<T> {
@@ -77,6 +147,20 @@ export function runIdempotent<T>(key: string, task: () => Promise<T>, ttlMs = 90
   idempotent.set(key, { expiresAt: now + ttlMs, promise } as IdempotentEntry<unknown>)
   pruneStores(now)
   return promise
+}
+
+function requestTooLargeResponse() {
+  return Response.json(
+    { code: "REQUEST_TOO_LARGE", error: "That request is too large." },
+    { status: 413, headers: { "Cache-Control": "no-store" } },
+  )
+}
+
+function crossSiteResponse() {
+  return Response.json(
+    { code: "CROSS_SITE_REQUEST_BLOCKED", error: "This request was blocked for security reasons." },
+    { status: 403, headers: { "Cache-Control": "no-store", "Vary": "Origin" } },
+  )
 }
 
 function pruneStores(now: number) {

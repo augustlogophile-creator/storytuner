@@ -1,5 +1,7 @@
+import "server-only"
 const STRIPE_API = "https://api.stripe.com/v1"
 const STRIPE_VERSION = "2025-06-30.basil"
+const STRIPE_TIMEOUT_MS = 15_000
 
 function secretKey() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -15,48 +17,66 @@ function encode(params: Record<string, string | number | boolean | undefined>) {
   return body
 }
 
-export async function stripePost<T>(path: string, params: Record<string, string | number | boolean | undefined>) {
-  const response = await fetch(`${STRIPE_API}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey()}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Stripe-Version": STRIPE_VERSION,
-    },
-    body: encode(params),
-    cache: "no-store",
-  })
-  const payload = await response.json() as T & { error?: { message?: string } }
-  if (!response.ok) throw new Error(payload.error?.message || `Stripe request failed (${response.status}).`)
+type StripeRequestOptions = { idempotencyKey?: string }
+
+async function stripeRequest<T>(
+  path: string,
+  init: RequestInit,
+  options: StripeRequestOptions = {},
+) {
+  const headers = new Headers(init.headers)
+  headers.set("Authorization", `Bearer ${secretKey()}`)
+  headers.set("Stripe-Version", STRIPE_VERSION)
+  if (options.idempotencyKey) headers.set("Idempotency-Key", options.idempotencyKey.slice(0, 255))
+
+  let response: Response
+  try {
+    response = await fetch(`${STRIPE_API}${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+      signal: AbortSignal.timeout(STRIPE_TIMEOUT_MS),
+    })
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new Error("Stripe request timed out.")
+    }
+    throw error
+  }
+
+  const text = await response.text()
+  let payload: (T & { error?: { message?: string } }) | null = null
+  try {
+    payload = text ? JSON.parse(text) as T & { error?: { message?: string } } : null
+  } catch {
+    // Keep malformed upstream bodies out of user-facing responses.
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || `Stripe request failed (${response.status}).`)
+  }
+  if (!payload) throw new Error("Stripe returned an invalid response.")
   return payload
 }
 
+export async function stripePost<T>(
+  path: string,
+  params: Record<string, string | number | boolean | undefined>,
+  options?: StripeRequestOptions,
+) {
+  return stripeRequest<T>(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: encode(params),
+  }, options)
+}
 
 export async function stripeDelete<T>(path: string) {
-  const response = await fetch(`${STRIPE_API}${path}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${secretKey()}`,
-      "Stripe-Version": STRIPE_VERSION,
-    },
-    cache: "no-store",
-  })
-  const payload = await response.json() as T & { error?: { message?: string } }
-  if (!response.ok) throw new Error(payload.error?.message || `Stripe request failed (${response.status}).`)
-  return payload
+  return stripeRequest<T>(path, { method: "DELETE" })
 }
 
 export async function stripeGet<T>(path: string) {
-  const response = await fetch(`${STRIPE_API}${path}`, {
-    headers: {
-      Authorization: `Bearer ${secretKey()}`,
-      "Stripe-Version": STRIPE_VERSION,
-    },
-    cache: "no-store",
-  })
-  const payload = await response.json() as T & { error?: { message?: string } }
-  if (!response.ok) throw new Error(payload.error?.message || `Stripe request failed (${response.status}).`)
-  return payload
+  return stripeRequest<T>(path, { method: "GET" })
 }
 
 export async function verifyStripeSignature(rawBody: string, signatureHeader: string, secret: string) {

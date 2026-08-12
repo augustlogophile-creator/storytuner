@@ -27,7 +27,14 @@ export async function POST(request: Request) {
     return new Response("Invalid webhook signature.", { status: 400 })
   }
 
-  const event = JSON.parse(rawBody) as StripeEvent
+  let event: StripeEvent
+  try {
+    event = JSON.parse(rawBody) as StripeEvent
+  } catch (error) {
+    backendError("stripe_webhook_invalid_json", error)
+    return new Response("Invalid webhook payload.", { status: 400 })
+  }
+
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object

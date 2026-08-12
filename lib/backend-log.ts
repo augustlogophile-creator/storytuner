@@ -1,3 +1,4 @@
+import "server-only"
 type BackendLogLevel = "info" | "warn" | "error"
 type BackendLogData = Record<string, unknown>
 

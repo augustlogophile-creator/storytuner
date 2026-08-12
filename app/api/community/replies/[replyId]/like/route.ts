@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
-import { rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 
 export const dynamic = "force-dynamic"
@@ -64,10 +64,14 @@ async function handleLike(routeContext: RouteContext, liked: boolean) {
   return noStoreJson({ likedByViewer: liked, likeCount: count ?? 0 })
 }
 
-export async function POST(_request: Request, routeContext: RouteContext) {
+export async function POST(request: Request, routeContext: RouteContext) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   return handleLike(routeContext, true)
 }
 
-export async function DELETE(_request: Request, routeContext: RouteContext) {
+export async function DELETE(request: Request, routeContext: RouteContext) {
+  const crossSite = requireSameOrigin(request)
+  if (crossSite) return crossSite
   return handleLike(routeContext, false)
 }
