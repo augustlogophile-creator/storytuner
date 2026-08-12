@@ -43,6 +43,7 @@
   --color-streak-soft: var(--streak-soft);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-editorial: var(--font-editorial), Georgia, "Times New Roman", serif;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -52,51 +53,50 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+
 :root {
   color-scheme: light;
-  /* warm paper background */
-  --background: oklch(0.985 0.005 95);
-  --foreground: oklch(0.24 0.012 75);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.012 75);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.012 75);
-  /* warm ink primary */
-  --primary: oklch(0.27 0.012 70);
-  --primary-foreground: oklch(0.98 0.006 95);
-  --secondary: oklch(0.955 0.008 95);
-  --secondary-foreground: oklch(0.27 0.012 70);
-  --muted: oklch(0.955 0.008 95);
-  --muted-foreground: oklch(0.53 0.012 75);
-  /* crisp blue accent */
-  --accent: oklch(0.92 0.055 250);
-  --accent-foreground: oklch(0.39 0.15 250);
-  --destructive: oklch(0.577 0.18 25);
-  --border: oklch(0.9 0.008 90);
-  --input: oklch(0.9 0.008 90);
-  --ring: oklch(0.62 0.16 250);
-  /* blue-led data palette + warm amber */
-  --chart-1: oklch(0.62 0.16 250);
-  --chart-2: oklch(0.74 0.12 235);
-  --chart-3: oklch(0.8 0.11 85);
-  --chart-4: oklch(0.56 0.13 265);
-  --chart-5: oklch(0.48 0.11 245);
-  --radius: 1rem;
-  /* custom brand tokens */
-  --brand: oklch(0.62 0.16 250);
-  --brand-foreground: oklch(0.99 0.005 95);
-  --brand-soft: oklch(0.94 0.035 250);
-  --streak: oklch(0.72 0.14 55);
-  --streak-soft: oklch(0.94 0.05 65);
-  --sidebar: oklch(0.985 0.005 95);
-  --sidebar-foreground: oklch(0.24 0.012 75);
-  --sidebar-primary: oklch(0.27 0.012 70);
-  --sidebar-primary-foreground: oklch(0.98 0.006 95);
-  --sidebar-accent: oklch(0.92 0.055 250);
-  --sidebar-accent-foreground: oklch(0.39 0.15 250);
-  --sidebar-border: oklch(0.9 0.008 90);
-  --sidebar-ring: oklch(0.62 0.16 250);
+  /* Reference-led warm paper + charcoal ink. */
+  --background: #f5f3f0;
+  --foreground: #34312e;
+  --card: #fbfaf8;
+  --card-foreground: #34312e;
+  --popover: #fffefa;
+  --popover-foreground: #34312e;
+  --primary: #302d2a;
+  --primary-foreground: #fbfaf8;
+  --secondary: #eeece8;
+  --secondary-foreground: #34312e;
+  --muted: #efedea;
+  --muted-foreground: #6f6a65;
+  /* Navy teal taken from the supplied reference swatch (#2F576B). */
+  --accent: #e7eff2;
+  --accent-foreground: #2f576b;
+  --destructive: #b84b43;
+  --border: #dedad5;
+  --input: #d8d4cf;
+  --ring: #2f576b;
+  --chart-1: #2f576b;
+  --chart-2: #597b8c;
+  --chart-3: #8da5b1;
+  --chart-4: #495f6b;
+  --chart-5: #2f3940;
+  --radius: 0.78rem;
+  --brand: #2f576b;
+  --brand-foreground: #fbfaf8;
+  --brand-soft: #e7eff2;
+  --streak: #496f80;
+  --streak-soft: #e7eff2;
+  --sidebar: #f8f6f3;
+  --sidebar-foreground: #34312e;
+  --sidebar-primary: #302d2a;
+  --sidebar-primary-foreground: #fbfaf8;
+  --sidebar-accent: #e7eff2;
+  --sidebar-accent-foreground: #2f576b;
+  --sidebar-border: #dedad5;
+  --sidebar-ring: #2f576b;
 }
+
 
 .dark {
   color-scheme: dark;
@@ -125,12 +125,12 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: #7fa5b7;
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: #7fa5b7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -161,12 +161,12 @@
     --chart-5: oklch(0.269 0 0);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary: #7fa5b7;
     --sidebar-primary-foreground: oklch(0.985 0 0);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --sidebar-ring: #7fa5b7;
   }
 }
 
@@ -176,6 +176,56 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  /* Tight, confident display headings matching the reference set. */
+  .text-display {
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+    font-weight: 800;
+  }
+  .text-title {
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+  .text-editorial {
+    font-family: var(--font-editorial), Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    letter-spacing: -0.038em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+  .reference-chip {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    gap: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--card) 88%, transparent);
+    padding: 0.38rem 0.72rem;
+    box-shadow: 0 4px 16px rgb(48 45 42 / 0.04);
+  }
+  .reference-rule {
+    border-top: 1px solid var(--border);
+  }
+  /* Subtle diagonal hatch texture used in reference gutters / hero. */
+  .hatch-texture {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--foreground) 5%, transparent) 0px,
+      color-mix(in oklch, var(--foreground) 5%, transparent) 1px,
+      transparent 1px,
+      transparent 8px
+    );
   }
 }
 
@@ -220,7 +270,7 @@ header {
   .entry-shell {
     min-height: 100svh;
     background:
-      radial-gradient(circle at 50% -10%, color-mix(in oklch, var(--brand-soft) 38%, transparent) 0%, transparent 36%),
+      radial-gradient(circle at 50% -10%, color-mix(in oklch, var(--brand-soft) 62%, transparent) 0%, transparent 36%),
       var(--background);
   }
 
@@ -433,15 +483,39 @@ html {
   animation: storytuner-page-in 320ms cubic-bezier(.2,.75,.25,1) both;
 }
 
+/* Staggered list/section entrances. Set --rise-delay inline per item. */
+@keyframes storytuner-rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rise-in {
+  animation: storytuner-rise-in 460ms cubic-bezier(.2,.75,.25,1) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+/* Tactile press feedback for interactive surfaces. */
+.press {
+  transition: transform 160ms cubic-bezier(.2,.75,.25,1), box-shadow 180ms ease, filter 180ms ease;
+}
+.press:active {
+  transform: scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in { animation: none !important; }
+  .press { transition: none !important; }
+}
+
 .app-surface {
-  box-shadow: 0 1px 2px rgba(39, 34, 29, 0.025);
+  box-shadow: 0 1px 0 rgb(48 45 42 / 0.025);
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .app-surface:hover {
     border-color: color-mix(in oklch, var(--border) 58%, var(--brand) 42%);
-    box-shadow: 0 10px 28px rgba(39, 34, 29, 0.055);
+    box-shadow: 0 12px 30px rgb(48 45 42 / 0.06);
     transform: translateY(-1px);
   }
 }
@@ -493,4 +567,38 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .planner-expand-in { animation: none !important; }
+}
+
+
+/* Reference-inspired page frame: warm paper center, quiet hatched gutters on larger screens. */
+::selection {
+  background: color-mix(in oklch, var(--brand) 24%, white);
+  color: var(--foreground);
+}
+
+@media (min-width: 640px) {
+  body {
+    background-color: #efedea;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(48 45 42 / 0.025) 0,
+      rgb(48 45 42 / 0.025) 1px,
+      transparent 1px,
+      transparent 10px
+    );
+  }
+  .app-shell {
+    border-inline: 1px solid var(--border);
+    background: var(--background);
+    box-shadow: 0 28px 80px rgb(48 45 42 / 0.07);
+  }
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in oklch, var(--brand) 22%, transparent);
+  outline-offset: 3px;
 }
