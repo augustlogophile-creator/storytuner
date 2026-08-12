@@ -117,13 +117,13 @@ export function AccountSetup({
     <main className="entry-shell">
       <section className="auth-canvas">
         <div className="mx-auto w-full max-w-md">
-          <div className="flex justify-center"><Weaver colorId="classic" size={60} /></div>
-          <span className="mx-auto mt-4 flex h-9 w-9 items-center justify-center rounded-full border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_10px_28px_-12px_color-mix(in_oklch,var(--brand)_55%,transparent)]"><Check className="h-5 w-5" /></span>
-          <p className="mt-4 text-center text-[0.58rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{recoveryMode ? "Account confirmation" : "Profile setup"}</p>
-          <h1 className="text-editorial mx-auto mt-4 max-w-sm text-center text-[1.78rem] leading-[1.04] text-balance sm:text-[1.9rem]">{recoveryMode ? "Welcome back." : "Choose how you appear in StoryTuner."}</h1>
-          <p className="mx-auto mt-4 max-w-sm text-center text-[0.82rem] leading-6 text-muted-foreground">{recoveryMode ? "Your existing StoryTuner identity will stay exactly the same. Confirm the age requirement once to continue." : "Your public name is separate from the email you use to log in."}</p>
+          <div className="flex justify-center"><Weaver colorId="classic" size={90} /></div>
+          <span className="mx-auto mt-5 flex h-11 w-11 items-center justify-center rounded-full border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_10px_28px_rgba(21,93,183,0.10)]"><Check className="h-5 w-5" /></span>
+          <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{recoveryMode ? "Account confirmation" : "Profile setup"}</p>
+          <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">{recoveryMode ? "Welcome back." : "Choose how you appear in StoryTuner."}</h1>
+          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">{recoveryMode ? "Your existing StoryTuner identity will stay exactly the same. Confirm the age requirement once to continue." : "Your public name is separate from the email you use to log in."}</p>
 
-          <form onSubmit={finish} className="mt-6 space-y-4">
+          <form onSubmit={finish} className="mt-8 space-y-5">
             {!recoveryMode && <label className="block">
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Public username</span>
               <input
@@ -158,17 +158,17 @@ export function AccountSetup({
                 className="auth-input mt-2"
               />
             </label>}
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-4 transition hover:border-brand/35">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-brand/35">
               <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
               <span className="text-sm leading-relaxed">I confirm that I am at least 13 years old.</span>
             </label>
 
-            {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">{error}</p>}
+            {error && <p role="alert" className="rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">{error}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="press flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.78rem] font-medium text-primary-foreground shadow-[0_10px_24px_rgb(48_45_42_/_0.12)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_rgba(38,34,29,0.12)] transition active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Enter StoryTuner <ArrowRight className="h-4 w-4" /></>}
             </button>

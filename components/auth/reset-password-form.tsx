@@ -44,8 +44,8 @@ export function ResetPasswordForm() {
     <form onSubmit={submit} className="space-y-4">
       <Password label="New password" value={password} setValue={setPassword} shown={shown} toggle={() => setShown((value) => !value)} />
       <Password label="Confirm password" value={confirm} setValue={setConfirm} shown={shown} toggle={() => setShown((value) => !value)} />
-      {error && <p role="alert" className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">{error}</p>}
-      <button type="submit" disabled={checking || loading || !sessionReady} className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-[0.8rem] font-medium text-primary-foreground disabled:opacity-50">
+      {error && <p role="alert" className="rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">{error}</p>}
+      <button type="submit" disabled={checking || loading || !sessionReady} className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
         {checking || loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Save new password <ArrowRight className="h-4 w-4" /></>}
       </button>
     </form>
@@ -55,7 +55,7 @@ export function ResetPasswordForm() {
 function Password({ label, value, setValue, shown, toggle }: { label: string; value: string; setValue: (value: string) => void; shown: boolean; toggle: () => void }) {
   return (
     <label className="block">
-      <span className="text-[0.56rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground">{label}</span>
+      <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">{label}</span>
       <div className="relative mt-2">
         <input type={shown ? "text" : "password"} value={value} onChange={(event) => setValue(event.target.value)} minLength={8} required autoComplete="new-password" className="auth-input pr-12" />
         <button type="button" onClick={toggle} aria-label={shown ? "Hide password" : "Show password"} className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted-foreground">

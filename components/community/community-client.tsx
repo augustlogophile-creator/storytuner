@@ -77,30 +77,30 @@ export function CommunityClient({ membershipActive, currentUsername }: Community
 
 function MembershipLock() {
   return (
-    <div className="flex min-w-0 flex-col gap-5">
-      <header className="app-page-enter">
-        <Eyebrow>Members feature</Eyebrow>
-        <h1 className="text-title mt-2.5 text-[1.78rem] leading-[1.03] text-balance">
-          Community is part of Membership.
+    <div className="flex min-w-0 flex-col gap-6">
+      <header>
+        <Eyebrow>Paid feature</Eyebrow>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
+          Community requires a paid StoryTuner Membership.
         </h1>
-        <p className="mt-2.5 max-w-[23rem] text-[0.85rem] leading-6 text-muted-foreground text-pretty">
-          Reading posts, sharing stories, replying, and liking all live inside the paid plan.
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+          Free accounts cannot read posts, publish stories, reply, or like content in Community.
         </p>
       </header>
 
-      <section className="corner-hatch-card rounded-[1.35rem] border border-brand/15 bg-brand-soft/65 px-5 py-7">
+      <section className="rounded-3xl border border-brand/35 bg-brand-soft/40 px-6 py-9">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background shadow-sm">
-            <LockKeyhole className="h-4.5 w-4.5 text-accent-foreground" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background shadow-sm">
+            <LockKeyhole className="h-6 w-6 text-accent-foreground" />
           </div>
-          <h2 className="text-title mt-4 text-[1.26rem]">Step into the Community</h2>
-          <p className="mt-1.5 text-[0.82rem] leading-6 text-muted-foreground">
-            Share the text, transcripts, or audio you choose, and talk it through with other storytellers.
-            Your private recordings stay private unless you post them yourself.
+          <h2 className="mt-4 text-lg font-semibold">Unlock the full Community</h2>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Membership lets you share selected text, transcripts, and audio, then respond to other storytellers.
+            Nothing from your private recordings is shared automatically.
           </p>
           <Link
             href="/membership"
-            className="press mt-4 inline-flex rounded-full bg-primary px-4 py-2.5 text-[0.78rem] font-medium text-primary-foreground"
+            className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
           >
             View Membership
           </Link>
@@ -224,39 +224,39 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
   if (membershipRequired) return <MembershipLock />
 
   return (
-    <div className="flex min-w-0 flex-col gap-5">
-      <header className="app-page-enter">
+    <div className="flex min-w-0 flex-col gap-7">
+      <header>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Eyebrow>Community</Eyebrow>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-[0.68rem] font-semibold text-muted-foreground">
             <CheckCircle2 className="h-3.5 w-3.5" /> Membership active
           </span>
         </div>
-        <h1 className="text-title mt-2.5 text-[1.76rem] leading-[1.03] text-balance">Share stories. Grow together.</h1>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share stories. Help each other improve.</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
-          Everything here is shared on purpose. Listen or read, then say what actually landed for you.
+          Community is built around stories people intentionally choose to share. Listen or read, then respond to what actually landed.
         </p>
       </header>
 
-      <section className="rounded-[1.35rem] border border-brand/15 bg-brand-soft/65 p-4">
+      <section className="rounded-[2rem] border border-brand/35 bg-brand-soft/45 p-5 shadow-sm">
         <div className="flex items-center gap-4">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
             <Headphones className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
             <Eyebrow>Share a story</Eyebrow>
-            <h2 className="text-title mt-2 text-[1.05rem]">Choose a recording to share</h2>
+            <h2 className="mt-1 text-lg font-semibold">Choose a recording to share</h2>
           </div>
         </div>
-        <Link href="/arena/recordings" className="press mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-[0.82rem] font-medium text-primary-foreground">
+        <Link href="/arena/recordings" className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
           <Headphones className="h-4 w-4" /> Choose a story
         </Link>
       </section>
 
-      <section aria-labelledby="share-heading" className="rounded-[1.3rem] border border-border bg-card p-4">
+      <section aria-labelledby="share-heading" className="rounded-3xl border border-border bg-card p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="share-heading" className="text-[0.82rem] font-medium">Post a note</h2>
+            <h2 id="share-heading" className="text-sm font-semibold">Post a note</h2>
             <p className="mt-1 text-xs text-muted-foreground">Reflections, tips, questions, or what you want to improve · @{currentUsername}</p>
           </div>
           <CharacterCount value={draft.length} maximum={5000} warningAt={4500} />
@@ -264,7 +264,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
         <textarea value={draft} maxLength={5000} rows={3} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)} placeholder="Share a reflection, a storytelling tip, a question, or something you want to get better at…" className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
         <div className="mt-3 flex justify-end">
-          <button type="button" onClick={publishPost} disabled={!draft.trim() || publishing} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40">
+          <button type="button" onClick={publishPost} disabled={!draft.trim() || publishing} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40">
             {publishing ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
             {publishing ? "Publishing…" : "Post note"}
           </button>
@@ -274,19 +274,19 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
       <section id="community-feed" aria-labelledby="community-feed-heading" aria-live="polite" className="scroll-mt-20 pt-2">
         <div className="mb-4">
           <Eyebrow>Community feed</Eyebrow>
-          <h2 id="community-feed-heading" className="text-title mt-2 text-xl">Top stories</h2>
+          <h2 id="community-feed-heading" className="mt-2 text-xl font-semibold tracking-tight">Top stories</h2>
           <p className="mt-1 text-xs text-muted-foreground">Ranked by likes, with newer stories breaking ties.</p>
         </div>
 
         {loading && posts.length === 0 ? (
-          <div className="flex items-center justify-center rounded-[1.3rem] border border-border bg-card px-4 py-9 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center rounded-3xl border border-border bg-card px-6 py-12 text-sm text-muted-foreground">
             <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Loading Community…
           </div>
         ) : feedError && posts.length === 0 ? (
           <FeedError message={feedError} onRetry={() => void loadPage(0, true)} />
         ) : posts.length === 0 ? (
-          <div className="rounded-[1.3rem] border border-dashed border-border bg-card px-4 py-9 text-center">
-            <p className="text-[0.82rem] font-medium">No stories have been shared yet.</p>
+          <div className="rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center">
+            <p className="text-sm font-semibold">No stories have been shared yet.</p>
             <p className="mt-1 text-sm text-muted-foreground">Your first post can begin the Community.</p>
           </div>
         ) : (
@@ -294,7 +294,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
             {feedError && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-destructive/25 bg-card px-4 py-3">
                 <p className="text-xs text-muted-foreground">The latest refresh failed. Loaded posts are still shown.</p>
-                <button type="button" onClick={() => void loadPage(0, true)} className="inline-flex items-center gap-1.5 text-xs font-medium">
+                <button type="button" onClick={() => void loadPage(0, true)} className="inline-flex items-center gap-1.5 text-xs font-semibold">
                   <RefreshCw className="h-3.5 w-3.5" /> Retry
                 </button>
               </div>
@@ -314,7 +314,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
                 type="button"
                 onClick={() => void loadPage(page + 1, false)}
                 disabled={loadingMore}
-                className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-[0.82rem] font-medium disabled:opacity-50"
+                className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
               >
                 {loadingMore && <LoaderCircle className="h-4 w-4 animate-spin" />}
                 {loadingMore ? "Loading…" : "Load more"}
@@ -332,10 +332,10 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
 
 function FeedError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="rounded-[1.4rem] border border-destructive/30 bg-card px-5 py-8 text-center">
-      <p className="text-[0.82rem] font-medium">Community feed could not load.</p>
+    <div className="rounded-3xl border border-destructive/30 bg-card px-6 py-8 text-center">
+      <p className="text-sm font-semibold">Community feed could not load.</p>
       <p className="mt-1 text-sm text-muted-foreground">{message}</p>
-      <button type="button" onClick={onRetry} className="mt-4 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-[0.82rem] font-medium">
+      <button type="button" onClick={onRetry} className="mt-4 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold">
         <RefreshCw className="h-4 w-4" /> Try again
       </button>
     </div>
@@ -591,10 +591,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
     : [{ label: "Report post", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
 
   return (
-    <article id={post.id} className="app-surface scroll-mt-24 rounded-[1.3rem] border border-border bg-card p-4">
+    <article id={post.id} className="app-surface scroll-mt-24 rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-[0.82rem] font-medium">{publicAuthorLabel(post.author)}</p>
+          <p className="truncate text-sm font-semibold">{publicAuthorLabel(post.author)}</p>
           <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
             {relativeDate(post.createdAt)}{post.editedAt ? " · edited" : ""}
           </p>
@@ -602,7 +602,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
         <ActionMenu label="Post options" items={menuItems} />
       </div>
 
-      {post.title && <h3 className="mt-4 text-[0.9rem] font-medium">{post.title}</h3>}
+      {post.title && <h3 className="mt-4 text-base font-semibold">{post.title}</h3>}
 
       {editing ? (
         <div className="mt-4">
@@ -616,8 +616,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
           <div className="mt-2 flex items-center justify-between gap-3">
             <CharacterCount value={editDraft.length} maximum={5000} warningAt={4500} />
             <div className="flex items-center gap-2">
-              <button type="button" onClick={() => { setEditing(false); setEditDraft(post.body) }} disabled={savingEdit} className="rounded-full px-3 py-2 text-xs font-medium text-muted-foreground">Cancel</button>
-              <button type="button" onClick={savePostEdit} disabled={!editDraft.trim() || savingEdit} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-40">
+              <button type="button" onClick={() => { setEditing(false); setEditDraft(post.body) }} disabled={savingEdit} className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground">Cancel</button>
+              <button type="button" onClick={savePostEdit} disabled={!editDraft.trim() || savingEdit} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-40">
                 {savingEdit ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
               </button>
             </div>
@@ -625,7 +625,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
         </div>
       ) : (
         <div className="mt-4 flex flex-col gap-3">
-          {post.body && <p className="whitespace-pre-wrap text-[0.89rem] leading-7 text-foreground/90 text-pretty">{post.body}</p>}
+          {post.body && <p className="whitespace-pre-wrap text-[0.95rem] leading-7 text-foreground/90 text-pretty">{post.body}</p>}
           {post.hasAudio && <CommunityAudioPlayer postId={post.id} durationSeconds={post.audioDurationSeconds} onMembershipRequired={onMembershipRequired} />}
           {post.sharedTranscript && <SharedTranscript transcript={post.sharedTranscript} defaultOpen={post.postType === "transcript"} />}
         </div>
@@ -640,8 +640,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
             onClick={togglePostLike}
             disabled={liking}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50",
-              post.likedByViewer ? "bg-brand-soft text-accent-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50",
+              post.likedByViewer ? "bg-rose-50 text-rose-700" : "text-muted-foreground hover:bg-secondary hover:text-foreground",
             )}
             aria-pressed={post.likedByViewer}
           >
@@ -651,7 +651,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
           <button
             type="button"
             onClick={() => void toggleThread()}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
             aria-expanded={threadOpen}
           >
             <MessageCircle className="h-3.5 w-3.5" />
@@ -668,7 +668,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
           ) : threadError && !threadLoaded ? (
             <div className="rounded-2xl border border-destructive/25 px-4 py-4">
               <p className="text-xs text-destructive">{threadError}</p>
-              <button type="button" onClick={() => void loadReplies()} className="mt-2 text-xs font-medium">Try again</button>
+              <button type="button" onClick={() => void loadReplies()} className="mt-2 text-xs font-semibold">Try again</button>
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -692,7 +692,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
                 <button
                   type="button"
                   onClick={() => setVisibleThreadCount((count) => count + 4)}
-                  className="mx-auto rounded-full px-4 py-2 text-xs font-medium text-brand hover:bg-brand-soft/60"
+                  className="mx-auto rounded-full px-4 py-2 text-xs font-semibold text-brand hover:bg-brand-soft/60"
                 >
                   See {Math.min(4, groupedReplies.length - visibleThreadCount)} more responses
                 </button>
@@ -716,7 +716,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
                 />
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <CharacterCount value={replyDraft.length} maximum={2000} warningAt={1800} />
-                  <button type="button" onClick={submitReply} disabled={!replyDraft.trim() || postingReply} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-40">
+                  <button type="button" onClick={submitReply} disabled={!replyDraft.trim() || postingReply} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-40">
                     {postingReply ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Reply
                   </button>
                 </div>
@@ -754,7 +754,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
 function SharedTranscript({ transcript, defaultOpen }: { transcript: string; defaultOpen: boolean }) {
   return (
     <details open={defaultOpen} className="rounded-2xl border border-border bg-secondary/35 px-4 py-3">
-      <summary className="flex cursor-pointer list-none items-center gap-2 text-xs font-medium text-muted-foreground">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-xs font-semibold text-muted-foreground">
         <FileText className="h-3.5 w-3.5" /> Transcript
       </summary>
       <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{transcript}</p>
@@ -829,9 +829,9 @@ function CommunityAudioPlayer({ postId, durationSeconds, onMembershipRequired }:
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background"><Headphones className="h-4 w-4" /></span>
-          <div><p className="text-xs font-medium">Shared audio</p>{displayDuration > 0 ? <p className="text-[0.68rem] text-muted-foreground">{formatCommunityDuration(displayDuration)}</p> : null}</div>
+          <div><p className="text-xs font-semibold">Shared audio</p>{displayDuration > 0 ? <p className="text-[0.68rem] text-muted-foreground">{formatCommunityDuration(displayDuration)}</p> : null}</div>
         </div>
-        {!url && <button type="button" onClick={() => void loadAudio()} disabled={loading} className="rounded-full bg-background px-3 py-2 text-xs font-medium disabled:opacity-50">{loading ? "Loading…" : "Load audio"}</button>}
+        {!url && <button type="button" onClick={() => void loadAudio()} disabled={loading} className="rounded-full bg-background px-3 py-2 text-xs font-semibold disabled:opacity-50">{loading ? "Loading…" : "Load audio"}</button>}
       </div>
 
       {url && (
@@ -1106,7 +1106,7 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
     <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3 transition-colors", nested && "bg-secondary/30")}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium">{publicAuthorLabel(reply.author)}</p>
+          <p className="text-xs font-semibold">{publicAuthorLabel(reply.author)}</p>
           <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
             {parentAuthor ? `Replying to ${parentAuthor} · ` : ""}{relativeDate(reply.createdAt)}{reply.editedAt ? " · edited" : ""}
           </p>
@@ -1118,8 +1118,8 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
         <div className="mt-2">
           <textarea value={editDraft} maxLength={2000} rows={3} onChange={(event) => setEditDraft(event.target.value)} className="w-full resize-y rounded-xl border border-brand bg-background px-3 py-2 text-sm leading-6 outline-none" />
           <div className="mt-2 flex justify-end gap-2">
-            <button type="button" onClick={() => { setEditing(false); setEditDraft(reply.body) }} disabled={saving} className="rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground">Cancel</button>
-            <button type="button" onClick={saveEdit} disabled={!editDraft.trim() || saving} className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-40">
+            <button type="button" onClick={() => { setEditing(false); setEditDraft(reply.body) }} disabled={saving} className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground">Cancel</button>
+            <button type="button" onClick={saveEdit} disabled={!editDraft.trim() || saving} className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-40">
               {saving && <LoaderCircle className="h-3 w-3 animate-spin" />} Save
             </button>
           </div>
@@ -1132,7 +1132,7 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
 
       {!editing && (
         <div className="mt-2 flex items-center gap-1">
-          <button type="button" onClick={toggleLike} disabled={liking} className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[0.68rem] font-semibold disabled:opacity-50", reply.likedByViewer ? "bg-brand-soft text-accent-foreground" : "text-muted-foreground hover:bg-background")} aria-pressed={reply.likedByViewer}>
+          <button type="button" onClick={toggleLike} disabled={liking} className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[0.68rem] font-semibold disabled:opacity-50", reply.likedByViewer ? "bg-rose-50 text-rose-700" : "text-muted-foreground hover:bg-background")} aria-pressed={reply.likedByViewer}>
             {liking ? <LoaderCircle className="h-3 w-3 animate-spin" /> : <Heart className="h-3 w-3" fill={reply.likedByViewer ? "currentColor" : "none"} />} {reply.likeCount}
           </button>
           <button type="button" onClick={onReply} className="inline-flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[0.68rem] font-semibold text-muted-foreground hover:bg-background">
@@ -1185,7 +1185,7 @@ function ActionMenu({ label, items, compact = false }: { label: string; items: M
                 key={item.label}
                 type="button"
                 onClick={() => { setOpen(false); item.onSelect() }}
-                className={cn("flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-medium transition", item.tone === "danger" ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-secondary")}
+                className={cn("flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition", item.tone === "danger" ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-secondary")}
               >
                 <Icon className="h-3.5 w-3.5" /> {item.label}
               </button>
@@ -1252,7 +1252,7 @@ function ReportDialog({
     <ConfirmDialog open={open} title={`Report this ${target}?`} confirmLabel="Submit report" tone="brand" busy={busy} onCancel={onCancel} onConfirm={() => void submit()}>
       <p>Reports are private. The person who posted this will not see who submitted the report.</p>
       <label className="mt-4 block">
-        <span className="text-xs font-medium text-foreground">Reason</span>
+        <span className="text-xs font-semibold text-foreground">Reason</span>
         <div className="relative mt-2">
           <select value={reason} onChange={(event) => setReason(event.target.value as CommunityReportReason)} className="w-full appearance-none rounded-xl border border-border bg-background py-2.5 pl-3 pr-16 text-sm text-foreground outline-none focus:border-brand">
             {reportReasons.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
@@ -1263,7 +1263,7 @@ function ReportDialog({
         </div>
       </label>
       <label className="mt-3 block">
-        <span className="text-xs font-medium text-foreground">Optional details</span>
+        <span className="text-xs font-semibold text-foreground">Optional details</span>
         <textarea value={details} maxLength={1000} rows={3} onChange={(event) => setDetails(event.target.value)} placeholder="Add context that would help a moderator…" className="mt-2 w-full resize-y rounded-xl border border-border bg-background px-3 py-2.5 text-sm leading-5 text-foreground outline-none focus:border-brand" />
       </label>
       {error && <p className="mt-3 text-xs text-destructive" role="alert">{error}</p>}

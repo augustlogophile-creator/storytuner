@@ -8,27 +8,23 @@ import { Weaver } from "@/components/weaver"
 
 const pages = [
   {
-    eyebrow: "Learn",
-    title: "Build the instincts behind a great story.",
-    copy: "Short lessons, quick checks, and focused practice teach you what to notice when you tell a story out loud.",
+    title: "Learn the craft, one decision at a time.",
+    copy: "StoryTuner turns a complete storytelling course into short readings, quick checks, and focused practice that build on each other.",
     icon: BookOpen,
   },
   {
-    eyebrow: "Practice",
-    title: "Tell it out loud. Then make the next take better.",
-    copy: "Record a real take in Arena and get clear notes on what landed, what drifted, and what to sharpen next.",
+    title: "Practice the way stories are actually told.",
+    copy: "Use the Arena to record a real take, review the transcript, and get specific feedback on your hook, development, and landing.",
     icon: Mic2,
   },
   {
-    eyebrow: "Private by default",
-    title: "Your stories stay yours.",
-    copy: "Recordings stay private unless you deliberately share one with Community. You stay in control of what leaves your archive.",
+    title: "Your recordings stay private by default.",
+    copy: "Community is included with Membership, and a story only appears there when you deliberately share it. You can remove your recordings and posts at any time.",
     icon: LockKeyhole,
   },
   {
-    eyebrow: "Keep your progress",
-    title: "Come back exactly where you left off.",
-    copy: "Create a secure account so your lessons, recordings, progress, and Weaver history follow you across devices.",
+    title: "Save your progress",
+    copy: "Create a secure account for your StoryTuner profile. Your current lessons, recordings, and XP still stay on this device for now.",
     icon: ShieldCheck,
   },
 ]
@@ -60,89 +56,93 @@ export function Onboarding() {
   return (
     <main className="entry-shell">
       <section className="intro-canvas" aria-label="StoryTuner introduction">
-        <header className="flex items-center justify-between px-5 pt-[max(1.2rem,env(safe-area-inset-top))] sm:px-6 sm:pt-6">
-          <p className="text-[0.72rem] font-semibold tracking-[-0.015em] text-foreground">StoryTuner</p>
-          <p className="text-[0.6rem] font-medium tabular-nums tracking-[0.08em] text-muted-foreground/70">
-            {String(page + 1).padStart(2, "0")} / {String(pages.length).padStart(2, "0")}
+        <header className="flex items-center justify-between px-5 pt-[max(1.35rem,env(safe-area-inset-top))] sm:pt-7">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-foreground">StoryTuner</p>
+          <p className="font-mono text-[0.62rem] uppercase tracking-[0.15em] text-muted-foreground">
+            {page + 1} of {pages.length}
           </p>
         </header>
 
-        <div className="flex flex-1 items-center px-5 py-6 sm:px-6 sm:py-8">
-          <div key={page} className="app-page-enter w-full">
-            <div className="mb-5 flex h-14 items-center">
+        <div className="flex flex-1 items-center justify-center px-5 py-8 sm:py-10">
+          <div className="w-full text-center">
+            <div className="flex min-h-28 items-center justify-center sm:min-h-32">
               {page === 0 ? (
-                <Weaver colorId="classic" size={62} />
+                <Weaver colorId="classic" size={112} />
               ) : (
-                <span className="flex h-11 w-11 items-center justify-center rounded-[0.95rem] border border-brand/15 bg-brand-soft/70 text-accent-foreground">
-                  <Icon className="h-[1.15rem] w-[1.15rem]" strokeWidth={1.65} />
+                <span className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_12px_32px_rgba(21,93,183,0.10)]">
+                  <Icon className="h-7 w-7" strokeWidth={1.8} />
                 </span>
               )}
             </div>
 
-            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.14em] text-brand">{item.eyebrow}</p>
-            <h1 className="text-title mt-2.5 max-w-[21rem] text-[1.88rem] leading-[1.05] text-balance sm:text-[2rem]">
+            <p className="mt-5 font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Welcome to StoryTuner</p>
+            <h1 className="mx-auto mt-3 max-w-sm text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance sm:text-[2.35rem]">
               {item.title}
             </h1>
-            <p className="mt-3 max-w-[22rem] text-[0.84rem] leading-[1.65] text-muted-foreground text-pretty">
+            <p className="mx-auto mt-4 max-w-sm text-[0.95rem] leading-7 text-muted-foreground text-pretty sm:text-base">
               {item.copy}
             </p>
 
             {page === 0 && (
-              <label className="mt-6 block max-w-[22rem]">
-                <span className="text-[0.58rem] font-medium text-muted-foreground">What should we call you?</span>
+              <label className="mx-auto mt-7 block max-w-sm text-left">
+                <span className="font-mono text-[0.61rem] uppercase tracking-[0.15em] text-muted-foreground">What should we call you?</span>
                 <input
                   value={name}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value.slice(0, 40))}
-                  placeholder="First name or nickname"
+                  placeholder="Your first name or nickname"
                   autoComplete="name"
                   autoFocus
-                  className="mt-1.5 w-full border-0 border-b border-border bg-transparent px-0 py-2.5 text-[0.86rem] outline-none transition placeholder:text-muted-foreground/55 focus:border-brand"
+                  className="mt-2.5 w-full rounded-2xl border border-border bg-background px-4 py-3.5 text-sm shadow-[0_1px_0_rgba(255,255,255,0.8)_inset] outline-none transition placeholder:text-muted-foreground/65 focus:border-brand focus:ring-4 focus:ring-brand/10"
                 />
               </label>
             )}
           </div>
         </div>
 
-        <footer className="px-5 pb-[max(1.35rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-6">
-          <div className="mb-4 grid grid-cols-4 gap-1.5" aria-label={`Introduction step ${page + 1} of ${pages.length}`}>
-            {pages.map((_, index) => (
-              <span
-                key={index}
-                className={`h-px rounded-full transition-colors duration-300 ${index <= page ? "bg-foreground/70" : "bg-border"}`}
-              />
-            ))}
-          </div>
-
-          {accountStep ? (
-            <div className="space-y-2.5">
-              <Link href="/sign-up" className="intro-primary-button">Create account</Link>
-              <p className="text-center text-[0.72rem] text-muted-foreground">
-                Already have one?{" "}
-                <Link href="/sign-up?mode=sign-in" className="font-medium text-foreground underline-offset-4 hover:underline">Log in</Link>
-              </p>
+        <footer className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-7">
+          <div className="mx-auto w-full">
+            <div className="mb-5 flex gap-1.5" aria-label={`Introduction step ${page + 1} of ${pages.length}`}>
+              {pages.map((_, index) => (
+                <span
+                  key={index}
+                  className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${index <= page ? "bg-brand" : "bg-secondary"}`}
+                />
+              ))}
             </div>
-          ) : (
-            <button
-              type="button"
-              disabled={!ready || (page === 0 && !name.trim())}
-              onClick={continueIntro}
-              className="intro-primary-button disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              Continue
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          )}
 
-          {page > 0 && (
-            <button
-              type="button"
-              onClick={() => setPage((value) => Math.max(0, value - 1))}
-              className="mx-auto mt-3 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[0.7rem] font-medium text-muted-foreground transition hover:text-foreground"
-            >
-              <ArrowLeft className="h-3 w-3" />
-              Back
-            </button>
-          )}
+            {accountStep ? (
+              <div className="space-y-3">
+                <Link href="/sign-up" className="intro-primary-button">
+                  Sign up
+                </Link>
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Link href="/sign-up?mode=sign-in" className="font-semibold text-accent-foreground hover:underline">Log in</Link>
+                </p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={!ready || (page === 0 && !name.trim())}
+                onClick={continueIntro}
+                className="intro-primary-button disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Continue
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+
+            {page > 0 && (
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.max(0, value - 1))}
+                className="mx-auto mt-4 flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back
+              </button>
+            )}
+          </div>
         </footer>
       </section>
     </main>

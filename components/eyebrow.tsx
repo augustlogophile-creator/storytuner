@@ -1,12 +1,18 @@
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 
-/** Quiet uppercase label used above sections. */
-export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
+/** Small uppercase monospace label used above sections. */
+export function Eyebrow({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
   return (
     <p
       className={cn(
-        "font-sans text-[0.6rem] font-semibold uppercase tracking-[0.135em] text-muted-foreground/70",
+        "font-mono text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground",
         className,
       )}
     >

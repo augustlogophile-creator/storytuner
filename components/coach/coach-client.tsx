@@ -207,17 +207,17 @@ export function CoachClient() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] min-w-0 flex-col gap-3.5">
-      <header className="app-page-enter">
-        <Link href="/home" className="group inline-flex items-center gap-1.5 text-[0.7rem] font-medium text-muted-foreground transition-colors hover:text-foreground"><ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" /> Home</Link>
-        <div className="mt-4 flex items-center gap-3"><Weaver size={40} /><div><p className="text-[0.56rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">AI story coach</p><h1 className="text-title mt-1.5 text-[1.55rem]">Ask Weaver</h1></div></div>
+    <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col gap-4">
+      <header>
+        <Link href="/home" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link>
+        <div className="mt-4 flex items-center gap-3"><Weaver size={48} /><div><p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">AI story coach</p><h1 className="mt-1 text-2xl font-semibold tracking-tight">Ask Weaver</h1></div></div>
       </header>
 
-      <section className="rounded-[1.25rem] border border-border bg-card p-3.5">
+      <section className="rounded-3xl border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0"><p className="text-[0.57rem] font-semibold uppercase tracking-[0.11em] text-muted-foreground">Story context</p><p className="mt-1 truncate text-[0.8rem] font-medium">{recording ? recording.title : "General storytelling"}</p></div>
+          <div className="min-w-0"><p className="text-[0.65rem] font-semibold uppercase tracking-[0.13em] text-muted-foreground">Story context</p><p className="mt-1 truncate text-sm font-semibold">{recording ? recording.title : "General storytelling"}</p></div>
           <div className="relative shrink-0">
-            <select value={recordingId} onChange={(event) => setRecordingId(event.target.value)} className="max-w-36 appearance-none rounded-full border border-border bg-background py-2 pl-3 pr-8 text-[0.7rem] font-medium outline-none focus:border-brand" aria-label="Choose story context">
+            <select value={recordingId} onChange={(event) => setRecordingId(event.target.value)} className="max-w-36 appearance-none rounded-full border border-border bg-background py-2 pl-3 pr-8 text-xs font-semibold outline-none focus:border-brand" aria-label="Choose story context">
               <option value="">General</option>
               {state.recordings.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
             </select>
@@ -227,23 +227,23 @@ export function CoachClient() {
         {recording && <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">Weaver can reference this story’s transcript, feedback, and scores while you chat.</p>}
       </section>
 
-      <div className="flex items-center justify-between gap-3 px-1 text-[0.68rem] text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
         <span>{state.premium ? "Unlimited coaching with Membership" : `${used} of ${FREE_COACH_LIMIT} free messages used`}</span>
         <span className="hidden sm:inline">{recording ? `Talking about: ${recording.title}` : "General coaching"}</span>
       </div>
 
-      <section className="flex min-h-[27rem] flex-1 flex-col overflow-hidden rounded-[1.35rem] border border-border bg-card">
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-3.5 py-4 sm:px-5">
+      <section className="flex min-h-[30rem] flex-1 flex-col overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-5 sm:px-5">
           {safeMessages.length === 0 && !pendingUserMessage ? (
-            <div className="m-auto max-w-xs text-center"><Weaver size={38} className="mx-auto" /><p className="text-title mt-3 text-[1.12rem]">What are you working on?</p><p className="mt-1.5 text-[0.8rem] leading-5 text-muted-foreground">A story, an opening, an ending, your feedback, or what to practice next. Start anywhere.</p></div>
+            <div className="m-auto max-w-xs text-center"><Weaver size={44} className="mx-auto" /><p className="mt-4 text-sm font-semibold">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Ask about a story, an opening, an ending, your feedback, or what to practice next.</p></div>
           ) : (
             <>
               {safeMessages.map((message: CoachMessage) => message.role === "user" ? (
-                <div key={message.id} className="coach-message-in ml-10 self-end rounded-[1.15rem] rounded-br-md bg-primary px-3.5 py-2.5 text-[0.82rem] leading-relaxed text-primary-foreground">{message.content}</div>
+                <div key={message.id} className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{message.content}</div>
               ) : (
-                <div key={message.id} className="coach-message-in group flex items-start gap-3"><Weaver size={28} className="mt-1" /><div className="min-w-0 flex-1 rounded-xl rounded-tl-sm bg-secondary/60 px-3.5 py-2.5 text-[0.82rem]"><RichText markdown={message.content} /><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.68rem] font-medium text-muted-foreground opacity-70 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button></div></div>
+                <div key={message.id} className="coach-message-in group flex items-start gap-3"><Weaver size={28} className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.68rem] font-semibold text-muted-foreground opacity-75 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button></div></div>
               ))}
-              {pendingUserMessage && <div className="coach-message-in ml-10 self-end rounded-[1.15rem] rounded-br-md bg-primary px-3.5 py-2.5 text-[0.82rem] leading-relaxed text-primary-foreground">{pendingUserMessage}</div>}
+              {pendingUserMessage && <div className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{pendingUserMessage}</div>}
               {loading && <div className="coach-message-in flex items-center gap-3"><Weaver size={28} /><div className="flex items-center gap-1.5 rounded-2xl bg-secondary/55 px-4 py-3" aria-label="Weaver is thinking"><span className="weaver-thinking-dot" /><span className="weaver-thinking-dot [animation-delay:120ms]" /><span className="weaver-thinking-dot [animation-delay:240ms]" /></div></div>}
               <div ref={endRef} />
             </>
@@ -253,13 +253,13 @@ export function CoachClient() {
         {error && <div className="mx-4 mb-3 flex items-start justify-between gap-3 rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive"><span>{error}</span><button type="button" onClick={() => setError("")} className="shrink-0 font-semibold opacity-70 hover:opacity-100">Dismiss</button></div>}
 
         {blocked ? (
-          <div className="border-t border-border p-4 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="text-title mt-2 text-base">That's your five free messages.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Everything you've discussed stays right here. Membership opens unlimited coaching whenever you're ready.</p><Link href="/membership" className="press mt-3.5 inline-flex rounded-full bg-primary px-4 py-2.5 text-[0.76rem] font-medium text-primary-foreground">See Membership</Link></div>
+          <div className="border-t border-border p-5 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="mt-2 text-sm font-semibold">Your five free messages are used.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Your five exchanges stay here so you can revisit Weaver’s advice. Membership includes unlimited coaching.</p><Link href="/membership" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link></div>
         ) : (
           <div className="border-t border-border bg-background/75 p-3 backdrop-blur-sm">
-            <div className="flex items-end gap-2 rounded-[1.15rem] border border-border bg-[#fbfaf7] px-2 py-1.5 focus-within:border-brand">
-              <button type="button" onClick={startVoice} disabled={loading} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${listening ? "bg-destructive text-destructive-foreground" : "bg-secondary text-foreground hover:bg-brand-soft"}`} aria-label={listening ? "Stop voice input" : "Speak to Weaver"}>{listening ? <Square className="h-3.5 w-3.5" fill="currentColor" /> : <Mic className="h-4 w-4" />}</button>
-              <textarea value={input} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { requestKeyRef.current = null; setInput(event.target.value) }} onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send() } }} rows={1} placeholder={listening ? "Listening… speak naturally" : recording ? `Ask Weaver about ${recording.title}…` : "Message Weaver…"} className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-1 py-1.5 text-[0.82rem] leading-relaxed outline-none placeholder:text-muted-foreground" />
-              <button type="button" disabled={!input.trim() || loading} onClick={() => void send()} className="press flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-[0_6px_16px_-8px_color-mix(in_oklch,var(--brand)_80%,transparent)] hover:brightness-105 disabled:opacity-30 disabled:shadow-none" aria-label="Send message"><ArrowUp className="h-4 w-4" /></button>
+            <div className="flex items-end gap-2 rounded-[1.45rem] border border-border bg-card px-2.5 py-2 shadow-sm focus-within:border-brand">
+              <button type="button" onClick={startVoice} disabled={loading} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${listening ? "bg-destructive text-destructive-foreground" : "bg-secondary text-foreground hover:bg-brand-soft"}`} aria-label={listening ? "Stop voice input" : "Speak to Weaver"}>{listening ? <Square className="h-3.5 w-3.5" fill="currentColor" /> : <Mic className="h-4 w-4" />}</button>
+              <textarea value={input} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { requestKeyRef.current = null; setInput(event.target.value) }} onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send() } }} rows={1} placeholder={listening ? "Listening… speak naturally" : recording ? `Ask Weaver about ${recording.title}…` : "Message Weaver…"} className="max-h-36 min-h-10 flex-1 resize-none bg-transparent px-1 py-2 text-sm leading-relaxed outline-none placeholder:text-muted-foreground" />
+              <button type="button" disabled={!input.trim() || loading} onClick={() => void send()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground transition-transform active:scale-95 disabled:opacity-30" aria-label="Send message"><ArrowUp className="h-4 w-4" /></button>
             </div>
             <p className="mt-2 px-2 text-[0.62rem] leading-4 text-muted-foreground">Press Enter to send. The microphone fills your message so you can review it before sending.</p>
           </div>
