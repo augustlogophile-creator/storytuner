@@ -157,8 +157,8 @@ export function SettingsClient() {
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ scope: "app_data" }),
         })
-        const payload = await response.json() as { deleted?: boolean; error?: string }
-        if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete your app data.")
+        const payload = await response.json() as { deleted?: boolean; error?: string; failedStep?: string }
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || (payload.failedStep ? `StoryTuner could not delete your app data during ${payload.failedStep}.` : "StoryTuner could not delete your app data."))
         await resetAll({ skipCloud: true, skipRemoteState: true })
         setNotice("Your StoryTuner content and progress were deleted across devices. Your login, billing, usage limits, and safety records remain.")
       }

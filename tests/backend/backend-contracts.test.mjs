@@ -65,3 +65,12 @@ test("account data reset tolerates absent optional feature resources", async () 
   assert.match(source, /isMissingResourceError/)
   assert.match(source, /isMissingBucketError/)
 })
+
+test("account data reset self-identifies the failing cleanup stage", () => {
+  const source = read("app/api/account/data/route.ts")
+  assert.match(source, /let failedStep = "starting"/)
+  assert.match(source, /failedStep = "community_content"/)
+  assert.match(source, /failedStep,\n\s*error:/)
+  assert.match(source, /safeListUserStoragePaths/)
+  assert.match(source, /account_data_profile_reset_skipped/)
+})

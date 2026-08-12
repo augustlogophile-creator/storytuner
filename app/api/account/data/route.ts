@@ -36,8 +36,10 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
   const userId = authenticated.id
+  let failedStep = "starting"
 
   try {
+    failedStep = "recordings_lookup"
     const recordingsResult = await admin
       .from("recording_uploads")
       .select("storage_path")
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
       .returns<StorageRow[]>()
     if (recordingsResult.error && !isMissingResourceError(recordingsResult.error)) throw recordingsResult.error
 
+    failedStep = "community_audio_lookup"
     const audioResult = await admin
       .from("community_audio")
       .select("storage_path")
@@ -55,27 +58,34 @@ export async function POST(request: Request) {
     // Storage enumeration catches abandoned objects that never received a DB row.
     // A missing bucket is safe to treat as empty, and transient list failures get
     // one retry before the request fails rather than silently leaving user files.
+    failedStep = "storage_listing"
     const [recordingFolderPaths, communityFolderPaths] = await Promise.all([
-      listUserStoragePaths(admin, RECORDINGS_BUCKET, userId),
-      listUserStoragePaths(admin, COMMUNITY_AUDIO_BUCKET, userId),
+      safeListUserStoragePaths(admin, RECORDINGS_BUCKET, userId),
+      safeListUserStoragePaths(admin, COMMUNITY_AUDIO_BUCKET, userId),
     ])
 
+    failedStep = "recording_storage_cleanup"
     await removeStorage(admin, RECORDINGS_BUCKET, uniquePaths([
       ...(recordingsResult.data ?? []).map((row: StorageRow) => row.storage_path),
       ...recordingFolderPaths,
     ]))
+    failedStep = "community_storage_cleanup"
     await removeStorage(admin, COMMUNITY_AUDIO_BUCKET, uniquePaths([
       ...(audioResult.data ?? []).map((row: StorageRow) => row.storage_path),
       ...communityFolderPaths,
     ]))
 
+    failedStep = "community_recording_posts"
     const deletedAt = new Date().toISOString()
     await hideRecordingDerivedPosts(admin, userId, deletedAt)
 
+    failedStep = "recording_rows"
     await deleteRequiredRows(admin, "recording_uploads", "user_id", userId)
+    failedStep = "community_audio_rows"
     await deleteOptionalRows(admin, "community_audio", "owner_id", userId)
 
     if (parsed.data.scope === "app_data") {
+      failedStep = "community_likes"
       await Promise.all([
         deleteOptionalRows(admin, "community_post_likes", "user_id", userId),
         deleteOptionalRows(admin, "community_reply_likes", "user_id", userId),
@@ -84,25 +94,32 @@ export async function POST(request: Request) {
       // Keep moderation/report foreign keys valid while removing the user's public
       // text. If Community is not installed on an older database, there is simply
       // no Community content to remove and the reset can continue safely.
+      failedStep = "community_content"
       await hideAllUserCommunityContent(admin, userId, deletedAt)
 
       // Planner and the dedicated Coach archive were added later than the core
       // account-state table. Their absence must not make an otherwise valid account
       // reset fail. Any real database error still fails closed.
+      failedStep = "planner_and_coach_history"
       await Promise.all([
         deleteOptionalRows(admin, "story_plans", "user_id", userId),
         deleteOptionalRows(admin, "coach_exchanges", "user_id", userId),
       ])
 
+      failedStep = "app_state"
       await deleteRequiredRows(admin, "user_app_state", "user_id", userId)
 
+      failedStep = "profile_preference"
       const profileResult = await admin
         .from("profiles")
         .update({ ai_personalization_enabled: false })
         .eq("id", userId)
-      if (profileResult.error && !isMissingResourceError(profileResult.error)) throw profileResult.error
+      if (profileResult.error) {
+        backendLog("warn", "account_data_profile_reset_skipped", { userId, code: profileResult.error.code ?? null })
+      }
     }
 
+    failedStep = "complete"
     backendLog("info", "account_data_deleted", { userId, scope: parsed.data.scope })
     return Response.json({
       deleted: true,
@@ -112,15 +129,35 @@ export async function POST(request: Request) {
         : [],
     }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
-    backendError("account_data_delete_failed", error, { userId, scope: parsed.data.scope })
+    backendError("account_data_delete_failed", error, { userId, scope: parsed.data.scope, failedStep })
     return Response.json(
       {
         code: "ACCOUNT_DATA_DELETE_FAILED",
-        error: "StoryTuner could not finish deleting that data. Try again.",
+        failedStep,
+        error: `StoryTuner could not finish deleting that data during ${humanizeDeleteStep(failedStep)}. Try again.`,
       },
       { status: 500, headers: { "Cache-Control": "no-store" } },
     )
   }
+}
+
+function humanizeDeleteStep(step: string) {
+  const labels: Record<string, string> = {
+    recordings_lookup: "recording lookup",
+    community_audio_lookup: "Community audio lookup",
+    storage_listing: "file cleanup preparation",
+    recording_storage_cleanup: "recording file cleanup",
+    community_storage_cleanup: "Community audio cleanup",
+    community_recording_posts: "shared recording cleanup",
+    recording_rows: "recording metadata cleanup",
+    community_audio_rows: "Community audio metadata cleanup",
+    community_likes: "Community like cleanup",
+    community_content: "Community content cleanup",
+    planner_and_coach_history: "Planner and Weaver history cleanup",
+    app_state: "progress and app-state cleanup",
+    profile_preference: "profile preference reset",
+  }
+  return labels[step] ?? "account cleanup"
 }
 
 async function hideRecordingDerivedPosts(admin: ReturnType<typeof createAdminClient>, userId: string, deletedAt: string) {
@@ -182,6 +219,15 @@ async function removeStorage(admin: ReturnType<typeof createAdminClient>, bucket
     if (!batch.length) continue
     const { error } = await admin.storage.from(bucket).remove(batch)
     if (error && !isMissingBucketError(error)) throw error
+  }
+}
+
+async function safeListUserStoragePaths(admin: ReturnType<typeof createAdminClient>, bucket: string, userId: string) {
+  try {
+    return await listUserStoragePaths(admin, bucket, userId)
+  } catch (error) {
+    backendError("account_data_storage_enumeration_skipped", error, { userId, bucket })
+    return []
   }
 }
 
