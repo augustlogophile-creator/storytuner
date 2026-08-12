@@ -26,7 +26,7 @@ export default async function AccountRestrictedPage() {
     <MobileShell nav={false}>
       <RestrictionStatusWatcher />
       <div className="flex min-h-[75vh] flex-col justify-center">
-        <section className="rounded-[1.35rem] border border-destructive/20 bg-card p-5 text-center">
+        <section className="rounded-[2rem] border border-destructive/25 bg-card p-7 text-center">
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             {banned ? <Ban className="h-6 w-6" /> : <Clock3 className="h-6 w-6" />}
           </span>
@@ -53,7 +53,7 @@ export default async function AccountRestrictedPage() {
           )}
 
           {until && !banned && (
-            <p className="mt-4 rounded-2xl bg-secondary px-4 py-3 text-[0.8rem] font-medium">
+            <p className="mt-4 rounded-2xl bg-secondary px-4 py-3 text-sm font-semibold">
               Access is scheduled to return {new Date(until).toLocaleString()}.
             </p>
           )}

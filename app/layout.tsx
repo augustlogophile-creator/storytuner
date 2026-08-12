@@ -1,17 +1,12 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
-import { EB_Garamond, Manrope, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 import "./globals.css"
 
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-  weight: ["400", "500", "600", "700", "800"],
-})
-const editorial = EB_Garamond({ subsets: ["latin"], variable: "--font-editorial", weight: ["400", "500"] })
+const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 
 export const metadata: Metadata = {
@@ -23,7 +18,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light",
-  themeColor: "#f7f6f1",
+  themeColor: "#f8f7f2",
   maximumScale: 1,
   userScalable: false,
 }
@@ -47,7 +42,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   }
 
   return (
-    <html lang="en" className={`light bg-background ${manrope.variable} ${editorial.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
         <AppProviders
           initialUserId={authenticated?.id ?? null}
