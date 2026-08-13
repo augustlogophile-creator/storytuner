@@ -1,150 +1,182 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState, type ChangeEvent } from "react"
-import { ArrowLeft, ArrowRight, BookOpen, LockKeyhole, Mic2, ShieldCheck } from "lucide-react"
-import { useApp } from "@/lib/app-state"
-import { Weaver } from "@/components/weaver"
+import { useEffect, useState, type ReactNode } from "react"
+import { ArrowLeft } from "lucide-react"
+import {
+  blockerLabels,
+  goalLabels,
+  readOnboardingPreferences,
+  writeOnboardingPreferences,
+  type OnboardingPreferences,
+  type StoryBlocker,
+  type StoryGoal,
+} from "@/lib/onboarding-preferences"
 
-const pages = [
-  {
-    title: "Learn the craft, one decision at a time.",
-    copy: "StoryTuner turns a complete storytelling course into short readings, quick checks, and focused practice that build on each other.",
-    icon: BookOpen,
-  },
-  {
-    title: "Practice the way stories are actually told.",
-    copy: "Use the Arena to record a real take, review the transcript, and get specific feedback on your hook, development, and landing.",
-    icon: Mic2,
-  },
-  {
-    title: "Your recordings stay private by default.",
-    copy: "Community is included with Membership, and a story only appears there when you deliberately share it. You can remove your recordings and posts at any time.",
-    icon: LockKeyhole,
-  },
-  {
-    title: "Save your progress",
-    copy: "Create a secure account for your StoryTuner profile. Your current lessons, recordings, and XP still stay on this device for now.",
-    icon: ShieldCheck,
-  },
+const TOTAL_STEPS = 5
+
+const goalDetails: Array<{ value: Exclude<StoryGoal, "">; title: string; detail?: string }> = [
+  { value: "everyday", title: "Everyday stories", detail: "Tell better stories with friends." },
+  { value: "speaking", title: "Interviews & speaking", detail: "Answer clearly and confidently." },
+  { value: "writing", title: "Writing", detail: "Turn experiences into stronger stories." },
+  { value: "confidence", title: "Confidence", detail: "Feel better when people are listening." },
+  { value: "everything", title: "Everything" },
 ]
 
+const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring", "details", "nervous", "confident"]
+
 export function Onboarding() {
-  const { state, ready, updateProfileName } = useApp()
   const [page, setPage] = useState(0)
-  const [name, setName] = useState("")
+  const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", blocker: "" })
 
   useEffect(() => {
-    if (!ready) return
-    setName(state.profile.name === "Storyteller" ? "" : state.profile.name)
-    if (state.onboardingComplete) setPage(pages.length - 1)
-  }, [ready, state.onboardingComplete, state.profile.name])
+    setPreferences(readOnboardingPreferences())
+  }, [])
 
-  const item = pages[page]
-  const Icon = item.icon
-  const accountStep = page === pages.length - 1
+  const progress = [5, 26, 48, 72, 94][page] ?? 100
+  const canContinue = page !== 1 || Boolean(preferences.goal)
+  const canContinueBlocker = page !== 2 || Boolean(preferences.blocker)
 
-  function continueIntro() {
-    if (page === 0) {
-      const clean = name.trim()
-      if (!clean) return
-      updateProfileName(clean)
-    }
-    setPage((value) => Math.min(value + 1, pages.length - 1))
+  function save(next: OnboardingPreferences) {
+    setPreferences(next)
+    writeOnboardingPreferences(next)
+  }
+
+  function next() {
+    if (!canContinue || !canContinueBlocker) return
+    setPage((current) => Math.min(TOTAL_STEPS - 1, current + 1))
   }
 
   return (
-    <main className="entry-shell">
-      <section className="intro-canvas" aria-label="StoryTuner introduction">
-        <header className="flex items-center justify-between px-5 pt-[max(1.35rem,env(safe-area-inset-top))] sm:pt-7">
-          <p className="text-sm font-semibold tracking-[-0.01em] text-foreground">StoryTuner</p>
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.15em] text-muted-foreground">
-            {page + 1} of {pages.length}
-          </p>
+    <main className="min-h-svh bg-card">
+      <section className="mx-auto flex min-h-svh w-full max-w-md flex-col bg-card px-5 pb-[max(1.2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:border-x sm:border-border">
+        <header className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setPage((current) => Math.max(0, current - 1))}
+            disabled={page === 0}
+            aria-label="Go back"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground disabled:opacity-0"
+          >
+            <ArrowLeft className="h-5 w-5" strokeWidth={2.2} />
+          </button>
+          <div className="intro-progress-track flex-1" aria-label={`Introduction step ${page + 1} of ${TOTAL_STEPS}`}>
+            <div className="intro-progress-fill" style={{ width: `${progress}%` }} />
+          </div>
         </header>
 
-        <div className="flex flex-1 items-center justify-center px-5 py-8 sm:py-10">
-          <div className="w-full text-center">
-            <div className="flex min-h-28 items-center justify-center sm:min-h-32">
-              {page === 0 ? (
-                <Weaver colorId="classic" size={112} />
-              ) : (
-                <span className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_12px_32px_rgba(21,93,183,0.10)]">
-                  <Icon className="h-7 w-7" strokeWidth={1.8} />
-                </span>
-              )}
-            </div>
-
-            <p className="mt-5 font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Welcome to StoryTuner</p>
-            <h1 className="mx-auto mt-3 max-w-sm text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance sm:text-[2.35rem]">
-              {item.title}
-            </h1>
-            <p className="mx-auto mt-4 max-w-sm text-[0.95rem] leading-7 text-muted-foreground text-pretty sm:text-base">
-              {item.copy}
-            </p>
-
-            {page === 0 && (
-              <label className="mx-auto mt-7 block max-w-sm text-left">
-                <span className="font-mono text-[0.61rem] uppercase tracking-[0.15em] text-muted-foreground">What should we call you?</span>
-                <input
-                  value={name}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setName(event.target.value.slice(0, 40))}
-                  placeholder="Your first name or nickname"
-                  autoComplete="name"
-                  autoFocus
-                  className="mt-2.5 w-full rounded-2xl border border-border bg-background px-4 py-3.5 text-sm shadow-[0_1px_0_rgba(255,255,255,0.8)_inset] outline-none transition placeholder:text-muted-foreground/65 focus:border-brand focus:ring-4 focus:ring-brand/10"
-                />
-              </label>
-            )}
-          </div>
+        <div key={page} className="app-page-enter flex flex-1 flex-col">
+          {page === 0 && <WelcomeScreen />}
+          {page === 1 && (
+            <ChoiceScreen title="What do you want to get better at?">
+              {goalDetails.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="intro-choice"
+                  data-selected={preferences.goal === option.value}
+                  onClick={() => save({ ...preferences, goal: option.value })}
+                >
+                  <span className="block text-[0.9rem] font-semibold tracking-[-0.015em]">{option.title}</span>
+                  {option.detail && <span className="mt-0.5 block text-[0.72rem] leading-5 text-muted-foreground">{option.detail}</span>}
+                </button>
+              ))}
+            </ChoiceScreen>
+          )}
+          {page === 2 && (
+            <ChoiceScreen title="What usually gets in your way?">
+              {blockers.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="intro-choice py-3.5"
+                  data-selected={preferences.blocker === value}
+                  onClick={() => save({ ...preferences, blocker: value })}
+                >
+                  <span className="block text-[0.88rem] font-semibold tracking-[-0.012em]">{blockerLabels[value]}</span>
+                </button>
+              ))}
+            </ChoiceScreen>
+          )}
+          {page === 3 && <SecretScreen />}
+          {page === 4 && <ReadyScreen preferences={preferences} />}
         </div>
 
-        <footer className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pb-7">
-          <div className="mx-auto w-full">
-            <div className="mb-5 flex gap-1.5" aria-label={`Introduction step ${page + 1} of ${pages.length}`}>
-              {pages.map((_, index) => (
-                <span
-                  key={index}
-                  className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${index <= page ? "bg-brand" : "bg-secondary"}`}
-                />
-              ))}
+        <footer className="pt-4">
+          {page < TOTAL_STEPS - 1 ? (
+            <button
+              type="button"
+              onClick={next}
+              disabled={!canContinue || !canContinueBlocker}
+              className="intro-bottom-action"
+            >
+              {page === 0 ? "Let’s start" : "Continue"}
+            </button>
+          ) : (
+            <div>
+              <Link href="/sign-up" className="intro-bottom-action flex items-center justify-center">
+                Start learning
+              </Link>
+              <p className="mt-3 text-center text-[0.72rem] text-muted-foreground">
+                Already have an account?{" "}
+                <Link href="/sign-up?mode=sign-in" className="font-semibold text-foreground underline-offset-4 hover:underline">Log in</Link>
+              </p>
             </div>
-
-            {accountStep ? (
-              <div className="space-y-3">
-                <Link href="/sign-up" className="intro-primary-button">
-                  Sign up
-                </Link>
-                <p className="text-center text-sm text-muted-foreground">
-                  Already have an account?{" "}
-                  <Link href="/sign-up?mode=sign-in" className="font-semibold text-accent-foreground hover:underline">Log in</Link>
-                </p>
-              </div>
-            ) : (
-              <button
-                type="button"
-                disabled={!ready || (page === 0 && !name.trim())}
-                onClick={continueIntro}
-                className="intro-primary-button disabled:cursor-not-allowed disabled:opacity-35"
-              >
-                Continue
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
-
-            {page > 0 && (
-              <button
-                type="button"
-                onClick={() => setPage((value) => Math.max(0, value - 1))}
-                className="mx-auto mt-4 flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Back
-              </button>
-            )}
-          </div>
+          )}
         </footer>
       </section>
     </main>
+  )
+}
+
+function WelcomeScreen() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-2 pb-10 text-center">
+      <p className="font-mono text-[0.62rem] uppercase tracking-[0.19em] text-muted-foreground">StoryTuner</p>
+      <h1 className="mt-4 text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.05em] text-balance">Welcome to StoryTuner.</h1>
+      <p className="mt-5 max-w-xs text-[1rem] leading-7 text-muted-foreground text-pretty">Learn to tell stories people actually want to hear.</p>
+    </div>
+  )
+}
+
+function ChoiceScreen({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-1 flex-col pt-9">
+      <h1 className="mx-auto max-w-sm text-center text-[1.8rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">{title}</h1>
+      <div className="mt-7 flex flex-col gap-2.5">{children}</div>
+    </div>
+  )
+}
+
+function SecretScreen() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-3 pb-8 text-center">
+      <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground">Here’s the secret</p>
+      <h1 className="mt-4 max-w-sm text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">Great stories aren’t about having an extraordinary life.</h1>
+      <p className="mt-6 max-w-sm text-[0.98rem] leading-7 text-muted-foreground text-pretty">
+        They’re about knowing <strong className="font-semibold text-foreground">what to notice, what to leave out, and what to make people care about.</strong>
+      </p>
+    </div>
+  )
+}
+
+function ReadyScreen({ preferences }: { preferences: OnboardingPreferences }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-2 pb-8 text-center">
+      <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground">Ready</p>
+      <h1 className="mt-4 text-[2.2rem] font-semibold leading-[1.04] tracking-[-0.05em] text-balance">StoryTuner is ready.</h1>
+      <p className="mt-5 max-w-sm text-[0.95rem] leading-7 text-muted-foreground text-pretty">You’ll learn one idea at a time, then practice it in stories of your own.</p>
+      <div className="mt-7 grid w-full grid-cols-2 gap-2">
+        {["Learn", "Practice", "Get feedback", "Improve"].map((item) => (
+          <div key={item} className="rounded-2xl bg-secondary/70 px-3 py-3 text-[0.78rem] font-semibold">{item}</div>
+        ))}
+      </div>
+      {(preferences.goal || preferences.blocker) && (
+        <p className="mt-6 text-[0.68rem] leading-5 text-muted-foreground">
+          {preferences.goal && preferences.goal !== "everything" ? `Starting focus: ${goalLabels[preferences.goal]}. ` : ""}
+          StoryTuner will use your setup to make coaching more relevant.
+        </p>
+      )}
+    </div>
   )
 }

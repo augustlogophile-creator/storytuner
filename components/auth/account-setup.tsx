@@ -2,10 +2,10 @@
 
 import { useMemo, useState, type FormEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowRight, Check, Loader2 } from "lucide-react"
-import { Weaver } from "@/components/weaver"
+import { ArrowRight, Check, Loader2, ScrollText } from "lucide-react"
 import { useApp } from "@/lib/app-state"
 import { safeInternalPath } from "@/lib/auth/redirects"
+import { readOnboardingPreferences } from "@/lib/onboarding-preferences"
 import {
   usernameSuggestionsFromEmail,
   validateDisplayName,
@@ -30,7 +30,7 @@ export function AccountSetup({
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { completeOnboarding } = useApp()
+  const { completeOnboarding, updateOnboardingPreferences } = useApp()
   const recoveryMode = searchParams.get("mode") === "login-recovery"
   const suggestions = useMemo(() => usernameSuggestionsFromEmail(initialEmail), [initialEmail])
   const [username, setUsername] = useState(initialProfile?.username ?? suggestions[0] ?? "story_weaves")
@@ -107,6 +107,7 @@ export function AccountSetup({
     }
 
     setUsername(finalUsername)
+    updateOnboardingPreferences(readOnboardingPreferences())
     completeOnboarding(cleanDisplayName)
     const destination = safeInternalPath(searchParams.get("next"), "/home")
     router.replace(destination === "/onboarding" ? "/home" : destination)
@@ -117,8 +118,12 @@ export function AccountSetup({
     <main className="entry-shell">
       <section className="auth-canvas">
         <div className="mx-auto w-full max-w-md">
-          <div className="flex justify-center"><Weaver colorId="classic" size={90} /></div>
-          <span className="mx-auto mt-5 flex h-11 w-11 items-center justify-center rounded-full border border-brand/15 bg-brand-soft text-accent-foreground shadow-[0_10px_28px_rgba(21,93,183,0.10)]"><Check className="h-5 w-5" /></span>
+          <div className="flex justify-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-secondary text-foreground">
+              <ScrollText className="h-7 w-7" strokeWidth={1.8} />
+            </span>
+          </div>
+          <span className="mx-auto mt-5 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm"><Check className="h-4 w-4" /></span>
           <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{recoveryMode ? "Account confirmation" : "Profile setup"}</p>
           <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">{recoveryMode ? "Welcome back." : "Choose how you appear in StoryTuner."}</h1>
           <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">{recoveryMode ? "Your existing StoryTuner identity will stay exactly the same. Confirm the age requirement once to continue." : "Your public name is separate from the email you use to log in."}</p>

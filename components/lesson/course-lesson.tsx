@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react"
 import { ArrowRight, Check, ChevronLeft, Loader2, Lock, Sparkles, X } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
+import { Celebration } from "@/components/ui/celebration"
+import { CountUp } from "@/components/ui/count-up"
 import { RichText } from "@/components/rich-text"
 import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isUnitUnlocked, useApp } from "@/lib/app-state"
 import { curriculum, lessonId, stageLabels, stageOrder, stageXp, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
@@ -302,11 +304,12 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
   const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
   const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
-    <div className="flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
+    <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
+      <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${stageXp[stage]} XP` : undefined} />
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
-      <div className="flex items-center gap-2 rounded-full bg-brand-soft px-4 py-2 text-sm font-semibold text-accent-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? `+${stageXp[stage]} XP earned` : "Progress already saved"}</div>
-      <p className="text-xs text-muted-foreground">Your full course is {coursePercent}% complete.</p>
+      <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? <><span>+</span><CountUp value={stageXp[stage]} /><span>XP earned</span></> : "Progress already saved"}</div>
+      <p className="text-xs text-muted-foreground">Your full course is <CountUp value={coursePercent} suffix="%" /> complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
         <Link href={primaryHref} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>
         <button type="button" onClick={onReview} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-semibold"><Sparkles className="h-4 w-4" />Review or try again</button>

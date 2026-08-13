@@ -6,6 +6,7 @@ import { AlertCircle, ArrowLeft, MessageCircle, Mic2, RotateCcw, Share2, Trash2 
 import { MediaPlayer } from "@/components/arena/media-player"
 import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
+import { CountUp } from "@/components/ui/count-up"
 import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
 import { useApp, type Recording } from "@/lib/app-state"
 
@@ -146,6 +147,6 @@ export function RecordingsClient() {
 }
 
 function Score({ label, value }: { label: string; value: number }) {
-  return <div className="rounded-2xl bg-secondary px-2 py-3"><p className="text-sm font-semibold">{value}</p><p className="mt-0.5 font-mono text-[0.5rem] uppercase tracking-wider text-muted-foreground">{label}</p></div>
+  return <div className="rounded-2xl bg-secondary px-2 py-3"><CountUp value={value} className="text-sm font-semibold" /><p className="mt-0.5 font-mono text-[0.5rem] uppercase tracking-wider text-muted-foreground">{label}</p></div>
 }
 function formatTime(seconds: number) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` }

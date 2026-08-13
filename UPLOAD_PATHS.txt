@@ -1,0 +1,25 @@
+StoryTuner changed files
+
+Copy these files into the SAME paths in your GitHub repo. Existing files should be replaced. New files should be added.
+
+app/globals.css
+app/loading.tsx                         NEW
+app/template.tsx                        NEW
+components/arena/recordings-client.tsx
+components/arena/score-ring.tsx
+components/auth/account-setup.tsx
+components/auth/auth-shell.tsx
+components/bottom-nav.tsx
+components/coach/coach-client.tsx
+components/home/home-dashboard.tsx
+components/lesson/course-lesson.tsx
+components/mobile-shell.tsx
+components/onboarding.tsx
+components/profile/profile-client.tsx
+components/profile/progress-client.tsx
+components/ui/celebration.tsx            NEW
+components/ui/count-up.tsx               NEW
+lib/app-state.tsx
+lib/onboarding-preferences.ts            NEW
+
+No package.json changes or new npm dependencies are required.

@@ -2,8 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
-import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Volume2, VolumeX } from "lucide-react"
-import { Weaver } from "@/components/weaver"
+import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, ScrollText, Square, Volume2, VolumeX } from "lucide-react"
 import { RichText } from "@/components/rich-text"
 import { FREE_COACH_LIMIT, useApp, type CoachMessage, type Recording } from "@/lib/app-state"
 
@@ -115,7 +114,7 @@ export function CoachClient() {
           messages: [...history, { role: "user", content: clean }],
           storyContext: recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.",
           scoreContext: recording ? scoreContext(recording) : "No prior score selected.",
-          personalizationContext: state.settings.aiOptIn ? personalizationContext(state.recordings) : "",
+          personalizationContext: state.settings.aiOptIn ? `${onboardingContext(state.onboardingPreferences)}\n\n${personalizationContext(state.recordings)}` : "",
           requestKey,
         }),
       })
@@ -210,7 +209,7 @@ export function CoachClient() {
     <div className="flex min-h-[calc(100vh-8rem)] min-w-0 flex-col gap-4">
       <header>
         <Link href="/home" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Home</Link>
-        <div className="mt-4 flex items-center gap-3"><Weaver size={48} /><div><p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">AI story coach</p><h1 className="mt-1 text-2xl font-semibold tracking-tight">Ask Weaver</h1></div></div>
+        <div className="mt-4 flex items-center gap-3"><CoachMark size="lg" /><div><p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">AI story coach</p><h1 className="mt-1 text-2xl font-semibold tracking-tight">Ask Weaver</h1></div></div>
       </header>
 
       <section className="rounded-3xl border border-border bg-card p-4">
@@ -235,16 +234,16 @@ export function CoachClient() {
       <section className="flex min-h-[30rem] flex-1 flex-col overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-5 sm:px-5">
           {safeMessages.length === 0 && !pendingUserMessage ? (
-            <div className="m-auto max-w-xs text-center"><Weaver size={44} className="mx-auto" /><p className="mt-4 text-sm font-semibold">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Ask about a story, an opening, an ending, your feedback, or what to practice next.</p></div>
+            <div className="m-auto max-w-xs text-center"><CoachMark size="lg" className="mx-auto" /><p className="mt-4 text-sm font-semibold">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Ask about a story, an opening, an ending, your feedback, or what to practice next.</p></div>
           ) : (
             <>
               {safeMessages.map((message: CoachMessage) => message.role === "user" ? (
                 <div key={message.id} className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{message.content}</div>
               ) : (
-                <div key={message.id} className="coach-message-in group flex items-start gap-3"><Weaver size={28} className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.68rem] font-semibold text-muted-foreground opacity-75 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button></div></div>
+                <div key={message.id} className="coach-assistant-in group flex items-start gap-3"><CoachMark className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.68rem] font-semibold text-muted-foreground opacity-75 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button></div></div>
               ))}
               {pendingUserMessage && <div className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{pendingUserMessage}</div>}
-              {loading && <div className="coach-message-in flex items-center gap-3"><Weaver size={28} /><div className="flex items-center gap-1.5 rounded-2xl bg-secondary/55 px-4 py-3" aria-label="Weaver is thinking"><span className="weaver-thinking-dot" /><span className="weaver-thinking-dot [animation-delay:120ms]" /><span className="weaver-thinking-dot [animation-delay:240ms]" /></div></div>}
+              {loading && <div className="coach-message-in flex items-center gap-3"><CoachMark /><div className="flex items-center gap-1.5 rounded-2xl bg-secondary/55 px-4 py-3" aria-label="Weaver is thinking"><span className="weaver-thinking-dot" /><span className="weaver-thinking-dot [animation-delay:120ms]" /><span className="weaver-thinking-dot [animation-delay:240ms]" /></div></div>}
               <div ref={endRef} />
             </>
           )}
@@ -267,6 +266,19 @@ export function CoachClient() {
       </section>
     </div>
   )
+}
+
+function CoachMark({ size = "sm", className = "" }: { size?: "sm" | "lg"; className?: string }) {
+  return (
+    <span className={`${size === "lg" ? "h-11 w-11 rounded-2xl" : "h-7 w-7 rounded-lg"} ${className} flex shrink-0 items-center justify-center bg-secondary text-muted-foreground`}>
+      <ScrollText className={size === "lg" ? "h-5 w-5" : "h-3.5 w-3.5"} strokeWidth={1.8} />
+    </span>
+  )
+}
+
+function onboardingContext(preferences: { goal: string; blocker: string }) {
+  if (!preferences.goal && !preferences.blocker) return "No onboarding preferences are available yet."
+  return `User setup preferences: primary goal = ${preferences.goal || "not set"}; biggest storytelling blocker = ${preferences.blocker || "not set"}. Use this only to make coaching more relevant, not to repeatedly mention the setup.`
 }
 
 function mergeCoachMessages(...sources: CoachMessage[][]) {

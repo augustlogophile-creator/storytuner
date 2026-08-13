@@ -1,7 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
-import { ArrowLeft } from "lucide-react"
-import { Weaver } from "@/components/weaver"
+import { ArrowLeft, ScrollText } from "lucide-react"
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -13,7 +12,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
               <ArrowLeft className="h-4 w-4" />
               Introduction
             </Link>
-            <Weaver colorId="classic" size={56} />
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-foreground"><ScrollText className="h-5 w-5" strokeWidth={1.8} /></span>
           </header>
           <div className="auth-content">{children}</div>
         </div>

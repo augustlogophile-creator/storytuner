@@ -19,6 +19,7 @@ import {
   type CloudRecordingRow,
 } from "@/lib/recording-cloud"
 import { createClient } from "@/lib/supabase/client"
+import type { OnboardingPreferences } from "@/lib/onboarding-preferences"
 
 export type ArenaScores = { hook: number; development: number; landing: number }
 
@@ -109,6 +110,7 @@ export type AppState = {
   version: 6
   accountOwnerId: string | null
   profile: { name: string; joinedAt: string }
+  onboardingPreferences: OnboardingPreferences
   sessions: number
   lastOpen: string | null
   activityDates: string[]
@@ -172,6 +174,7 @@ function freshState(accountOwnerId: string | null = null, premium = false, displ
     version: 6,
     accountOwnerId,
     profile: { name: displayName || "Storyteller", joinedAt: new Date().toISOString() },
+    onboardingPreferences: { goal: "", blocker: "" },
     sessions: 0,
     lastOpen: null,
     activityDates: [],
@@ -206,6 +209,7 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
     version: 6,
     accountOwnerId,
     profile: { ...base.profile, ...(value.profile ?? {}) },
+    onboardingPreferences: { ...base.onboardingPreferences, ...(value.onboardingPreferences ?? {}) },
     settings: { ...base.settings, ...(value.settings ?? {}) },
     completed: Array.isArray(value.completed) ? value.completed : [],
     activityDates: Array.isArray(value.activityDates) ? value.activityDates : [],
@@ -408,6 +412,10 @@ function mergeSyncedState(local: AppState, remoteRaw: unknown, accountOwnerId: s
       messages,
     },
     settings: { ...remote.settings, ...local.settings },
+    onboardingPreferences: {
+      goal: local.onboardingPreferences.goal || remote.onboardingPreferences.goal,
+      blocker: local.onboardingPreferences.blocker || remote.onboardingPreferences.blocker,
+    },
     onboardingComplete: remote.onboardingComplete || local.onboardingComplete,
     premium: local.premium,
     recordings,
@@ -432,6 +440,7 @@ type AppContextValue = {
   equipWeaver: (id: string) => void
   updateSettings: (patch: Partial<AppState["settings"]>) => void
   updateProfileName: (name: string) => void
+  updateOnboardingPreferences: (patch: Partial<OnboardingPreferences>) => void
   setPremium: (value: boolean) => void
   completeOnboarding: (name?: string) => void
   deleteAllRecordings: (options?: { skipCloud?: boolean }) => Promise<void>
@@ -852,6 +861,13 @@ export function AppProvider({
     setState((current) => ({ ...current, profile: { ...current.profile, name: clean || "Storyteller" } }))
   }, [])
 
+  const updateOnboardingPreferences = useCallback((patch: Partial<OnboardingPreferences>) => {
+    setState((current) => ({
+      ...current,
+      onboardingPreferences: { ...current.onboardingPreferences, ...patch },
+    }))
+  }, [])
+
   const setPremium = useCallback((value: boolean) => setState((current) => ({ ...current, premium: value })), [])
   const completeOnboarding = useCallback((name?: string) => {
     const clean = name?.trim().slice(0, 40)
@@ -944,6 +960,7 @@ export function AppProvider({
       equipWeaver,
       updateSettings,
       updateProfileName,
+      updateOnboardingPreferences,
       setPremium,
       completeOnboarding,
       deleteAllRecordings,
@@ -967,6 +984,7 @@ export function AppProvider({
       equipWeaver,
       updateSettings,
       updateProfileName,
+      updateOnboardingPreferences,
       setPremium,
       completeOnboarding,
       deleteAllRecordings,

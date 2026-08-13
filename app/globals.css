@@ -69,8 +69,8 @@
   --muted: oklch(0.955 0.008 95);
   --muted-foreground: oklch(0.53 0.012 75);
   /* crisp blue accent */
-  --accent: oklch(0.92 0.055 250);
-  --accent-foreground: oklch(0.39 0.15 250);
+  --accent: oklch(0.965 0.006 92);
+  --accent-foreground: oklch(0.27 0.012 70);
   --destructive: oklch(0.577 0.18 25);
   --border: oklch(0.9 0.008 90);
   --input: oklch(0.9 0.008 90);
@@ -85,15 +85,15 @@
   /* custom brand tokens */
   --brand: oklch(0.62 0.16 250);
   --brand-foreground: oklch(0.99 0.005 95);
-  --brand-soft: oklch(0.94 0.035 250);
+  --brand-soft: oklch(0.965 0.006 92);
   --streak: oklch(0.72 0.14 55);
   --streak-soft: oklch(0.94 0.05 65);
   --sidebar: oklch(0.985 0.005 95);
   --sidebar-foreground: oklch(0.24 0.012 75);
   --sidebar-primary: oklch(0.27 0.012 70);
   --sidebar-primary-foreground: oklch(0.98 0.006 95);
-  --sidebar-accent: oklch(0.92 0.055 250);
-  --sidebar-accent-foreground: oklch(0.39 0.15 250);
+  --sidebar-accent: oklch(0.965 0.006 92);
+  --sidebar-accent-foreground: oklch(0.27 0.012 70);
   --sidebar-border: oklch(0.9 0.008 90);
   --sidebar-ring: oklch(0.62 0.16 250);
 }
@@ -493,4 +493,193 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   .planner-expand-in { animation: none !important; }
+}
+
+
+/* StoryTuner motion system: tactile, restrained, and shared across the app. */
+@keyframes storytuner-route-in {
+  from { opacity: 0; transform: translateY(5px); filter: blur(1px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes storytuner-skeleton {
+  0% { background-position: 110% 0; }
+  100% { background-position: -110% 0; }
+}
+
+@keyframes storytuner-assistant-in {
+  0% { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+  55% { opacity: .76; filter: blur(1px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes storytuner-confetti {
+  0% { opacity: 0; transform: translate3d(0,-8px,0) rotate(0deg) scale(.8); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), 180px, 0) rotate(280deg) scale(1); }
+}
+
+@keyframes storytuner-celebration-label {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.84); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -58%) scale(.98); }
+}
+
+.route-transition {
+  min-height: 100%;
+  animation: storytuner-route-in 260ms cubic-bezier(.2,.72,.25,1) both;
+}
+
+.skeleton-block {
+  background: linear-gradient(100deg, var(--secondary) 20%, color-mix(in oklch, var(--card) 72%, var(--secondary)) 42%, var(--secondary) 64%);
+  background-size: 220% 100%;
+  animation: storytuner-skeleton 1.25s ease-in-out infinite;
+}
+
+:is(button, [role="button"], a[href], summary, label):not([aria-disabled="true"]) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary {
+  transition-property: transform, opacity, background-color, border-color, color, box-shadow, filter;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(.22,1.25,.32,1);
+  transform-origin: center;
+}
+
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+a[href]:active,
+summary:active,
+label:has(input[type="checkbox"]):active,
+label:has(input[type="radio"]):active {
+  transform: scale(.975);
+}
+
+.story-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(32, 28, 24, .025);
+}
+
+.story-card-interactive:hover {
+  border-color: color-mix(in oklch, var(--border) 72%, var(--foreground) 28%);
+}
+
+.coach-assistant-in {
+  animation: storytuner-assistant-in 480ms cubic-bezier(.2,.72,.25,1) both;
+}
+
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.celebration-piece {
+  --confetti-x: 18px;
+  position: absolute;
+  width: 7px;
+  height: 13px;
+  border-radius: 2px;
+  background: var(--brand);
+  opacity: 0;
+  animation: storytuner-confetti 1.15s cubic-bezier(.16,.72,.28,1) both;
+}
+
+.celebration-piece:nth-child(3n + 2) {
+  --confetti-x: -24px;
+  background: var(--streak);
+}
+
+.celebration-piece:nth-child(3n) {
+  --confetti-x: 8px;
+  background: var(--foreground);
+}
+
+.celebration-label {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--card) 94%, transparent);
+  padding: .7rem 1rem;
+  color: var(--foreground);
+  font-size: .82rem;
+  font-weight: 700;
+  box-shadow: 0 14px 38px rgba(37, 32, 27, .13);
+  backdrop-filter: blur(10px);
+  animation: storytuner-celebration-label 1.35s ease both;
+}
+
+/* Intro follows the same clean, full-screen rhythm as the rest of StoryTuner. */
+.intro-progress-track {
+  height: .38rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--secondary) 92%, var(--border));
+}
+
+.intro-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width 360ms cubic-bezier(.2,.75,.25,1);
+}
+
+.intro-choice {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 1.25rem;
+  background: color-mix(in oklch, var(--secondary) 64%, var(--card));
+  padding: .9rem 1rem;
+  text-align: left;
+}
+
+.intro-choice[data-selected="true"] {
+  border-color: color-mix(in oklch, var(--brand) 28%, var(--border));
+  background: color-mix(in oklch, var(--brand) 10%, var(--card));
+  box-shadow: 0 8px 22px rgba(32, 28, 24, .035);
+}
+
+.intro-bottom-action {
+  width: 100%;
+  border-radius: 999px;
+  background: var(--brand);
+  padding: .95rem 1.25rem;
+  color: var(--brand-foreground);
+  font-size: .9rem;
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 color-mix(in oklch, var(--brand) 72%, black), 0 9px 22px rgba(38, 104, 196, .14);
+}
+
+.intro-bottom-action:disabled {
+  opacity: .35;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-transition,
+  .skeleton-block,
+  .coach-assistant-in,
+  .celebration-piece,
+  .celebration-label {
+    animation: none !important;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  a[href]:active,
+  summary:active,
+  label:has(input[type="checkbox"]):active,
+  label:has(input[type="radio"]):active {
+    transform: none !important;
+  }
 }
