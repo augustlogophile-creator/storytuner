@@ -1,149 +1,203 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Check, Lock, ScrollText, Sparkles, Stars } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { Weaver } from "@/components/weaver"
+import { Celebration } from "@/components/ui/celebration"
+import { CountUp } from "@/components/ui/count-up"
 import { useApp, weaverColors } from "@/lib/app-state"
+
+const parchLore: Record<string, { rarity: string; title: string; note: string }> = {
+  classic: { rarity: "Original", title: "The first page", note: "Paper & possibility" },
+  scholar: { rarity: "Uncommon", title: "Keeper of margins", note: "Ink & inquiry" },
+  detective: { rarity: "Uncommon", title: "Hunter of details", note: "Clue & consequence" },
+  explorer: { rarity: "Rare", title: "Collector of roads", note: "Maps & memory" },
+  bard: { rarity: "Rare", title: "Keeper of cadence", note: "Voice & rhythm" },
+  sage: { rarity: "Epic", title: "The old storykeeper", note: "Wisdom & weight" },
+  royal: { rarity: "Epic", title: "The crowned narrator", note: "Poise & presence" },
+  master: { rarity: "Legendary", title: "Master of the telling", note: "Craft & command" },
+  golden: { rarity: "Mythic", title: "The illuminated one", note: "Legacy & light" },
+}
 
 export function ShopClient() {
   const { state, purchaseWeaver, equipWeaver } = useApp()
+  const activeIndex = Math.max(0, weaverColors.findIndex((item) => item.id === state.activeWeaver))
+  const [selectedIndex, setSelectedIndex] = useState(activeIndex)
   const [notice, setNotice] = useState("")
   const [pendingPurchaseId, setPendingPurchaseId] = useState<string | null>(null)
-  const active = weaverColors.find((item) => item.id === state.activeWeaver) ?? weaverColors[0]
+  const [celebrate, setCelebrate] = useState(false)
+  const pointerStart = useRef<number | null>(null)
+
+  useEffect(() => {
+    setSelectedIndex((current) => current < weaverColors.length ? current : activeIndex)
+  }, [activeIndex])
+
+  const selected = weaverColors[selectedIndex] ?? weaverColors[0]
+  const selectedLore = parchLore[selected.id] ?? parchLore.classic
+  const owned = state.ownedWeavers.includes(selected.id)
+  const equipped = state.activeWeaver === selected.id
+  const affordable = state.xpBalance >= selected.cost
   const pendingPurchase = useMemo(
     () => weaverColors.find((item) => item.id === pendingPurchaseId) ?? null,
     [pendingPurchaseId],
   )
 
-  function choose(id: string) {
-    const style = weaverColors.find((item) => item.id === id)
-    if (!style) return
+  function select(nextIndex: number) {
+    const normalized = (nextIndex + weaverColors.length) % weaverColors.length
+    if (normalized === selectedIndex) return
+    setSelectedIndex(normalized)
+    playParchTone("browse")
+  }
 
-    const owned = state.ownedWeavers.includes(id)
+  function chooseSelected() {
+    if (equipped) return
+
     if (owned) {
-      equipWeaver(id)
-      setNotice(`${style.name} is now equipped.`)
+      equipWeaver(selected.id)
+      playParchTone("equip")
+      setCelebrate(true)
       return
     }
 
-    if (state.xpBalance < style.cost) {
-      setNotice(`You need ${style.cost - state.xpBalance} more XP to unlock ${style.name}.`)
+    if (!affordable) {
+      playParchTone("blocked")
+      setNotice(`You need ${selected.cost - state.xpBalance} more XP to unlock ${selected.name}.`)
       return
     }
 
-    setPendingPurchaseId(id)
+    setPendingPurchaseId(selected.id)
   }
 
   function confirmPurchase() {
     if (!pendingPurchase) return
     const result = purchaseWeaver(pendingPurchase.id)
     setPendingPurchaseId(null)
-    setNotice(result.message.replace(/Weaver/g, "Parch"))
+    if (result.ok) {
+      playParchTone("unlock")
+      setCelebrate(true)
+    } else {
+      setNotice(result.message.replace(/Weaver/g, "Parch"))
+    }
+  }
+
+  function handlePointerUp(clientX: number) {
+    if (pointerStart.current === null) return
+    const delta = clientX - pointerStart.current
+    pointerStart.current = null
+    if (Math.abs(delta) < 42) return
+    select(selectedIndex + (delta < 0 ? 1 : -1))
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-2">
-      <BackLink href="/home" label="Today" />
+    <div className="flex flex-col gap-4 pb-4">
+      <Celebration active={celebrate} label={equipped ? `${selected.name} equipped` : `${selected.name} unlocked`} onDone={() => setCelebrate(false)} />
+      <BackLink href="/profile" label="Profile" />
 
-      <section className="relative overflow-hidden rounded-[2rem] border border-amber-200/70 bg-[radial-gradient(circle_at_top,rgba(240,204,130,0.35),transparent_34%),linear-gradient(135deg,#2d261f_0%,#413529_52%,#8c6239_120%)] p-6 text-primary-foreground shadow-[0_18px_50px_rgba(51,36,22,0.16)]">
-        <div className="absolute -right-12 top-4 h-32 w-32 rounded-full bg-amber-200/20 blur-3xl" />
-        <div className="absolute -left-8 bottom-0 h-24 w-24 rounded-full bg-orange-200/15 blur-2xl" />
-        <div className="relative flex items-start justify-between gap-4">
-          <div className="max-w-[17rem]">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-[0.66rem] font-mono uppercase tracking-[0.16em] text-white/80">
-              <ScrollText className="h-3.5 w-3.5" />
-              Parch atelier
-            </div>
-            <h1 className="mt-3 text-[1.7rem] font-semibold leading-tight tracking-[-0.03em] text-balance">Choose a new form for Parch.</h1>
-            <p className="mt-2 text-sm leading-relaxed text-white/72">
-              Unlock rare scroll forms with XP. Your lifetime XP stays intact, only your spendable balance changes.
-            </p>
+      <header className="px-1">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Parch collection</p>
+            <h1 className="mt-1.5 text-[1.65rem] font-semibold leading-tight tracking-[-0.035em]">Choose your Parch.</h1>
+            <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-muted-foreground">Browse the archive, unlock a form with XP, then equip it everywhere in StoryTuner.</p>
           </div>
-          <div className="hidden rounded-[1.6rem] border border-white/10 bg-white/6 p-3 sm:block">
-            <Weaver size={120} />
+          <div className="shrink-0 rounded-full border border-border bg-card px-3.5 py-2 text-right shadow-sm">
+            <p className="text-sm font-semibold"><CountUp value={state.xpBalance} /> XP</p>
+            <p className="text-[0.58rem] font-mono uppercase tracking-[0.12em] text-muted-foreground">available</p>
           </div>
         </div>
+      </header>
 
-        <div className="relative mt-5 grid gap-3 sm:grid-cols-[1.2fr_auto] sm:items-center">
-          <div className="rounded-[1.5rem] border border-white/10 bg-white/7 px-4 py-4">
-            <p className="text-[0.68rem] font-mono uppercase tracking-[0.16em] text-white/65">Currently equipped</p>
-            <p className="mt-2 text-lg font-semibold text-white">{active.name}</p>
-            <p className="mt-1 max-w-[18rem] text-sm leading-relaxed text-white/70">{active.description}</p>
+      <section
+        className="parch-archive relative isolate overflow-hidden rounded-[2rem] border border-[#d5ad63]/35 bg-[#16343a] text-[#f6ead0] shadow-[0_18px_52px_rgba(20,43,48,0.18)] outline-none"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowLeft") select(selectedIndex - 1)
+          if (event.key === "ArrowRight") select(selectedIndex + 1)
+        }}
+        onPointerDown={(event) => { pointerStart.current = event.clientX }}
+        onPointerUp={(event) => handlePointerUp(event.clientX)}
+        onPointerCancel={() => { pointerStart.current = null }}
+      >
+        <div className="parch-grid absolute inset-0 opacity-70" aria-hidden="true" />
+        <div className="parch-glow absolute left-1/2 top-[10rem] h-64 w-64 -translate-x-1/2 rounded-full opacity-70 blur-3xl" aria-hidden="true" />
+        <span className="parch-star left-[9%] top-[7%]" aria-hidden="true">✦</span>
+        <span className="parch-star right-[12%] top-[11%] [animation-delay:900ms]" aria-hidden="true">✧</span>
+        <span className="parch-star left-[17%] top-[28%] [animation-delay:1500ms]" aria-hidden="true">✧</span>
+
+        <div className="relative px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
+          <div className="flex items-center justify-between gap-4 font-mono text-[0.6rem] uppercase tracking-[0.17em] text-[#c6b78f]">
+            <span>{selectedLore.rarity}</span>
+            <span>Entry {String(selectedIndex + 1).padStart(2, "0")} / {String(weaverColors.length).padStart(2, "0")}</span>
           </div>
-          <div className="inline-flex items-center gap-2 self-start rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm sm:self-center">
-            <Sparkles className="h-4 w-4" />
-            {state.xpBalance} XP available
+
+          <div className="relative mx-auto mt-4 flex min-h-[15.5rem] max-w-[25rem] flex-col items-center justify-center text-center sm:min-h-[17rem]">
+            <div className="parch-orbit absolute left-1/2 top-1/2 h-[13.5rem] w-[13.5rem] -translate-x-1/2 -translate-y-[54%] rounded-full sm:h-[15rem] sm:w-[15rem]" aria-hidden="true" />
+            <div className="parch-orbit parch-orbit-inner absolute left-1/2 top-1/2 h-[10.5rem] w-[10.5rem] -translate-x-1/2 -translate-y-[58%] rounded-full sm:h-[12rem] sm:w-[12rem]" aria-hidden="true" />
+            <div key={selected.id} className="parch-reveal relative z-10 flex h-[10.5rem] w-[13.5rem] items-center justify-center sm:h-[12rem] sm:w-[15rem]">
+              <Weaver size={190} colorId={selected.id} className="max-h-full max-w-full drop-shadow-[0_14px_16px_rgba(0,0,0,0.18)]" />
+            </div>
+            <p className="relative z-10 mt-1 font-mono text-[0.59rem] uppercase tracking-[0.2em] text-[#d9b463]">{selectedLore.rarity}</p>
+            <h2 className="relative z-10 mt-1 text-[1.55rem] font-semibold tracking-[-0.035em] text-[#f5dfaf]">{selected.name}</h2>
           </div>
+
+          <div className="relative mt-2 rounded-[1.55rem] border border-[#d0aa61]/24 bg-[#17373d]/88 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] backdrop-blur-sm sm:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex rounded-full border border-[#b6a16e]/30 px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-[#bdb38f]">{selectedLore.rarity}</div>
+              <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-[#8ea2a0]">Archive {String(selectedIndex + 1).padStart(2, "0")}</span>
+            </div>
+
+            <h3 className="mt-4 text-[1.42rem] font-semibold leading-tight tracking-[-0.03em] text-[#f2d69c]">{selectedLore.title}</h3>
+            <p className="mt-2 max-w-[29rem] text-sm leading-relaxed text-[#aebfbc]">{selected.description}</p>
+
+            <div className="mt-5 flex items-center gap-3">
+              <button type="button" onClick={() => select(selectedIndex - 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#c2a45d]/32 bg-transparent text-[#d8bb78] hover:bg-white/5" aria-label="Previous Parch">
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => select(selectedIndex + 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#c2a45d]/32 bg-transparent text-[#d8bb78] hover:bg-white/5" aria-label="Next Parch">
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-[0.7rem] font-medium text-[#92a6a3]">Browse the collection</p>
+                <div className="mt-2 flex gap-1.5">
+                  {weaverColors.map((item, index) => (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => select(index)}
+                      className={`h-1.5 rounded-full transition-all ${index === selectedIndex ? "w-5 bg-[#ddb55d]" : "w-1.5 bg-[#6d827f]/65 hover:bg-[#8da09d]"}`}
+                      aria-label={`View ${item.name}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-4 border-t border-[#bfa66c]/20 pt-4">
+              <div>
+                <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#c6a65f]">Archive note</p>
+                <p className="mt-1 text-sm text-[#a9bbb8]">{selectedLore.note}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#c6a65f]">{owned ? "Collection status" : "Unlock with"}</p>
+                <p className="mt-1 text-[1.25rem] font-semibold tracking-[-0.02em] text-[#e3bb64]">{owned ? (equipped ? "Equipped" : "Owned") : `${selected.cost} XP`}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={chooseSelected}
+              disabled={equipped}
+              className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] disabled:cursor-default ${equipped ? "bg-[#283f43] text-[#b6c0bd] shadow-none" : owned ? "bg-[#eee1c1] text-[#24383a] hover:bg-[#f6e9c9]" : affordable ? "bg-brand text-brand-foreground hover:brightness-[1.03]" : "bg-[#566568] text-[#d3d9d7] hover:bg-[#607174]"}`}
+            >
+              {equipped ? <><Check className="h-4 w-4" />Equipped</> : owned ? "Equip Parch" : <><Sparkles className="h-4 w-4" />Unlock for {selected.cost} XP</>}
+            </button>
+          </div>
+
+          <p className="mt-3 text-center text-[0.62rem] leading-relaxed text-[#76908d]">Swipe, use the arrows, or tap a marker to browse.</p>
         </div>
       </section>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        {weaverColors.map((style) => {
-          const owned = state.ownedWeavers.includes(style.id)
-          const equipped = state.activeWeaver === style.id
-          const affordable = state.xpBalance >= style.cost
-          const featuredClass =
-            style.featured === "gold"
-              ? "border-amber-300/80 bg-[linear-gradient(180deg,rgba(255,247,214,0.96),rgba(255,252,244,0.98))] shadow-[0_16px_32px_rgba(232,182,67,0.16)]"
-              : style.featured === "master"
-                ? "border-slate-300/80 bg-[linear-gradient(180deg,rgba(247,245,241,0.98),rgba(255,255,255,0.98))] shadow-[0_12px_28px_rgba(66,54,41,0.08)]"
-                : "border-border bg-card shadow-[0_1px_2px_rgba(32,28,24,.025)]"
-
-          return (
-            <article
-              key={style.id}
-              className={`group relative overflow-hidden rounded-[1.8rem] border p-4 transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[0_12px_28px_rgba(51,36,22,0.08)] ${featuredClass}`}
-            >
-              <div className="absolute right-3 top-3 flex items-center gap-1.5 text-[0.65rem] font-mono uppercase tracking-[0.14em] text-muted-foreground">
-                {equipped ? <><Check className="h-3.5 w-3.5 text-brand" />Equipped</> : owned ? "Owned" : `${style.cost} XP`}
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[1.45rem] border border-black/5 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-                  <Weaver size={88} colorId={style.id} className="transition-transform duration-200 group-hover:scale-[1.04]" />
-                </div>
-                <div className="min-w-0 flex-1 pt-1">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[1.02rem] font-semibold leading-snug tracking-[-0.02em]">{style.name}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{style.description}</p>
-                    </div>
-                    {(style.featured === "gold" || style.featured === "master") && (
-                      <span className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${style.featured === "gold" ? "bg-amber-100 text-amber-700" : "bg-stone-100 text-stone-700"}`}>
-                        <Stars className="h-4 w-4" />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3">
-                <div className="text-xs text-muted-foreground">
-                  {equipped ? "Active across StoryTuner" : owned ? "Ready to equip across the app" : "Unlock and equip instantly"}
-                </div>
-                <button
-                  type="button"
-                  disabled={equipped}
-                  onClick={() => choose(style.id)}
-                  className={`inline-flex min-w-[6.6rem] items-center justify-center gap-1.5 rounded-full px-3.5 py-2.5 text-xs font-semibold transition-colors disabled:opacity-50 ${equipped ? "border border-border bg-secondary text-foreground" : owned ? "bg-primary text-primary-foreground" : affordable ? "bg-brand text-brand-foreground" : "border border-border bg-card text-foreground"}`}
-                >
-                  {equipped ? (
-                    <><Check className="h-3.5 w-3.5" />Active</>
-                  ) : owned ? (
-                    "Equip"
-                  ) : affordable ? (
-                    `${style.cost} XP`
-                  ) : (
-                    <><Lock className="h-3.5 w-3.5" />Locked</>
-                  )}
-                </button>
-              </div>
-            </article>
-          )
-        })}
-      </div>
 
       {pendingPurchase && (
         <ConfirmDialog
@@ -158,9 +212,37 @@ export function ShopClient() {
         </ConfirmDialog>
       )}
 
-      <NoticeDialog open={Boolean(notice)} title="Parch atelier" onClose={() => setNotice("")}>
+      <NoticeDialog open={Boolean(notice)} title="Parch collection" onClose={() => setNotice("")}>
         {notice}
       </NoticeDialog>
     </div>
   )
+}
+
+function playParchTone(kind: "browse" | "equip" | "unlock" | "blocked") {
+  if (typeof window === "undefined") return
+  try {
+    const AudioContextCtor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextCtor) return
+    const context = new AudioContextCtor()
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    const now = context.currentTime
+
+    oscillator.type = kind === "unlock" ? "triangle" : "sine"
+    const start = kind === "browse" ? 360 : kind === "equip" ? 440 : kind === "unlock" ? 520 : 220
+    const end = kind === "browse" ? 430 : kind === "equip" ? 520 : kind === "unlock" ? 760 : 180
+    oscillator.frequency.setValueAtTime(start, now)
+    oscillator.frequency.exponentialRampToValueAtTime(end, now + (kind === "unlock" ? 0.16 : 0.09))
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.gain.exponentialRampToValueAtTime(kind === "unlock" ? 0.045 : 0.024, now + 0.015)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + (kind === "unlock" ? 0.22 : 0.12))
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start(now)
+    oscillator.stop(now + (kind === "unlock" ? 0.23 : 0.13))
+    oscillator.addEventListener("ended", () => void context.close())
+  } catch {
+    // Sound is optional. Browsing should still work when the browser blocks audio.
+  }
 }
