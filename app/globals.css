@@ -629,8 +629,10 @@ label:has(input[type="radio"]):active {
 
 .typewriter-text {
   display: inline;
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  letter-spacing: .055em;
+  font-family: inherit;
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: .005em;
 }
 
 .typewriter-cursor {
