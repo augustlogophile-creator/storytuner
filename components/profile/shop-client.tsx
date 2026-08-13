@@ -34,6 +34,14 @@ export function ShopClient() {
     setSelectedIndex((current) => current < weaverColors.length ? current : activeIndex)
   }, [activeIndex])
 
+  useEffect(() => {
+    // Preload the whole collection so every Parch is ready the moment the user browses to it.
+    for (const item of weaverColors) {
+      const image = new window.Image()
+      image.src = item.image
+    }
+  }, [])
+
   const selected = weaverColors[selectedIndex] ?? weaverColors[0]
   const selectedLore = parchLore[selected.id] ?? parchLore.classic
   const owned = state.ownedWeavers.includes(selected.id)
@@ -110,7 +118,7 @@ export function ShopClient() {
       </header>
 
       <section
-        className="parch-archive relative isolate overflow-hidden rounded-[2rem] border border-[#d5ad63]/35 bg-[#16343a] text-[#f6ead0] shadow-[0_18px_52px_rgba(20,43,48,0.18)] outline-none"
+        className="parch-archive relative isolate h-[45.5rem] overflow-hidden rounded-[2rem] border border-[#ded9cf] bg-[#fbfaf7] text-[#27231f] shadow-[0_16px_44px_rgba(39,35,31,0.07)] outline-none sm:h-[47rem]"
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") select(selectedIndex - 1)
@@ -120,53 +128,55 @@ export function ShopClient() {
         onPointerUp={(event) => handlePointerUp(event.clientX)}
         onPointerCancel={() => { pointerStart.current = null }}
       >
-        <div className="parch-grid absolute inset-0 opacity-70" aria-hidden="true" />
-        <div className="parch-glow absolute left-1/2 top-[10rem] h-64 w-64 -translate-x-1/2 rounded-full opacity-70 blur-3xl" aria-hidden="true" />
+        <div className="parch-grid absolute inset-0 opacity-80" aria-hidden="true" />
+        <div className="parch-glow absolute left-1/2 top-[8.7rem] h-52 w-52 -translate-x-1/2 rounded-full opacity-90 blur-3xl" aria-hidden="true" />
         <span className="parch-star left-[9%] top-[7%]" aria-hidden="true">✦</span>
         <span className="parch-star right-[12%] top-[11%] [animation-delay:900ms]" aria-hidden="true">✧</span>
         <span className="parch-star left-[17%] top-[28%] [animation-delay:1500ms]" aria-hidden="true">✧</span>
 
-        <div className="relative px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
-          <div className="flex items-center justify-between gap-4 font-mono text-[0.6rem] uppercase tracking-[0.17em] text-[#c6b78f]">
+        <div className="relative flex h-full flex-col px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
+          <div className="flex h-5 shrink-0 items-center justify-between gap-4 font-mono text-[0.6rem] uppercase tracking-[0.17em] text-[#91887d]">
             <span>{selectedLore.rarity}</span>
             <span>Entry {String(selectedIndex + 1).padStart(2, "0")} / {String(weaverColors.length).padStart(2, "0")}</span>
           </div>
 
-          <div className="relative mx-auto mt-4 flex min-h-[15.5rem] max-w-[25rem] flex-col items-center justify-center text-center sm:min-h-[17rem]">
-            <div className="parch-orbit absolute left-1/2 top-1/2 h-[13.5rem] w-[13.5rem] -translate-x-1/2 -translate-y-[54%] rounded-full sm:h-[15rem] sm:w-[15rem]" aria-hidden="true" />
-            <div className="parch-orbit parch-orbit-inner absolute left-1/2 top-1/2 h-[10.5rem] w-[10.5rem] -translate-x-1/2 -translate-y-[58%] rounded-full sm:h-[12rem] sm:w-[12rem]" aria-hidden="true" />
-            <div key={selected.id} className="parch-reveal relative z-10 flex h-[10.5rem] w-[13.5rem] items-center justify-center sm:h-[12rem] sm:w-[15rem]">
-              <Weaver size={190} colorId={selected.id} className="max-h-full max-w-full drop-shadow-[0_14px_16px_rgba(0,0,0,0.18)]" />
+          <div className="relative mx-auto mt-3 flex h-[14.8rem] w-full max-w-[25rem] shrink-0 flex-col items-center justify-center text-center sm:h-[15.6rem]">
+            <div className="parch-orbit absolute left-1/2 top-[47%] h-[12.2rem] w-[12.2rem] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[13rem] sm:w-[13rem]" aria-hidden="true" />
+            <div className="parch-orbit parch-orbit-inner absolute left-1/2 top-[47%] h-[9.3rem] w-[9.3rem] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[10rem] sm:w-[10rem]" aria-hidden="true" />
+            <div key={selected.id} className="parch-reveal relative z-10 flex h-[9.2rem] w-[12rem] items-center justify-center sm:h-[9.8rem] sm:w-[12.7rem]">
+              <Weaver size={156} colorId={selected.id} className="max-h-full max-w-full drop-shadow-[0_12px_14px_rgba(49,42,34,0.12)]" />
             </div>
-            <p className="relative z-10 mt-1 font-mono text-[0.59rem] uppercase tracking-[0.2em] text-[#d9b463]">{selectedLore.rarity}</p>
-            <h2 className="relative z-10 mt-1 text-[1.55rem] font-semibold tracking-[-0.035em] text-[#f5dfaf]">{selected.name}</h2>
+            <p className="relative z-10 mt-1 font-mono text-[0.56rem] uppercase tracking-[0.2em] text-[#aa7a35]">{selectedLore.rarity}</p>
+            <h2 className="relative z-10 mt-1 text-[1.42rem] font-semibold tracking-[-0.035em] text-[#27231f]">{selected.name}</h2>
           </div>
 
-          <div className="relative mt-2 rounded-[1.55rem] border border-[#d0aa61]/24 bg-[#17373d]/88 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.035)] backdrop-blur-sm sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="inline-flex rounded-full border border-[#b6a16e]/30 px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-[#bdb38f]">{selectedLore.rarity}</div>
-              <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-[#8ea2a0]">Archive {String(selectedIndex + 1).padStart(2, "0")}</span>
+          <div className="relative mt-2 flex h-[22.8rem] shrink-0 flex-col rounded-[1.55rem] border border-[#ded9cf] bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,35,31,0.045)] backdrop-blur-sm sm:h-[23.5rem] sm:p-6">
+            <div className="flex h-7 shrink-0 items-center justify-between gap-3">
+              <div className="inline-flex rounded-full border border-[#d7d0c5] bg-[#f6f3ed] px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-[#746d64]">{selectedLore.rarity}</div>
+              <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-[#989187]">Archive {String(selectedIndex + 1).padStart(2, "0")}</span>
             </div>
 
-            <h3 className="mt-4 text-[1.42rem] font-semibold leading-tight tracking-[-0.03em] text-[#f2d69c]">{selectedLore.title}</h3>
-            <p className="mt-2 max-w-[29rem] text-sm leading-relaxed text-[#aebfbc]">{selected.description}</p>
+            <div className="mt-3 h-[5.9rem] shrink-0 overflow-hidden">
+              <h3 className="text-[1.36rem] font-semibold leading-tight tracking-[-0.03em] text-[#27231f]">{selectedLore.title}</h3>
+              <p className="mt-2 line-clamp-2 max-w-[29rem] text-sm leading-relaxed text-[#716b64]">{selected.description}</p>
+            </div>
 
-            <div className="mt-5 flex items-center gap-3">
-              <button type="button" onClick={() => select(selectedIndex - 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#c2a45d]/32 bg-transparent text-[#d8bb78] hover:bg-white/5" aria-label="Previous Parch">
+            <div className="mt-3 flex h-11 shrink-0 items-center gap-3">
+              <button type="button" onClick={() => select(selectedIndex - 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#d7d0c5] bg-[#fbfaf7] text-[#39342e] hover:bg-[#f2eee7]" aria-label="Previous Parch">
                 <ArrowLeft className="h-4 w-4" />
               </button>
-              <button type="button" onClick={() => select(selectedIndex + 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#c2a45d]/32 bg-transparent text-[#d8bb78] hover:bg-white/5" aria-label="Next Parch">
+              <button type="button" onClick={() => select(selectedIndex + 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#d7d0c5] bg-[#fbfaf7] text-[#39342e] hover:bg-[#f2eee7]" aria-label="Next Parch">
                 <ArrowRight className="h-4 w-4" />
               </button>
               <div className="min-w-0 flex-1">
-                <p className="text-[0.7rem] font-medium text-[#92a6a3]">Browse the collection</p>
+                <p className="text-[0.7rem] font-medium text-[#777069]">Browse the collection</p>
                 <div className="mt-2 flex gap-1.5">
                   {weaverColors.map((item, index) => (
                     <button
                       type="button"
                       key={item.id}
                       onClick={() => select(index)}
-                      className={`h-1.5 rounded-full transition-all ${index === selectedIndex ? "w-5 bg-[#ddb55d]" : "w-1.5 bg-[#6d827f]/65 hover:bg-[#8da09d]"}`}
+                      className={`h-1.5 rounded-full transition-all ${index === selectedIndex ? "w-5 bg-[#2b2823]" : "w-1.5 bg-[#d2cdc5] hover:bg-[#aaa39a]"}`}
                       aria-label={`View ${item.name}`}
                     />
                   ))}
@@ -174,14 +184,14 @@ export function ShopClient() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-4 border-t border-[#bfa66c]/20 pt-4">
+            <div className="mt-4 grid h-[4.4rem] shrink-0 grid-cols-2 gap-4 border-t border-[#e2ddd5] pt-4">
               <div>
-                <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#c6a65f]">Archive note</p>
-                <p className="mt-1 text-sm text-[#a9bbb8]">{selectedLore.note}</p>
+                <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#aa7a35]">Archive note</p>
+                <p className="mt-1 text-sm text-[#716b64]">{selectedLore.note}</p>
               </div>
               <div className="text-right">
-                <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#c6a65f]">{owned ? "Collection status" : "Unlock with"}</p>
-                <p className="mt-1 text-[1.25rem] font-semibold tracking-[-0.02em] text-[#e3bb64]">{owned ? (equipped ? "Equipped" : "Owned") : `${selected.cost} XP`}</p>
+                <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#aa7a35]">{owned ? "Collection status" : "Unlock with"}</p>
+                <p className="mt-1 text-[1.16rem] font-semibold tracking-[-0.02em] text-[#27231f]">{owned ? (equipped ? "Equipped" : "Owned") : `${selected.cost} XP`}</p>
               </div>
             </div>
 
@@ -189,13 +199,13 @@ export function ShopClient() {
               type="button"
               onClick={chooseSelected}
               disabled={equipped}
-              className={`mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] disabled:cursor-default ${equipped ? "bg-[#283f43] text-[#b6c0bd] shadow-none" : owned ? "bg-[#eee1c1] text-[#24383a] hover:bg-[#f6e9c9]" : affordable ? "bg-brand text-brand-foreground hover:brightness-[1.03]" : "bg-[#566568] text-[#d3d9d7] hover:bg-[#607174]"}`}
+              className={`mt-auto flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-[inset_0_-2px_0_rgba(0,0,0,0.1)] disabled:cursor-default ${equipped ? "bg-[#ece8e1] text-[#716b64] shadow-none" : owned ? "bg-[#2b2823] text-white hover:bg-[#35312b]" : affordable ? "bg-brand text-brand-foreground hover:brightness-[1.03]" : "bg-[#ddd9d2] text-[#79736c] hover:bg-[#d3cfc8]"}`}
             >
               {equipped ? <><Check className="h-4 w-4" />Equipped</> : owned ? "Equip Parch" : <><Sparkles className="h-4 w-4" />Unlock for {selected.cost} XP</>}
             </button>
           </div>
 
-          <p className="mt-3 text-center text-[0.62rem] leading-relaxed text-[#76908d]">Swipe, use the arrows, or tap a marker to browse.</p>
+          <p className="mt-auto pt-2 text-center text-[0.62rem] leading-relaxed text-[#9a938a]">Swipe, use the arrows, or tap a marker to browse.</p>
         </div>
       </section>
 
