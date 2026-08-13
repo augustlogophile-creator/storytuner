@@ -215,7 +215,7 @@ function BlockerScreen({ value, onChoose }: { value: StoryBlocker; onChoose: (va
   return (
     <div className="flex flex-1 flex-col px-5 pb-1 pt-1">
       <div className="flex flex-col items-center text-center">
-        <Image src="/parch-confused.png" alt="Parch looking confused" width={326} height={364} priority className="intro-mascot-in h-auto w-[7.3rem] object-contain" />
+        <Image src="/parch-confused.png" alt="Parch looking confused" width={326} height={364} priority className="intro-mascot-in h-auto w-[6.6rem] object-contain" />
         <h1 className="intro-title-reveal -mt-1 max-w-[20rem] text-[1.85rem] font-semibold leading-[1.04] tracking-[-0.045em] text-balance">What usually gets in your way?</h1>
       </div>
       <div className="mt-4 flex flex-col gap-2">
@@ -241,7 +241,7 @@ function SecretScreen() {
       <div className="intro-secret-stage">
         <span className="intro-sparkle intro-sparkle-left">✦</span>
         <span className="intro-sparkle intro-sparkle-right">✦</span>
-        <Image src="/parch-intro-detective.png" alt="Parch looking closely through a magnifying glass" width={297} height={320} priority className="intro-mascot-in h-auto w-[12.4rem] object-contain" />
+        <Image src="/parch-intro-detective.png" alt="Parch looking closely through a magnifying glass" width={297} height={320} priority className="intro-mascot-in h-auto w-[10.9rem] object-contain" />
       </div>
       <div className="relative z-10 mt-3 min-h-[1.5rem] text-[0.82rem] font-medium text-muted-foreground">
         <TypingText text="Here’s the secret." />
@@ -283,9 +283,9 @@ function ReadyScreen({ preferences }: { preferences: OnboardingPreferences }) {
         ))}
       </div>
 
-      <div className="relative mt-auto flex min-h-[9.8rem] w-full items-end justify-center pt-2">
+      <div className="relative mt-auto flex min-h-[8.9rem] w-full items-end justify-center pt-2">
         <span className="intro-celebrate-glow" />
-        <Image src="/parch-celebrating.png" alt="Parch celebrating" width={364} height={381} priority className="intro-mascot-in relative z-10 h-auto w-[9.6rem] object-contain" />
+        <Image src="/parch-celebrating.png" alt="Parch celebrating" width={364} height={381} priority className="intro-mascot-in relative z-10 h-auto w-[8.5rem] object-contain" />
       </div>
       {(goals.length > 0 || preferences.blocker) && (
         <p className="mt-1 max-w-[20rem] text-[0.62rem] leading-4 text-muted-foreground/80">
