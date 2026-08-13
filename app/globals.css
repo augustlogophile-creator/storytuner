@@ -1452,3 +1452,64 @@ label:has(input[type="radio"]):active {
   .auth-benefits { margin-top: .9rem; padding-block: .7rem; }
   .auth-google-button { margin-top: .9rem; padding-block: .78rem; }
 }
+
+/* August 13 onboarding interaction polish. */
+.intro-welcome-art {
+  width: min(100%, 24rem);
+  overflow: hidden;
+  border-radius: 1.75rem;
+  background: #fdfaf6;
+  box-shadow: 0 14px 34px rgba(37, 32, 27, .045);
+}
+
+.intro-tap {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform 90ms cubic-bezier(.2,.75,.25,1),
+    filter 120ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.intro-tap:not(:disabled):active {
+  transform: scale(.982);
+  filter: brightness(.985);
+}
+
+.intro-choice {
+  transition:
+    transform 90ms cubic-bezier(.2,.75,.25,1),
+    background-color 170ms ease,
+    border-color 170ms ease,
+    box-shadow 170ms ease;
+}
+
+.intro-choice[data-selected="true"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--brand) 8%, transparent),
+    0 8px 22px rgba(32, 28, 24, .035);
+}
+
+.intro-choice-check {
+  transition: transform 160ms cubic-bezier(.2,.8,.25,1), background-color 160ms ease;
+}
+
+.intro-choice-check.is-selected {
+  transform: scale(1.04);
+}
+
+@media (max-height: 760px) {
+  .intro-welcome-art {
+    width: min(100%, 20.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-tap,
+  .intro-choice,
+  .intro-choice-check {
+    transition: none !important;
+  }
+}
