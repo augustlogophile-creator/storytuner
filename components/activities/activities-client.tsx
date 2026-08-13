@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Check, ChevronRight, Lock, Sparkles } from "lucide-react"
+import { Check, ChevronRight, Lock } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isUnitUnlocked, unitProgress, useApp } from "@/lib/app-state"
@@ -25,7 +25,7 @@ export function ActivitiesClient() {
       <section className="min-w-0 rounded-3xl border border-border bg-card p-5">
         <div className="mb-2 flex min-w-0 items-center justify-between gap-3 text-sm">
           <span className="font-medium text-foreground">Your journey</span>
-          <span className="shrink-0 text-muted-foreground">{course.done} of {course.total} steps</span>
+          <span className="shrink-0 text-muted-foreground">{course.done} of {course.total} lessons</span>
         </div>
         <ProgressBar value={course.percent} />
         {!state.premium && (
@@ -50,7 +50,7 @@ export function ActivitiesClient() {
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
                     <p className="min-w-0 truncate font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : unit.skill}</p>
-                    {!planAccess && <span className="shrink-0 rounded-full bg-brand-soft px-2 py-1 text-[0.58rem] font-semibold text-accent-foreground">Membership</span>}
+                    {!planAccess && <span className="shrink-0 rounded-full border border-[#f4b9a5] bg-[#fff0ea] px-2 py-1 text-[0.58rem] font-semibold text-[#bd4e2e]">Membership</span>}
                   </div>
                   <h2 className="mt-1 break-words text-base font-semibold text-foreground">{unit.title}</h2>
                   <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground text-pretty">{unit.description}</p>
@@ -70,16 +70,6 @@ export function ActivitiesClient() {
         })}
       </div>
 
-      {!state.premium && (
-        <Link href="/membership" className="flex min-w-0 items-center gap-3 rounded-3xl border border-brand/30 bg-brand-soft/35 p-5">
-          <Sparkles className="h-5 w-5 shrink-0 text-accent-foreground" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Unlock the remaining ten lessons</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Founding waitlist members can join for $11.99 a year.</p>
-          </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-        </Link>
-      )}
     </div>
   )
 }

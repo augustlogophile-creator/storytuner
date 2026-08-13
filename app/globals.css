@@ -179,12 +179,6 @@
   }
 }
 
-@media (max-width: 768px) {
-  html[data-recording-room="true"] nav[aria-label="Primary"] {
-    display: none;
-  }
-}
-
 /* Keep every route on the same mobile canvas, even when lesson content is long. */
 html,
 body {
@@ -497,11 +491,6 @@ a {
 
 
 /* StoryTuner motion system: tactile, restrained, and shared across the app. */
-@keyframes storytuner-route-in {
-  from { opacity: 0; transform: translateY(5px); filter: blur(1px); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
-}
-
 @keyframes storytuner-skeleton {
   0% { background-position: 110% 0; }
   100% { background-position: -110% 0; }
@@ -524,11 +513,6 @@ a {
   35% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
   70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -58%) scale(.98); }
-}
-
-.route-transition {
-  min-height: 100%;
-  animation: storytuner-route-in 260ms cubic-bezier(.2,.72,.25,1) both;
 }
 
 .skeleton-block {
@@ -619,6 +603,23 @@ label:has(input[type="radio"]):active {
   animation: storytuner-celebration-label 1.35s ease both;
 }
 
+@keyframes storytuner-typewriter-cursor {
+  0%, 48% { opacity: 1; }
+  49%, 100% { opacity: 0; }
+}
+
+.typewriter-text {
+  display: inline;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  letter-spacing: .055em;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  margin-left: .08em;
+  animation: storytuner-typewriter-cursor 760ms steps(1, end) infinite;
+}
+
 /* Intro follows the same clean, full-screen rhythm as the rest of StoryTuner. */
 .intro-progress-track {
   height: .38rem;
@@ -666,11 +667,11 @@ label:has(input[type="radio"]):active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-transition,
   .skeleton-block,
   .coach-assistant-in,
   .celebration-piece,
-  .celebration-label {
+  .celebration-label,
+  .typewriter-cursor {
     animation: none !important;
   }
 

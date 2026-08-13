@@ -4,5 +4,5 @@ import { requireStoryTunerUser } from "@/lib/require-auth"
 
 export default async function ShopPage() {
   await requireStoryTunerUser("/shop")
-  return <MobileShell nav={false}><ShopClient /></MobileShell>
+  return <MobileShell><ShopClient /></MobileShell>
 }

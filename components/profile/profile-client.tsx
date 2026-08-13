@@ -23,13 +23,14 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
   const goal = state.onboardingPreferences.goal
 
   return (
-    <div className="flex flex-col gap-5 pb-4">
-      <header className="text-center">
-        <h1 className="text-[1.22rem] font-semibold tracking-[-0.025em]">Profile</h1>
+    <div className="flex flex-col gap-6 pb-6">
+      <header className="px-1 pt-1">
+        <h1 className="text-[1.55rem] font-semibold tracking-[-0.035em]">Profile</h1>
+        <p className="mt-1.5 max-w-sm text-[0.75rem] leading-5 text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>
       </header>
 
       <section className="story-card overflow-hidden rounded-[1.55rem]">
-        <div className="flex items-center gap-3.5 px-4 py-4">
+        <div className="flex items-center gap-3.5 px-4 py-4.5">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
             <ScrollText className="h-5 w-5" strokeWidth={1.8} />
           </span>
@@ -62,7 +63,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 
       <section>
         <SectionLabel>StoryTuner</SectionLabel>
-        <div className="story-card overflow-hidden rounded-[1.45rem] px-4">
+        <div className="story-card overflow-hidden rounded-[1.45rem] px-4.5">
           <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, and activity" />
           <Divider />
           <ProfileRow
@@ -82,7 +83,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       {moderatorRole && (
         <section>
           <SectionLabel>Admin</SectionLabel>
-          <div className="story-card overflow-hidden rounded-[1.45rem] px-4">
+          <div className="story-card overflow-hidden rounded-[1.45rem] px-4.5">
             <ProfileRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Reports and account actions" />
             <Divider />
             <ProfileRow href="/admin/system" icon={Activity} title="System health" detail="Usage, failures, and maintenance" />
@@ -90,7 +91,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </section>
       )}
 
-      <section className="story-card rounded-[1.55rem] p-5">
+      <section className="story-card rounded-[1.55rem] p-6">
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground">
           <Mail className="h-4.5 w-4.5" strokeWidth={1.8} />
         </span>
@@ -137,7 +138,7 @@ function ProfileRow({
   value?: string
 }) {
   return (
-    <Link href={href} className="group flex items-center gap-3 py-3.5">
+    <Link href={href} className="group flex items-center gap-3 py-4">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
         <Icon className="h-4 w-4" strokeWidth={1.9} />
       </span>

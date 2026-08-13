@@ -13,5 +13,5 @@ export default async function MembershipPage() {
     currentPeriodEnd: membership.subscription?.current_period_end ?? null,
   }
 
-  return <MobileShell nav={false}><MembershipClient initialStatus={initialStatus} /></MobileShell>
+  return <MobileShell><MembershipClient initialStatus={initialStatus} /></MobileShell>
 }

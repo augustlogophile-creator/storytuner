@@ -4,5 +4,5 @@ import { requireStoryTunerUser } from "@/lib/require-auth"
 
 export default async function SettingsPage() {
   await requireStoryTunerUser("/settings")
-  return <MobileShell nav={false}><SettingsClient /></MobileShell>
+  return <MobileShell><SettingsClient /></MobileShell>
 }

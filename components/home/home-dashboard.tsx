@@ -9,6 +9,7 @@ import { ProgressBar } from "@/components/progress-bar"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
 import { CountUp } from "@/components/ui/count-up"
 import { Celebration } from "@/components/ui/celebration"
+import { TypewriterText } from "@/components/ui/typewriter-text"
 import { courseProgress, freeLessonLimitReached, nextLesson, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
@@ -103,7 +104,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           <Link href="/arena/recordings" className="text-[0.7rem] font-semibold text-brand hover:underline">Past recordings</Link>
         </div>
 
-        <div className="story-card mb-2.5 rounded-[1.45rem] px-3.5 py-3">
+        <div className="story-card mb-2.5 min-h-[6.75rem] rounded-[1.45rem] px-3.5 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.78rem] font-semibold">This week</p>
@@ -111,10 +112,10 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             </div>
             <p className="text-[0.68rem] text-muted-foreground"><CountUp value={activeDays} /> of 7 days</p>
           </div>
-          <ul className="mt-3 flex items-center justify-between gap-1.5">
+          <ul className="mt-4 flex items-center justify-between gap-1.5">
             {week.map((day) => (
               <li key={day.key} className="flex flex-1 justify-center">
-                <span className={`flex h-7 w-7 items-center justify-center rounded-full border text-[0.61rem] font-medium ${day.active ? "border-transparent bg-foreground text-background" : day.today ? "border-dashed border-foreground/45 bg-card text-foreground" : "border-border bg-card text-muted-foreground"}`}>
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full border text-[0.61rem] font-medium ${day.active ? "border-transparent bg-foreground text-background" : day.today ? "border-dashed border-foreground/45 bg-card text-foreground" : "border-border bg-card text-muted-foreground"}`}>
                   {day.active ? <Check className="h-3 w-3" strokeWidth={2.6} /> : day.label}
                 </span>
               </li>
@@ -135,6 +136,10 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             title="Choose a scenario"
             description="Practice an interview, personal question, or real situation."
           />
+        </div>
+
+        <div className="flex min-h-[6.25rem] items-center justify-center px-3 py-5 text-center">
+          <TypewriterText className="max-w-[20rem] text-[0.72rem] leading-6 text-[#164f8d]" />
         </div>
       </section>
     </div>

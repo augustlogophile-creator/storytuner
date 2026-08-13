@@ -1011,9 +1011,11 @@ export function unitProgress(state: AppState, unitId: string) {
 }
 
 export function courseProgress(state: AppState) {
-  const total = curriculum.length * 3
-  const done = state.completed.filter((id) => id.includes("--")).length
-  return { done, total, percent: Math.round((done / total) * 100) }
+  const total = curriculum.length
+  const done = curriculum.filter((unit) => unitProgress(state, unit.id).done === 3).length
+  const completedSteps = state.completed.filter((id) => id.includes("--")).length
+  const totalSteps = curriculum.length * 3
+  return { done, total, percent: Math.round((completedSteps / totalSteps) * 100) }
 }
 
 export const FREE_UNIT_LIMIT = 5

@@ -15,15 +15,16 @@ const items = [
 
 export function BottomNav() {
   const pathname = usePathname()
+
   return (
-    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 backdrop-blur-xl">
+    <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-[100] border-t border-border bg-background/95 backdrop-blur-xl">
       <ul className="mx-auto flex max-w-md items-stretch justify-between px-1 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2">
         {items.map(({ href, label, icon: Icon }) => {
-          const active = href === "/home" ? pathname === "/home" : pathname.startsWith(href)
+          const active = isActivePath(pathname, href)
           return (
             <li key={href} className="min-w-0 flex-1">
-              <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1 rounded-xl py-1.5 text-[0.6rem] font-medium transition-all duration-200", active ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                <span className={cn("flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200", active ? "scale-100 bg-[#dceeff] text-[#0f5da8] shadow-[0_4px_14px_rgba(35,125,220,0.08)]" : "scale-[0.94] bg-transparent")}>
+              <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1 rounded-xl py-1.5 text-[0.6rem] font-medium transition-colors duration-150", active ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                <span className={cn("flex h-8 w-11 items-center justify-center rounded-full transition-colors duration-150", active ? "bg-[#2b2823] text-white shadow-[0_4px_14px_rgba(31,27,23,0.12)]" : "bg-transparent")}>
                   <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={active ? 2.4 : 1.9} />
                 </span>
                 <span className="truncate">{label}</span>
@@ -34,4 +35,12 @@ export function BottomNav() {
       </ul>
     </nav>
   )
+}
+
+function isActivePath(pathname: string, href: string) {
+  if (href === "/home") return pathname === "/home"
+  if (href === "/activities") return pathname.startsWith("/activities") || pathname.startsWith("/lesson")
+  if (href === "/arena") return pathname.startsWith("/arena") || pathname.startsWith("/planner")
+  if (href === "/profile") return ["/profile", "/progress", "/membership", "/shop", "/settings"].some((path) => pathname.startsWith(path))
+  return pathname.startsWith(href)
 }

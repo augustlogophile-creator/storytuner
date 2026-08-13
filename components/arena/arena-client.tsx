@@ -782,7 +782,7 @@ export function ArenaClient() {
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
-        <span className="mt-3 inline-flex rounded-full bg-brand-soft px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-accent-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
+        <span className="mt-3 inline-flex rounded-full border border-[#b8d9fb] bg-[#eaf4ff] px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-[#145b9d]">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
       </header>
 
       {phase === "setup" && (
@@ -790,13 +790,13 @@ export function ArenaClient() {
           <section className="rounded-3xl border border-border bg-card p-4">
             <p className="px-1 text-sm font-semibold">Choose how you want to practice</p>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-brand bg-brand-soft/55" : "border-border bg-background hover:border-brand/50")}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-brand-foreground"><Mic2 className="h-4 w-4" /></span>
+              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-[#5fa8f2] bg-[#eaf4ff] shadow-[0_8px_22px_rgba(35,125,220,0.07)]" : "border-border bg-background hover:border-[#9ac8f6]")}>
+                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-[#eaf4ff] text-[#145b9d]")}><Mic2 className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Tell any story</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-brand bg-brand-soft/55" : "border-border bg-background hover:border-brand/50")}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-foreground"><Video className="h-4 w-4" /></span>
+              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-[#5fa8f2] bg-[#eaf4ff] shadow-[0_8px_22px_rgba(35,125,220,0.07)]" : "border-border bg-background hover:border-[#9ac8f6]")}>
+                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
               </button>
@@ -811,7 +811,7 @@ export function ArenaClient() {
                   {scenarios.map((item) => {
                     const selected = item.id === scenarioId
                     return (
-                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-brand bg-brand-soft/45" : "border-border bg-card hover:border-brand/50")}>
+                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-[#5fa8f2] bg-[#eaf4ff]" : "border-border bg-card hover:border-[#9ac8f6]")}>
                         <p className="text-sm font-semibold leading-snug">{item.name}</p>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</p>
                       </button>
@@ -880,7 +880,7 @@ export function ArenaClient() {
                   onClick={() => { setTargetSeconds(duration); setExtraSeconds(0) }}
                   className={cn(
                     "rounded-2xl border px-2 py-3 text-sm font-semibold tabular-nums transition",
-                    targetSeconds === duration ? "border-brand bg-brand-soft text-accent-foreground" : "border-border bg-background text-muted-foreground hover:border-brand/45",
+                    targetSeconds === duration ? "border-[#4d9bed] bg-[#eaf4ff] text-[#145b9d]" : "border-border bg-background text-muted-foreground hover:border-[#9ac8f6]",
                   )}
                 >
                   {formatTime(duration)}
@@ -892,7 +892,7 @@ export function ArenaClient() {
               onClick={() => setShowDurationOptions(true)}
               className={cn(
                 "mt-3 flex w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition",
-                !durationOptions.includes(targetSeconds) ? "border-brand bg-brand-soft/55" : "border-border bg-background hover:border-brand/45",
+                !durationOptions.includes(targetSeconds) ? "border-[#5fa8f2] bg-[#eaf4ff]" : "border-border bg-background hover:border-[#9ac8f6]",
               )}
             >
               <span className="min-w-0">
@@ -912,7 +912,7 @@ export function ArenaClient() {
             </div>
           </section>
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+          <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
           <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
       )}
@@ -928,7 +928,7 @@ export function ArenaClient() {
             <p className="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-white/65">Ready when you are</p>
             <p className="mt-2 text-sm font-semibold tabular-nums">Target · {formatTime(limitSeconds)}</p>
           </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-center gap-7 p-7 text-white">
+          <div className="absolute inset-x-0 bottom-16 z-10 flex items-end justify-center gap-7 p-7 text-white">
             <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
             <Control label="Start" onClick={startRecording} icon={Play} large tone="brand" />
             <Control label="Setup" onClick={reset} icon={RotateCcw} />
@@ -952,7 +952,7 @@ export function ArenaClient() {
               <button type="button" onClick={() => setExtraSeconds(45)} className="mt-4 rounded-full bg-white/18 px-4 py-2 text-xs font-semibold backdrop-blur-md">Add 45 seconds</button>
             )}
           </div>
-          <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 p-5 text-white">
+          <div className="absolute inset-x-0 bottom-16 z-10 flex items-end justify-between gap-3 p-5 text-white">
             <div className="flex items-end gap-2.5">
               <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
               <Control label={paused ? "Resume" : "Pause"} onClick={togglePause} icon={paused ? Play : Pause} />
