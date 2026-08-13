@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Check, Loader2, ShieldCheck } from "lucide-react"
 import { safeInternalPath } from "@/lib/auth/redirects"
 import { createClient } from "@/lib/supabase/client"
 
@@ -58,18 +58,18 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   return (
     <div className="w-full">
       <div className="text-center">
-        <p className="font-mono text-[0.62rem] uppercase tracking-[0.17em] text-muted-foreground">StoryTuner account</p>
-        <h1 className="mt-3 text-[2rem] font-semibold leading-[1.06] tracking-[-0.05em] text-balance">
-          {isSignUp ? "Create your account" : "Welcome back"}
+        <p className="auth-eyebrow">StoryTuner account</p>
+        <h1 className="auth-title">
+          {isSignUp ? "Save your stories." : "Welcome back."}
         </h1>
-        <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted-foreground text-pretty">
+        <p className="auth-subtitle">
           {isSignUp
-            ? "Save your progress and continue securely with Google."
-            : "Return to your lessons, recordings, and Parch coaching."}
+            ? "Keep your progress, XP, recordings, and Parch with you across devices."
+            : "Pick up exactly where you left off."}
         </p>
       </div>
 
-      <div className="mt-6 flex justify-center">
+      <div className="mt-5 flex justify-center">
         <div className="account-mode-switch" role="tablist" aria-label="Choose whether to sign up or log in">
           <button type="button" role="tab" aria-selected={isSignUp} onClick={() => chooseMode("sign-up")} className={isSignUp ? "is-active" : ""}>
             Sign up
@@ -80,27 +80,41 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         </div>
       </div>
 
+      {isSignUp && (
+        <div className="auth-benefits" aria-label="What your account saves">
+          {["Lesson progress and XP", "Recordings and feedback", "Your equipped Parch"].map((item) => (
+            <div key={item} className="auth-benefit-row">
+              <span className="auth-benefit-check"><Check className="h-3.5 w-3.5" strokeWidth={2.7} /></span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={continueWithGoogle}
         disabled={loading}
-        className="mt-7 flex w-full items-center justify-center gap-3 rounded-full border border-border bg-background px-5 py-3.5 text-sm font-semibold shadow-[0_8px_22px_rgba(38,34,29,0.06)] transition hover:border-brand/35 hover:bg-secondary/45 active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
+        className="auth-google-button"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
-          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-white text-xs font-bold text-[#4285f4]">G</span>
+          <span className="auth-google-mark" aria-hidden="true">G</span>
         )}
-        Continue with Google
+        {isSignUp ? "Continue with Google" : "Log in with Google"}
       </button>
 
       {error && (
-        <p role="alert" className="mt-5 rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">
+        <p role="alert" className="mt-4 rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">
           {error}
         </p>
       )}
 
-      <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">One secure sign-in method. No password to remember.</p>
+      <div className="auth-security-note">
+        <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
+        <span>Secure Google sign-in. No password to remember.</span>
+      </div>
     </div>
   )
 }

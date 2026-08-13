@@ -15,6 +15,13 @@ import {
 } from "@/lib/onboarding-preferences"
 
 const TOTAL_STEPS = 5
+const INTRO_PARCH_IMAGES = [
+  "/parch-welcoming.png",
+  "/parch-thinking.png",
+  "/parch-confused.png",
+  "/parch-intro-detective.png",
+  "/parch-celebrating.png",
+]
 
 const goalDetails: Array<{ value: Exclude<StoryGoal, "">; title: string; detail?: string }> = [
   { value: "everyday", title: "Everyday stories", detail: "Tell better stories with friends." },
@@ -32,6 +39,14 @@ export function Onboarding() {
 
   useEffect(() => {
     setPreferences(readOnboardingPreferences())
+
+    // Preload every Parch pose immediately so the figure is already decoded
+    // before the user advances. This keeps the art and text appearing together.
+    INTRO_PARCH_IMAGES.forEach((src) => {
+      const image = new window.Image()
+      image.decoding = "async"
+      image.src = src
+    })
   }, [])
 
   const progress = ((page + 1) / TOTAL_STEPS) * 100
@@ -116,14 +131,13 @@ export function Onboarding() {
 function WelcomeScreen() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-7 pb-4 text-center">
-      <div className="intro-hero-stage intro-mascot-in">
+      <div className="intro-hero-stage">
         <span className="intro-sparkle intro-sparkle-left">✦</span>
         <span className="intro-sparkle intro-sparkle-right">✦</span>
-        <Image src="/parch-welcoming.png" alt="Parch waving hello" width={320} height={316} priority className="h-auto w-[13.2rem] object-contain" />
+        <Image src="/parch-welcoming.png" alt="Parch waving hello" width={320} height={316} priority className="intro-mascot-in h-auto w-[13.2rem] object-contain" />
       </div>
       <h1 className="intro-title-reveal mt-5 text-[2.35rem] font-semibold leading-[1.01] tracking-[-0.055em] text-balance">Welcome to StoryTuner.</h1>
       <p className="intro-copy-reveal mt-4 max-w-[19rem] text-[1rem] leading-6 text-muted-foreground text-pretty">Learn to tell stories people actually want to hear.</p>
-      <StepDots active={0} />
     </div>
   )
 }
@@ -133,14 +147,14 @@ function GoalScreen({ value, onChoose }: { value: StoryGoal; onChoose: (value: E
     <div className="flex flex-1 flex-col px-5 pb-1 pt-3">
       <div className="intro-question-header">
         <h1 className="intro-title-reveal max-w-[14.5rem] text-[2rem] font-semibold leading-[1.02] tracking-[-0.05em] text-balance">What do you want to get better at?</h1>
-        <Image src="/parch-thinking.png" alt="Parch thinking" width={290} height={318} className="intro-side-parch h-auto w-[7.5rem] object-contain" />
+        <Image src="/parch-thinking.png" alt="Parch thinking" width={290} height={318} priority className="intro-side-parch h-auto w-[7.5rem] object-contain" />
       </div>
       <div className="mt-4 flex flex-col gap-2.5">
         {goalDetails.map((option, index) => (
           <ChoiceButton
             key={option.value}
             selected={value === option.value}
-            delay={index * 42}
+            delay={index * 36}
             onClick={() => onChoose(option.value)}
           >
             <span className="block text-[0.92rem] font-semibold tracking-[-0.02em]">{option.title}</span>
@@ -156,7 +170,7 @@ function BlockerScreen({ value, onChoose }: { value: StoryBlocker; onChoose: (va
   return (
     <div className="flex flex-1 flex-col px-5 pb-1 pt-1">
       <div className="flex flex-col items-center text-center">
-        <Image src="/parch-confused.png" alt="Parch looking confused" width={326} height={364} className="intro-mascot-in h-auto w-[7.3rem] object-contain" />
+        <Image src="/parch-confused.png" alt="Parch looking confused" width={326} height={364} priority className="intro-mascot-in h-auto w-[7.3rem] object-contain" />
         <h1 className="intro-title-reveal -mt-1 max-w-[20rem] text-[1.85rem] font-semibold leading-[1.04] tracking-[-0.045em] text-balance">What usually gets in your way?</h1>
       </div>
       <div className="mt-4 flex flex-col gap-2">
@@ -164,7 +178,7 @@ function BlockerScreen({ value, onChoose }: { value: StoryBlocker; onChoose: (va
           <ChoiceButton
             key={blocker}
             selected={value === blocker}
-            delay={index * 35}
+            delay={index * 30}
             compact
             onClick={() => onChoose(blocker)}
           >
@@ -178,48 +192,57 @@ function BlockerScreen({ value, onChoose }: { value: StoryBlocker; onChoose: (va
 
 function SecretScreen() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 pb-2 text-center">
+    <div className="intro-secret-screen flex flex-1 flex-col items-center justify-center px-6 pb-2 text-center">
       <div className="intro-secret-stage">
         <span className="intro-sparkle intro-sparkle-left">✦</span>
         <span className="intro-sparkle intro-sparkle-right">✦</span>
-        <Image src="/parch-intro-detective.png" alt="Parch looking closely through a magnifying glass" width={297} height={320} className="intro-mascot-in h-auto w-[12.4rem] object-contain" />
+        <Image src="/parch-intro-detective.png" alt="Parch looking closely through a magnifying glass" width={297} height={320} priority className="intro-mascot-in h-auto w-[12.4rem] object-contain" />
       </div>
-      <div className="mt-3 min-h-[1.5rem] text-[0.82rem] font-medium text-muted-foreground">
+      <div className="relative z-10 mt-3 min-h-[1.5rem] text-[0.82rem] font-medium text-muted-foreground">
         <TypingText text="Here’s the secret." />
       </div>
-      <h1 className="intro-title-reveal mt-2 max-w-[21rem] text-[1.95rem] font-semibold leading-[1.04] tracking-[-0.05em] text-balance">Great stories aren’t about having an extraordinary life.</h1>
-      <p className="intro-copy-reveal mt-4 max-w-[20rem] text-[0.92rem] leading-6 text-muted-foreground text-pretty">
+      <h1 className="intro-title-reveal relative z-10 mt-2 max-w-[21rem] text-[1.95rem] font-semibold leading-[1.04] tracking-[-0.05em] text-balance">Great stories aren’t about having an extraordinary life.</h1>
+      <p className="intro-copy-reveal relative z-10 mt-4 max-w-[20rem] text-[0.92rem] leading-6 text-muted-foreground text-pretty">
         They’re about knowing <strong className="font-semibold text-foreground">what to notice, what to leave out, and what to make people care about.</strong>
       </p>
-      <StepDots active={3} />
     </div>
   )
 }
 
 function ReadyScreen({ preferences }: { preferences: OnboardingPreferences }) {
-  const items = ["Learn", "Practice", "Get feedback", "Improve"]
+  const items = [
+    { title: "Learn", detail: "One useful storytelling idea." },
+    { title: "Practice", detail: "Use it in a story of your own." },
+    { title: "Get feedback", detail: "See what landed and what didn’t." },
+    { title: "Improve", detail: "Try again, sharper than before." },
+  ]
 
   return (
     <div className="flex flex-1 flex-col items-center px-5 pb-1 pt-3 text-center">
       <h1 className="intro-title-reveal text-[2.3rem] font-semibold leading-[1.02] tracking-[-0.055em] text-balance">StoryTuner is ready.</h1>
       <p className="intro-copy-reveal mt-3 max-w-[20rem] text-[0.92rem] leading-6 text-muted-foreground text-pretty">You’ll learn one idea at a time, then practice it in stories of your own.</p>
 
-      <div className="mt-5 grid w-full gap-2">
+      <div className="intro-ready-path mt-5 w-full text-left" aria-label="How StoryTuner works">
         {items.map((item, index) => (
-          <div key={item} className="intro-ready-row" style={{ animationDelay: `${110 + index * 55}ms` }}>
-            <span className="intro-ready-number">{index + 1}</span>
-            <span>{item}</span>
+          <div key={item.title} className="intro-ready-step" style={{ animationDelay: `${70 + index * 45}ms` }}>
+            <div className="intro-ready-marker-wrap" aria-hidden="true">
+              <span className="intro-ready-number">{index + 1}</span>
+              {index < items.length - 1 && <span className="intro-ready-line" />}
+            </div>
+            <div className="min-w-0 pb-3.5 pt-0.5">
+              <p className="text-[0.9rem] font-semibold tracking-[-0.02em] text-foreground">{item.title}</p>
+              <p className="mt-0.5 text-[0.71rem] leading-5 text-muted-foreground">{item.detail}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="relative mt-auto flex min-h-[10.5rem] w-full items-end justify-center pt-3">
+      <div className="relative mt-auto flex min-h-[9.8rem] w-full items-end justify-center pt-2">
         <span className="intro-celebrate-glow" />
-        <Image src="/parch-celebrating.png" alt="Parch celebrating" width={364} height={381} className="intro-mascot-in relative z-10 h-auto w-[10rem] object-contain" />
+        <Image src="/parch-celebrating.png" alt="Parch celebrating" width={364} height={381} priority className="intro-mascot-in relative z-10 h-auto w-[9.6rem] object-contain" />
       </div>
-      <StepDots active={4} />
       {(preferences.goal || preferences.blocker) && (
-        <p className="mt-2 text-[0.62rem] leading-4 text-muted-foreground/80">
+        <p className="mt-1 text-[0.62rem] leading-4 text-muted-foreground/80">
           {preferences.goal && preferences.goal !== "everything" ? `Starting focus: ${goalLabels[preferences.goal]}. ` : ""}
           Your setup will help Parch make coaching more relevant.
         </p>
@@ -257,17 +280,7 @@ function ChoiceButton({
   )
 }
 
-function StepDots({ active }: { active: number }) {
-  return (
-    <div className="mt-5 flex items-center justify-center gap-2" aria-hidden="true">
-      {Array.from({ length: TOTAL_STEPS }, (_, index) => (
-        <span key={index} className={`h-2 w-2 rounded-full transition-all ${index === active ? "w-4 bg-brand" : "bg-border"}`} />
-      ))}
-    </div>
-  )
-}
-
-function TypingText({ text, speed = 52 }: { text: string; speed?: number }) {
+function TypingText({ text, speed = 42 }: { text: string; speed?: number }) {
   const [visible, setVisible] = useState("")
 
   useEffect(() => {

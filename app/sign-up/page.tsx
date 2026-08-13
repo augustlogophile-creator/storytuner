@@ -9,7 +9,7 @@ export default async function SignUpPage() {
   if (destination) redirect(destination)
   return (
     <AuthShell>
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-secondary/50" />}>
+      <Suspense fallback={<div className="auth-panel min-h-[22rem]" aria-hidden="true" />}>
         <AuthForm initialMode="sign-up" />
       </Suspense>
     </AuthShell>
