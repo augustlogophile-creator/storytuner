@@ -31,9 +31,9 @@ type TypewriterTextProps = {
 export function TypewriterText({
   prompts = writingPrompts,
   className = "",
-  typingMs = 52,
-  deletingMs = 28,
-  pauseMs = 1350,
+  typingMs = 68,
+  deletingMs = 34,
+  pauseMs = 1800,
 }: TypewriterTextProps) {
   const source = useMemo(() => prompts.filter(Boolean), [prompts])
   const [queue, setQueue] = useState<string[]>([])
@@ -77,7 +77,7 @@ export function TypewriterText({
       const timeout = window.setTimeout(() => {
         setPromptIndex((value) => (queue.length ? (value + 1) % queue.length : 0))
         setDeleting(false)
-      }, 180)
+      }, 320)
       return () => window.clearTimeout(timeout)
     }
   }, [current, deleting, deletingMs, pauseMs, queue.length, typingMs, visibleCharacters])

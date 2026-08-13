@@ -153,7 +153,7 @@ function humanizeDeleteStep(step: string) {
     community_audio_rows: "Community audio metadata cleanup",
     community_likes: "Community like cleanup",
     community_content: "Community content cleanup",
-    planner_and_coach_history: "Planner and Weaver history cleanup",
+    planner_and_coach_history: "Planner and Parch history cleanup",
     app_state: "progress and app-state cleanup",
     profile_preference: "profile preference reset",
   }

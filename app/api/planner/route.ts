@@ -14,7 +14,7 @@ export const maxDuration = 30
 const inputSchema = z.object({
   audienceContext: z.string().trim().min(3, "Describe where or to whom you will tell the story.").max(1000),
   goal: z.string().trim().min(3, "Describe what you hope the listener understands or feels.").max(1500),
-  roughPlan: z.string().trim().min(10, "Give Weaver a basic sequence of what happens.").max(5000),
+  roughPlan: z.string().trim().min(10, "Give Parch a basic sequence of what happens.").max(5000),
   mustInclude: z.string().trim().max(3000).default(""),
   nervousAbout: z.string().trim().max(2000).default(""),
 })
@@ -182,7 +182,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
   }
   if ((count ?? 0) >= 10) {
-    return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Weaver can keep the feature reliable for everyone." }, { status: 429 })
+    return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Parch can keep the feature reliable for everyone." }, { status: 429 })
   }
 
   try {
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are Weaver, StoryTuner's expert story-planning coach. Help the user turn incomplete notes into a clear, tellable plan before they record or speak.
+          content: `You are Parch, StoryTuner's expert story-planning coach. Help the user turn incomplete notes into a clear, tellable plan before they record or speak.
 
 Rules:
 - Preserve the user's facts, purpose, voice, and uncertainty. Never invent events, dialogue, motives, emotions, or outcomes.
@@ -233,8 +233,8 @@ Rules:
   } catch (error) {
     backendError("planner_route_failed", error, { userId: auth.user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
-      ? "Weaver's AI connection is not configured yet."
-      : "Weaver could not build the plan right now."
+      ? "Parch's AI connection is not configured yet."
+      : "Parch could not build the plan right now."
     return Response.json({ error: message }, { status: 500 })
   }
 }

@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     { limit: 12, windowMs: 60_000, label: "12/min" },
     { limit: 120, windowMs: 60 * 60 * 1000, label: "120/hour" },
   ])
-  const blocked = rateLimitResponse(rate, "Weaver is receiving too many messages from this account. Wait a moment and try again.")
+  const blocked = rateLimitResponse(rate, "Parch is receiving too many messages from this account. Wait a moment and try again.")
   if (blocked) return blocked
 
   try {
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
           .map((item) => ({ ...item, content: item.content.slice(0, 5000) }))
       : []
     const latest = messages.at(-1)?.content?.trim() || ""
-    if (!latest) return Response.json({ error: "Ask Weaver a question first." }, { status: 400 })
-    if (latest.length > 5000) return Response.json({ error: "Keep each Weaver message under 5,000 characters." }, { status: 400 })
+    if (!latest) return Response.json({ error: "Ask Parch a question first." }, { status: 400 })
+    if (latest.length > 5000) return Response.json({ error: "Keep each Parch message under 5,000 characters." }, { status: 400 })
 
     const requestKey = body.requestKey ?? null
     if (!isUuid(requestKey)) return Response.json({ error: "This coaching request is missing a valid request key. Refresh and try again." }, { status: 400 })
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
       membership = await getMembershipByUserId(user.id)
     } catch (error) {
       backendError("coach_membership_lookup_failed", error, { userId: user.id })
-      return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "Weaver could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+      return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "Parch could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
     }
     let reservation: UsageReservation | null = null
     if (!membership.active) {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       if (!reservation.allowed) {
         return Response.json({
           code: "COACH_LIMIT_REACHED",
-          error: "You have used all five free Weaver messages. Membership unlocks unlimited coaching.",
+          error: "You have used all five free Parch messages. Membership unlocks unlimited coaching.",
           usage: reservation,
         }, { status: 403, headers: { "Cache-Control": "no-store" } })
       }
@@ -101,17 +101,17 @@ export async function POST(req: Request) {
     ])
     if (!durableRate.allowed) {
       if (reservation && !reservation.alreadyReserved) await releaseUsage(user.id, "coach_message", requestKey).catch(() => undefined)
-      return Response.json({ code: "RATE_LIMITED", error: "Weaver has received unusually many requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
+      return Response.json({ code: "RATE_LIMITED", error: "Parch has received unusually many requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
     }
 
     try {
       const reply = await runIdempotent(`coach:${user.id}:${requestKey}`, () => openAIText([
         {
           role: "system",
-          content: `You are Weaver, StoryTuner's friendly, sophisticated storytelling coach. Answer the user's exact question directly and conversationally. Default to concise answers: usually 120-220 words, and 60-140 words for simple questions. Only go longer when the user explicitly asks for a detailed breakdown, full rewrite, or comprehensive critique. Avoid filler and repetitive conclusions.
+          content: `You are Parch, StoryTuner's friendly, sophisticated storytelling coach. Answer the user's exact question directly and conversationally. Default to concise answers: usually 120-220 words, and 60-140 words for simple questions. Only go longer when the user explicitly asks for a detailed breakdown, full rewrite, or comprehensive critique. Avoid filler and repetitive conclusions.
 
 STORYTUNER PRODUCT KNOWLEDGE:
-StoryTuner is a storytelling practice app, especially for spoken and personal storytelling. It helps people learn storytelling craft, plan stories before telling them, record spoken stories in Arena, receive AI transcript-based coaching and Hook/Development/Landing feedback, revisit recordings, ask Weaver follow-up questions, and intentionally share selected stories with the Community for responses. The Learn curriculum teaches concrete story skills. Story Planner helps organize a story before recording. Arena is where users practice and record. Ask Weaver is the personalized story coach. Community is optional sharing, never automatic. Progress, XP, Weaver customization, and Membership support the learning experience. When asked what StoryTuner is or how a feature works, answer from this product context instead of describing it as a generic writing app. Never invent features not stated here.
+StoryTuner is a storytelling practice app, especially for spoken and personal storytelling. It helps people learn storytelling craft, plan stories before telling them, record spoken stories in Arena, receive AI transcript-based coaching and Hook/Development/Landing feedback, revisit recordings, ask Parch follow-up questions, and intentionally share selected stories with the Community for responses. The Learn curriculum teaches concrete story skills. Story Planner helps organize a story before recording. Arena is where users practice and record. Ask Parch is the personalized story coach. Community is optional sharing, never automatic. Progress, XP, Parch customization, and Membership support the learning experience. When asked what StoryTuner is or how a feature works, answer from this product context instead of describing it as a generic writing app. Never invent features not stated here.
 
 COACHING RULES:
 - Focus on storytelling and telling, not generic fiction-writing advice unless the user is actually writing fiction.
@@ -163,8 +163,8 @@ ${personalizedHistory || "Personalization from past recordings is disabled or no
   } catch (error) {
     backendError("coach_route_failed", error, { userId: user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
-      ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
-      : "Weaver could not respond right now."
+      ? "Parch's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
+      : "Parch could not respond right now."
     return Response.json({ error: message }, { status: 500 })
   }
 }

@@ -60,7 +60,7 @@ export function SettingsClient() {
     }
     if (dialog === "delete-all") return {
       title: "Delete all StoryTuner data?",
-      body: <>This erases your StoryTuner content, progress, XP, Weaver purchases, settings, recordings, Planner history, and Community activity across devices. Your login, billing connection, free-usage limits, and safety records remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
+      body: <>This erases your StoryTuner content, progress, XP, Parch purchases, settings, recordings, Planner history, and Community activity across devices. Your login, billing connection, free-usage limits, and safety records remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
       confirm: "Delete all data",
       tone: "danger" as const,
     }
@@ -131,7 +131,7 @@ export function SettingsClient() {
       updateSettings({ aiOptIn: previous })
       return setNotice("Run the new Supabase personalization migration, then try this setting again.")
     }
-    setNotice(enabled ? "Weaver can now use patterns from your past recordings when you ask for general coaching." : "Past recordings will no longer be used to personalize future coaching.")
+    setNotice(enabled ? "Parch can now use patterns from your past recordings when you ask for general coaching." : "Past recordings will no longer be used to personalize future coaching.")
   }, [state.settings.aiOptIn, updateSettings])
 
   async function confirmAction() {
@@ -256,8 +256,8 @@ export function SettingsClient() {
           <p className="text-sm leading-relaxed">Recordings are private by default. A story only appears in Community when you deliberately share it.</p>
         </div>
         <Row
-          title="Personalize Weaver with past recordings"
-          detail="When enabled, Weaver can privately use patterns from your transcripts, scores, strengths, and revisions to give more useful long-term coaching. Raw video is not sent as context."
+          title="Personalize Parch with past recordings"
+          detail="When enabled, Parch can privately use patterns from your transcripts, scores, strengths, and revisions to give more useful long-term coaching. Raw video is not sent as context."
         >
           <label className="relative inline-flex cursor-pointer items-center">
             <input

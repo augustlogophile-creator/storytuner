@@ -70,7 +70,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
         <div className="flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
           <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
-          <CountUp value={state.streak} className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#2b7fc6]" />
+          <CountUp value={state.streak} className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]" />
           <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">days</span>
         </div>
       </header>
@@ -111,12 +111,12 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
               <p className="text-[0.8rem] font-semibold">This week</p>
               <p className="mt-0.5 text-[0.65rem] text-muted-foreground">Keep the habit moving.</p>
             </div>
-            <p className="text-[0.69rem] text-[#4d83b2]"><CountUp value={activeDays} /> of 7 days</p>
+            <p className="text-[0.69rem] text-muted-foreground"><CountUp value={activeDays} /> of 7 days</p>
           </div>
           <ul className="mt-4 flex items-center justify-between gap-1.5">
             {week.map((day) => (
               <li key={day.key} className="flex flex-1 justify-center">
-                <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-[0.62rem] font-medium ${day.active ? "border-[#b9d9fb] bg-[#e6f2ff] text-[#1768b5]" : day.today ? "border-dashed border-foreground/45 bg-card text-foreground" : "border-border bg-card text-muted-foreground"}`}>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-[0.62rem] font-medium ${day.active ? "border-brand/30 bg-brand-soft text-brand" : day.today ? "border-dashed border-foreground/45 bg-card text-foreground" : "border-border bg-card text-muted-foreground"}`}>
                   {day.active ? <Check className="h-3 w-3" strokeWidth={2.6} /> : day.label}
                 </span>
               </li>
@@ -139,8 +139,8 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
         </div>
 
-        <div className="mt-auto flex h-[3rem] shrink-0 items-center justify-center overflow-hidden px-2 pt-1 text-center">
-          <TypewriterText className="block w-full whitespace-nowrap text-[0.84rem] font-light italic leading-none text-muted-foreground/90 sm:text-[0.88rem]" />
+        <div className="mt-auto flex h-[2.55rem] shrink-0 items-center justify-center overflow-hidden px-2 pb-2 text-center">
+          <TypewriterText className="block w-full whitespace-nowrap text-[0.82rem] font-light italic leading-none text-muted-foreground/80 sm:text-[0.86rem]" />
         </div>
       </section>
     </div>

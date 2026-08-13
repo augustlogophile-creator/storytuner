@@ -513,16 +513,16 @@ a {
 }
 
 @keyframes storytuner-confetti {
-  0% { opacity: 0; transform: translate3d(0,-12px,0) rotate(0deg) scale(.72); }
+  0% { opacity: 0; transform: translate3d(0,-14px,0) rotate(0deg) scale(.72); }
   10% { opacity: 1; }
   72% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), 245px, 0) rotate(420deg) scale(1.04); }
+  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), var(--confetti-y, 190px), 0) rotate(var(--confetti-rotate, 320deg)) scale(var(--confetti-scale, 1)); }
 }
 
 @keyframes storytuner-celebration-label {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(.78); }
-  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.8); }
+  28% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  68% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -60%) scale(.98); }
 }
 
@@ -588,39 +588,50 @@ label:has(input[type="radio"]):active {
 
 .celebration-piece {
   --confetti-x: 18px;
+  --confetti-y: 190px;
+  --confetti-rotate: 300deg;
+  --confetti-scale: 1;
   position: absolute;
   width: 8px;
   height: 15px;
   border-radius: 2px;
   background: var(--brand);
   opacity: 0;
-  animation: storytuner-confetti 2.05s cubic-bezier(.16,.72,.28,1) both;
+  box-shadow: 0 1px 2px rgba(31, 27, 23, .12);
+  animation: storytuner-confetti 1.75s cubic-bezier(.16,.72,.28,1) both;
 }
 
-.celebration-piece:nth-child(3n + 2) {
-  --confetti-x: -24px;
+.celebration-piece[data-hue="1"] {
   background: var(--streak);
+  border-radius: 999px;
 }
 
-.celebration-piece:nth-child(3n) {
-  --confetti-x: 8px;
+.celebration-piece[data-hue="2"] {
   background: var(--foreground);
+  height: 11px;
+}
+
+.celebration-piece[data-hue="3"] {
+  background: color-mix(in oklch, var(--brand) 55%, white 45%);
+  width: 6px;
+  height: 14px;
 }
 
 .celebration-label {
   position: absolute;
   left: 50%;
-  top: 45%;
+  top: 44%;
   border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
   border-radius: 999px;
   background: color-mix(in oklch, var(--card) 94%, transparent);
-  padding: .82rem 1.2rem;
+  padding: .92rem 1.2rem;
   color: var(--foreground);
-  font-size: 1rem;
-  font-weight: 750;
-  box-shadow: 0 14px 38px rgba(37, 32, 27, .13);
+  font-size: .96rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  box-shadow: 0 16px 42px rgba(37, 32, 27, .13);
   backdrop-filter: blur(10px);
-  animation: storytuner-celebration-label 2.2s ease both;
+  animation: storytuner-celebration-label 1.9s ease both;
 }
 
 @keyframes storytuner-typewriter-cursor {
@@ -633,13 +644,14 @@ label:has(input[type="radio"]):active {
   font-family: inherit;
   font-weight: 300;
   font-style: italic;
-  letter-spacing: .005em;
+  letter-spacing: .006em;
+  text-shadow: 0 1px 0 rgba(255,255,255,.4);
 }
 
 .typewriter-cursor {
   display: inline-block;
   margin-left: .08em;
-  animation: storytuner-typewriter-cursor 760ms steps(1, end) infinite;
+  animation: storytuner-typewriter-cursor 920ms steps(1, end) infinite;
 }
 
 /* Intro follows the same clean, full-screen rhythm as the rest of StoryTuner. */

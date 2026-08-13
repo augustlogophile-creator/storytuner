@@ -8,7 +8,7 @@ import { FOUNDING_PRICE, FUTURE_PRICE, useApp } from "@/lib/app-state"
 const rows = [
   { feature: "Storytelling lessons", detail: "Each lesson includes Learn, Check, and Practice.", free: "5 full lessons", member: "All 15 lessons" },
   { feature: "Spoken story reviews", detail: "A complete recording, transcript, grade, and revision.", free: "2 total", member: "Unlimited" },
-  { feature: "Ask Weaver", detail: "Coaching on ideas, structure, language, delivery, scores, and long-term growth.", free: "5 total messages", member: "Unlimited" },
+  { feature: "Ask Parch", detail: "Coaching on ideas, structure, language, delivery, scores, and long-term growth.", free: "5 total messages", member: "Unlimited" },
   { feature: "Community", detail: "Share stories, respond, and learn from other members.", free: "Locked", member: "Full access" },
   { feature: "AI Story Planner", detail: "Shape your purpose, facts, structure, and delivery before you tell a story.", free: "Locked", member: "10 plans daily" },
 ]
@@ -111,7 +111,7 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
       <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
         <h2 className="text-lg font-semibold">StoryTuner Membership</h2>
         <div className="mt-4 space-y-2.5">
-          {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Weaver craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
+          {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Parch craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
         </div>
 
         {active ? (

@@ -84,7 +84,7 @@ export async function uploadAndTranscribeRecording({
   })
 
   if (rowError) {
-    throw new Error(`Weaver could not prepare the private upload. ${rowError.message}`)
+    throw new Error(`Parch could not prepare the private upload. ${rowError.message}`)
   }
 
   onCreated?.(cloudRef)
@@ -121,7 +121,7 @@ export async function uploadAndTranscribeRecording({
     }
 
     const transcript = typeof data?.transcript === "string" ? data.transcript.trim() : ""
-    if (!transcript) throw new Error(data?.details || data?.error || "Weaver returned an empty transcript.")
+    if (!transcript) throw new Error(data?.details || data?.error || "Parch returned an empty transcript.")
 
     onStage?.("saving")
     const title = titleFromTranscript(transcript)
@@ -280,7 +280,7 @@ function extensionFor(contentType: string) {
 }
 
 async function edgeFunctionErrorMessage(error: unknown) {
-  const fallback = error instanceof Error ? error.message : "Weaver could not start transcription."
+  const fallback = error instanceof Error ? error.message : "Parch could not start transcription."
   const context = (error as { context?: Response } | null)?.context
   if (!context || typeof context.clone !== "function") return fallback
   try {

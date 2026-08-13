@@ -68,19 +68,19 @@ export type WeaverColor = {
   cost: number
   image: string
   description: string
-  featured?: "gold" | "goat"
+  featured?: "gold" | "master"
 }
 
 export const weaverColors: WeaverColor[] = [
-  { id: "classic", name: "Classic Black", cost: 0, image: "/weaver.png", description: "Weaver's original look." },
-  { id: "brown", name: "Walnut", cost: 50, image: "/weaver-brown.png", description: "Warm cocoa brown with bronze highlights." },
-  { id: "slate", name: "Cobalt", cost: 180, image: "/weaver-cobalt.png", description: "Electric blue with deep sapphire shading." },
-  { id: "red", name: "Crimson", cost: 260, image: "/weaver-red.png", description: "A bold ruby red with darker edges." },
-  { id: "moss", name: "Emerald", cost: 320, image: "/weaver-emerald.png", description: "Bright jewel green with rich depth." },
-  { id: "plum", name: "Violet", cost: 520, image: "/weaver-violet.png", description: "A vivid royal purple with glossy highlights." },
-  { id: "amber", name: "Sunset", cost: 800, image: "/weaver-sunset.png", description: "Burnished orange with a warm golden glow." },
-  { id: "gold", name: "Crowned Gold", cost: 1000, image: "/weaver-gold.png", description: "Polished gold, finished with a crown.", featured: "gold" },
-  { id: "goat", name: "G.O.A.T. Weaver", cost: 2000, image: "/weaver-goat.png", description: "The rarest Weaver, with horns, ears, and a beard.", featured: "goat" },
+  { id: "classic", name: "Classic Parch", cost: 0, image: "/parch-classic.png", description: "The original scroll, clean, simple, and ready to tell." },
+  { id: "scholar", name: "Scholar Parch", cost: 125, image: "/parch-scholar.png", description: "Round glasses and a thoughtful look for careful storytellers." },
+  { id: "detective", name: "Detective Parch", cost: 260, image: "/parch-detective.png", description: "Magnifying glass in hand, built for details and clues." },
+  { id: "explorer", name: "Explorer Parch", cost: 400, image: "/parch-explorer.png", description: "Backpack, compass, and a sense that the story is out there somewhere." },
+  { id: "bard", name: "Bard Parch", cost: 650, image: "/parch-bard.png", description: "A performer’s version of Parch, with a lute and a little flair." },
+  { id: "sage", name: "Sage Parch", cost: 900, image: "/parch-sage.png", description: "Wise, warm, and holding a glowing staff." },
+  { id: "royal", name: "Royal Parch", cost: 1200, image: "/parch-royal.png", description: "Regal trim and a crown for a polished storyteller." },
+  { id: "master", name: "Master Storyteller", cost: 1600, image: "/parch-master.png", description: "Hood, feather, and book. Reserved for serious storytellers.", featured: "master" },
+  { id: "golden", name: "Golden Parch", cost: 2000, image: "/parch-golden.png", description: "The rarest Parch, glowing gold with a crown and staff.", featured: "gold" },
 ]
 
 export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }

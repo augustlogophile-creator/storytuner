@@ -65,7 +65,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-muted-foreground text-pretty">
           {isSignUp
             ? "Save your progress and continue securely with Google."
-            : "Return to your lessons, recordings, and Weaver coaching."}
+            : "Return to your lessons, recordings, and Parch coaching."}
         </p>
       </div>
 

@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       return Response.json({
         code: "NO_SPEECH",
         wordCount: rawWordCount,
-        error: "Weaver could not hear a story. Check your microphone and try another take.",
+        error: "Parch could not hear a story. Check your microphone and try another take.",
       }, { status: 422 })
     }
     try {
@@ -127,8 +127,8 @@ export async function POST(req: Request) {
   } catch (error) {
     backendError("transcription_route_failed", error, { userId: user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
-      ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
-      : "Weaver could not transcribe this recording right now."
+      ? "Parch's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
+      : "Parch could not transcribe this recording right now."
     return Response.json({ error: message }, { status: 500 })
   }
 }

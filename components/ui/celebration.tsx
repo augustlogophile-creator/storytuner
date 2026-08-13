@@ -1,16 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
-
-const pieces = [
-  [5, 10, -14], [10, 25, 8], [15, 42, 16], [20, 15, -7], [24, 33, 11], [28, 52, -12],
-  [32, 8, 6], [36, 25, 15], [40, 45, -9], [44, 17, 10], [48, 37, -16], [52, 55, 5],
-  [56, 11, 14], [60, 29, -8], [64, 48, 9], [68, 19, -13], [72, 39, 7], [76, 58, 16],
-  [80, 12, -5], [84, 31, 12], [88, 50, -15], [92, 21, 6], [96, 41, 13], [8, 60, -10],
-  [18, 68, 9], [30, 63, -6], [42, 71, 15], [54, 66, -12], [66, 73, 8], [78, 65, -9],
-  [90, 71, 14], [12, 77, -5], [34, 80, 10], [58, 79, -14], [82, 82, 6], [96, 76, -8],
-] as const
 
 export function Celebration({
   active,
@@ -25,6 +16,23 @@ export function Celebration({
 }) {
   const [visible, setVisible] = useState(active)
 
+  const pieces = useMemo(() => {
+    if (!active) return []
+    return Array.from({ length: 30 }, (_, index) => ({
+      id: `${index}-${Math.round(Math.random() * 10_000)}`,
+      left: 8 + Math.random() * 84,
+      top: 10 + Math.random() * 58,
+      rotate: -30 + Math.random() * 60,
+      drift: `${-40 + Math.random() * 80}px`,
+      drop: `${150 + Math.random() * 140}px`,
+      spin: `${180 + Math.random() * 420}deg`,
+      duration: `${1.45 + Math.random() * 0.95}s`,
+      delay: `${index * 22 + Math.random() * 70}ms`,
+      scale: `${0.8 + Math.random() * 0.55}`,
+      hue: index % 4,
+    }))
+  }, [active])
+
   useEffect(() => {
     if (!active) {
       setVisible(false)
@@ -34,7 +42,7 @@ export function Celebration({
     const timeout = window.setTimeout(() => {
       setVisible(false)
       onDone?.()
-    }, 3000)
+    }, 2200)
     return () => window.clearTimeout(timeout)
   }, [active, onDone])
 
@@ -42,15 +50,21 @@ export function Celebration({
 
   return (
     <div className={cn("celebration-layer", mobileOnly && "celebration-layer-mobile")} aria-hidden="true">
-      {pieces.map(([left, top, rotate], index) => (
+      {pieces.map((piece) => (
         <span
-          key={`${left}-${top}`}
+          key={piece.id}
           className="celebration-piece"
+          data-hue={piece.hue}
           style={{
-            left: `${left}%`,
-            top: `${top}%`,
-            transform: `rotate(${rotate}deg)`,
-            animationDelay: `${index * 24}ms`,
+            left: `${piece.left}%`,
+            top: `${piece.top}%`,
+            transform: `rotate(${piece.rotate}deg)`,
+            animationDelay: piece.delay,
+            animationDuration: piece.duration,
+            ["--confetti-x" as "--confetti-x"]: piece.drift,
+            ["--confetti-y" as "--confetti-y"]: piece.drop,
+            ["--confetti-rotate" as "--confetti-rotate"]: piece.spin,
+            ["--confetti-scale" as "--confetti-scale"]: piece.scale,
           }}
         />
       ))}

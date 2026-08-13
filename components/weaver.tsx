@@ -26,11 +26,11 @@ export function Weaver({
         className,
       )}
       style={{ width: size, height: size }}
-      aria-label={`Weaver in ${color.name}`}
+      aria-label={`Parch: ${color.name}`}
     >
       <Image
         src={color.image}
-        alt={`Weaver in ${color.name}`}
+        alt={`Parch: ${color.name}`}
         width={size}
         height={size}
         className="h-full w-full object-contain drop-shadow-sm"

@@ -111,7 +111,7 @@ export async function POST(req: Request) {
 
     if (mode === "lesson") {
       const answer = typeof body.answer === "string" ? body.answer.trim() : ""
-      if (answer.length < 20) return Response.json({ error: "Write a little more so Weaver can respond usefully." }, { status: 400 })
+      if (answer.length < 20) return Response.json({ error: "Write a little more so Parch can respond usefully." }, { status: 400 })
       if (answer.length > 6000) return Response.json({ error: "Keep lesson responses under 6,000 characters." }, { status: 400 })
 
       const unitIndex = Number(body.unitIndex ?? 0)
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: "You are Weaver, StoryTuner's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Refer to the student's actual wording. Give one genuine strength and one concrete revision. Never invent details. Keep the full answer under 100 words.",
+            content: "You are Parch, StoryTuner's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Refer to the student's actual wording. Give one genuine strength and one concrete revision. Never invent details. Keep the full answer under 100 words.",
           },
           {
             role: "user",
@@ -159,8 +159,8 @@ export async function POST(req: Request) {
           code: wordCount === 0 ? "NO_SPEECH" : "STORY_TOO_SHORT",
           wordCount,
           error: wordCount === 0
-            ? "Weaver could not hear a story. Check your microphone and try another take."
-            : `Weaver caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least 50 words, then try again.`,
+            ? "Parch could not hear a story. Check your microphone and try another take."
+            : `Parch caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least 50 words, then try again.`,
         }, { status: 400 })
       }
       const requestKey = body.requestKey
@@ -223,7 +223,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: `You are Weaver, a precise, friendly, sophisticated coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, forward movement, stakes, emotional honesty, and a satisfying ending, not dramatic subject matter.
+            content: `You are Parch, a precise, friendly, sophisticated coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, forward movement, stakes, emotional honesty, and a satisfying ending, not dramatic subject matter.
 
 Create a short, recognizable title of 2 to 6 words based on the actual story. Do not mechanically copy the first few words of the transcript.
 
@@ -290,7 +290,7 @@ ${object.revisedStory}`,
       name: "written_story_feedback",
       schema: writtenStorySchema,
       messages: [
-        { role: "system", content: "You are Weaver, a warm, specific storytelling coach. Focus on structure, vivid detail, emotional truth, and a clean landing. Avoid generic praise and never invent details." },
+        { role: "system", content: "You are Parch, a warm, specific storytelling coach. Focus on structure, vivid detail, emotional truth, and a clean landing. Avoid generic praise and never invent details." },
         { role: "user", content: `Title: ${String(body.title || "Untitled")}\n\nStory:\n${story}` },
       ],
     }), 90_000)
@@ -298,8 +298,8 @@ ${object.revisedStory}`,
   } catch (error) {
     backendError("feedback_route_failed", error, { userId: user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
-      ? "Weaver's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
-      : "Weaver could not review this right now. Your work is still saved on this device."
+      ? "Parch's AI connection is not configured yet. Add OPENAI_API_KEY in Vercel, then redeploy."
+      : "Parch could not review this right now. Your work is still saved on this device."
     return Response.json({ error: message }, { status: 500 })
   }
 }

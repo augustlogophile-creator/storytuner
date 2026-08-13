@@ -283,7 +283,7 @@ export function ArenaClient() {
     if (phase !== "review" || !mediaBlob || autoTranscriptionStartedRef.current) return
     autoTranscriptionStartedRef.current = true
     void transcribeRecording().catch((caught) => {
-      setError(caught instanceof Error ? caught.message : "Weaver could not transcribe this recording.")
+      setError(caught instanceof Error ? caught.message : "Parch could not transcribe this recording.")
     })
   }, [phase, mediaBlob])
 
@@ -350,7 +350,7 @@ export function ArenaClient() {
       return
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setError("This browser does not support in-app recording. You can still type your story and ask Weaver to grade it.")
+      setError("This browser does not support in-app recording. You can still type your story and ask Parch to grade it.")
       setCameraOn(false)
       setPhase("review")
       return
@@ -674,7 +674,7 @@ export function ArenaClient() {
     const response = await fetch("/api/transcribe", { method: "POST", body: form })
     const data = (await response.json()) as { text?: string; title?: string; code?: string; error?: string }
     if (!response.ok || !data.text) {
-      throw new Error(data.error || "Weaver could not transcribe this recording.")
+      throw new Error(data.error || "Parch could not transcribe this recording.")
     }
     return { text: data.text, title: data.title?.trim() || firstSentence(data.text) }
   }
@@ -689,8 +689,8 @@ export function ArenaClient() {
       if (wordCount < MIN_STORY_WORDS) {
         setTranscriptionOutcome(wordCount === 0 ? "no-speech" : "success")
         throw new Error(wordCount === 0
-          ? "Weaver could not hear a story. Check your microphone and try another take."
-          : `Weaver caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again.`)
+          ? "Parch could not hear a story. Check your microphone and try another take."
+          : `Parch caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again.`)
       }
       const requestKey = reviewRequestKeyRef.current ?? crypto.randomUUID()
       reviewRequestKeyRef.current = requestKey
@@ -711,7 +711,7 @@ export function ArenaClient() {
       if (typeof data.usage?.remaining === "number") setServerRemainingFreeStories(data.usage.remaining)
       if (!response.ok) {
         if (data.code === "ARENA_LIMIT_REACHED") setServerRemainingFreeStories(0)
-        throw new Error(data.error || "Weaver could not grade this story.")
+        throw new Error(data.error || "Parch could not grade this story.")
       }
       const id = crypto.randomUUID()
       if (mediaBlob) await saveMedia(id, mediaBlob).catch(() => undefined)
@@ -758,7 +758,7 @@ export function ArenaClient() {
       setPhase("result")
       window.scrollTo({ top: 0, behavior: "auto" })
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Weaver could not grade this story.")
+      setError(caught instanceof Error ? caught.message : "Parch could not grade this story.")
       setPhase("review")
     }
   }
@@ -792,7 +792,7 @@ export function ArenaClient() {
           <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Parch grades the craft, not the topic.</p>
         <span className="mt-3 inline-flex rounded-full border border-border bg-secondary/45 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
       </header>
 
@@ -983,10 +983,10 @@ export function ArenaClient() {
           </section>
           <section className="rounded-3xl border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3">
-              <div><Eyebrow>Prepared by Weaver</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
+              <div><Eyebrow>Prepared by Parch</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Weaver creates a readable transcript while preserving your voice and events. Edit anything before grading. Weaver will name the story from the full transcript."}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Parch creates a readable transcript while preserving your voice and events. Edit anything before grading. Parch will name the story from the full transcript."}</p>
             <div className="mt-5 flex items-center justify-between gap-3">
               <label className="block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
               {transcriptWordCount >= MIN_STORY_WORDS ? (
@@ -999,8 +999,8 @@ export function ArenaClient() {
           </section>
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-              <p className="text-sm font-semibold text-amber-950">{transcriptWordCount === 0 ? "Weaver could not hear a story." : "Your story needs a little more before grading."}</p>
-              <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `Weaver caught ${transcriptWordCount} ${transcriptWordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again. This will not use one of your free stories.`}</p>
+              <p className="text-sm font-semibold text-amber-950">{transcriptWordCount === 0 ? "Parch could not hear a story." : "Your story needs a little more before grading."}</p>
+              <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `Parch caught ${transcriptWordCount} ${transcriptWordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again. This will not use one of your free stories.`}</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
                 <button type="button" onClick={() => transcriptRef.current?.focus()} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-semibold"><FileText className="h-4 w-4" />Review transcript</button>
@@ -1013,7 +1013,7 @@ export function ArenaClient() {
         </>
       )}
 
-      {phase === "scoring" && <div className="flex min-h-96 flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center"><Loader2 className="h-8 w-8 animate-spin text-brand" /><h2 className="mt-5 text-lg font-semibold">Weaver is grading your story</h2><p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">Reviewing the hook, development, landing, and the clearest next revision.</p></div>}
+      {phase === "scoring" && <div className="flex min-h-96 flex-col items-center justify-center rounded-3xl border border-border bg-card p-8 text-center"><Loader2 className="h-8 w-8 animate-spin text-brand" /><h2 className="mt-5 text-lg font-semibold">Parch is grading your story</h2><p className="mt-2 max-w-xs text-sm leading-relaxed text-muted-foreground">Reviewing the hook, development, landing, and the clearest next revision.</p></div>}
 
       {phase === "result" && feedback && savedId && (
         <Result feedback={feedback} recording={state.recordings.find((item) => item.id === savedId)} onAgain={reset} premium={state.premium} />
@@ -1062,9 +1062,9 @@ export function ArenaClient() {
 function transcriptionStageLabel(stage: CloudTranscriptionStage | "idle") {
   if (stage === "preparing") return "Preparing a secure private upload…"
   if (stage === "uploading") return "Uploading the audio directly to your private StoryTuner storage…"
-  if (stage === "transcribing") return "Weaver is transcribing the private audio…"
+  if (stage === "transcribing") return "Parch is transcribing the private audio…"
   if (stage === "saving") return "Saving the transcript securely…"
-  return "Weaver is preparing your transcript…"
+  return "Parch is preparing your transcript…"
 }
 
 function DurationOptionsDialog({
@@ -1380,7 +1380,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
 
         <div className="grid grid-cols-2 gap-2.5">
           <Link href={`/coach?recording=${recording.id}`} className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-xs font-semibold text-brand-foreground">
-            <MessageCircle className="h-4 w-4" />Ask Weaver
+            <MessageCircle className="h-4 w-4" />Ask Parch
           </Link>
           <button type="button" onClick={onAgain} className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground">
             <RotateCcw className="h-4 w-4" />Record again

@@ -103,7 +103,7 @@ export function StoryPlannerClient() {
       })
       const payload = await response.json() as { plan?: StoryPlanRecord; code?: string; error?: string }
       if (!response.ok || !payload.plan) {
-        throw new Error(payload.error || "Weaver could not build the plan.")
+        throw new Error(payload.error || "Parch could not build the plan.")
       }
       setPlan(payload.plan)
       setPlanOrigin("new")
@@ -111,7 +111,7 @@ export function StoryPlannerClient() {
       setHistory((current) => [payload.plan!, ...current.filter((item) => item.id !== payload.plan!.id)].slice(0, 8))
       window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Weaver could not build the plan.")
+      setError(caught instanceof Error ? caught.message : "Parch could not build the plan.")
     } finally {
       setBuilding(false)
     }
@@ -171,7 +171,7 @@ export function StoryPlannerClient() {
             <Eyebrow className="text-primary-foreground/60">AI Story Planner</Eyebrow>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Know where your story is going before you tell it.</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-primary-foreground/70">
-              Give Weaver the situation, your goal, the facts, and what feels difficult. You will get a clear structure, a stronger plan, and practical delivery guidance without losing your voice.
+              Give Parch the situation, your goal, the facts, and what feels difficult. You will get a clear structure, a stronger plan, and practical delivery guidance without losing your voice.
             </p>
           </div>
         </div>
@@ -216,7 +216,7 @@ export function StoryPlannerClient() {
               number={3}
               icon={ListChecks}
               title="What basically happens?"
-              help="List the events in rough order. Fragments are fine. Weaver will help shape them."
+              help="List the events in rough order. Fragments are fine. Parch will help shape them."
               value={form.roughPlan}
               onChange={(value) => update("roughPlan", value)}
               placeholder="First..., then..., the turning point was..., after that..., it ended when..."
@@ -228,7 +228,7 @@ export function StoryPlannerClient() {
               number={4}
               icon={FileText}
               title="Which facts or details must stay?"
-              help="Add names, sensory details, exact moments, context, or boundaries that Weaver must preserve."
+              help="Add names, sensory details, exact moments, context, or boundaries that Parch must preserve."
               value={form.mustInclude}
               onChange={(value) => update("mustInclude", value)}
               placeholder="The keyboard was sticky, it was finals week, and I do not want the story to make my brother look careless..."
@@ -376,7 +376,7 @@ export function StoryPlannerClient() {
 
 function PlanReadySkeleton() {
   return (
-    <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/25 bg-card shadow-sm" aria-label="Weaver is building your story plan" aria-busy="true">
+    <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/25 bg-card shadow-sm" aria-label="Parch is building your story plan" aria-busy="true">
       <div className="p-5 sm:p-6">
         <div className="animate-pulse">
           <div className="flex items-center justify-between gap-3">
@@ -406,7 +406,7 @@ function PlanReadySkeleton() {
       </div>
       <div className="flex items-center justify-center gap-2 border-t border-border/70 px-5 py-3 text-xs font-medium text-muted-foreground">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand" />
-        Weaver is shaping your plan
+        Parch is shaping your plan
       </div>
     </section>
   )
