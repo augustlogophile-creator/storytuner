@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Activity, ArrowUpRight, BarChart3, Mail, Settings, ShieldCheck, Sparkles, Star } from "lucide-react"
+import { Activity, BarChart3, ChevronRight, Mail, Settings, ShieldCheck, Sparkles, Star } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { Weaver } from "@/components/weaver"
 import { useApp } from "@/lib/app-state"
@@ -11,77 +11,118 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
   const name = displayName.trim() || state.profile.name || "Storyteller"
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="app-surface overflow-hidden rounded-[2rem] border border-border bg-card p-5">
-        <div className="flex items-center gap-4">
-          <div className="shrink-0 rounded-[1.35rem] bg-secondary/60 p-2"><Weaver size={62} /></div>
+    <div className="flex flex-col gap-5">
+      <header className="text-center">
+        <h1 className="text-[1.35rem] font-semibold tracking-[-0.025em]">Profile</h1>
+      </header>
+
+      <section className="overflow-hidden rounded-[1.55rem] border border-border bg-card">
+        <div className="flex items-center gap-3.5 px-4 py-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-soft/60">
+            <Weaver size={44} />
+          </div>
           <div className="min-w-0 flex-1">
-            <Eyebrow>Your profile</Eyebrow>
-            <h1 className="mt-1 truncate text-2xl font-semibold tracking-tight">{name}</h1>
-            <p className="mt-0.5 truncate text-sm text-muted-foreground">@{username}</p>
+            <p className="truncate text-[0.95rem] font-semibold tracking-[-0.015em]">{name}</p>
+            <p className="mt-0.5 truncate text-[0.7rem] text-muted-foreground">@{username}</p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-muted-foreground">Streak</p>
+            <p className="mt-0.5 text-[0.8rem] font-semibold tabular-nums">{state.streak}d</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-3 divide-x divide-border rounded-2xl bg-secondary/45 py-3">
-          <Stat value={state.streak} label="Day streak" />
+        <div className="grid grid-cols-3 border-t border-border bg-secondary/25 py-2.5">
+          <Stat value={state.streak} label="Days" />
           <Stat value={state.xpLifetime} label="Total XP" />
           <Stat value={state.recordings.length} label="Stories" />
         </div>
       </section>
 
       <section>
-        <Eyebrow className="mb-3">Your StoryTuner</Eyebrow>
-        <div className="grid grid-cols-2 gap-3">
-          <QuickCard href="/progress" icon={BarChart3} title="Progress" detail="Lessons and growth" />
-          <QuickCard href="/membership" icon={Star} title="Membership" detail={state.premium ? "Active" : "View your plan"} badge={state.premium ? "Active" : undefined} />
+        <Eyebrow className="mb-2.5 px-1">Your StoryTuner</Eyebrow>
+        <div className="overflow-hidden rounded-[1.45rem] border border-border bg-card px-4">
+          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons and growth" />
+          <Divider />
+          <ProfileRow
+            href="/membership"
+            icon={Star}
+            title="Membership"
+            detail={state.premium ? "Active" : "View your plan"}
+            value={state.premium ? "Active" : undefined}
+          />
+          <Divider />
+          <ProfileRow href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
+          <Divider />
+          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
         </div>
       </section>
 
-      <section className="rounded-3xl border border-border bg-card px-4">
-        <CompactRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
-        <div className="h-px bg-border" />
-        <CompactRow href="/shop" icon={Sparkles} title="Weaver shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
-      </section>
-
       {moderatorRole && (
-        <section className="overflow-hidden rounded-3xl border border-border bg-card px-4">
-          <CompactRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Review reports and account actions" />
-          <div className="h-px bg-border" />
-          <CompactRow href="/admin/system" icon={Activity} title="System health" detail="Backend usage, failures, and maintenance" />
+        <section>
+          <Eyebrow className="mb-2.5 px-1">Admin</Eyebrow>
+          <div className="overflow-hidden rounded-[1.45rem] border border-border bg-card px-4">
+            <ProfileRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Reports and account actions" />
+            <Divider />
+            <ProfileRow href="/admin/system" icon={Activity} title="System health" detail="Usage, failures, and maintenance" />
+          </div>
         </section>
       )}
 
-      <section className="rounded-[1.8rem] border border-border bg-card p-5">
-        <Eyebrow>Support</Eyebrow>
-        <h2 className="mt-2 text-lg font-semibold tracking-tight">Questions, issues, or feedback?</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">Reach out anytime about StoryTuner, your account, or something that is not working as expected.</p>
-        <a href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support" className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
-          <Mail className="h-4 w-4" /> Contact StoryTuner
-        </a>
+      <section>
+        <Eyebrow className="mb-2.5 px-1">Support</Eyebrow>
+        <div className="overflow-hidden rounded-[1.45rem] border border-border bg-card px-4">
+          <a href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support" className="group flex items-center gap-3 py-3.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft/65 text-brand">
+              <Mail className="h-4 w-4" strokeWidth={2} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.82rem] font-semibold">Contact StoryTuner</span>
+              <span className="mt-0.5 block truncate text-[0.67rem] text-muted-foreground">Questions, issues, or feedback</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />
+          </a>
+        </div>
       </section>
     </div>
   )
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
-  return <div className="px-2 text-center"><p className="text-lg font-semibold tabular-nums">{value.toLocaleString()}</p><p className="mt-0.5 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-muted-foreground">{label}</p></div>
+  return (
+    <div className="text-center">
+      <p className="text-[0.82rem] font-semibold tabular-nums">{value.toLocaleString()}</p>
+      <p className="mt-0.5 font-mono text-[0.5rem] uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+    </div>
+  )
 }
 
-function QuickCard({ href, icon: Icon, title, detail, badge }: { href: string; icon: typeof Settings; title: string; detail: string; badge?: string }) {
+function ProfileRow({
+  href,
+  icon: Icon,
+  title,
+  detail,
+  value,
+}: {
+  href: string
+  icon: typeof Settings
+  title: string
+  detail: string
+  value?: string
+}) {
   return (
-    <Link href={href} className="group min-w-0 rounded-3xl border border-border bg-card p-4 transition-all duration-200 hover:border-brand/45 hover:shadow-sm active:scale-[0.985]">
-      <div className="flex items-start justify-between gap-2"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft/75 text-accent-foreground"><Icon className="h-[1.1rem] w-[1.1rem]" /></span><ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></div>
-      <div className="mt-4 flex items-center gap-2"><p className="truncate text-sm font-semibold">{title}</p>{badge && <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[0.55rem] font-semibold text-accent-foreground">{badge}</span>}</div>
-      <p className="mt-1 truncate text-xs text-muted-foreground">{detail}</p>
+    <Link href={href} className="group flex items-center gap-3 py-3.5">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-soft/65 text-brand">
+        <Icon className="h-4 w-4" strokeWidth={2} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[0.82rem] font-semibold">{title}</span>
+        <span className="mt-0.5 block truncate text-[0.67rem] text-muted-foreground">{detail}</span>
+      </span>
+      {value && <span className="shrink-0 text-[0.67rem] font-medium text-brand">{value}</span>}
+      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />
     </Link>
   )
 }
 
-function CompactRow({ href, icon: Icon, title, detail }: { href: string; icon: typeof Settings; title: string; detail: string }) {
-  return (
-    <Link href={href} className="group flex items-center gap-3 py-4">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft/70 text-accent-foreground"><Icon className="h-[1.1rem] w-[1.1rem]" /></span>
-      <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{detail}</span></span>
-      <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-    </Link>
-  )
+function Divider() {
+  return <div className="ml-11 h-px bg-border" />
 }
