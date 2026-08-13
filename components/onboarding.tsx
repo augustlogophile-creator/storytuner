@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState, type ReactNode } from "react"
-import { ArrowLeft, Check } from "lucide-react"
+import { ArrowDownLeft, ArrowLeft, Check } from "lucide-react"
 import {
   blockerLabels,
   goalLabels,
@@ -134,6 +134,10 @@ function WelcomeScreen() {
       <div className="intro-hero-stage">
         <span className="intro-sparkle intro-sparkle-left">✦</span>
         <span className="intro-sparkle intro-sparkle-right">✦</span>
+        <div className="intro-parch-label" aria-hidden="true">
+          <span>This is Parch</span>
+          <ArrowDownLeft className="h-4 w-4" strokeWidth={1.9} />
+        </div>
         <Image src="/parch-welcoming.png" alt="Parch waving hello" width={320} height={316} priority className="intro-mascot-in h-auto w-[13.2rem] object-contain" />
       </div>
       <h1 className="intro-title-reveal mt-5 text-[2.35rem] font-semibold leading-[1.01] tracking-[-0.055em] text-balance">Welcome to StoryTuner.</h1>
