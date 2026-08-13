@@ -156,19 +156,21 @@ export async function requireStoryTunerUser(
   if (!authenticated) redirect(`/sign-up?mode=sign-in&next=${encodeURIComponent(safeReturn)}`)
 
   const needsProfile = options.requireProfile !== false
-  const profilePromise: Promise<StoryTunerProfile | null> = needsProfile
-    ? authenticated.supabase
-        .from("profiles")
-        .select("id, username, display_name, confirmed_age_13_plus, onboarding_completed")
-        .eq("id", authenticated.id)
-        .maybeSingle<StoryTunerProfile>()
-        .then(({ data }) => data ?? null)
-    : Promise.resolve(null)
+  const restrictionPromise: Promise<AccountRestriction | null> = options.allowRestricted
+    ? Promise.resolve(null)
+    : getAccountRestriction(authenticated.id)
 
-  const [restriction, profile] = await Promise.all([
-    options.allowRestricted ? Promise.resolve<AccountRestriction | null>(null) : getAccountRestriction(authenticated.id),
-    profilePromise,
-  ])
+  let profile: StoryTunerProfile | null = null
+  if (needsProfile) {
+    const { data } = await authenticated.supabase
+      .from("profiles")
+      .select("id, username, display_name, confirmed_age_13_plus, onboarding_completed")
+      .eq("id", authenticated.id)
+      .maybeSingle<StoryTunerProfile>()
+    profile = data ?? null
+  }
+
+  const restriction = await restrictionPromise
 
   if (restriction?.restricted) redirect("/account-restricted")
 
