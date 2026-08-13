@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type CSSProperties } from "react"
 import { cn } from "@/lib/utils"
 
 export function Celebration({
@@ -50,24 +50,28 @@ export function Celebration({
 
   return (
     <div className={cn("celebration-layer", mobileOnly && "celebration-layer-mobile")} aria-hidden="true">
-      {pieces.map((piece) => (
-        <span
-          key={piece.id}
-          className="celebration-piece"
-          data-hue={piece.hue}
-          style={{
-            left: `${piece.left}%`,
-            top: `${piece.top}%`,
-            transform: `rotate(${piece.rotate}deg)`,
-            animationDelay: piece.delay,
-            animationDuration: piece.duration,
-            ["--confetti-x" as "--confetti-x"]: piece.drift,
-            ["--confetti-y" as "--confetti-y"]: piece.drop,
-            ["--confetti-rotate" as "--confetti-rotate"]: piece.spin,
-            ["--confetti-scale" as "--confetti-scale"]: piece.scale,
-          }}
-        />
-      ))}
+      {pieces.map((piece) => {
+        const style: CSSProperties & Record<`--${string}`, string> = {
+          left: `${piece.left}%`,
+          top: `${piece.top}%`,
+          transform: `rotate(${piece.rotate}deg)`,
+          animationDelay: piece.delay,
+          animationDuration: piece.duration,
+          "--confetti-x": piece.drift,
+          "--confetti-y": piece.drop,
+          "--confetti-rotate": piece.spin,
+          "--confetti-scale": piece.scale,
+        }
+
+        return (
+          <span
+            key={piece.id}
+            className="celebration-piece"
+            data-hue={piece.hue}
+            style={style}
+          />
+        )
+      })}
       {label && <span className="celebration-label">{label}</span>}
     </div>
   )
