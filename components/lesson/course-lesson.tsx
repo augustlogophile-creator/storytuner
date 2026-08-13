@@ -306,9 +306,9 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
   return (
     <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
       <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${stageXp[stage]} XP` : undefined} />
-      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
+      <span className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-brand-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
-      <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? <><span>+</span><CountUp value={stageXp[stage]} /><span>XP earned</span></> : "Progress already saved"}</div>
+      <div className="flex items-center gap-2.5 rounded-full bg-secondary px-5 py-2.5 text-base font-semibold text-foreground"><Sparkles className="h-[1.1rem] w-[1.1rem]" />{earnedThisVisit ? <><span>+</span><CountUp value={stageXp[stage]} duration={1250} className="text-[1.08rem]" /><span>XP earned</span></> : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is <CountUp value={coursePercent} suffix="%" /> complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
         <Link href={primaryHref} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>

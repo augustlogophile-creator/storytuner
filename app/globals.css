@@ -513,16 +513,17 @@ a {
 }
 
 @keyframes storytuner-confetti {
-  0% { opacity: 0; transform: translate3d(0,-8px,0) rotate(0deg) scale(.8); }
-  12% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), 180px, 0) rotate(280deg) scale(1); }
+  0% { opacity: 0; transform: translate3d(0,-12px,0) rotate(0deg) scale(.72); }
+  10% { opacity: 1; }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), 245px, 0) rotate(420deg) scale(1.04); }
 }
 
 @keyframes storytuner-celebration-label {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(.84); }
-  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
-  70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -58%) scale(.98); }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.78); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -60%) scale(.98); }
 }
 
 .skeleton-block {
@@ -588,12 +589,12 @@ label:has(input[type="radio"]):active {
 .celebration-piece {
   --confetti-x: 18px;
   position: absolute;
-  width: 7px;
-  height: 13px;
+  width: 8px;
+  height: 15px;
   border-radius: 2px;
   background: var(--brand);
   opacity: 0;
-  animation: storytuner-confetti 1.15s cubic-bezier(.16,.72,.28,1) both;
+  animation: storytuner-confetti 2.05s cubic-bezier(.16,.72,.28,1) both;
 }
 
 .celebration-piece:nth-child(3n + 2) {
@@ -613,13 +614,13 @@ label:has(input[type="radio"]):active {
   border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
   border-radius: 999px;
   background: color-mix(in oklch, var(--card) 94%, transparent);
-  padding: .7rem 1rem;
+  padding: .82rem 1.2rem;
   color: var(--foreground);
-  font-size: .82rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 750;
   box-shadow: 0 14px 38px rgba(37, 32, 27, .13);
   backdrop-filter: blur(10px);
-  animation: storytuner-celebration-label 1.35s ease both;
+  animation: storytuner-celebration-label 2.2s ease both;
 }
 
 @keyframes storytuner-typewriter-cursor {
