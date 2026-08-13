@@ -50,7 +50,7 @@ export function ActivitiesClient() {
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
                     <p className="min-w-0 truncate font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{unit.kind === "capstone" ? "Capstone" : unit.skill}</p>
-                    {!planAccess && <span className="shrink-0 rounded-full border border-[#b9d9f8] bg-[#edf6ff] px-2 py-1 text-[0.58rem] font-semibold text-[#1769aa]">Membership</span>}
+                    {!planAccess && <span className="shrink-0 rounded-full border border-[#a9cff7] bg-[#e6f2ff] px-2 py-1 text-[0.58rem] font-semibold text-[#155d9f]">Membership</span>}
                   </div>
                   <h2 className="mt-1 break-words text-base font-semibold text-foreground">{unit.title}</h2>
                   <p className="mt-1 break-words text-sm leading-relaxed text-muted-foreground text-pretty">{unit.description}</p>

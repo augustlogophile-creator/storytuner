@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 
 const pieces = [
   [8, 18, -12], [16, 34, 7], [24, 12, 16], [31, 44, -5], [39, 22, 12], [47, 9, -10],
@@ -12,10 +13,12 @@ export function Celebration({
   active,
   label,
   onDone,
+  mobileOnly = false,
 }: {
   active: boolean
   label?: string
   onDone?: () => void
+  mobileOnly?: boolean
 }) {
   const [visible, setVisible] = useState(active)
 
@@ -35,7 +38,7 @@ export function Celebration({
   if (!visible) return null
 
   return (
-    <div className="celebration-layer" aria-hidden="true">
+    <div className={cn("celebration-layer", mobileOnly && "celebration-layer-mobile")} aria-hidden="true">
       {pieces.map(([left, top, rotate], index) => (
         <span
           key={`${left}-${top}`}

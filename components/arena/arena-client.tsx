@@ -7,11 +7,13 @@ import {
   Camera,
   CameraOff,
   Check,
+  CheckCircle2,
   ChevronRight,
   Clock3,
   FileText,
   Loader2,
   LockKeyhole,
+  Lightbulb,
   Map,
   MessageCircle,
   Mic2,
@@ -20,12 +22,14 @@ import {
   Rewind,
   RotateCcw,
   Share2,
+  Sparkles,
   Video,
   X,
 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
+import { Celebration } from "@/components/ui/celebration"
 import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
 import { FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
@@ -45,6 +49,7 @@ type TranscriptionOutcome = "idle" | "success" | "no-speech" | "error"
 type ArenaConfirmAction = "leave" | "retake-recording" | "retake-review" | "discard" | null
 type ScoreArea = "hook" | "development" | "landing"
 type Feedback = {
+  title: string
   hook: number
   development: number
   landing: number
@@ -175,6 +180,7 @@ export function ArenaClient() {
   const [transcriptionOutcome, setTranscriptionOutcome] = useState<TranscriptionOutcome>("idle")
   const [savedId, setSavedId] = useState<string | null>(null)
   const [error, setError] = useState("")
+  const [showCaptureCelebration, setShowCaptureCelebration] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const transcriptRef = useRef<HTMLTextAreaElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -324,6 +330,7 @@ export function ArenaClient() {
     setTranscriptionStage("idle")
     setSavedId(null)
     setError("")
+    setShowCaptureCelebration(false)
     chunksRef.current = []
     audioChunksRef.current = []
     transcriptionBlobRef.current = null
@@ -558,6 +565,7 @@ export function ArenaClient() {
   function stopRecording() {
     if (stoppingRef.current) return
     stoppingRef.current = true
+    setShowCaptureCelebration(true)
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
     const recorder = recorderRef.current
@@ -708,9 +716,11 @@ export function ArenaClient() {
       const id = crypto.randomUUID()
       if (mediaBlob) await saveMedia(id, mediaBlob).catch(() => undefined)
       const cloudUpload = cloudUploadRef.current
+      const aiTitle = data.title?.trim() || title.trim() || firstSentence(clean)
+      setTitle(aiTitle)
       if (cloudUpload) {
         await finalizeCloudRecording(cloudUpload.id, {
-          title: title.trim() || firstSentence(clean),
+          title: aiTitle,
           transcript: clean,
         }).catch(() => undefined)
       }
@@ -718,7 +728,7 @@ export function ArenaClient() {
       const recording: Recording = {
         id,
         createdAt: new Date().toISOString(),
-        title: title.trim() || firstSentence(clean),
+        title: aiTitle,
         context: contextName,
         prompt,
         duration: seconds,
@@ -746,7 +756,7 @@ export function ArenaClient() {
       setFeedback(data)
       setSavedId(id)
       setPhase("result")
-      window.scrollTo({ top: 0, behavior: "smooth" })
+      window.scrollTo({ top: 0, behavior: "auto" })
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Weaver could not grade this story.")
       setPhase("review")
@@ -776,13 +786,14 @@ export function ArenaClient() {
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
+      <Celebration active={showCaptureCelebration} mobileOnly label="Story captured" onDone={() => setShowCaptureCelebration(false)} />
       <header className="min-w-0">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Weaver grades the craft, not the topic.</p>
-        <span className="mt-3 inline-flex rounded-full border border-[#b8d9fb] bg-[#eaf4ff] px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-[#145b9d]">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
+        <span className="mt-3 inline-flex rounded-full border border-border bg-secondary/45 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
       </header>
 
       {phase === "setup" && (
@@ -790,12 +801,12 @@ export function ArenaClient() {
           <section className="rounded-3xl border border-border bg-card p-4">
             <p className="px-1 text-sm font-semibold">Choose how you want to practice</p>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-[#5fa8f2] bg-[#eaf4ff] shadow-[0_8px_22px_rgba(35,125,220,0.07)]" : "border-border bg-background hover:border-[#9ac8f6]")}>
-                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-[#eaf4ff] text-[#145b9d]")}><Mic2 className="h-4 w-4" /></span>
+              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-foreground/45 bg-secondary/35 shadow-[0_8px_22px_rgba(31,27,23,0.035)]" : "border-border bg-background hover:border-foreground/25")}>
+                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Mic2 className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Tell any story</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-[#5fa8f2] bg-[#eaf4ff] shadow-[0_8px_22px_rgba(35,125,220,0.07)]" : "border-border bg-background hover:border-[#9ac8f6]")}>
+              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-foreground/45 bg-secondary/35 shadow-[0_8px_22px_rgba(31,27,23,0.035)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
@@ -811,7 +822,7 @@ export function ArenaClient() {
                   {scenarios.map((item) => {
                     const selected = item.id === scenarioId
                     return (
-                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-[#5fa8f2] bg-[#eaf4ff]" : "border-border bg-card hover:border-[#9ac8f6]")}>
+                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-foreground/45 bg-secondary/35" : "border-border bg-card hover:border-foreground/25")}>
                         <p className="text-sm font-semibold leading-snug">{item.name}</p>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</p>
                       </button>
@@ -880,7 +891,7 @@ export function ArenaClient() {
                   onClick={() => { setTargetSeconds(duration); setExtraSeconds(0) }}
                   className={cn(
                     "rounded-2xl border px-2 py-3 text-sm font-semibold tabular-nums transition",
-                    targetSeconds === duration ? "border-[#4d9bed] bg-[#eaf4ff] text-[#145b9d]" : "border-border bg-background text-muted-foreground hover:border-[#9ac8f6]",
+                    targetSeconds === duration ? "border-foreground/45 bg-secondary/35 text-foreground" : "border-border bg-background text-muted-foreground hover:border-foreground/25",
                   )}
                 >
                   {formatTime(duration)}
@@ -892,7 +903,7 @@ export function ArenaClient() {
               onClick={() => setShowDurationOptions(true)}
               className={cn(
                 "mt-3 flex w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition",
-                !durationOptions.includes(targetSeconds) ? "border-[#5fa8f2] bg-[#eaf4ff]" : "border-border bg-background hover:border-[#9ac8f6]",
+                !durationOptions.includes(targetSeconds) ? "border-foreground/45 bg-secondary/35" : "border-border bg-background hover:border-foreground/25",
               )}
             >
               <span className="min-w-0">
@@ -928,7 +939,7 @@ export function ArenaClient() {
             <p className="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-white/65">Ready when you are</p>
             <p className="mt-2 text-sm font-semibold tabular-nums">Target · {formatTime(limitSeconds)}</p>
           </div>
-          <div className="absolute inset-x-0 bottom-16 z-10 flex items-end justify-center gap-7 p-7 text-white">
+          <div className="absolute inset-x-0 bottom-3 z-10 flex items-end justify-center gap-7 px-7 pb-4 text-white">
             <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
             <Control label="Start" onClick={startRecording} icon={Play} large tone="brand" />
             <Control label="Setup" onClick={reset} icon={RotateCcw} />
@@ -952,7 +963,7 @@ export function ArenaClient() {
               <button type="button" onClick={() => setExtraSeconds(45)} className="mt-4 rounded-full bg-white/18 px-4 py-2 text-xs font-semibold backdrop-blur-md">Add 45 seconds</button>
             )}
           </div>
-          <div className="absolute inset-x-0 bottom-16 z-10 flex items-end justify-between gap-3 p-5 text-white">
+          <div className="absolute inset-x-0 bottom-3 z-10 flex items-end justify-between gap-3 px-5 pb-4 text-white">
             <div className="flex items-end gap-2.5">
               <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
               <Control label={paused ? "Resume" : "Pause"} onClick={togglePause} icon={paused ? Play : Pause} />
@@ -975,12 +986,14 @@ export function ArenaClient() {
               <div><Eyebrow>Prepared by Weaver</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Weaver creates a readable transcript while preserving your voice and events. Edit anything before grading."}</p>
-            <label className="mt-5 block text-sm font-semibold" htmlFor="arena-title">Title</label>
-            <input id="arena-title" value={title} onChange={(event: ChangeEvent<HTMLInputElement>) => setTitle(event.target.value)} placeholder={transcribing ? "Preparing your story…" : "Give this story a title"} className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand" />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Weaver creates a readable transcript while preserving your voice and events. Edit anything before grading. Weaver will name the story from the full transcript."}</p>
             <div className="mt-5 flex items-center justify-between gap-3">
               <label className="block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
-              <span className={cn("text-xs font-medium tabular-nums", transcriptWordCount >= MIN_STORY_WORDS ? "text-emerald-600" : "text-muted-foreground")}>{transcriptWordCount} / {MIN_STORY_WORDS} words</span>
+              {transcriptWordCount >= MIN_STORY_WORDS ? (
+                <span className="text-xs font-semibold text-emerald-600">Minimum met</span>
+              ) : (
+                <span className="text-xs font-medium tabular-nums text-muted-foreground">{transcriptWordCount} / {MIN_STORY_WORDS} words</span>
+              )}
             </div>
             <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} rows={10} placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
           </section>
@@ -1301,28 +1314,88 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
   const [shareOpen, setShareOpen] = useState(false)
   const [sharedPostId, setSharedPostId] = useState("")
   if (!recording) return null
-  const strongest = labelArea(feedback.strongest)
-  const weakest = labelArea(feedback.weakest)
+
   return (
     <>
-      <div className="flex flex-col gap-5">
-        <section className="flex items-center gap-5 rounded-3xl border border-border bg-card p-5"><ScoreRing value={recording.overall} /><div><Eyebrow>Saved privately</Eyebrow><h2 className="mt-1 text-lg font-semibold leading-snug">{recording.title}</h2><p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p></div></section>
-        <section className="grid grid-cols-3 gap-3"><SubScore label="Hook" value={feedback.hook} /><SubScore label="Development" value={feedback.development} /><SubScore label="Landing" value={feedback.landing} /></section>
-        <FeedbackList tone="good" title={`What is working · ${strongest}`} items={feedback.strengths} />
-        <FeedbackList tone="bad" title={`What to improve · ${weakest}`} items={feedback.improvements} />
-        <section className="rounded-3xl border border-brand/35 bg-brand-soft p-5"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-accent-foreground">One change for your next take</p><p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{feedback.levelUp}</p></section>
-        <section className="rounded-3xl border border-border bg-card p-5"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Revised story</Eyebrow><h3 className="mt-1 text-sm font-semibold">A stronger version in your voice</h3></div></div><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p></section>
-        <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground"><MessageCircle className="h-4 w-4" />Ask Weaver about this grade</Link>
-        <button type="button" onClick={onAgain} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Record another story</button>
+      <div className="flex flex-col gap-4">
+        <section className="rounded-[1.65rem] border border-border bg-card p-5 shadow-[0_1px_2px_rgba(32,28,24,0.025)]">
+          <Eyebrow>Story review</Eyebrow>
+          <div className="mt-3 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-[1.25rem] font-semibold leading-tight tracking-[-0.025em] text-balance">{recording.title}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">{recording.context} · {formatTime(recording.duration)}</p>
+            </div>
+            <ScoreRing value={recording.overall} />
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <ResultScore label="Hook" value={feedback.hook} />
+            <ResultScore label="Development" value={feedback.development} />
+            <ResultScore label="Landing" value={feedback.landing} />
+          </div>
+        </section>
+
+        <section className="rounded-[1.55rem] border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold">What landed</h3>
+          </div>
+          <ul className="mt-3 space-y-2.5 text-sm leading-6 text-foreground/90">
+            {feedback.strengths.map((item, index) => (
+              <li key={index} className="flex gap-2.5">
+                <span className="mt-[0.62rem] h-1 w-1 shrink-0 rounded-full bg-foreground/45" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-[1.55rem] border border-border bg-card p-5">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-streak" />
+            <h3 className="text-sm font-semibold">What to tighten</h3>
+          </div>
+          <ul className="mt-3 space-y-2.5 text-sm leading-6 text-foreground/90">
+            {feedback.improvements.map((item, index) => (
+              <li key={index} className="flex gap-2.5">
+                <span className="mt-[0.62rem] h-1 w-1 shrink-0 rounded-full bg-foreground/45" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="rounded-[1.55rem] bg-[#2b2823] p-5 text-[#f8f7f2] shadow-[0_10px_28px_rgba(31,27,23,0.08)]">
+          <div className="flex items-center gap-2 text-[#c9c3bb]">
+            <Sparkles className="h-4 w-4" />
+            <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em]">Quickest fix</p>
+          </div>
+          <p className="mt-2.5 text-sm font-medium leading-6">{feedback.levelUp}</p>
+        </section>
+
+        <section className="rounded-[1.65rem] border border-[#e1ddd5] bg-[#f2f0e9] p-5">
+          <Eyebrow>Revised story</Eyebrow>
+          <h3 className="mt-1.5 text-base font-semibold tracking-[-0.015em]">A stronger version in your voice</h3>
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p>
+        </section>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <Link href={`/coach?recording=${recording.id}`} className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-xs font-semibold text-brand-foreground">
+            <MessageCircle className="h-4 w-4" />Ask Weaver
+          </Link>
+          <button type="button" onClick={onAgain} className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground">
+            <RotateCcw className="h-4 w-4" />Record again
+          </button>
+        </div>
+
         {sharedPostId ? (
-          <Link href={`/community#${sharedPostId}`} className="flex items-center justify-center gap-2 rounded-full border border-brand bg-brand-soft px-5 py-3.5 text-sm font-semibold text-accent-foreground"><Share2 className="h-4 w-4" />View shared story</Link>
+          <Link href={`/community#${sharedPostId}`} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />View shared story</Link>
         ) : premium ? (
-          <button type="button" onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Share to Community</button>
+          <button type="button" onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />Share to Community</button>
         ) : (
-          <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
+          <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
         )}
-        <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
-        <p className="text-center text-xs leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>
+        <Link href="/arena/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
+        <p className="text-center text-[0.68rem] leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>
       </div>
       <ShareRecordingDialog
         open={shareOpen}
@@ -1331,6 +1404,15 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
         onShared={(post) => setSharedPostId(post.id)}
       />
     </>
+  )
+}
+
+function ResultScore({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl bg-secondary/55 px-2 py-3 text-center">
+      <span className="text-base font-semibold tabular-nums">{value}</span>
+      <span className="mt-0.5 block font-mono text-[0.5rem] uppercase tracking-[0.1em] text-muted-foreground">{label}</span>
+    </div>
   )
 }
 

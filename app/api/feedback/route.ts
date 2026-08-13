@@ -23,6 +23,7 @@ const arenaSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
+    title: { type: "string" },
     hook: { type: "integer", minimum: 0, maximum: 100 },
     development: { type: "integer", minimum: 0, maximum: 100 },
     landing: { type: "integer", minimum: 0, maximum: 100 },
@@ -43,7 +44,16 @@ const arenaSchema = {
     levelUp: { type: "string" },
     revisedStory: { type: "string" },
   },
-  required: ["hook", "development", "landing", "strongest", "weakest", "strengths", "improvements", "levelUp", "revisedStory"],
+  required: ["title", "hook", "development", "landing", "strongest", "weakest", "strengths", "improvements", "levelUp", "revisedStory"],
+}
+
+const arenaRevisionSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    revisedStory: { type: "string" },
+  },
+  required: ["revisedStory"],
 }
 
 const writtenStorySchema = {
@@ -197,6 +207,7 @@ export async function POST(req: Request) {
 
       try {
         const object = await runIdempotent(`arena-feedback:${user.id}:${requestKey}`, () => openAIJson<{
+        title: string
         hook: number
         development: number
         landing: number
@@ -212,11 +223,13 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: `You are Weaver, a friendly and sophisticated coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, forward movement, stakes, emotional honesty, and a satisfying ending, not dramatic subject matter.
+            content: `You are Weaver, a precise, friendly, sophisticated coach for spoken true stories. Score hook, development, and landing from 0 to 100. Reward clarity, specificity, forward movement, stakes, emotional honesty, and a satisfying ending, not dramatic subject matter.
 
-Return exactly three strengths and exactly three improvements. Each bullet must point to something specific in the transcript, use plain language, and avoid repeating another bullet. The immediate next-step instruction must be one concrete change the storyteller can make right away.
+Create a short, recognizable title of 2 to 6 words based on the actual story. Do not mechanically copy the first few words of the transcript.
 
-Then write a revised version of the full story. Preserve every real event, the speaker's personality, meaning, and recognizable voice. Remove filler, tighten repetition, improve the opening, clarify the central turn, and strengthen the landing. Do not invent details, dialogue, feelings, or lessons. Do not make the speaker sound formal or unlike themselves.`,
+Return exactly three strengths and exactly three improvements. Every point must be demonstrably true from the transcript and specific to what the speaker actually said. Before claiming that a detail, example, feeling, image, context, or explanation is missing, re-read the transcript and verify that it is genuinely absent. Never criticize the storyteller for omitting something they already included. Do not invent evidence. Avoid generic feedback and avoid repeating the same point in different language. The immediate next-step instruction must be the single most useful concrete change the storyteller can make right away, and it must not ask for something already present in the transcript.
+
+Then write a revised version of the ENTIRE story from beginning to end. It must remain a full story, not a summary, excerpt, outline, or partial rewrite. Preserve every real event, sequence, important detail, speaker meaning, and recognizable voice. You may tighten filler and repetition, improve the opening, clarify transitions, and strengthen the landing, but do not drop whole events or meaningful beats. Do not invent details, dialogue, feelings, or lessons. Do not make the speaker sound formal or unlike themselves.`,
           },
           {
             role: "user",
@@ -224,6 +237,41 @@ Then write a revised version of the full story. Preserve every real event, the s
           },
         ],
         }), 2 * 60 * 1000)
+        const transcriptWords = meaningfulWordCount(transcript)
+        const revisedWords = meaningfulWordCount(object.revisedStory || "")
+        const minimumFullRevisionWords = Math.max(45, Math.floor(transcriptWords * 0.72))
+
+        if (revisedWords < minimumFullRevisionWords) {
+          try {
+            const repaired = await openAIJson<{ revisedStory: string }>({
+              name: "arena_full_revision_repair",
+              schema: arenaRevisionSchema,
+              temperature: 0.2,
+              timeoutMs: 12_000,
+              messages: [
+                {
+                  role: "system",
+                  content: "Rewrite the complete spoken story from beginning to end. Preserve every real event, sequence, important detail, meaning, and recognizable voice. Tighten filler and repetition, but do not summarize, truncate, omit whole beats, or invent anything. Return only the full revisedStory field required by the schema.",
+                },
+                {
+                  role: "user",
+                  content: `Original transcript:
+${transcript}
+
+The prior revision was too incomplete:
+${object.revisedStory}`,
+                },
+              ],
+            })
+            object.revisedStory = meaningfulWordCount(repaired.revisedStory) >= minimumFullRevisionWords
+              ? repaired.revisedStory
+              : transcript
+          } catch {
+            object.revisedStory = transcript
+          }
+        }
+
+        object.title = cleanArenaTitle(object.title, transcript)
         return Response.json({ ...object, usage: reservation }, { headers: { "Cache-Control": "no-store" } })
       } catch (error) {
         if (reservation && !reservation.alreadyReserved) {
@@ -256,6 +304,15 @@ Then write a revised version of the full story. Preserve every real event, the s
   }
 }
 
+
+function cleanArenaTitle(value: string, transcript: string) {
+  const cleaned = value.replace(/[\n\r]+/g, " ").replace(/[^a-zA-Z0-9'’&: -]/g, "").trim().replace(/\s+/g, " ")
+  const words = cleaned.split(/\s+/).filter(Boolean).slice(0, 6)
+  if (words.length >= 2) return words.join(" ")
+  const fallback = transcript.split(/[.!?]/)[0]?.trim() || "Untitled story"
+  const fallbackWords = fallback.replace(/[^a-zA-Z0-9'’& -]/g, " ").split(/\s+/).filter(Boolean).slice(0, 5)
+  return fallbackWords.join(" ") || "Untitled story"
+}
 
 function meaningfulWordCount(text: string) {
   const fillerWords = new Set(["um", "uh", "erm", "hmm", "mhm", "ah", "eh"])

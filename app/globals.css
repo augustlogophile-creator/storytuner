@@ -415,12 +415,21 @@ header {
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   -webkit-tap-highlight-color: transparent;
 }
 
 .app-shell {
   box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 45%, transparent);
+}
+
+@keyframes storytuner-content-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.app-content-reveal {
+  animation: storytuner-content-in 150ms ease-out both;
 }
 
 .app-page-enter {
@@ -455,6 +464,7 @@ a {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .app-content-reveal,
   .app-page-enter,
   .app-dialog-overlay,
   .app-dialog-panel { animation: none !important; }
@@ -563,6 +573,15 @@ label:has(input[type="radio"]):active {
   inset: 0;
   z-index: 120;
   pointer-events: none;
+  overflow: hidden;
+}
+
+
+.celebration-layer-mobile {
+  left: 50%;
+  right: auto;
+  width: min(100vw, 28rem);
+  transform: translateX(-50%);
   overflow: hidden;
 }
 

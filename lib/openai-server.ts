@@ -23,11 +23,13 @@ export async function openAIJson<T>({
   schema,
   messages,
   temperature = 0.25,
+  timeoutMs = 45_000,
 }: {
   name: string
   schema: JsonSchema
   messages: ChatMessage[]
   temperature?: number
+  timeoutMs?: number
 }): Promise<T> {
   const startedAt = Date.now()
   try {
@@ -51,7 +53,7 @@ export async function openAIJson<T>({
           },
         },
       }),
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(Math.max(5_000, Math.min(45_000, timeoutMs))),
     })
 
     const data = (await response.json()) as {

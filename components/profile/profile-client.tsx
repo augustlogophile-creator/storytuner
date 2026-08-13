@@ -23,47 +23,44 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
   const goal = state.onboardingPreferences.goal
 
   return (
-    <div className="flex flex-col gap-4 pb-2">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden pb-1">
       <header className="px-1">
-        <h1 className="text-[1.5rem] font-semibold tracking-[-0.035em]">Profile</h1>
-        <p className="mt-1 max-w-sm text-[0.7rem] leading-5 text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>
+        <h1 className="text-[1.48rem] font-semibold tracking-[-0.035em]">Profile</h1>
+        <p className="mt-0.5 max-w-sm text-[0.68rem] leading-[1.15rem] text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>
       </header>
 
-      <section className="story-card overflow-hidden rounded-[1.55rem]">
-        <div className="flex items-center gap-3 px-4 py-3.5">
+      <section className="story-card overflow-hidden rounded-[1.45rem]">
+        <div className="flex items-center gap-3 px-4 py-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-            <ScrollText className="h-4.5 w-4.5" strokeWidth={1.8} />
+            <ScrollText className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.9rem] font-semibold tracking-[-0.015em]">{name}</p>
-            <p className="mt-0.5 truncate text-[0.69rem] text-muted-foreground">@{username}</p>
+            <p className="truncate text-[0.88rem] font-semibold tracking-[-0.015em]">{name}</p>
+            <div className="mt-0.5 flex min-w-0 items-center gap-2">
+              <p className="truncate text-[0.67rem] text-muted-foreground">@{username}</p>
+              {goal && (
+                <span className="max-w-[9.5rem] truncate rounded-full bg-secondary px-2 py-0.5 text-[0.52rem] font-semibold text-muted-foreground">
+                  {goalLabels[goal as Exclude<StoryGoal, "">]}
+                </span>
+              )}
+            </div>
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-muted-foreground">Streak</p>
-            <CountUp value={state.streak} suffix="d" className="mt-0.5 block text-[0.82rem] font-semibold tabular-nums" />
+            <p className="font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">Streak</p>
+            <CountUp value={state.streak} suffix="d" className="mt-0.5 block text-[0.8rem] font-semibold tabular-nums" />
           </div>
         </div>
 
-        <div className="grid grid-cols-3 border-t border-border bg-secondary/35 py-2">
+        <div className="grid grid-cols-3 border-t border-border bg-secondary/30 py-1.5">
           <Stat value={state.streak} label="Days" />
           <Stat value={state.xpLifetime} label="Total XP" />
           <Stat value={state.recordings.length} label="Stories" />
         </div>
       </section>
 
-      {goal && (
-        <section>
-          <SectionLabel>Current focus</SectionLabel>
-          <div className="story-card rounded-[1.3rem] px-4 py-3">
-            <p className="text-[0.82rem] font-semibold">{goalLabels[goal as Exclude<StoryGoal, "">]}</p>
-            <p className="mt-1 text-[0.68rem] leading-5 text-muted-foreground">This came from your StoryTuner setup and can help make coaching more relevant.</p>
-          </div>
-        </section>
-      )}
-
       <section>
         <SectionLabel>StoryTuner</SectionLabel>
-        <div className="story-card overflow-hidden rounded-[1.4rem] px-4">
+        <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
           <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, and activity" />
           <Divider />
           <ProfileRow
@@ -83,7 +80,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       {moderatorRole && (
         <section>
           <SectionLabel>Admin</SectionLabel>
-          <div className="story-card overflow-hidden rounded-[1.4rem] px-4">
+          <div className="story-card overflow-hidden rounded-[1.3rem] px-4">
             <ProfileRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Reports and account actions" />
             <Divider />
             <ProfileRow href="/admin/system" icon={Activity} title="System health" detail="Usage, failures, and maintenance" />
@@ -91,17 +88,19 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </section>
       )}
 
-      <section className="story-card rounded-[1.5rem] p-4.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">
-          <Mail className="h-4.5 w-4.5" strokeWidth={1.8} />
-        </span>
-        <h2 className="mt-3 text-[0.95rem] font-semibold tracking-[-0.02em]">Reach out to StoryTuner</h2>
-        <p className="mt-1 max-w-sm text-[0.68rem] leading-[1.45] text-muted-foreground">
-          Have a question, found something that feels off, or have an idea that would make StoryTuner better? Send us a note.
-        </p>
+      <section className="story-card mt-auto rounded-[1.4rem] p-3.5">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
+            <Mail className="h-4 w-4" strokeWidth={1.8} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[0.88rem] font-semibold tracking-[-0.02em]">Reach out to StoryTuner</h2>
+            <p className="mt-0.5 text-[0.63rem] leading-[1.4] text-muted-foreground">Questions, feedback, or something that feels off? Send us a note.</p>
+          </div>
+        </div>
         <a
           href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support"
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.75rem] font-semibold text-primary-foreground"
+          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.73rem] font-semibold text-primary-foreground"
         >
           Contact StoryTuner
           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
@@ -112,14 +111,14 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="mb-1.5 px-1 font-mono text-[0.58rem] uppercase tracking-[0.15em] text-muted-foreground">{children}</p>
+  return <p className="mb-1 px-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-muted-foreground">{children}</p>
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div className="text-center">
-      <CountUp value={value} className="text-[0.82rem] font-semibold tabular-nums" />
-      <p className="mt-0.5 font-mono text-[0.49rem] uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
+      <CountUp value={value} className="text-[0.79rem] font-semibold tabular-nums" />
+      <p className="mt-0.5 font-mono text-[0.47rem] uppercase tracking-[0.1em] text-muted-foreground">{label}</p>
     </div>
   )
 }
@@ -138,15 +137,15 @@ function ProfileRow({
   value?: string
 }) {
   return (
-    <Link href={href} className="group flex items-center gap-3 py-3">
+    <Link prefetch href={href} className="group flex items-center gap-3 py-[0.61rem]">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
         <Icon className="h-4 w-4" strokeWidth={1.9} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.78rem] font-semibold">{title}</span>
-        <span className="mt-0.5 block truncate text-[0.62rem] text-muted-foreground">{detail}</span>
+        <span className="block text-[0.76rem] font-semibold">{title}</span>
+        <span className="mt-0.5 block truncate text-[0.6rem] text-muted-foreground">{detail}</span>
       </span>
-      {value && <span className="shrink-0 text-[0.65rem] font-semibold text-foreground">{value}</span>}
+      {value && <span className="shrink-0 text-[0.63rem] font-semibold text-foreground">{value}</span>}
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />
     </Link>
   )

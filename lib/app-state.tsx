@@ -721,11 +721,22 @@ export function AppProvider({
 
   const addRecording = useCallback((recording: Recording) => {
     setState((current) => {
-      const isNew = !current.recordings.some((item) => item.id === recording.id)
+      const sameCloudRecording = recording.cloudRecordingId
+        ? current.recordings.find((item) => item.cloudRecordingId === recording.cloudRecordingId)
+        : undefined
+      const sameRecording = current.recordings.find((item) => item.id === recording.id) ?? sameCloudRecording
+      const isNew = !sameRecording || sameRecording.overall <= 0
       const today = todayKey()
       const next = applyActivity({
         ...current,
-        recordings: [recording, ...current.recordings.filter((item) => item.id !== recording.id)],
+        recordings: [
+          recording,
+          ...current.recordings.filter((item) => {
+            if (item.id === recording.id) return false
+            if (recording.cloudRecordingId && item.cloudRecordingId === recording.cloudRecordingId) return false
+            return true
+          }),
+        ],
         arenaUses: isNew ? { ...current.arenaUses, [today]: (current.arenaUses[today] ?? 0) + 1 } : current.arenaUses,
         arenaTotal: current.arenaTotal + (isNew ? 1 : 0),
         xpLifetime: current.xpLifetime + (isNew ? 15 : 0),

@@ -32,7 +32,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell fitViewport>
       <ProfileClient
         moderatorRole={moderatorRole}
         displayName={displayName}
