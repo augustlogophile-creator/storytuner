@@ -23,19 +23,19 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
   const goal = state.onboardingPreferences.goal
 
   return (
-    <div className="flex flex-col gap-6 pb-6">
-      <header className="px-1 pt-1">
-        <h1 className="text-[1.55rem] font-semibold tracking-[-0.035em]">Profile</h1>
-        <p className="mt-1.5 max-w-sm text-[0.75rem] leading-5 text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>
+    <div className="flex flex-col gap-4 pb-2">
+      <header className="px-1">
+        <h1 className="text-[1.5rem] font-semibold tracking-[-0.035em]">Profile</h1>
+        <p className="mt-1 max-w-sm text-[0.7rem] leading-5 text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>
       </header>
 
       <section className="story-card overflow-hidden rounded-[1.55rem]">
-        <div className="flex items-center gap-3.5 px-4 py-4.5">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-            <ScrollText className="h-5 w-5" strokeWidth={1.8} />
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
+            <ScrollText className="h-4.5 w-4.5" strokeWidth={1.8} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.95rem] font-semibold tracking-[-0.015em]">{name}</p>
+            <p className="truncate text-[0.9rem] font-semibold tracking-[-0.015em]">{name}</p>
             <p className="mt-0.5 truncate text-[0.69rem] text-muted-foreground">@{username}</p>
           </div>
           <div className="shrink-0 text-right">
@@ -44,7 +44,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
           </div>
         </div>
 
-        <div className="grid grid-cols-3 border-t border-border bg-secondary/35 py-2.5">
+        <div className="grid grid-cols-3 border-t border-border bg-secondary/35 py-2">
           <Stat value={state.streak} label="Days" />
           <Stat value={state.xpLifetime} label="Total XP" />
           <Stat value={state.recordings.length} label="Stories" />
@@ -54,7 +54,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       {goal && (
         <section>
           <SectionLabel>Current focus</SectionLabel>
-          <div className="story-card rounded-[1.35rem] px-4 py-3.5">
+          <div className="story-card rounded-[1.3rem] px-4 py-3">
             <p className="text-[0.82rem] font-semibold">{goalLabels[goal as Exclude<StoryGoal, "">]}</p>
             <p className="mt-1 text-[0.68rem] leading-5 text-muted-foreground">This came from your StoryTuner setup and can help make coaching more relevant.</p>
           </div>
@@ -63,7 +63,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 
       <section>
         <SectionLabel>StoryTuner</SectionLabel>
-        <div className="story-card overflow-hidden rounded-[1.45rem] px-4.5">
+        <div className="story-card overflow-hidden rounded-[1.4rem] px-4">
           <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, and activity" />
           <Divider />
           <ProfileRow
@@ -83,7 +83,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       {moderatorRole && (
         <section>
           <SectionLabel>Admin</SectionLabel>
-          <div className="story-card overflow-hidden rounded-[1.45rem] px-4.5">
+          <div className="story-card overflow-hidden rounded-[1.4rem] px-4">
             <ProfileRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Reports and account actions" />
             <Divider />
             <ProfileRow href="/admin/system" icon={Activity} title="System health" detail="Usage, failures, and maintenance" />
@@ -91,17 +91,17 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </section>
       )}
 
-      <section className="story-card rounded-[1.55rem] p-6">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-foreground">
+      <section className="story-card rounded-[1.5rem] p-4.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-foreground">
           <Mail className="h-4.5 w-4.5" strokeWidth={1.8} />
         </span>
-        <h2 className="mt-4 text-[1rem] font-semibold tracking-[-0.02em]">Reach out to StoryTuner</h2>
-        <p className="mt-1.5 max-w-sm text-[0.72rem] leading-5 text-muted-foreground">
+        <h2 className="mt-3 text-[0.95rem] font-semibold tracking-[-0.02em]">Reach out to StoryTuner</h2>
+        <p className="mt-1 max-w-sm text-[0.68rem] leading-[1.45] text-muted-foreground">
           Have a question, found something that feels off, or have an idea that would make StoryTuner better? Send us a note.
         </p>
         <a
           href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support"
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-[0.78rem] font-semibold text-primary-foreground"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.75rem] font-semibold text-primary-foreground"
         >
           Contact StoryTuner
           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
@@ -112,7 +112,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
-  return <p className="mb-2 px-1 font-mono text-[0.58rem] uppercase tracking-[0.15em] text-muted-foreground">{children}</p>
+  return <p className="mb-1.5 px-1 font-mono text-[0.58rem] uppercase tracking-[0.15em] text-muted-foreground">{children}</p>
 }
 
 function Stat({ value, label }: { value: number; label: string }) {
@@ -138,13 +138,13 @@ function ProfileRow({
   value?: string
 }) {
   return (
-    <Link href={href} className="group flex items-center gap-3 py-4">
+    <Link href={href} className="group flex items-center gap-3 py-3">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
         <Icon className="h-4 w-4" strokeWidth={1.9} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.81rem] font-semibold">{title}</span>
-        <span className="mt-0.5 block truncate text-[0.65rem] text-muted-foreground">{detail}</span>
+        <span className="block text-[0.78rem] font-semibold">{title}</span>
+        <span className="mt-0.5 block truncate text-[0.62rem] text-muted-foreground">{detail}</span>
       </span>
       {value && <span className="shrink-0 text-[0.65rem] font-semibold text-foreground">{value}</span>}
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />

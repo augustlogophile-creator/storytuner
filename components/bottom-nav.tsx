@@ -24,7 +24,7 @@ export function BottomNav() {
           return (
             <li key={href} className="min-w-0 flex-1">
               <Link href={href} aria-current={active ? "page" : undefined} className={cn("flex flex-col items-center gap-1 rounded-xl py-1.5 text-[0.6rem] font-medium transition-colors duration-150", active ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                <span className={cn("flex h-8 w-11 items-center justify-center rounded-full transition-colors duration-150", active ? "bg-[#2b2823] text-white shadow-[0_4px_14px_rgba(31,27,23,0.12)]" : "bg-transparent")}>
+                <span className={cn("flex h-8 w-11 items-center justify-center rounded-full transition-colors duration-150", active ? "bg-[#514e49] text-white shadow-[0_4px_14px_rgba(31,27,23,0.09)]" : "bg-transparent")}>
                   <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={active ? 2.4 : 1.9} />
                 </span>
                 <span className="truncate">{label}</span>
