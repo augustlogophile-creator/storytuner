@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { Check, Loader2, ShieldCheck } from "lucide-react"
+import { Loader2, ShieldCheck } from "lucide-react"
 import { safeInternalPath } from "@/lib/auth/redirects"
 import { createClient } from "@/lib/supabase/client"
 
@@ -16,9 +16,6 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const isSignUp = mode === "sign-up"
-  const benefits = isSignUp
-    ? ["Lesson progress and XP", "Recordings and feedback", "Your overall development"]
-    : ["Your lessons and XP", "Your recordings and feedback", "Your progress across devices"]
 
   useEffect(() => {
     setMode(searchParams.get("mode") === "sign-in" ? "sign-in" : initialMode)
@@ -83,13 +80,8 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         </div>
       </div>
 
-      <div className="auth-benefits" aria-label={isSignUp ? "What your account saves" : "What you can pick back up"}>
-        {benefits.map((item) => (
-          <div key={item} className="auth-benefit-row">
-            <span className="auth-benefit-check"><Check className="h-3.5 w-3.5" strokeWidth={2.7} /></span>
-            <span>{item}</span>
-          </div>
-        ))}
+      <div className="auth-sync-message" aria-label="What your account saves">
+        Your progress, recordings, and streaks, all saved and synced.
       </div>
 
       <button

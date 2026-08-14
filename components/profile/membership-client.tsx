@@ -102,8 +102,12 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
         {rows.map((row) => (
           <div key={row.feature} className="grid min-w-0 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] items-center gap-2 border-b border-border px-4 py-4 last:border-b-0">
             <div className="min-w-0 pr-1"><p className="text-sm font-medium text-foreground">{row.feature}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{row.detail}</p></div>
-            <p className="text-center text-xs leading-snug text-muted-foreground"><strong className="font-semibold text-foreground">{row.free}</strong></p>
-            <p className="text-center text-xs leading-snug text-muted-foreground"><strong className="font-semibold text-accent-foreground">{row.member}</strong></p>
+            <div className="flex justify-center">
+              <span className="membership-plan-value membership-plan-value-free">{row.free}</span>
+            </div>
+            <div className="flex justify-center">
+              <span className="membership-plan-value membership-plan-value-member">{row.member}</span>
+            </div>
           </div>
         ))}
       </section>
