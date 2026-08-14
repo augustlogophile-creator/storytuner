@@ -61,33 +61,33 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       <Celebration active={celebrateStreak} label={`${state.streak} day streak`} onDone={() => setCelebrateStreak(false)} />
       {accountNotice && <AccountRestoredNotice message={accountNotice} updatedAt={accountNoticeUpdatedAt} />}
 
-      <header className="flex items-start justify-between gap-4">
+      <header className="book-home-header flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <Eyebrow className="text-[0.64rem] tracking-[0.2em]">{today()}</Eyebrow>
-          <h1 className="mt-2 text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
+          <Eyebrow className="book-home-date text-[0.64rem] tracking-[0.2em]">{today()}</Eyebrow>
+          <h1 className="book-home-greeting mt-2 text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
             {greeting()},<br />{state.profile.name}.
           </h1>
-          <p className="mt-2 max-w-[19rem] text-[0.77rem] leading-[1.42] text-muted-foreground text-pretty">
+          <p className="book-home-subtitle mt-2 max-w-[19rem] text-[0.77rem] leading-[1.42] text-muted-foreground text-pretty">
             Learn one idea, then test it in a story of your own.
           </p>
         </div>
 
-        <div className="flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
+        <div className="book-streak-card flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
           <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
           <CountUp value={state.streak} className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]" />
           <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">days</span>
         </div>
       </header>
 
-      <section className="mt-4 rounded-[1.8rem] bg-[#2b2823] px-4.5 py-4 text-[#f8f7f2] shadow-[0_10px_30px_rgba(31,27,23,0.08)]">
+      <section className="book-course-card mt-4 rounded-[1.8rem] bg-[#2b2823] px-4.5 py-4 text-[#f8f7f2] shadow-[0_10px_30px_rgba(31,27,23,0.08)]">
         <div className="flex items-center justify-between gap-3 font-mono text-[0.59rem] uppercase tracking-[0.16em] text-[#aaa49c]">
           <span>{progress.percent}% through the course</span>
           {next && <span>{next.type === "lesson" ? `Unit ${next.unit.index}` : `Test ${next.checkpoint.index}`}</span>}
         </div>
-        <h2 className="mt-3 text-[1.2rem] font-semibold leading-tight tracking-[-0.028em] text-balance">
+        <h2 className="book-course-title mt-3 text-[1.2rem] font-semibold leading-tight tracking-[-0.028em] text-balance">
           {courseTitle}
         </h2>
-        <p className="mt-1.5 text-[0.72rem] leading-relaxed text-[#bdb7af] text-pretty">{courseSubtitle}</p>
+        <p className="book-course-subtitle mt-1.5 text-[0.72rem] leading-relaxed text-[#bdb7af] text-pretty">{courseSubtitle}</p>
 
         <div className="mt-3">
           <ProgressBar value={progress.percent} className="h-1.5 bg-white/15 [&>div]:bg-white/65" />
@@ -96,7 +96,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         <Link
           prefetch
           href={courseHref}
-          className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[0.8rem] font-semibold text-brand-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)]"
+          className="book-course-button mt-3.5 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[0.8rem] font-semibold text-brand-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)]"
         >
           {courseAction}
           <ArrowRight className="h-3.5 w-3.5" />
@@ -105,11 +105,11 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
       <section className="mt-4 flex min-h-0 flex-1 flex-col">
         <div className="mb-2.5 flex items-center justify-between gap-3">
-          <h2 className="text-[1rem] font-semibold tracking-[-0.015em]">Practice</h2>
-          <Link prefetch href="/arena/recordings" className="text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
+          <h2 className="book-practice-heading text-[1rem] font-semibold tracking-[-0.015em]">Practice</h2>
+          <Link prefetch href="/arena/recordings" className="book-past-recordings text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
         </div>
 
-        <div className="story-card mb-3 min-h-[7.35rem] rounded-[1.5rem] px-3.5 py-4">
+        <div className="story-card book-week-card mb-3 min-h-[7.35rem] rounded-[1.5rem] px-3.5 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.8rem] font-semibold">This week</p>
@@ -144,7 +144,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         </div>
 
         <div className="mt-auto flex h-[2.55rem] shrink-0 items-center justify-center overflow-hidden px-2 pb-3 text-center">
-          <TypewriterText className="block w-full whitespace-nowrap text-[0.82rem] font-light italic leading-none text-muted-foreground/80 sm:text-[0.86rem]" />
+          <TypewriterText className="book-home-typewriter block w-full whitespace-nowrap text-[0.82rem] font-light italic leading-none text-muted-foreground/80 sm:text-[0.86rem]" />
         </div>
       </section>
     </div>
@@ -153,7 +153,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
 function PracticeCard({ href, icon, title, description }: { href: string; icon: ReactNode; title: string; description: string }) {
   return (
-    <Link prefetch href={href} className="story-card story-card-interactive flex min-h-[8.35rem] flex-col rounded-[1.5rem] p-3.5">
+    <Link prefetch href={href} className="story-card story-card-interactive book-practice-card flex min-h-[8.35rem] flex-col rounded-[1.5rem] p-3.5">
       <span className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-secondary text-foreground">{icon}</span>
       <div className="mt-3.5">
         <p className="text-[0.82rem] font-semibold leading-snug tracking-[-0.015em]">{title}</p>

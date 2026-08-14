@@ -2550,3 +2550,455 @@ label:has(input[type="radio"]):active {
 .book-typewriter-pending {
   visibility: hidden;
 }
+
+/* StoryTuner printed-book visual system for the full product. */
+:root {
+  --background: #faf8f2;
+  --foreground: #2f2b26;
+  --card: #fffdf8;
+  --card-foreground: #2f2b26;
+  --popover: #fffdf8;
+  --popover-foreground: #2f2b26;
+  --primary: #2f2b26;
+  --primary-foreground: #fbf8ef;
+  --secondary: #f3efe6;
+  --secondary-foreground: #342f29;
+  --muted: #f2eee5;
+  --muted-foreground: #746c62;
+  --accent: #f3efe6;
+  --accent-foreground: #342f29;
+  --border: #d4c9b9;
+  --input: #d4c9b9;
+  --ring: #496f9e;
+  --brand: #466f9f;
+  --brand-foreground: #fffdf8;
+  --brand-soft: #eef3f7;
+  --streak: #a55e43;
+  --streak-soft: #f7efe7;
+  --sidebar: #faf8f2;
+  --sidebar-foreground: #2f2b26;
+  --sidebar-primary: #2f2b26;
+  --sidebar-primary-foreground: #fbf8ef;
+  --sidebar-accent: #f3efe6;
+  --sidebar-accent-foreground: #342f29;
+  --sidebar-border: #d4c9b9;
+  --sidebar-ring: #496f9e;
+  --font-book-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Baskerville, Georgia, "Times New Roman", serif;
+}
+
+body {
+  background: #eee9de;
+}
+
+.book-app {
+  position: relative;
+  isolation: isolate;
+  color: var(--foreground);
+  font-family: var(--font-book-serif);
+  background-color: var(--background) !important;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(92, 74, 50, .045) 0 .55px, transparent .7px),
+    radial-gradient(circle at 76% 67%, rgba(92, 74, 50, .032) 0 .5px, transparent .68px),
+    linear-gradient(180deg, rgba(255,255,255,.44), rgba(248,244,234,.18));
+  background-size: 7px 7px, 11px 11px, 100% 100%;
+  box-shadow:
+    inset 1px 0 0 rgba(105, 86, 62, .11),
+    inset -1px 0 0 rgba(105, 86, 62, .11),
+    0 0 42px rgba(54, 45, 34, .035);
+}
+
+.book-app::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .22;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 17px, rgba(91, 72, 47, .018) 18px),
+    linear-gradient(90deg, transparent 0 97%, rgba(99, 79, 55, .035) 100%);
+}
+
+.book-app-content {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.book-app :is(h1, h2, h3, h4, h5, h6),
+.book-app :is(p, li, label, button, input, textarea, select, blockquote),
+.book-bottom-nav {
+  font-family: var(--font-book-serif);
+}
+
+.book-app :is(h1, h2, h3) {
+  color: #2c2823;
+  font-weight: 600;
+  letter-spacing: -.028em;
+}
+
+.book-app h1 {
+  line-height: 1.08;
+}
+
+.book-app :is(p, li) {
+  text-rendering: optimizeLegibility;
+}
+
+.book-app .font-mono,
+.book-app code,
+.book-app pre {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+.book-app .text-muted-foreground {
+  color: #746c62;
+}
+
+.book-app :is(input, textarea, select) {
+  border-color: #d4c9b9;
+  background: rgba(255, 253, 248, .72);
+  color: #2f2b26;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.68);
+}
+
+.book-app :is(input, textarea, select)::placeholder {
+  color: #9a9186;
+}
+
+.book-app :is(input, textarea, select):focus {
+  border-color: color-mix(in srgb, var(--brand) 58%, #d4c9b9);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.book-app .story-card,
+.book-app .app-surface,
+.book-app :is(section, article, div)[class*="bg-card"] {
+  border-color: #d4c9b9;
+}
+
+.book-app .story-card,
+.book-app .app-surface {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(102, 80, 54, .025) 0 .5px, transparent .65px),
+    rgba(255, 253, 248, .68);
+  background-size: 8px 8px, auto;
+  box-shadow: 0 1px 0 rgba(255,255,255,.72), 0 3px 14px rgba(59, 47, 34, .025);
+}
+
+.book-app .story-card-interactive:hover,
+.book-app .app-surface:hover {
+  border-color: #b9aa96;
+  box-shadow: 0 7px 18px rgba(59, 47, 34, .04);
+}
+
+.book-app .app-dialog-panel {
+  background:
+    radial-gradient(circle at 16% 20%, rgba(102,80,54,.025) 0 .5px, transparent .7px),
+    #fffdf8;
+  background-size: 8px 8px, auto;
+  border-color: #d4c9b9;
+}
+
+.book-app .bg-secondary,
+.book-app .bg-muted {
+  background-color: #f2eee5;
+}
+
+.book-app .border-border {
+  border-color: #d4c9b9;
+}
+
+.book-app .bg-primary {
+  background-color: #302c27;
+}
+
+.book-app .bg-brand {
+  background-color: #466f9f;
+}
+
+.book-app .text-brand {
+  color: #3f6eaa;
+}
+
+.book-app .bg-brand-soft {
+  background-color: #edf3f8;
+}
+
+.book-app .text-streak {
+  color: #a55e43;
+}
+
+.book-app .bg-streak-soft\/75 {
+  background-color: rgba(247, 239, 231, .78);
+}
+
+/* Homepage mirrors the supplied printed-page mockup. */
+.book-home-header {
+  padding-top: .1rem;
+}
+
+.book-home-date {
+  display: inline-block;
+  position: relative;
+  padding-bottom: .34rem;
+  color: #4d463e !important;
+}
+
+.book-home-date::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 5.7rem;
+  height: 1px;
+  background: rgba(71, 61, 49, .36);
+}
+
+.book-home-greeting {
+  font-family: var(--font-book-serif);
+  font-size: 2rem !important;
+  font-weight: 500 !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.035em !important;
+  color: #2d2924;
+}
+
+.book-home-subtitle {
+  font-family: var(--font-book-serif);
+  font-size: .82rem !important;
+  font-style: italic;
+  line-height: 1.45 !important;
+  color: #554d44 !important;
+}
+
+.book-streak-card {
+  border: 1px solid #b9aa96;
+  border-radius: .9rem !important;
+  background: rgba(255, 253, 248, .52) !important;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.34);
+}
+
+.book-streak-card span:last-child {
+  color: #4d463e !important;
+}
+
+.book-course-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #3c3731;
+  border-radius: 1.3rem !important;
+  background-color: #302d28 !important;
+  background-image:
+    radial-gradient(circle at 18% 30%, rgba(255,255,255,.025) 0 .55px, transparent .7px),
+    radial-gradient(circle at 70% 65%, rgba(255,255,255,.018) 0 .45px, transparent .65px),
+    linear-gradient(135deg, rgba(255,255,255,.02), rgba(0,0,0,.08));
+  background-size: 7px 7px, 11px 11px, 100% 100%;
+  box-shadow: 0 9px 22px rgba(44, 37, 29, .08) !important;
+}
+
+.book-course-card::after {
+  content: "";
+  position: absolute;
+  inset: .45rem;
+  border: 1px solid rgba(246, 238, 224, .06);
+  border-radius: .95rem;
+  pointer-events: none;
+}
+
+.book-course-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.book-course-title {
+  font-family: var(--font-book-serif);
+  font-size: 1.28rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -.02em !important;
+  color: #fffaf0 !important;
+}
+
+.book-course-subtitle {
+  font-family: var(--font-book-serif);
+  font-style: italic;
+  color: #c9c1b5 !important;
+}
+
+.book-course-button {
+  border-radius: .72rem !important;
+  background: #496f9e !important;
+  font-family: var(--font-book-serif);
+  font-size: .86rem !important;
+  font-weight: 600 !important;
+  box-shadow: inset 0 -2px 0 rgba(31, 43, 57, .22), 0 4px 10px rgba(18, 31, 45, .08) !important;
+}
+
+.book-practice-heading {
+  font-family: var(--font-book-serif);
+  font-size: 1.28rem !important;
+  font-weight: 600 !important;
+}
+
+.book-past-recordings {
+  font-family: var(--font-book-serif);
+  font-size: .79rem !important;
+  font-weight: 500 !important;
+}
+
+.book-week-card {
+  border-radius: 1.05rem !important;
+  background: rgba(255, 253, 248, .42) !important;
+  box-shadow: none !important;
+}
+
+.book-week-card p:first-child {
+  font-size: .88rem !important;
+}
+
+.book-week-card p:nth-child(2) {
+  font-style: italic;
+}
+
+.book-week-card li span {
+  background: rgba(255, 253, 248, .42) !important;
+  border-color: #c8baa6 !important;
+}
+
+.book-week-card li span:has(svg) {
+  border-color: #5d82ae !important;
+  background: rgba(238, 244, 249, .5) !important;
+  color: #3f6eaa !important;
+}
+
+.book-practice-card {
+  border-radius: 1rem !important;
+  background: rgba(255, 253, 248, .42) !important;
+  box-shadow: none !important;
+}
+
+.book-practice-card > span:first-child {
+  border: 1px solid #d3c9bb;
+  background: rgba(245, 241, 233, .78) !important;
+}
+
+.book-practice-card p:first-child {
+  font-family: var(--font-book-serif);
+  font-size: .92rem !important;
+  font-weight: 600 !important;
+}
+
+.book-practice-card p:nth-child(2) {
+  font-family: var(--font-book-serif);
+  font-size: .69rem !important;
+  font-style: italic;
+  color: #655d54 !important;
+}
+
+.book-home-typewriter {
+  font-family: var(--font-book-serif) !important;
+  font-size: .86rem !important;
+  font-style: italic;
+  color: #766e64 !important;
+  text-shadow: none;
+}
+
+/* Shared navigation as a printed footer strip. */
+.book-bottom-nav {
+  border-color: rgba(126, 106, 79, .22) !important;
+  background-color: rgba(250, 248, 242, .965) !important;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(92, 74, 50, .028) 0 .5px, transparent .7px),
+    linear-gradient(180deg, rgba(255,255,255,.32), rgba(248,244,234,.16));
+  background-size: 8px 8px, 100% 100%;
+  box-shadow: 0 -8px 24px rgba(55, 44, 32, .025);
+  backdrop-filter: blur(12px);
+}
+
+.book-nav-item {
+  font-family: var(--font-book-serif);
+}
+
+.book-nav-pill {
+  border-radius: .72rem !important;
+}
+
+.book-nav-item[aria-current="page"] .book-nav-pill {
+  background: #302c27 !important;
+  color: #fffdf8 !important;
+  box-shadow: 0 3px 9px rgba(46, 39, 31, .08) !important;
+}
+
+.book-nav-label {
+  font-family: var(--font-book-serif);
+  font-size: .67rem;
+  font-style: italic;
+  letter-spacing: -.01em;
+}
+
+/* Make utility-heavy interior pages feel printed without changing their layout or behavior. */
+.book-app section[class*="rounded"],
+.book-app article[class*="rounded"] {
+  box-shadow: none;
+}
+
+.book-app section[class*="border"][class*="bg-card"],
+.book-app article[class*="border"][class*="bg-card"],
+.book-app div[class*="border"][class*="bg-card"] {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(102, 80, 54, .022) 0 .5px, transparent .65px),
+    rgba(255, 253, 248, .64);
+  background-size: 8px 8px, auto;
+  border-color: #d4c9b9;
+}
+
+.book-app :is(h1, h2, h3) + p.text-muted-foreground,
+.book-app header p.text-muted-foreground {
+  font-style: italic;
+}
+
+.book-app button[class*="rounded-full"],
+.book-app a[class*="rounded-full"] {
+  font-family: var(--font-book-serif);
+}
+
+.book-app .rounded-3xl,
+.book-app .rounded-\[2rem\],
+.book-app .rounded-\[1\.8rem\] {
+  border-radius: 1.15rem;
+}
+
+/* Auth and account surfaces use the same cleaner page stock. */
+.auth-canvas {
+  background-color: #faf8f2;
+  background-image:
+    radial-gradient(circle at 18% 20%, rgba(92, 74, 50, .034) 0 .5px, transparent .7px),
+    linear-gradient(180deg, rgba(255,255,255,.38), rgba(248,244,234,.16));
+  background-size: 8px 8px, 100% 100%;
+}
+
+.auth-canvas :is(h1, h2, h3, p, button, label, input) {
+  font-family: var(--font-book-serif);
+}
+
+.auth-canvas :is(h1, h2, h3) {
+  color: #2f2b26;
+  letter-spacing: -.025em;
+}
+
+.auth-input {
+  border-color: #d4c9b9;
+  background: rgba(255,253,248,.72);
+}
+
+@media (min-width: 640px) {
+  .book-app {
+    border-inline: 1px solid rgba(105, 86, 62, .14);
+  }
+}
+
+.auth-entry-shell {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.62), transparent 34%),
+    #eee9de;
+}

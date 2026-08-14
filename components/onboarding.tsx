@@ -328,7 +328,7 @@ function ReadyPage({ active, animate, preferences, onBack }: { active: boolean; 
           onPointerDown={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
           onTouchStart={(event) => event.stopPropagation()}
-          onClick={() => triggerIntroFeedback("action")}
+          onClick={() => triggerIntroFeedback("page")}
           className="book-start-link"
         >
           Start learning <span aria-hidden="true">→</span>
