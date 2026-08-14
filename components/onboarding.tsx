@@ -636,15 +636,54 @@ function playIntroSound(kind: "selection" | "action" | "page" | "back") {
   const play = () => {
     try {
       const now = context.currentTime
+
+      // Choices use a soft, low tactile "tap" rather than another bright
+      // synthesized chirp, so they feel clearly different from typing.
+      if (kind === "selection") {
+        const body = context.createOscillator()
+        const bodyGain = context.createGain()
+        body.type = "sine"
+        body.frequency.setValueAtTime(190, now)
+        body.frequency.exponentialRampToValueAtTime(158, now + 0.055)
+        bodyGain.gain.setValueAtTime(0.0001, now)
+        bodyGain.gain.linearRampToValueAtTime(0.031, now + 0.004)
+        bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.057)
+        body.connect(bodyGain)
+        bodyGain.connect(context.destination)
+        body.start(now)
+        body.stop(now + 0.065)
+
+        const noiseLength = Math.max(1, Math.floor(context.sampleRate * 0.028))
+        const noiseBuffer = context.createBuffer(1, noiseLength, context.sampleRate)
+        const noiseData = noiseBuffer.getChannelData(0)
+        for (let index = 0; index < noiseLength; index += 1) {
+          const envelope = 1 - index / noiseLength
+          noiseData[index] = (Math.random() * 2 - 1) * envelope
+        }
+
+        const noise = context.createBufferSource()
+        const filter = context.createBiquadFilter()
+        const noiseGain = context.createGain()
+        noise.buffer = noiseBuffer
+        filter.type = "lowpass"
+        filter.frequency.setValueAtTime(1050, now)
+        noiseGain.gain.setValueAtTime(0.014, now)
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.028)
+        noise.connect(filter)
+        filter.connect(noiseGain)
+        noiseGain.connect(context.destination)
+        noise.start(now)
+        noise.stop(now + 0.03)
+        return
+      }
+
       const oscillator = context.createOscillator()
       const gain = context.createGain()
-      const settings = kind === "selection"
-        ? { frequency: 390, end: 335, duration: 0.058, volume: 0.045, wave: "triangle" as OscillatorType }
-        : kind === "action"
-          ? { frequency: 465, end: 390, duration: 0.075, volume: 0.05, wave: "triangle" as OscillatorType }
-          : kind === "back"
-            ? { frequency: 225, end: 185, duration: 0.064, volume: 0.034, wave: "sine" as OscillatorType }
-            : { frequency: 285, end: 235, duration: 0.07, volume: 0.038, wave: "sine" as OscillatorType }
+      const settings = kind === "action"
+        ? { frequency: 465, end: 390, duration: 0.075, volume: 0.05, wave: "triangle" as OscillatorType }
+        : kind === "back"
+          ? { frequency: 225, end: 185, duration: 0.064, volume: 0.034, wave: "sine" as OscillatorType }
+          : { frequency: 285, end: 235, duration: 0.07, volume: 0.038, wave: "sine" as OscillatorType }
 
       oscillator.type = settings.wave
       oscillator.frequency.setValueAtTime(settings.frequency, now)
