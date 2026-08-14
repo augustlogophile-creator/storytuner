@@ -5,7 +5,9 @@ import {
   Children,
   forwardRef,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  type TouchEvent as ReactTouchEvent,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -77,6 +79,28 @@ const BookSlider = forwardRef<BookSliderHandle, {
     else flip.flip(nextPage, "bottom")
   }
 
+  function isInteractiveTarget(target: EventTarget | null) {
+    return target instanceof Element
+      && Boolean(target.closest("button, a, input, textarea, select, label, [data-book-no-turn='true']"))
+  }
+
+  // PageFlip supports both directions by default. StoryTuner intentionally reserves
+  // manual page turning for the right side only. Previous-page navigation stays on
+  // the explicit back control, which avoids accidental backwards flips on mobile.
+  function blockLeftMouseTurn(event: ReactMouseEvent<HTMLDivElement>) {
+    if (isInteractiveTarget(event.target)) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (event.clientX - rect.left < rect.width * 0.48) event.stopPropagation()
+  }
+
+  function blockLeftTouchTurn(event: ReactTouchEvent<HTMLDivElement>) {
+    if (isInteractiveTarget(event.target)) return
+    const touch = event.touches[0]
+    if (!touch) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (touch.clientX - rect.left < rect.width * 0.48) event.stopPropagation()
+  }
+
   useImperativeHandle(forwardedRef, () => ({
     next: () => goTo(currentPageRef.current + 1),
     previous: () => goTo(currentPageRef.current - 1),
@@ -84,32 +108,36 @@ const BookSlider = forwardRef<BookSliderHandle, {
   }), [canGoNext, lastPage])
 
   return (
-    <div className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}>
+    <div
+      className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
+      onMouseDownCapture={blockLeftMouseTurn}
+      onTouchStartCapture={blockLeftTouchTurn}
+    >
       <HTMLFlipBook
         ref={bookRef}
         className="story-pageflip"
         style={{ margin: "0 auto" } as CSSProperties}
         startPage={page}
         size="stretch"
-        width={430}
-        height={760}
-        minWidth={310}
-        maxWidth={430}
-        minHeight={570}
-        maxHeight={780}
+        width={448}
+        height={800}
+        minWidth={320}
+        maxWidth={448}
+        minHeight={560}
+        maxHeight={900}
         drawShadow
-        flippingTime={820}
+        flippingTime={650}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.34}
+        maxShadowOpacity={0.28}
         showCover
-        mobileScrollSupport={false}
+        mobileScrollSupport
         clickEventForward
-        useMouseEvents={canGoNext || page === lastPage}
-        swipeDistance={24}
-        showPageCorners
-        disableFlipByClick={false}
+        useMouseEvents={canGoNext}
+        swipeDistance={12}
+        showPageCorners={false}
+        disableFlipByClick
         onChangeState={(event: any) => {
           const state = event?.data
           setIsFlipping(state === "flipping" || state === "user_fold" || state === "fold_corner")

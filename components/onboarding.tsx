@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { BookOpen, Check } from "lucide-react"
 import BookSlider, { BookPage, type BookSliderHandle } from "@/components/ui/book-slider"
 import {
@@ -93,7 +93,7 @@ export function Onboarding() {
         </BookPage>
 
         <BookPage>
-          <SecretPage active={page === 3} onNext={nextPage} onBack={previousPage} />
+          <SecretPage onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
@@ -185,44 +185,18 @@ function BlockerPage({
   )
 }
 
-function SecretPage({ active, onNext, onBack }: { active: boolean; onNext: () => void; onBack: () => void }) {
+function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   return (
     <PaperLayout pageNumber={3} onBack={onBack} centered>
-      <div className="book-secret-reveal" data-active={active ? "true" : "false"}>
-        <p className="book-paper-eyebrow book-reveal-line" style={{ "--reveal-delay": "90ms" } as CSSProperties}>
-          Here’s the secret.
-        </p>
-        <h1 className="book-secret-title">
-          <RevealWords active={active} startDelay={220} text="Great stories aren’t about having an extraordinary life." />
-        </h1>
+      <div className="book-secret-reveal">
+        <p className="book-paper-eyebrow">Here’s the secret.</p>
+        <h1 className="book-secret-title">Great stories aren’t about having an extraordinary life.</h1>
         <p className="book-secret-copy">
-          <RevealWords active={active} startDelay={780} text="They’re about knowing" />{" "}
-          <strong>
-            <RevealWords active={active} startDelay={1050} text="what to notice, what to leave out, and what to make people care about." />
-          </strong>
+          They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
         </p>
       </div>
       <PageTurnAction onClick={onNext}>Continue</PageTurnAction>
     </PaperLayout>
-  )
-}
-
-function RevealWords({ active, text, startDelay }: { active: boolean; text: string; startDelay: number }) {
-  const words = text.split(" ")
-  return (
-    <span className="book-reveal-words" aria-label={text}>
-      {words.map((word, index) => (
-        <span
-          key={`${word}-${index}-${active ? "on" : "off"}`}
-          aria-hidden="true"
-          className="book-reveal-word"
-          data-active={active ? "true" : "false"}
-          style={{ "--word-delay": `${startDelay + index * 62}ms` } as CSSProperties}
-        >
-          {word}{index < words.length - 1 ? " " : ""}
-        </span>
-      ))}
-    </span>
   )
 }
 
