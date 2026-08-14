@@ -28,6 +28,7 @@ export function ShopClient() {
   const [notice, setNotice] = useState("")
   const [pendingPurchaseId, setPendingPurchaseId] = useState<string | null>(null)
   const [celebrate, setCelebrate] = useState(false)
+  const [unlockedParchId, setUnlockedParchId] = useState<string | null>(null)
   const pointerStart = useRef<number | null>(null)
 
   useEffect(() => {
@@ -51,6 +52,16 @@ export function ShopClient() {
     () => weaverColors.find((item) => item.id === pendingPurchaseId) ?? null,
     [pendingPurchaseId],
   )
+  const unlockedParch = useMemo(
+    () => weaverColors.find((item) => item.id === unlockedParchId) ?? null,
+    [unlockedParchId],
+  )
+
+  useEffect(() => {
+    if (!unlockedParchId) return
+    const timeout = window.setTimeout(() => setUnlockedParchId(null), 2300)
+    return () => window.clearTimeout(timeout)
+  }, [unlockedParchId])
 
   function select(nextIndex: number) {
     const normalized = (nextIndex + weaverColors.length) % weaverColors.length
@@ -84,7 +95,7 @@ export function ShopClient() {
     setPendingPurchaseId(null)
     if (result.ok) {
       playParchTone("unlock")
-      setCelebrate(true)
+      setUnlockedParchId(pendingPurchase.id)
     } else {
       setNotice(result.message.replace(/Weaver/g, "Parch"))
     }
@@ -100,7 +111,7 @@ export function ShopClient() {
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <Celebration active={celebrate} label={equipped ? `${selected.name} equipped` : `${selected.name} unlocked`} onDone={() => setCelebrate(false)} />
+      <Celebration active={celebrate} label={`${selected.name} equipped`} onDone={() => setCelebrate(false)} />
       <BackLink href="/profile" label="Profile" />
 
       <header className="px-1">
@@ -218,8 +229,18 @@ export function ShopClient() {
           onCancel={() => setPendingPurchaseId(null)}
           onConfirm={confirmPurchase}
         >
-          This will use <strong className="font-semibold text-foreground">{pendingPurchase.cost} XP</strong> and automatically equip the new Parch. You will have <strong className="font-semibold text-foreground">{state.xpBalance - pendingPurchase.cost} XP</strong> left.
+          This will use {pendingPurchase.cost} XP and automatically equip the new Parch. You will have {state.xpBalance - pendingPurchase.cost} XP left.
         </ConfirmDialog>
+      )}
+
+
+      {unlockedParch && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/10 px-5 backdrop-blur-[1px]" role="status" aria-live="polite">
+          <div className="parch-unlock-medallion flex h-44 w-44 flex-col items-center justify-center rounded-full border border-[#cbbba6] bg-[#fffdf8] text-center shadow-[0_18px_55px_rgba(44,36,27,0.18)]">
+            <Weaver size={76} colorId={unlockedParch.id} className="max-h-[4.9rem] max-w-[5.8rem]" />
+            <p className="mt-2 px-4 text-[0.92rem] font-semibold leading-tight text-[#2d2924]">{unlockedParch.name} unlocked!</p>
+          </div>
+        </div>
       )}
 
       <NoticeDialog open={Boolean(notice)} title="Parch collection" onClose={() => setNotice("")}>

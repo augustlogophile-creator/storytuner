@@ -113,7 +113,7 @@ export function MembershipClient({ initialStatus }: { initialStatus: MembershipS
       </section>
 
       <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
-        <h2 className="text-lg font-semibold">StoryTuner Membership</h2>
+        <h2 className="text-lg font-semibold !text-[#fffdf8]">StoryTuner Membership</h2>
         <div className="mt-4 space-y-2.5">
           {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Parch craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
         </div>

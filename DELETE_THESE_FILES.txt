@@ -1,0 +1,4 @@
+Delete this file from the repo:
+app/loading.tsx
+
+Reason: the global Next.js loading boundary was replacing the current page with a blank fallback during lesson navigation. Removing it keeps the current page visible while prefetched lesson content resolves.

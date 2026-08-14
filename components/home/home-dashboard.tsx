@@ -109,7 +109,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           <Link prefetch href="/arena/recordings" className="book-past-recordings text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
         </div>
 
-        <div className="story-card book-week-card mb-3 min-h-[7.35rem] rounded-[1.5rem] px-3.5 py-4">
+        <div className="story-card book-week-card mb-2.5 min-h-[6.85rem] rounded-[1.5rem] px-3.5 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.8rem] font-semibold">This week</p>
@@ -117,7 +117,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             </div>
             <p className="text-[0.69rem] text-muted-foreground"><CountUp value={activeDays} /> of 7 days</p>
           </div>
-          <ul className="mt-4 flex items-center justify-between gap-1.5">
+          <ul className="mt-3.5 flex items-center justify-between gap-1.5">
             {week.map((day) => (
               <li key={day.key} className="flex flex-1 justify-center">
                 <span className={`flex h-9 w-9 items-center justify-center rounded-full border text-[0.62rem] font-medium ${day.active ? "border-brand/30 bg-brand-soft text-brand" : day.today ? "border-dashed border-foreground/45 bg-card text-foreground" : "border-border bg-card text-muted-foreground"}`}>
@@ -153,9 +153,9 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
 function PracticeCard({ href, icon, title, description }: { href: string; icon: ReactNode; title: string; description: string }) {
   return (
-    <Link prefetch href={href} className="story-card story-card-interactive book-practice-card flex min-h-[8.35rem] flex-col rounded-[1.5rem] p-3.5">
+    <Link prefetch href={href} className="story-card story-card-interactive book-practice-card flex min-h-[7.95rem] flex-col rounded-[1.5rem] p-3.5">
       <span className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-secondary text-foreground">{icon}</span>
-      <div className="mt-3.5">
+      <div className="mt-3">
         <p className="text-[0.82rem] font-semibold leading-snug tracking-[-0.015em]">{title}</p>
         <p className="mt-1.5 text-[0.64rem] leading-[1.42] text-muted-foreground">{description}</p>
       </div>

@@ -833,10 +833,10 @@ a {
 }
 
 @keyframes storytuner-celebration-label {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(.8); }
-  28% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  68% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -60%) scale(.98); }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.82); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+  82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -56%) scale(.985); }
 }
 
 .skeleton-block {
@@ -944,7 +944,7 @@ label:has(input[type="radio"]):active {
   letter-spacing: -.02em;
   box-shadow: 0 16px 42px rgba(37, 32, 27, .13);
   backdrop-filter: blur(10px);
-  animation: storytuner-celebration-label 1.9s ease both;
+  animation: storytuner-celebration-label 2.55s ease both;
 }
 
 @keyframes storytuner-typewriter-cursor {
@@ -2741,19 +2741,10 @@ body {
 .book-home-date {
   display: inline-block;
   position: relative;
-  padding-bottom: .34rem;
+  padding-bottom: 0;
   color: #4d463e !important;
 }
 
-.book-home-date::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 5.7rem;
-  height: 1px;
-  background: rgba(71, 61, 49, .36);
-}
 
 .book-home-greeting {
   font-family: var(--font-book-serif);
@@ -2966,6 +2957,24 @@ body {
 .book-app .rounded-\[2rem\],
 .book-app .rounded-\[1\.8rem\] {
   border-radius: 1.15rem;
+}
+
+
+
+@keyframes parch-unlock-medallion-in {
+  0% { opacity: 0; transform: scale(.86); }
+  62% { opacity: 1; transform: scale(1.025); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.parch-unlock-medallion {
+  animation: parch-unlock-medallion-in 260ms cubic-bezier(.2,.8,.25,1) both;
+}
+
+/* Portaled dialogs should retain the printed StoryTuner typography. */
+.app-dialog-panel,
+.app-dialog-panel :is(h1, h2, h3, p, div, span, button, label, input, textarea, select) {
+  font-family: var(--font-book-serif, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif);
 }
 
 /* Auth and account surfaces use the same cleaner page stock. */

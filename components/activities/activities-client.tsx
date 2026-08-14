@@ -77,9 +77,9 @@ export function ActivitiesClient() {
           const unitNode = !ready
             ? <div key={`unit-${unit.id}`}>{content}</div>
             : !planAccess
-              ? <Link key={`unit-${unit.id}`} href="/membership">{content}</Link>
+              ? <Link prefetch key={`unit-${unit.id}`} href="/membership">{content}</Link>
               : unlocked
-                ? <Link key={`unit-${unit.id}`} href={`/activities/${unit.id}`}>{content}</Link>
+                ? <Link prefetch key={`unit-${unit.id}`} href={`/activities/${unit.id}`}>{content}</Link>
                 : <div key={`unit-${unit.id}`}>{content}</div>
 
           const checkpoint = getCheckpointAfterUnit(unit.index)
@@ -97,19 +97,22 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
   const unlocked = isCheckpointUnlocked(state, checkpoint)
   const score = state.quizScores[checkpoint.id]
   const planAccess = hasUnitPlanAccess(state, checkpoint.afterUnit)
+  const isFoundations = checkpoint.id === "foundations-check"
 
   const card = (
     <article className={cn(
       "group relative overflow-hidden rounded-[1.55rem] border px-4 py-3.5 transition-all",
       unlocked || complete
-        ? "border-[#e7c977] bg-[#fffaf0] hover:-translate-y-px hover:border-[#d9b95f] hover:shadow-[0_8px_22px_rgba(112,82,32,.07)]"
+        ? isFoundations
+          ? "border-[#c9b8e5] bg-[#f8f4fc] hover:-translate-y-px hover:border-[#a991cf] hover:shadow-[0_8px_22px_rgba(90,65,130,.07)]"
+          : "border-[#e7c977] bg-[#fffaf0] hover:-translate-y-px hover:border-[#d9b95f] hover:shadow-[0_8px_22px_rgba(112,82,32,.07)]"
         : "border-border/70 bg-card opacity-70",
     )}>
-      <div className={cn("absolute inset-y-0 left-0 w-1", unlocked || complete ? "bg-[#d8a548]" : "bg-border")} />
+      <div className={cn("absolute inset-y-0 left-0 w-1", unlocked || complete ? (isFoundations ? "bg-[#8b6fb2]" : "bg-[#d8a548]") : "bg-border")} />
       <div className="relative flex min-w-0 items-center gap-3 pl-1">
         <span className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem]",
-          complete ? "bg-brand text-brand-foreground" : unlocked ? "bg-[#fff0c7] text-[#956119]" : "bg-secondary text-muted-foreground",
+          complete ? "bg-brand text-brand-foreground" : unlocked ? (isFoundations ? "bg-[#eee6f8] text-[#6f5599]" : "bg-[#fff0c7] text-[#956119]") : "bg-secondary text-muted-foreground",
         )}>
           {complete ? <Check className="h-4.5 w-4.5" strokeWidth={2.6} /> : unlocked ? <ClipboardCheck className="h-4.5 w-4.5" /> : <Lock className="h-4 w-4" />}
         </span>
@@ -118,7 +121,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn(
               "rounded-full px-2 py-0.5 font-mono text-[0.55rem] font-semibold uppercase tracking-[0.15em]",
-              unlocked || complete ? "bg-[#fff0c7] text-[#956119]" : "bg-secondary text-muted-foreground",
+              unlocked || complete ? (isFoundations ? "bg-[#eee6f8] text-[#6f5599]" : "bg-[#fff0c7] text-[#956119]") : "bg-secondary text-muted-foreground",
             )}>Unit test</span>
             <span className="font-mono text-[0.57rem] uppercase tracking-[0.14em] text-muted-foreground">{checkpoint.subtitle}</span>
           </div>
@@ -134,7 +137,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
             </>
           ) : unlocked ? (
             <>
-              <p className="text-xs font-semibold text-[#956119]">+{checkpoint.xp} XP</p>
+              <p className={cn("text-xs font-semibold", isFoundations ? "text-[#6f5599]" : "text-[#956119]")}>+{checkpoint.xp} XP</p>
               <p className="mt-0.5 text-[0.6rem] text-muted-foreground">50% to pass</p>
             </>
           ) : (
@@ -148,7 +151,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
   )
 
   if (!ready) return <div>{card}</div>
-  if (!planAccess) return <Link href="/membership">{card}</Link>
-  if (unlocked || complete) return <Link href={`/test/${checkpoint.id}`}>{card}</Link>
+  if (!planAccess) return <Link prefetch href="/membership">{card}</Link>
+  if (unlocked || complete) return <Link prefetch href={`/test/${checkpoint.id}`}>{card}</Link>
   return <div>{card}</div>
 }

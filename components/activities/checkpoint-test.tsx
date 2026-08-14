@@ -75,6 +75,7 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
   const [error, setError] = useState("")
   const [earnedThisVisit, setEarnedThisVisit] = useState(false)
   const unlocked = isCheckpointUnlocked(state, checkpoint) || alreadyComplete
+  const isFoundations = checkpoint.id === "foundations-check"
 
   useEffect(() => {
     const timeout = window.setTimeout(() => saveResponse(key, response), 350)
@@ -192,15 +193,6 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
         </section>
 
         <section className="rounded-3xl border border-border bg-card p-5">
-          <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-brand" /><h2 className="text-sm font-semibold">Parch's assessment</h2></div>
-          <div className="mt-4 grid gap-4">
-            <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What you understand</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.working}</p></div>
-            <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What to review</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.gaps}</p></div>
-            <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Next step</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.nextStep}</p></div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-border bg-card p-5">
           <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-semibold">Knowledge review</h2><span className="text-xs text-muted-foreground">Answers revealed</span></div>
           <div className="mt-4 flex flex-col divide-y divide-border">
             {checkpoint.questions.map((item, index) => {
@@ -221,6 +213,15 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
           </div>
         </section>
 
+        <section className="rounded-3xl border border-border bg-card p-5">
+          <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-brand" /><h2 className="text-sm font-semibold">Parch's assessment</h2></div>
+          <div className="mt-4 grid gap-4">
+            <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What you understand</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.working}</p></div>
+            <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What to review</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.gaps}</p></div>
+            <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Next step</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.nextStep}</p></div>
+          </div>
+        </section>
+
         <div className="flex flex-col gap-2">
           {result.passed ? (
             <Link href={nextHref} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">{nextLabel}<ArrowRight className="h-4 w-4" /></Link>
@@ -237,22 +238,22 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
     <div className="flex min-w-0 flex-col gap-6">
       <BackLink href="/activities" label="Curriculum" />
 
-      <header className="rounded-[1.8rem] border border-[#ead39d] bg-[#fffaf0] p-5">
+      <header className={cn("rounded-[1.8rem] border p-5", isFoundations ? "border-[#c9b8e5] bg-[#f8f4fc]" : "border-[#ead39d] bg-[#fffaf0]")}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#fff0c7] px-2.5 py-1 text-[0.6rem] font-mono font-semibold uppercase tracking-[0.16em] text-[#956119]"><ClipboardCheck className="h-3.5 w-3.5" />Unit test</div>
+            <div className={cn("inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[0.6rem] font-mono font-semibold uppercase tracking-[0.16em]", isFoundations ? "bg-[#eee6f8] text-[#6f5599]" : "bg-[#fff0c7] text-[#956119]")}><ClipboardCheck className="h-3.5 w-3.5" />Unit test</div>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight text-balance">{checkpoint.title}</h1>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{checkpoint.description}</p>
           </div>
           <div className="shrink-0 text-right">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted-foreground">{checkpoint.subtitle}</p>
-            <p className="mt-1 text-xs font-medium text-[#956119]">~{checkpoint.estimatedMinutes} min</p>
+            <p className={cn("mt-1 text-xs font-medium", isFoundations ? "text-[#6f5599]" : "text-[#956119]")}>~{checkpoint.estimatedMinutes} min</p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span className="rounded-full border border-[#ead39d] bg-white/70 px-3 py-1.5">{checkpoint.questions.length} knowledge questions</span>
-          <span className="rounded-full border border-[#ead39d] bg-white/70 px-3 py-1.5">1 AI-graded challenge</span>
-          <span className="rounded-full border border-[#ead39d] bg-white/70 px-3 py-1.5">{CHECKPOINT_PASSING_SCORE}% to pass</span>
+          <span className={cn("rounded-full border bg-white/70 px-3 py-1.5", isFoundations ? "border-[#c9b8e5]" : "border-[#ead39d]")}>{checkpoint.questions.length} knowledge questions</span>
+          <span className={cn("rounded-full border bg-white/70 px-3 py-1.5", isFoundations ? "border-[#c9b8e5]" : "border-[#ead39d]")}>1 AI-graded challenge</span>
+          <span className={cn("rounded-full border bg-white/70 px-3 py-1.5", isFoundations ? "border-[#c9b8e5]" : "border-[#ead39d]")}>{CHECKPOINT_PASSING_SCORE}% to pass</span>
         </div>
       </header>
 
@@ -261,7 +262,7 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
           <span>{phase === "questions" ? `Knowledge · ${questionIndex + 1} of ${checkpoint.questions.length}` : "Application challenge"}</span>
           <span>{Math.round(overallProgress)}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-[#d8a548] transition-[width] duration-300" style={{ width: `${overallProgress}%` }} /></div>
+        <div className="h-2 overflow-hidden rounded-full bg-secondary"><div className={cn("h-full rounded-full transition-[width] duration-300", isFoundations ? "bg-[#8b6fb2]" : "bg-[#d8a548]")} style={{ width: `${overallProgress}%` }} /></div>
       </div>
 
       {phase === "questions" && question && (
@@ -287,7 +288,6 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
             <button type="button" disabled={currentAnswer === null} onClick={() => {
               if (questionIndex === checkpoint.questions.length - 1) setPhase("writing")
               else setQuestionIndex((value) => value + 1)
-              window.scrollTo({ top: 0, behavior: "auto" })
             }} className="flex flex-[1.35] items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-40">
               {questionIndex === checkpoint.questions.length - 1 ? "Continue to challenge" : "Next question"}<ArrowRight className="h-4 w-4" />
             </button>
@@ -297,11 +297,11 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
 
       {phase === "writing" && (
         <>
-          <section className="rounded-3xl border border-[#ead39d] bg-[#fffaf0] p-5">
-            <div className="flex items-center justify-between gap-3"><p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-[#956119]">{checkpoint.writing.label}</p><span className="text-xs text-muted-foreground">Worth 50%</span></div>
+          <section className={cn("rounded-3xl border p-5", isFoundations ? "border-[#c9b8e5] bg-[#f8f4fc]" : "border-[#ead39d] bg-[#fffaf0]")}>
+            <div className="flex items-center justify-between gap-3"><p className={cn("font-mono text-[0.6rem] uppercase tracking-[0.16em]", isFoundations ? "text-[#6f5599]" : "text-[#956119]")}>{checkpoint.writing.label}</p><span className="text-xs text-muted-foreground">Worth 50%</span></div>
             <p className="mt-3 text-sm leading-7 text-foreground">{checkpoint.writing.prompt}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {checkpoint.writing.criteria.map((criterion) => <span key={criterion} className="rounded-full border border-[#ead39d] bg-white/75 px-3 py-1.5 text-[0.66rem] text-muted-foreground">{criterion}</span>)}
+              {checkpoint.writing.criteria.map((criterion) => <span key={criterion} className={cn("rounded-full border bg-white/75 px-3 py-1.5 text-[0.66rem] text-muted-foreground", isFoundations ? "border-[#c9b8e5]" : "border-[#ead39d]")}>{criterion}</span>)}
             </div>
           </section>
 

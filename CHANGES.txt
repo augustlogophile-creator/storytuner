@@ -1,0 +1,14 @@
+StoryTuner final book-theme polish
+- Removed the underline beneath the home date.
+- Slightly condensed the Practice area to give the typewriter more breathing room.
+- Applied the book serif to portaled popups/dialogs.
+- Profile: Customize -> Shop, shopping-bag icon, slightly larger typography.
+- Membership: StoryTuner Membership heading forced white on dark card.
+- Celebration: confetti ends slightly sooner; achievement label remains longer.
+- Lesson navigation: added prefetch and removed the blank app/loading.tsx route fallback.
+- Foundations Check: purple test accent instead of yellow.
+- Foundations Check estimate: ~11 min.
+- Test questions no longer jump to the top when advancing.
+- Test results now show multiple-choice knowledge review before the AI-graded response assessment.
+- Parch purchases now show a centered circular unlock medallion instead of confetti.
+- Parch purchase confirmation description no longer bolds XP amounts.

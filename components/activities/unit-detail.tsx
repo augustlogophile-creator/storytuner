@@ -68,7 +68,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
               {unlocked && <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />}
             </div>
           )
-          return <li key={stage}>{unlocked ? <Link href={`/lesson/${key}`}>{row}</Link> : row}</li>
+          return <li key={stage}>{unlocked ? <Link prefetch href={`/lesson/${key}`}>{row}</Link> : row}</li>
         })}
       </ol>
     </div>

@@ -35,7 +35,7 @@ export const checkpoints: Checkpoint[] = [
     subtitle: "Units 1–3",
     description: "Story shape, finding material, ownership, and specific stakes.",
     xp: 35,
-    estimatedMinutes: 7,
+    estimatedMinutes: 11,
     questions: [
       {
         question: "A memory has a clean beginning, middle, and end, but the narrator never makes clear why the event mattered to them. Which diagnosis is most accurate?",
