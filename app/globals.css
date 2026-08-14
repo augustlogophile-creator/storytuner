@@ -2335,3 +2335,20 @@ label:has(input[type="radio"]):active {
     display: none !important;
   }
 }
+
+/* August 14: hard guarantee that intro back navigation sits above pageflip. */
+.book-paper-topline {
+  z-index: 20020 !important;
+  pointer-events: none;
+}
+
+.book-paper-topline button {
+  position: relative;
+  z-index: 20030 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.book-paper-topline > span {
+  pointer-events: none;
+}

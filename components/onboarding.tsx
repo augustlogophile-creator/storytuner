@@ -257,7 +257,28 @@ function PaperLayout({
   return (
     <div className={centered ? "book-paper-content is-centered" : "book-paper-content"}>
       <div className="book-paper-topline">
-        <button type="button" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={onBack} aria-label="Turn to the previous page">←</button>
+        <button
+          type="button"
+          data-book-no-turn="true"
+          onPointerDown={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+          }}
+          onPointerUp={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onBack()
+          }}
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            // Keyboard activation has no pointer-up, so preserve Enter/Space.
+            if (event.detail === 0) onBack()
+          }}
+          aria-label="Turn to the previous page"
+        >
+          ←
+        </button>
         <span>StoryTuner</span>
       </div>
       <div className="book-paper-body">{children}</div>
