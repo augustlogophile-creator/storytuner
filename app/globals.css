@@ -2447,3 +2447,96 @@ label:has(input[type="radio"]):active {
 .book-paper-topline button:active {
   transform: scale(.985);
 }
+
+/* August 14: premium intro typing + interaction refinement. */
+.book-typewriter-pending {
+  visibility: hidden;
+}
+
+/* Reserve the final line wrapping while text is being revealed. The cursor has
+   zero layout width, so words never jump to a different line mid-type. */
+.book-typewriter-cursor {
+  position: relative;
+  display: inline;
+  width: 0;
+  margin: 0;
+  opacity: 1;
+  animation: none !important;
+}
+
+.book-typewriter-cursor::after {
+  content: "";
+  position: absolute;
+  left: .06em;
+  bottom: .08em;
+  width: 1px;
+  height: .82em;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .48;
+}
+
+.book-content-fade {
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 340ms cubic-bezier(.2, .72, .2, 1),
+    transform 380ms cubic-bezier(.2, .72, .2, 1);
+}
+
+.book-content-fade.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Quiz options fade in as one stable group. Selecting an answer must never
+   replay the entrance animation or make the list look like it reloaded. */
+.book-choice-list.book-content-fade .book-choice,
+.book-choice-list.book-content-fade.is-visible .book-choice {
+  opacity: 1;
+  transform: none;
+  animation: none !important;
+}
+
+.book-choice {
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background-color 140ms ease,
+    transform 90ms ease-out;
+}
+
+.book-secret-magnifier {
+  opacity: 0;
+  transform: translateY(8px) scale(.985);
+  transition:
+    opacity 480ms cubic-bezier(.2, .72, .2, 1),
+    transform 560ms cubic-bezier(.18, .78, .2, 1);
+  will-change: opacity, transform;
+}
+
+.book-secret-magnifier.is-visible {
+  opacity: .78;
+  transform: translateY(0) scale(1);
+}
+
+.book-choice:active,
+.book-turn-action:active:not(:disabled),
+.book-cover-open:active,
+.book-start-link:active,
+.book-paper-topline button:active {
+  transform: scale(.995);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-typewriter-cursor::after {
+    display: none;
+  }
+
+  .book-secret-magnifier,
+  .book-secret-magnifier.is-visible {
+    opacity: .78;
+    transform: none;
+    transition: none;
+  }
+}

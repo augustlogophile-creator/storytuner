@@ -14,8 +14,8 @@ import {
   type StoryGoalChoice,
 } from "@/lib/onboarding-preferences"
 
-const TYPE_SPEED = 21
-const TYPE_GAP = 90
+const TYPE_SPEED = 30
+const TYPE_GAP = 130
 
 const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string }> = [
   { value: "everyday", title: "Everyday stories", detail: "Tell better stories with friends." },
@@ -26,8 +26,8 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 
 const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring", "details", "nervous", "confident"]
 
-export function Onboarding() {
-  const [page, setPage] = useState(0)
+export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
+  const [page, setPage] = useState(() => Math.max(0, Math.min(4, initialPage)))
   const bookRef = useRef<BookSliderHandle>(null)
   const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", goals: [], blocker: "" })
 
@@ -109,15 +109,15 @@ function CoverPage({ active, onNext }: { active: boolean; onNext: () => void }) 
   const title = "Welcome to StoryTuner."
   const subtitle = "Learn to tell stories people actually want to hear."
   const titleDelay = 220
-  const subtitleDelay = titleDelay + typeDuration(title, 23) + 150
+  const subtitleDelay = titleDelay + typeDuration(title, 31) + 170
 
   return (
     <div className="book-cover-content">
       <div className="book-cover-rule" aria-hidden="true" />
       <div>
         <p className="book-cover-kicker">STORYTUNER</p>
-        <TypewriterText as="h1" text={title} active={active} delay={titleDelay} speed={23} />
-        <TypewriterText className="book-cover-subtitle" as="p" text={subtitle} active={active} delay={subtitleDelay} speed={21} />
+        <TypewriterText as="h1" text={title} active={active} delay={titleDelay} speed={31} />
+        <TypewriterText className="book-cover-subtitle" as="p" text={subtitle} active={active} delay={subtitleDelay} speed={29} />
       </div>
       <BookOpen className="book-cover-icon" strokeWidth={1.5} aria-hidden="true" />
       <button
@@ -226,21 +226,21 @@ function SecretPage({ active, onNext, onBack }: { active: boolean; onNext: () =>
   const copyStrong = "what to notice, what to leave out, and what to make people care about."
   const eyebrowDelay = 130
   const titleDelay = eyebrowDelay + typeDuration(eyebrow) + TYPE_GAP
-  const copyDelay = titleDelay + typeDuration(title, 20) + 120
-  const artDelay = copyDelay + typeDuration(copyLead + copyStrong, 18) + 140
+  const copyDelay = titleDelay + typeDuration(title, 29) + 150
+  const artDelay = copyDelay + typeDuration(copyLead + copyStrong, 27) + 180
   const artVisible = useRevealAfter(active, artDelay)
 
   return (
     <PaperLayout pageNumber={3} onBack={onBack} centered>
       <div className="book-secret-reveal">
         <TypewriterText className="book-paper-eyebrow" as="p" text={eyebrow} active={active} delay={eyebrowDelay} />
-        <TypewriterText className="book-secret-title" as="h1" text={title} active={active} delay={titleDelay} speed={20} />
+        <TypewriterText className="book-secret-title" as="h1" text={title} active={active} delay={titleDelay} speed={29} />
         <RichTypewriterText
           className="book-secret-copy"
           as="p"
           active={active}
           delay={copyDelay}
-          speed={18}
+          speed={27}
           segments={[
             { text: copyLead },
             { text: copyStrong, strong: true },
@@ -250,7 +250,7 @@ function SecretPage({ active, onNext, onBack }: { active: boolean; onNext: () =>
           src="/magnifying-glass-sketch.png"
           alt=""
           aria-hidden="true"
-          className={artVisible ? "book-secret-magnifier book-content-fade is-visible" : "book-secret-magnifier book-content-fade"}
+          className={artVisible ? "book-secret-magnifier is-visible" : "book-secret-magnifier"}
           draggable={false}
         />
       </div>
@@ -270,32 +270,32 @@ function ReadyPage({ active, preferences, onBack }: { active: boolean; preferenc
   const eyebrowDelay = 120
   const titleDelay = eyebrowDelay + typeDuration(eyebrow) + TYPE_GAP
   const subtitleDelay = titleDelay + typeDuration(title) + TYPE_GAP
-  const listStartDelay = subtitleDelay + typeDuration(subtitle, 19) + 120
-  const listStep = 150
-  const focusDelay = listStartDelay + items.reduce((total, item) => total + typeDuration(item, 19) + listStep, 0)
+  const listStartDelay = subtitleDelay + typeDuration(subtitle, 28) + 150
+  const listStep = 180
+  const focusDelay = listStartDelay + items.reduce((total, item) => total + typeDuration(item, 28) + listStep, 0)
 
   return (
     <PaperLayout pageNumber={4} onBack={onBack}>
       <div className="book-paper-heading">
         <TypewriterText className="book-paper-eyebrow" as="p" text={eyebrow} active={active} delay={eyebrowDelay} />
         <TypewriterText as="h1" text={title} active={active} delay={titleDelay} />
-        <TypewriterText as="p" text={subtitle} active={active} delay={subtitleDelay} speed={19} />
+        <TypewriterText as="p" text={subtitle} active={active} delay={subtitleDelay} speed={28} />
       </div>
 
       <div className="book-ready-list">
         {items.map((item, index) => {
-          const itemDelay = listStartDelay + items.slice(0, index).reduce((total, previous) => total + typeDuration(previous, 19) + listStep, 0)
+          const itemDelay = listStartDelay + items.slice(0, index).reduce((total, previous) => total + typeDuration(previous, 28) + listStep, 0)
           return (
             <div key={item} className="book-ready-line">
               <span>{index + 1}.</span>
-              <TypewriterText as="strong" text={item} active={active} delay={itemDelay} speed={19} />
+              <TypewriterText as="strong" text={item} active={active} delay={itemDelay} speed={28} />
             </div>
           )
         })}
       </div>
 
       {focus && (
-        <TypewriterText className="book-focus-note" as="p" text={focus} active={active} delay={focusDelay} speed={19} />
+        <TypewriterText className="book-focus-note" as="p" text={focus} active={active} delay={focusDelay} speed={28} />
       )}
 
       <div className="book-final-actions" data-book-no-turn="true">
@@ -479,10 +479,8 @@ function RichTypewriterText({
     setVisibleCharacters(0)
 
     const revealNext = (index: number) => {
-      if (cancelled) return
-      if (index > fullText.length) return
+      if (cancelled || index > fullText.length) return
       setVisibleCharacters(index)
-      if (index > 0 && index < fullText.length && index % 6 === 0) playTypingTick()
       if (index < fullText.length) {
         timer = setTimeout(() => revealNext(index + 1), speed)
       }
@@ -496,21 +494,37 @@ function RichTypewriterText({
     }
   }, [active, delay, fullText, speed])
 
-  let remaining = visibleCharacters
-  const rendered = segments.map((segment, index) => {
-    const amount = Math.max(0, Math.min(segment.text.length, remaining))
-    remaining -= amount
-    const text = segment.text.slice(0, amount)
-    if (!text) return null
-    return segment.strong ? <strong key={index}>{text}</strong> : <span key={index}>{text}</span>
-  })
+  let offset = 0
+  let cursorPlaced = false
+  const isTyping = active && visibleCharacters > 0 && visibleCharacters < fullText.length
 
-  const typing = active && visibleCharacters < fullText.length
+  const rendered = segments.map((segment, index) => {
+    const start = offset
+    const end = start + segment.text.length
+    offset = end
+
+    const visibleAmount = Math.max(0, Math.min(segment.text.length, visibleCharacters - start))
+    const visible = segment.text.slice(0, visibleAmount)
+    const pending = segment.text.slice(visibleAmount)
+    const cursorBelongsHere = isTyping && !cursorPlaced && visibleCharacters >= start && visibleCharacters <= end
+    if (cursorBelongsHere) cursorPlaced = true
+
+    const contents = (
+      <>
+        {visible}
+        {cursorBelongsHere && <span className="book-typewriter-cursor" aria-hidden="true" />}
+        {pending && <span className="book-typewriter-pending" aria-hidden="true">{pending}</span>}
+      </>
+    )
+
+    return segment.strong
+      ? <strong key={index}>{contents}</strong>
+      : <span key={index}>{contents}</span>
+  })
 
   return (
     <Tag className={className} aria-label={fullText}>
       {rendered}
-      {typing && <span className="book-typewriter-cursor" aria-hidden="true">|</span>}
     </Tag>
   )
 }
@@ -559,27 +573,6 @@ function getIntroAudioContext(create: boolean) {
   return introAudioContext
 }
 
-function playTypingTick() {
-  const context = getIntroAudioContext(false)
-  if (!context || context.state !== "running") return
-
-  try {
-    const oscillator = context.createOscillator()
-    const gain = context.createGain()
-    const now = context.currentTime
-
-    oscillator.type = "triangle"
-    oscillator.frequency.setValueAtTime(760 + Math.random() * 90, now)
-    gain.gain.setValueAtTime(0.004, now)
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.018)
-
-    oscillator.connect(gain)
-    gain.connect(context.destination)
-    oscillator.start(now)
-    oscillator.stop(now + 0.02)
-  } catch {}
-}
-
 function playIntroSound(kind: "selection" | "action" | "page" | "back") {
   const context = getIntroAudioContext(true)
   if (!context) return
@@ -587,42 +580,22 @@ function playIntroSound(kind: "selection" | "action" | "page" | "back") {
   const play = () => {
     try {
       const now = context.currentTime
-
-      if (kind === "page" || kind === "back") {
-        const length = Math.max(1, Math.floor(context.sampleRate * 0.055))
-        const buffer = context.createBuffer(1, length, context.sampleRate)
-        const data = buffer.getChannelData(0)
-        for (let index = 0; index < length; index += 1) {
-          const envelope = 1 - index / length
-          data[index] = (Math.random() * 2 - 1) * envelope
-        }
-
-        const source = context.createBufferSource()
-        const filter = context.createBiquadFilter()
-        const gain = context.createGain()
-        source.buffer = buffer
-        filter.type = "lowpass"
-        filter.frequency.setValueAtTime(kind === "back" ? 980 : 1220, now)
-        gain.gain.setValueAtTime(0.018, now)
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065)
-        source.connect(filter)
-        filter.connect(gain)
-        gain.connect(context.destination)
-        source.start(now)
-        return
-      }
-
       const oscillator = context.createOscillator()
       const gain = context.createGain()
-      oscillator.type = kind === "selection" ? "sine" : "triangle"
-      oscillator.frequency.setValueAtTime(kind === "selection" ? 720 : 560, now)
-      oscillator.frequency.exponentialRampToValueAtTime(kind === "selection" ? 880 : 710, now + 0.035)
-      gain.gain.setValueAtTime(kind === "selection" ? 0.018 : 0.022, now)
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055)
+      const baseFrequency = kind === "selection" ? 185 : kind === "action" ? 225 : kind === "back" ? 135 : 150
+      const duration = kind === "selection" ? 0.032 : kind === "action" ? 0.04 : 0.045
+      const volume = kind === "selection" ? 0.008 : kind === "action" ? 0.01 : 0.007
+
+      oscillator.type = "sine"
+      oscillator.frequency.setValueAtTime(baseFrequency, now)
+      oscillator.frequency.exponentialRampToValueAtTime(baseFrequency * 0.9, now + duration)
+      gain.gain.setValueAtTime(volume, now)
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration)
+
       oscillator.connect(gain)
       gain.connect(context.destination)
       oscillator.start(now)
-      oscillator.stop(now + 0.06)
+      oscillator.stop(now + duration + 0.005)
     } catch {}
   }
 
@@ -640,7 +613,8 @@ function triggerIntroFeedback(kind: "selection" | "action" | "page" | "back") {
 
   if (!("vibrate" in window.navigator)) return
   try {
-    const pattern = kind === "selection" ? 7 : kind === "action" ? 10 : kind === "back" ? 9 : 12
-    window.navigator.vibrate(pattern)
+    const duration = kind === "selection" ? 4 : kind === "action" ? 6 : 5
+    window.navigator.vibrate(duration)
   } catch {}
 }
+

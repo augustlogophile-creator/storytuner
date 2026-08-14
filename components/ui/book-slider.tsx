@@ -223,7 +223,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         pendingTargetRef.current = null
         window.setTimeout(() => requestPage(pending), 0)
       }
-    }, 450)
+    }, 340)
   }
 
   function requestPage(target: number) {
@@ -328,7 +328,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={320}
+        flippingTime={255}
         usePortrait
         startZIndex={10}
         autoSize={false}

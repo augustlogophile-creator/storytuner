@@ -9,7 +9,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <section className="auth-canvas auth-canvas-polished">
         <div className="auth-canvas-inner">
           <header className="auth-header-row">
-            <Link href="/" className="auth-back-link">
+            <Link href="/?introPage=4" className="auth-back-link">
               <ArrowLeft className="h-4 w-4" />
               Introduction
             </Link>
