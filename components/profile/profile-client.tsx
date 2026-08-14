@@ -77,7 +77,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </div>
       </section>
 
-      <section className="story-card rounded-[1.4rem] p-3.5">
+      <section className="story-card mt-2 rounded-[1.4rem] p-3.5">
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
             <Mail className="h-4 w-4" strokeWidth={1.8} />
