@@ -287,7 +287,7 @@ function ReadyPage({ active, animate, preferences, onBack }: { active: boolean; 
   const goals = preferences.goals ?? []
   const eyebrow = "Your next chapter"
   const title = "StoryTuner is ready."
-  const subtitle = "You’ll learn one idea at a time, then practice it in stories of your own."
+  const subtitle = "You’ll learn one idea at a time, then implement those ideas in stories of your own."
   const focus = goals.length > 0 ? `Starting focus: ${goals.map((goal) => goalLabels[goal]).join(", ")}.` : ""
 
   const eyebrowDelay = 120
@@ -509,6 +509,15 @@ function RichTypewriterText({
     const revealNext = (index: number) => {
       if (cancelled || index > fullText.length) return
       setVisibleCharacters(index)
+
+      // A restrained, bright paper/type tick while text is being revealed.
+      // It only plays after the reader has already interacted with the intro,
+      // because the shared AudioContext is unlocked by that first tap.
+      const currentCharacter = fullText[index - 1] ?? ""
+      if (/\S/.test(currentCharacter) && index % 2 === 0) {
+        playIntroTypingSound(index)
+      }
+
       if (index < fullText.length) {
         timer = setTimeout(() => revealNext(index + 1), speed)
       }
@@ -630,24 +639,24 @@ function playIntroSound(kind: "selection" | "action" | "page" | "back") {
       const oscillator = context.createOscillator()
       const gain = context.createGain()
       const settings = kind === "selection"
-        ? { frequency: 235, end: 205, duration: 0.055, volume: 0.026 }
+        ? { frequency: 390, end: 335, duration: 0.058, volume: 0.045, wave: "triangle" as OscillatorType }
         : kind === "action"
-          ? { frequency: 285, end: 245, duration: 0.07, volume: 0.03 }
+          ? { frequency: 465, end: 390, duration: 0.075, volume: 0.05, wave: "triangle" as OscillatorType }
           : kind === "back"
-            ? { frequency: 145, end: 126, duration: 0.062, volume: 0.021 }
-            : { frequency: 165, end: 142, duration: 0.068, volume: 0.023 }
+            ? { frequency: 225, end: 185, duration: 0.064, volume: 0.034, wave: "sine" as OscillatorType }
+            : { frequency: 285, end: 235, duration: 0.07, volume: 0.038, wave: "sine" as OscillatorType }
 
-      oscillator.type = "sine"
+      oscillator.type = settings.wave
       oscillator.frequency.setValueAtTime(settings.frequency, now)
       oscillator.frequency.exponentialRampToValueAtTime(settings.end, now + settings.duration)
       gain.gain.setValueAtTime(0.0001, now)
-      gain.gain.linearRampToValueAtTime(settings.volume, now + 0.006)
+      gain.gain.linearRampToValueAtTime(settings.volume, now + 0.005)
       gain.gain.exponentialRampToValueAtTime(0.0001, now + settings.duration)
 
       oscillator.connect(gain)
       gain.connect(context.destination)
       oscillator.start(now)
-      oscillator.stop(now + settings.duration + 0.008)
+      oscillator.stop(now + settings.duration + 0.01)
     } catch {}
   }
 
@@ -656,6 +665,32 @@ function playIntroSound(kind: "selection" | "action" | "page" | "back") {
   } else {
     play()
   }
+}
+
+function playIntroTypingSound(index: number) {
+  // Do not try to create or unlock audio from a timer. The context is created
+  // by a real reader interaction, which keeps this reliable on mobile Safari.
+  const context = getIntroAudioContext(false)
+  if (!context || context.state !== "running") return
+
+  try {
+    const now = context.currentTime
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    const pitchVariation = (index % 5) * 14
+
+    oscillator.type = "triangle"
+    oscillator.frequency.setValueAtTime(560 + pitchVariation, now)
+    oscillator.frequency.exponentialRampToValueAtTime(500 + pitchVariation, now + 0.022)
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.gain.linearRampToValueAtTime(0.0135, now + 0.003)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.023)
+
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start(now)
+    oscillator.stop(now + 0.027)
+  } catch {}
 }
 
 function triggerIntroFeedback(kind: "selection" | "action" | "page" | "back") {
