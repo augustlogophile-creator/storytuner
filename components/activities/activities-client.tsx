@@ -28,7 +28,7 @@ export function ActivitiesClient() {
         <Eyebrow>Curriculum</Eyebrow>
         <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-balance">The craft of true storytelling</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-          Fourteen focused units, a capstone, and short checkpoint tests along the way.
+          Fourteen focused units, a capstone, and five cumulative unit tests along the way.
         </p>
       </header>
 
@@ -100,25 +100,49 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
 
   const card = (
     <article className={cn(
-      "group relative overflow-hidden rounded-3xl border p-5 transition-colors",
-      unlocked || complete ? "border-brand/30 bg-brand-soft/25 hover:border-brand/50" : "border-border/70 bg-card opacity-70",
+      "group relative overflow-hidden rounded-[1.55rem] border px-4 py-3.5 transition-all",
+      unlocked || complete
+        ? "border-[#e7c977] bg-[#fffaf0] hover:-translate-y-px hover:border-[#d9b95f] hover:shadow-[0_8px_22px_rgba(112,82,32,.07)]"
+        : "border-border/70 bg-card opacity-70",
     )}>
-      <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-brand/5 blur-2xl" />
-      <div className="relative flex items-start gap-4">
-        <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", complete ? "bg-brand text-brand-foreground" : unlocked ? "bg-card text-brand ring-1 ring-brand/20" : "bg-secondary text-muted-foreground")}>
-          {complete ? <Check className="h-5 w-5" strokeWidth={2.6} /> : unlocked ? <ClipboardCheck className="h-5 w-5" /> : <Lock className="h-4 w-4" />}
+      <div className={cn("absolute inset-y-0 left-0 w-1", unlocked || complete ? "bg-[#d8a548]" : "bg-border")} />
+      <div className="relative flex min-w-0 items-center gap-3 pl-1">
+        <span className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem]",
+          complete ? "bg-brand text-brand-foreground" : unlocked ? "bg-[#fff0c7] text-[#956119]" : "bg-secondary text-muted-foreground",
+        )}>
+          {complete ? <Check className="h-4.5 w-4.5" strokeWidth={2.6} /> : unlocked ? <ClipboardCheck className="h-4.5 w-4.5" /> : <Lock className="h-4 w-4" />}
         </span>
+
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Unit test · {checkpoint.subtitle}</p>
-          <h2 className="mt-1 text-base font-semibold text-foreground">{checkpoint.title}</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{checkpoint.description}</p>
-          <p className="mt-3 text-xs font-medium text-foreground/75">Multiple choice + {checkpoint.writing.kind === "story" ? "AI-checked story" : "AI-checked written response"}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={cn(
+              "rounded-full px-2 py-0.5 font-mono text-[0.55rem] font-semibold uppercase tracking-[0.15em]",
+              unlocked || complete ? "bg-[#fff0c7] text-[#956119]" : "bg-secondary text-muted-foreground",
+            )}>Unit test</span>
+            <span className="font-mono text-[0.57rem] uppercase tracking-[0.14em] text-muted-foreground">{checkpoint.subtitle}</span>
+          </div>
+          <h2 className="mt-1 text-[0.98rem] font-semibold leading-snug text-foreground">{checkpoint.title}</h2>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{checkpoint.questions.length} questions · 1 challenge · ~{checkpoint.estimatedMinutes} min</p>
         </div>
-        {(unlocked || complete) && <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />}
-      </div>
-      <div className="relative mt-4 flex items-center justify-between border-t border-border/70 pt-3 text-xs text-muted-foreground">
-        <span>{complete ? `Complete${typeof score === "number" ? ` · ${score}%` : ""}` : `+${checkpoint.xp} XP`}</span>
-        <span>{checkpoint.questions.length} questions + 1 challenge</span>
+
+        <div className="shrink-0 text-right">
+          {complete && typeof score === "number" ? (
+            <>
+              <p className="text-sm font-semibold text-foreground">{score}%</p>
+              <p className="mt-0.5 text-[0.6rem] text-muted-foreground">Passed</p>
+            </>
+          ) : unlocked ? (
+            <>
+              <p className="text-xs font-semibold text-[#956119]">+{checkpoint.xp} XP</p>
+              <p className="mt-0.5 text-[0.6rem] text-muted-foreground">50% to pass</p>
+            </>
+          ) : (
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+
+        {(unlocked || complete) && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />}
       </div>
     </article>
   )

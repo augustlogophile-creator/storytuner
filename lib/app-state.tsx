@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react"
 import { curriculum, lessonId, stageOrder, stageXp, type LessonStage } from "@/lib/curriculum"
-import { checkpointKey, getCheckpointBeforeUnit, checkpoints, type Checkpoint } from "@/lib/checkpoints"
+import { CHECKPOINT_PASSING_SCORE, checkpointKey, getCheckpointBeforeUnit, checkpoints, type Checkpoint } from "@/lib/checkpoints"
 import { deleteMedia } from "@/lib/media-store"
 import {
   deleteCloudRecording,
@@ -1060,7 +1060,8 @@ export function hasUnitPlanAccess(state: AppState, index: number) {
 }
 
 export function isCheckpointComplete(state: AppState, checkpointId: string) {
-  return state.completed.includes(checkpointKey(checkpointId))
+  const score = state.quizScores[checkpointId]
+  return state.completed.includes(checkpointKey(checkpointId)) && typeof score === "number" && score >= CHECKPOINT_PASSING_SCORE
 }
 
 export function isCheckpointUnlocked(state: AppState, checkpoint: Checkpoint) {
