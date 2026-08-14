@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { Weaver } from "@/components/weaver"
-import { Celebration } from "@/components/ui/celebration"
 import { CountUp } from "@/components/ui/count-up"
 import { useApp, weaverColors } from "@/lib/app-state"
 
@@ -27,7 +26,7 @@ export function ShopClient() {
   const [selectedIndex, setSelectedIndex] = useState(activeIndex)
   const [notice, setNotice] = useState("")
   const [pendingPurchaseId, setPendingPurchaseId] = useState<string | null>(null)
-  const [celebrate, setCelebrate] = useState(false)
+  const [equippedParchId, setEquippedParchId] = useState<string | null>(null)
   const [unlockedParchId, setUnlockedParchId] = useState<string | null>(null)
   const pointerStart = useRef<number | null>(null)
 
@@ -56,12 +55,22 @@ export function ShopClient() {
     () => weaverColors.find((item) => item.id === unlockedParchId) ?? null,
     [unlockedParchId],
   )
+  const equippedParch = useMemo(
+    () => weaverColors.find((item) => item.id === equippedParchId) ?? null,
+    [equippedParchId],
+  )
 
   useEffect(() => {
     if (!unlockedParchId) return
     const timeout = window.setTimeout(() => setUnlockedParchId(null), 2300)
     return () => window.clearTimeout(timeout)
   }, [unlockedParchId])
+
+  useEffect(() => {
+    if (!equippedParchId) return
+    const timeout = window.setTimeout(() => setEquippedParchId(null), 1800)
+    return () => window.clearTimeout(timeout)
+  }, [equippedParchId])
 
   function select(nextIndex: number) {
     const normalized = (nextIndex + weaverColors.length) % weaverColors.length
@@ -76,7 +85,7 @@ export function ShopClient() {
     if (owned) {
       equipWeaver(selected.id)
       playParchTone("equip")
-      setCelebrate(true)
+      setEquippedParchId(selected.id)
       return
     }
 
@@ -111,7 +120,6 @@ export function ShopClient() {
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <Celebration active={celebrate} label={`${selected.name} equipped`} onDone={() => setCelebrate(false)} />
       <BackLink href="/profile" label="Profile" />
 
       <header className="px-1">
@@ -152,8 +160,6 @@ export function ShopClient() {
           </div>
 
           <div className="relative mx-auto mt-3 flex h-[14.8rem] w-full max-w-[25rem] shrink-0 flex-col items-center justify-center text-center sm:h-[15.6rem]">
-            <div className="parch-orbit absolute left-1/2 top-[47%] h-[12.2rem] w-[12.2rem] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[13rem] sm:w-[13rem]" aria-hidden="true" />
-            <div className="parch-orbit parch-orbit-inner absolute left-1/2 top-[47%] h-[9.3rem] w-[9.3rem] -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-[10rem] sm:w-[10rem]" aria-hidden="true" />
             <div key={selected.id} className="parch-reveal relative z-10 flex h-[9.2rem] w-[12rem] items-center justify-center sm:h-[9.8rem] sm:w-[12.7rem]">
               <Weaver size={156} colorId={selected.id} className="max-h-full max-w-full drop-shadow-[0_12px_14px_rgba(49,42,34,0.12)]" />
             </div>
@@ -239,6 +245,19 @@ export function ShopClient() {
           <div className="parch-unlock-medallion flex h-44 w-44 flex-col items-center justify-center rounded-full border border-[#cbbba6] bg-[#fffdf8] text-center shadow-[0_18px_55px_rgba(44,36,27,0.18)]">
             <Weaver size={76} colorId={unlockedParch.id} className="max-h-[4.9rem] max-w-[5.8rem]" />
             <p className="mt-2 px-4 text-[0.92rem] font-semibold leading-tight text-[#2d2924]">{unlockedParch.name} unlocked!</p>
+          </div>
+        </div>
+      )}
+
+      {equippedParch && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/5 px-5 backdrop-blur-[1px]" role="status" aria-live="polite">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-28 w-28 items-center justify-center rounded-full border border-[#d5cabb] bg-[#fffdf9] shadow-[0_16px_40px_rgba(44,36,27,0.16)]">
+              <Weaver size={88} colorId={equippedParch.id} className="max-h-[5.25rem] max-w-[6rem]" />
+            </div>
+            <div className="mt-3 rounded-full border border-[#d8cfc2] bg-[#fffdf9] px-5 py-2.5 shadow-[0_10px_28px_rgba(44,36,27,0.11)]">
+              <p className="text-[0.92rem] font-semibold leading-tight text-[#2d2924]">{equippedParch.name} equipped</p>
+            </div>
           </div>
         </div>
       )}

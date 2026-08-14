@@ -108,11 +108,16 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
           : "border-[#e7c977] bg-[#fffaf0] hover:-translate-y-px hover:border-[#d9b95f] hover:shadow-[0_8px_22px_rgba(112,82,32,.07)]"
         : "border-border/70 bg-card opacity-70",
     )}>
-      <div className={cn("absolute inset-y-0 left-0 w-1", unlocked || complete ? (isFoundations ? "bg-[#8b6fb2]" : "bg-[#d8a548]") : "bg-border")} />
-      <div className="relative flex min-w-0 items-center gap-3 pl-1">
+      <div className="relative flex min-w-0 items-center gap-3">
         <span className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.9rem]",
-          complete ? "bg-brand text-brand-foreground" : unlocked ? (isFoundations ? "bg-[#eee6f8] text-[#6f5599]" : "bg-[#fff0c7] text-[#956119]") : "bg-secondary text-muted-foreground",
+          complete
+            ? isFoundations
+              ? "bg-[#8b6fb2] text-white"
+              : "bg-brand text-brand-foreground"
+            : unlocked
+              ? (isFoundations ? "bg-[#eee6f8] text-[#6f5599]" : "bg-[#fff0c7] text-[#956119]")
+              : "bg-secondary text-muted-foreground",
         )}>
           {complete ? <Check className="h-4.5 w-4.5" strokeWidth={2.6} /> : unlocked ? <ClipboardCheck className="h-4.5 w-4.5" /> : <Lock className="h-4 w-4" />}
         </span>

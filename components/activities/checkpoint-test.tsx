@@ -61,6 +61,15 @@ function resultTheme(score: number) {
   }
 }
 
+const foundationsCompleteTheme = {
+  emoji: "✓",
+  label: "Passed",
+  panel: "border-[#b9a3dc] bg-[#f5f0fb]",
+  chip: "bg-[#e9def6] text-[#694f93]",
+  score: "text-[#694f93]",
+  bar: "bg-[#8b6fb2]",
+}
+
 export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
   const { state, ready, saveResponse, completeCheckpoint } = useApp()
   const key = checkpointKey(checkpoint.id)
@@ -127,11 +136,13 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
     const nextUnit = curriculum.find((unit) => unit.index === checkpoint.afterUnit + 1)
     const nextHref = nextUnit ? `/activities/${nextUnit.id}` : "/arena"
     const nextLabel = nextUnit ? `Continue to Unit ${nextUnit.index}` : "Practice in the Arena"
-    const theme = resultTheme(typeof savedScore === "number" ? savedScore : 100)
+    const theme = isFoundations
+      ? foundationsCompleteTheme
+      : resultTheme(typeof savedScore === "number" ? savedScore : 100)
 
     return (
       <div className={cn("relative flex flex-col items-center gap-5 rounded-3xl border px-6 py-10 text-center", theme.panel)}>
-        <div className="text-4xl" aria-hidden="true">{theme.emoji}</div>
+        <div className={cn("text-4xl", isFoundations && "flex h-12 w-12 items-center justify-center rounded-full bg-[#e4d8f3] text-2xl font-semibold text-[#694f93]")} aria-hidden="true">{theme.emoji}</div>
         <div>
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">{checkpoint.subtitle}</p>
           <h1 className="mt-2 text-xl font-semibold tracking-tight">{checkpoint.title} passed.</h1>
@@ -151,6 +162,7 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
 
   if (phase === "results" && result && feedback) {
     const theme = resultTheme(result.finalScore)
+    const resultPanel = isFoundations ? "border-[#b9a3dc] bg-[#f5f0fb]" : theme.panel
     const nextUnit = curriculum.find((unit) => unit.index === checkpoint.afterUnit + 1)
     const nextHref = nextUnit ? `/activities/${nextUnit.id}` : "/arena"
     const nextLabel = nextUnit ? `Continue to Unit ${nextUnit.index}` : "Practice in the Arena"
@@ -160,7 +172,7 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
         <Celebration active={result.passed && earnedThisVisit} label={result.passed && earnedThisVisit ? `+${checkpoint.xp} XP` : undefined} />
         <BackLink href="/activities" label="Curriculum" />
 
-        <section className={cn("rounded-[2rem] border p-6 text-center", theme.panel)}>
+        <section className={cn("rounded-[2rem] border p-6 text-center", resultPanel)}>
           <div className="text-5xl" aria-hidden="true">{theme.emoji}</div>
           <div className={cn("mx-auto mt-4 inline-flex rounded-full px-3 py-1.5 text-xs font-semibold", theme.chip)}>{theme.label}</div>
           <div className={cn("mt-3 text-5xl font-semibold tracking-[-0.05em]", theme.score)}><CountUp value={result.finalScore} suffix="%" /></div>
@@ -274,8 +286,24 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
               {question.options.map((option, optionIndex) => {
                 const isChosen = currentAnswer === optionIndex
                 return (
-                  <button key={option} type="button" onClick={() => updateAnswer(optionIndex)} className={cn("rounded-2xl border p-4 text-left text-sm leading-relaxed transition-all active:scale-[0.99]", isChosen ? "border-brand bg-brand-soft/55 shadow-[0_0_0_1px_rgba(48,132,220,.08)]" : "border-border bg-background hover:border-brand/50")}>
-                    <span className={cn("mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full font-mono text-[0.7rem]", isChosen ? "bg-brand text-brand-foreground" : "bg-secondary text-muted-foreground")}>{String.fromCharCode(65 + optionIndex)}</span>{option}
+                  <button key={option} type="button" onClick={() => updateAnswer(optionIndex)} className={cn(
+                    "rounded-2xl border p-4 text-left text-sm leading-relaxed transition-all active:scale-[0.99]",
+                    isChosen
+                      ? isFoundations
+                        ? "border-[#9e82c7] bg-[#f2ecfa] shadow-[0_0_0_1px_rgba(139,111,178,.08)]"
+                        : "border-brand bg-brand-soft/55 shadow-[0_0_0_1px_rgba(48,132,220,.08)]"
+                      : isFoundations
+                        ? "border-border bg-background hover:border-[#b9a3dc]"
+                        : "border-border bg-background hover:border-brand/50",
+                  )}>
+                    <span className={cn(
+                      "mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full font-mono text-[0.7rem]",
+                      isChosen
+                        ? isFoundations
+                          ? "bg-[#8b6fb2] text-white"
+                          : "bg-brand text-brand-foreground"
+                        : "bg-secondary text-muted-foreground",
+                    )}>{String.fromCharCode(65 + optionIndex)}</span>{option}
                   </button>
                 )
               })}

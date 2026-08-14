@@ -53,7 +53,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 
         <div className="grid grid-cols-3 border-t border-border bg-secondary/30 py-1.5">
           <Stat value={state.streak} label="Days" />
-          <Stat value={state.xpLifetime} label="Total XP" />
+          <Stat value={state.xpBalance} label="XP available" />
           <Stat value={state.recordings.length} label="Stories" />
         </div>
       </section>

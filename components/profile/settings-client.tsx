@@ -24,6 +24,7 @@ export function SettingsClient() {
 
   const cleanDisplayName = displayName.trim().slice(0, 40)
   const nameChanged = cleanDisplayName.length > 0 && cleanDisplayName !== state.profile.name
+  const displayNameError = notice.startsWith("Choose a different display name.")
 
   useEffect(() => setDisplayName(state.profile.name), [state.profile.name])
 
@@ -206,7 +207,7 @@ export function SettingsClient() {
         <span>{syncStatus === "syncing" ? "Syncing progress…" : syncStatus === "saved" ? "Progress saved across devices" : syncStatus === "offline" ? "Offline. Changes will sync later." : syncStatus === "error" ? "Progress sync needs attention" : "Progress is saved on this device"}</span>
       </div>
 
-      {notice && <p role="status" className="rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground">{notice}</p>}
+      {notice && <p role="status" className={displayNameError ? "rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm leading-relaxed text-destructive" : "rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground"}>{notice}</p>}
 
       <Section title="Profile">
         <Row title="Display name" detail="Used on your profile and on Community posts you choose to share.">
@@ -222,7 +223,7 @@ export function SettingsClient() {
               type="button"
               disabled={!nameChanged}
               onClick={() => setDialog("save-name")}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-foreground transition active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted-foreground"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-foreground transition active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-[#9d9993] disabled:text-white"
               aria-label="Confirm display name change"
             >
               <Check className="h-5 w-5" strokeWidth={2.7} />
