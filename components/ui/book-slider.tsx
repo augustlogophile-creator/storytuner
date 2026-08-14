@@ -1,190 +1,136 @@
 "use client"
 
+import HTMLFlipBook from "react-pageflip"
 import {
   Children,
+  forwardRef,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from "react"
 import { cn } from "@/lib/utils"
 
-type DragState = {
-  direction: "next" | "previous"
-  pageIndex: number
-  startX: number
-  progress: number
+export type BookSliderHandle = {
+  next: () => void
+  previous: () => void
+  goTo: (page: number) => void
 }
 
-export function BookPage({
-  children,
-  cover = false,
-  className,
-}: {
+export const BookPage = forwardRef<HTMLDivElement, {
   children: ReactNode
   cover?: boolean
   className?: string
-}) {
+}>(function BookPage({ children, cover = false, className }, ref) {
   return (
-    <div className={cn("story-book-page-inner", cover && "story-book-cover-inner", className)} data-book-cover={cover ? "true" : "false"}>
+    <div
+      ref={ref}
+      className={cn("story-book-page-inner", cover && "story-book-cover-inner", className)}
+      data-density={cover ? "hard" : "soft"}
+      data-book-cover={cover ? "true" : "false"}
+    >
       {children}
     </div>
   )
-}
+})
 
-export default function BookSlider({
-  children,
-  page,
-  onPageChange,
-  canGoNext = true,
-  className,
-  onTurn,
-}: {
+const BookSlider = forwardRef<BookSliderHandle, {
   children: ReactNode
   page: number
   onPageChange: (page: number) => void
   canGoNext?: boolean
   className?: string
   onTurn?: (direction: "next" | "previous") => void
-}) {
+}>(function BookSlider({
+  children,
+  page,
+  onPageChange,
+  canGoNext = true,
+  className,
+  onTurn,
+}, forwardedRef) {
   const pages = useMemo(() => Children.toArray(children), [children])
-  const stageRef = useRef<HTMLDivElement>(null)
-  const [drag, setDrag] = useState<DragState | null>(null)
-  const [settling, setSettling] = useState(false)
-
+  const bookRef = useRef<any>(null)
+  const currentPageRef = useRef(page)
+  const programmaticRef = useRef(false)
+  const [isFlipping, setIsFlipping] = useState(false)
   const lastPage = pages.length - 1
-  const canPrevious = page > 0
-  const canNext = page < lastPage && canGoNext
 
-  function width() {
-    return Math.max(stageRef.current?.getBoundingClientRect().width ?? 1, 1)
+  function api() {
+    return bookRef.current?.pageFlip?.()
   }
 
-  function beginDrag(event: ReactPointerEvent<HTMLDivElement>, direction: "next" | "previous") {
-    if (settling) return
-    if (direction === "next" && !canNext) return
-    if (direction === "previous" && !canPrevious) return
+  function goTo(target: number) {
+    const nextPage = Math.max(0, Math.min(lastPage, target))
+    const current = currentPageRef.current
+    if (nextPage === current) return
+    if (nextPage > current && !canGoNext) return
 
-    const target = event.target as HTMLElement
-    if (target.closest("button, a, input, textarea, label, [data-book-no-turn='true']")) return
+    const flip = api()
+    if (!flip) return
 
-    event.currentTarget.setPointerCapture(event.pointerId)
-    setDrag({
-      direction,
-      pageIndex: direction === "next" ? page : page - 1,
-      startX: event.clientX,
-      progress: 0,
-    })
+    programmaticRef.current = true
+    if (nextPage === current + 1) flip.flipNext("bottom")
+    else if (nextPage === current - 1) flip.flipPrev("bottom")
+    else flip.flip(nextPage, "bottom")
   }
 
-  function moveDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!drag) return
-    const distance = drag.direction === "next"
-      ? drag.startX - event.clientX
-      : event.clientX - drag.startX
-    const progress = Math.max(0, Math.min(1, distance / (width() * 0.74)))
-    setDrag((current) => current ? { ...current, progress } : current)
-  }
-
-  function finishDrag(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!drag) return
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    } catch {}
-
-    const shouldTurn = drag.progress > 0.24
-    const direction = drag.direction
-    setDrag(null)
-
-    if (!shouldTurn) return
-    turn(direction)
-  }
-
-  function turn(direction: "next" | "previous") {
-    if (settling) return
-    if (direction === "next" && !canNext) return
-    if (direction === "previous" && !canPrevious) return
-
-    setSettling(true)
-    onTurn?.(direction)
-    onPageChange(direction === "next" ? page + 1 : page - 1)
-    window.setTimeout(() => setSettling(false), 690)
-  }
-
-  function handleTap(event: ReactMouseEvent<HTMLDivElement>) {
-    if (drag || settling) return
-    const target = event.target as HTMLElement
-    if (target.closest("button, a, input, textarea, label, [data-book-no-turn='true']")) return
-
-    const rect = stageRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const relativeX = event.clientX - rect.left
-    if (relativeX > rect.width * 0.62) turn("next")
-    else if (relativeX < rect.width * 0.18) turn("previous")
-  }
+  useImperativeHandle(forwardedRef, () => ({
+    next: () => goTo(currentPageRef.current + 1),
+    previous: () => goTo(currentPageRef.current - 1),
+    goTo,
+  }), [canGoNext, lastPage])
 
   return (
-    <div className={cn("story-book-wrap", className)}>
-      <div
-        ref={stageRef}
-        className="story-book-stage"
-        onPointerMove={moveDrag}
-        onPointerUp={finishDrag}
-        onPointerCancel={finishDrag}
-        onPointerDown={(event) => {
-          const rect = event.currentTarget.getBoundingClientRect()
-          const x = event.clientX - rect.left
-          if (x >= rect.width * 0.72) beginDrag(event, "next")
-          else if (x <= rect.width * 0.16) beginDrag(event, "previous")
+    <div className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}>
+      <HTMLFlipBook
+        ref={bookRef}
+        className="story-pageflip"
+        style={{ margin: "0 auto" } as CSSProperties}
+        startPage={page}
+        size="stretch"
+        width={430}
+        height={760}
+        minWidth={310}
+        maxWidth={430}
+        minHeight={570}
+        maxHeight={780}
+        drawShadow
+        flippingTime={820}
+        usePortrait
+        startZIndex={10}
+        autoSize={false}
+        maxShadowOpacity={0.34}
+        showCover
+        mobileScrollSupport={false}
+        clickEventForward
+        useMouseEvents={canGoNext || page === lastPage}
+        swipeDistance={24}
+        showPageCorners
+        disableFlipByClick={false}
+        onChangeState={(event: any) => {
+          const state = event?.data
+          setIsFlipping(state === "flipping" || state === "user_fold" || state === "fold_corner")
         }}
-        onClick={handleTap}
-      >
-        <div className="story-book-spine" aria-hidden="true" />
-        {pages.map((child, index) => {
-          const isDragPage = drag?.pageIndex === index
-          let rotation = index < page ? -180 : 0
-          let dragProgress = 0
+        onFlip={(event: any) => {
+          const nextPage = Number(event?.data ?? 0)
+          const previousPage = currentPageRef.current
+          currentPageRef.current = nextPage
+          setIsFlipping(false)
 
-          if (isDragPage && drag) {
-            dragProgress = drag.progress
-            rotation = drag.direction === "next"
-              ? -180 * drag.progress
-              : -180 + 180 * drag.progress
+          if (!programmaticRef.current && nextPage !== previousPage) {
+            onTurn?.(nextPage > previousPage ? "next" : "previous")
           }
-
-          const isCover = index === 0
-          const style = {
-            "--book-rotation": `${rotation}deg`,
-            "--book-drag": dragProgress,
-            zIndex: isDragPage ? pages.length + 4 : index < page ? index + 1 : pages.length - index + 1,
-            pointerEvents: index === page ? "auto" : "none",
-          } as CSSProperties
-
-          return (
-            <div
-              key={index}
-              className={cn(
-                "story-book-sheet",
-                isCover && "story-book-sheet-cover",
-                isDragPage && "is-dragging",
-                index < page && "is-turned",
-              )}
-              style={style}
-              aria-hidden={index !== page}
-            >
-              <div className="story-book-face story-book-front">{child}</div>
-              <div className={cn("story-book-face story-book-back", isCover && "story-book-back-cover")} aria-hidden="true" />
-              <div className="story-book-turn-shadow" aria-hidden="true" />
-            </div>
-          )
-        })}
-
-        {canNext && <span className="story-book-corner story-book-corner-next" aria-hidden="true" />}
-        {canPrevious && <span className="story-book-corner story-book-corner-previous" aria-hidden="true" />}
-      </div>
+          programmaticRef.current = false
+          onPageChange(nextPage)
+        }}
+      >
+        {pages}
+      </HTMLFlipBook>
     </div>
   )
-}
+})
+
+export default BookSlider

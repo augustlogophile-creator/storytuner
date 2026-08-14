@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { BookOpen, Check } from "lucide-react"
-import BookSlider, { BookPage } from "@/components/ui/book-slider"
+import BookSlider, { BookPage, type BookSliderHandle } from "@/components/ui/book-slider"
 import {
   blockerLabels,
   goalLabels,
@@ -27,6 +27,7 @@ const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring",
 
 export function Onboarding() {
   const [page, setPage] = useState(0)
+  const bookRef = useRef<BookSliderHandle>(null)
   const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", goals: [], blocker: "" })
 
   useEffect(() => {
@@ -59,27 +60,23 @@ export function Onboarding() {
     save({ ...preferences, blocker })
   }
 
-  function goTo(nextPage: number) {
-    if (nextPage > page && !canAdvance) return
-    setPage(Math.max(0, Math.min(TOTAL_PAGES - 1, nextPage)))
-  }
-
   function nextPage() {
     if (!canAdvance) return
     triggerIntroHaptic("action")
-    goTo(page + 1)
+    bookRef.current?.next()
   }
 
   function previousPage() {
     triggerIntroHaptic("selection")
-    goTo(page - 1)
+    bookRef.current?.previous()
   }
 
   return (
     <main className={page === 0 ? "book-intro-canvas is-cover" : "book-intro-canvas"}>
       <BookSlider
+        ref={bookRef}
         page={page}
-        onPageChange={goTo}
+        onPageChange={setPage}
         canGoNext={canAdvance}
         onTurn={(direction) => triggerIntroHaptic(direction === "next" ? "action" : "selection")}
       >
@@ -96,7 +93,7 @@ export function Onboarding() {
         </BookPage>
 
         <BookPage>
-          <SecretPage onNext={nextPage} onBack={previousPage} />
+          <SecretPage active={page === 3} onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
@@ -188,17 +185,44 @@ function BlockerPage({
   )
 }
 
-function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+function SecretPage({ active, onNext, onBack }: { active: boolean; onNext: () => void; onBack: () => void }) {
   return (
     <PaperLayout pageNumber={3} onBack={onBack} centered>
-      <div className="book-secret-mark" aria-hidden="true">✦</div>
-      <p className="book-paper-eyebrow">Here’s the secret.</p>
-      <h1 className="book-secret-title">Great stories aren’t about having an extraordinary life.</h1>
-      <p className="book-secret-copy">
-        They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
-      </p>
+      <div className="book-secret-reveal" data-active={active ? "true" : "false"}>
+        <p className="book-paper-eyebrow book-reveal-line" style={{ "--reveal-delay": "90ms" } as CSSProperties}>
+          Here’s the secret.
+        </p>
+        <h1 className="book-secret-title">
+          <RevealWords active={active} startDelay={220} text="Great stories aren’t about having an extraordinary life." />
+        </h1>
+        <p className="book-secret-copy">
+          <RevealWords active={active} startDelay={780} text="They’re about knowing" />{" "}
+          <strong>
+            <RevealWords active={active} startDelay={1050} text="what to notice, what to leave out, and what to make people care about." />
+          </strong>
+        </p>
+      </div>
       <PageTurnAction onClick={onNext}>Continue</PageTurnAction>
     </PaperLayout>
+  )
+}
+
+function RevealWords({ active, text, startDelay }: { active: boolean; text: string; startDelay: number }) {
+  const words = text.split(" ")
+  return (
+    <span className="book-reveal-words" aria-label={text}>
+      {words.map((word, index) => (
+        <span
+          key={`${word}-${index}-${active ? "on" : "off"}`}
+          aria-hidden="true"
+          className="book-reveal-word"
+          data-active={active ? "true" : "false"}
+          style={{ "--word-delay": `${startDelay + index * 62}ms` } as CSSProperties}
+        >
+          {word}{index < words.length - 1 ? " " : ""}
+        </span>
+      ))}
+    </span>
   )
 }
 

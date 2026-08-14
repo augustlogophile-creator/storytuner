@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Handlee } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAuthenticatedUser } from "@/lib/require-auth"
@@ -8,6 +8,7 @@ import "./globals.css"
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
+const bookHand = Handlee({ subsets: ["latin"], weight: "400", variable: "--font-book-hand" })
 
 export const metadata: Metadata = {
   title: "StoryTuner · Learn the craft. Tell it well.",
@@ -42,7 +43,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   }
 
   return (
-    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable} ${bookHand.variable}`}>
       <body className="font-sans antialiased">
         <AppProviders
           initialUserId={authenticated?.id ?? null}
