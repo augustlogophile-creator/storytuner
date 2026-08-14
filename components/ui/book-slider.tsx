@@ -177,6 +177,10 @@ const BookSlider = forwardRef<BookSliderHandle, {
         size="fixed"
         width={bookSize.width}
         height={bookSize.height}
+        minWidth={bookSize.width}
+        maxWidth={bookSize.width}
+        minHeight={bookSize.height}
+        maxHeight={bookSize.height}
         drawShadow
         flippingTime={650}
         usePortrait
