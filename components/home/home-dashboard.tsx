@@ -10,14 +10,14 @@ import { AccountRestoredNotice } from "@/components/moderation/account-restored-
 import { CountUp } from "@/components/ui/count-up"
 import { Celebration } from "@/components/ui/celebration"
 import { TypewriterText } from "@/components/ui/typewriter-text"
-import { courseProgress, freeLessonLimitReached, nextLesson, useApp } from "@/lib/app-state"
+import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
   const { state, ready } = useApp()
   const [celebrateStreak, setCelebrateStreak] = useState(false)
   const progress = courseProgress(state)
-  const next = nextLesson(state)
+  const next = nextCourseItem(state)
   const freeLimitReached = freeLessonLimitReached(state) && progress.done < progress.total
   const week = getCurrentWeek(state.activityDates)
 
@@ -37,19 +37,23 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
   if (!ready) return null
 
   const courseTitle = next
-    ? next.unit.title
+    ? next.type === "lesson" ? next.unit.title : next.checkpoint.title
     : freeLimitReached
       ? "You finished your five free lessons"
       : "Your storytelling course is complete"
 
   const courseSubtitle = next
-    ? `Unit ${next.unit.index} · ${stageLabels[next.stage]} · ${next.unit.skill}`
+    ? next.type === "lesson"
+      ? `Unit ${next.unit.index} · ${stageLabels[next.stage]} · ${next.unit.skill}`
+      : `${next.checkpoint.subtitle} · Test what you remember`
     : freeLimitReached
       ? "Founding Membership unlocks the remaining ten lessons."
       : "Review any lesson or record a complete story in the Arena."
 
-  const courseHref = next ? `/activities/${next.unit.id}` : freeLimitReached ? "/membership" : "/activities"
-  const courseAction = next ? "Continue learning" : freeLimitReached ? "Unlock lessons" : "Review course"
+  const courseHref = next
+    ? next.type === "lesson" ? `/activities/${next.unit.id}` : `/test/${next.checkpoint.id}`
+    : freeLimitReached ? "/membership" : "/activities"
+  const courseAction = next ? (next.type === "lesson" ? "Continue learning" : "Take unit test") : freeLimitReached ? "Unlock lessons" : "Review course"
   const activeDays = week.filter((day) => day.active).length
 
   return (
@@ -78,7 +82,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       <section className="mt-4 rounded-[1.8rem] bg-[#2b2823] px-4.5 py-4 text-[#f8f7f2] shadow-[0_10px_30px_rgba(31,27,23,0.08)]">
         <div className="flex items-center justify-between gap-3 font-mono text-[0.59rem] uppercase tracking-[0.16em] text-[#aaa49c]">
           <span>{progress.percent}% through the course</span>
-          {next && <span>Unit {next.unit.index}</span>}
+          {next && <span>{next.type === "lesson" ? `Unit ${next.unit.index}` : `Test ${next.checkpoint.index}`}</span>}
         </div>
         <h2 className="mt-3 text-[1.2rem] font-semibold leading-tight tracking-[-0.028em] text-balance">
           {courseTitle}
@@ -139,7 +143,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
         </div>
 
-        <div className="mt-auto flex h-[2.55rem] shrink-0 items-center justify-center overflow-hidden px-2 pb-2 text-center">
+        <div className="mt-auto flex h-[2.55rem] shrink-0 items-center justify-center overflow-hidden px-2 pb-3 text-center">
           <TypewriterText className="block w-full whitespace-nowrap text-[0.82rem] font-light italic leading-none text-muted-foreground/80 sm:text-[0.86rem]" />
         </div>
       </section>

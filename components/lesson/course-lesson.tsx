@@ -10,6 +10,7 @@ import { CountUp } from "@/components/ui/count-up"
 import { RichText } from "@/components/rich-text"
 import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isUnitUnlocked, useApp } from "@/lib/app-state"
 import { curriculum, lessonId, stageLabels, stageOrder, stageXp, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
+import { getCheckpointAfterUnit } from "@/lib/checkpoints"
 import { cn } from "@/lib/utils"
 
 type LessonFeedback = { pass: boolean; working: string; fix: string }
@@ -300,9 +301,19 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
   const nextStage = stageOrder[stageIndex + 1]
   const unitIndex = curriculum.findIndex((item) => item.id === unit.id)
   const nextUnit = curriculum[unitIndex + 1]
+  const checkpoint = getCheckpointAfterUnit(unit.index)
   const nextUnitNeedsMembership = Boolean(nextUnit && !premium && nextUnit.index > FREE_UNIT_LIMIT)
-  const primaryHref = nextStage ? `/lesson/${lessonId(unit.id, nextStage)}` : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
-  const primaryLabel = nextStage ? `Continue to ${stageLabels[nextStage].toLowerCase()}` : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
+  const checkpointNeedsMembership = Boolean(checkpoint && !premium && checkpoint.afterUnit > FREE_UNIT_LIMIT)
+  const primaryHref = nextStage
+    ? `/lesson/${lessonId(unit.id, nextStage)}`
+    : checkpoint
+      ? checkpointNeedsMembership ? "/membership" : `/test/${checkpoint.id}`
+      : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
+  const primaryLabel = nextStage
+    ? `Continue to ${stageLabels[nextStage].toLowerCase()}`
+    : checkpoint
+      ? checkpointNeedsMembership ? "Unlock the full course" : "Take the unit test"
+      : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
     <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
       <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${stageXp[stage]} XP` : undefined} />

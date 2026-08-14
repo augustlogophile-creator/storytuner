@@ -19,6 +19,20 @@ const lessonSchema = {
   required: ["pass", "working", "fix"],
 }
 
+
+const checkpointSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    pass: { type: "boolean" },
+    score: { type: "integer", minimum: 0, maximum: 100 },
+    working: { type: "string" },
+    gaps: { type: "string" },
+    nextStep: { type: "string" },
+  },
+  required: ["pass", "score", "working", "gaps", "nextStep"],
+}
+
 const arenaSchema = {
   type: "object",
   additionalProperties: false,
@@ -144,6 +158,66 @@ export async function POST(req: Request) {
           {
             role: "user",
             content: `Unit: ${String(body.unitTitle || "Storytelling")}\nTechnique: ${String(body.technique || "story craft")}\nExercise: ${String(body.prompt || "")}\n\nStudent response:\n${answer}`,
+          },
+        ],
+      }), 90_000)
+      return Response.json(object, { headers: { "Cache-Control": "no-store" } })
+    }
+
+
+    if (mode === "checkpoint") {
+      const answer = typeof body.answer === "string" ? body.answer.trim() : ""
+      if (answer.length < 40) return Response.json({ error: "Write a little more so Parch can grade the test fairly." }, { status: 400 })
+      if (answer.length > 12_000) return Response.json({ error: "Keep checkpoint responses under 12,000 characters." }, { status: 400 })
+
+      const afterUnit = Number(body.afterUnit ?? 0)
+      if (!Number.isInteger(afterUnit) || afterUnit < 3 || afterUnit > 15) {
+        return Response.json({ error: "This checkpoint request is missing a valid course position." }, { status: 400 })
+      }
+
+      let membership
+      try {
+        membership = await getMembershipByUserId(user.id)
+      } catch (error) {
+        backendError("feedback_membership_lookup_failed", error, { userId: user.id })
+        return Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+      }
+      if (!membership.active && afterUnit > 5) {
+        return Response.json({
+          code: "LESSON_MEMBERSHIP_REQUIRED",
+          error: "This unit test is part of StoryTuner Membership.",
+        }, { status: 403 })
+      }
+
+      const criteria = Array.isArray(body.criteria)
+        ? body.criteria.filter((item): item is string => typeof item === "string").slice(0, 8)
+        : []
+      const fingerprint = requestFingerprint(user.id, "checkpoint", String(body.checkpointId || ""), answer, criteria.join("|"))
+      const object = await runIdempotent(`checkpoint-feedback:${fingerprint}`, () => openAIJson<{
+        pass: boolean
+        score: number
+        working: string
+        gaps: string
+        nextStep: string
+      }>({
+        name: "checkpoint_feedback",
+        schema: checkpointSchema,
+        messages: [
+          {
+            role: "system",
+            content: `You are Parch, StoryTuner's precise course assessor. Grade ONLY the skills listed in the criteria and prompt. These checkpoint tests occur after specific units, so never expect, mention, or penalize the student for techniques that have not been named in the supplied criteria. Refer to the student's actual words. Do not invent missing or present details. A score of 70 means the student demonstrates the taught ideas competently; 85+ means clear, deliberate application. Keep working, gaps, and nextStep each concise and concrete. pass should be true at 70 or above.`,
+          },
+          {
+            role: "user",
+            content: `Checkpoint: ${String(body.checkpointTitle || "Course checkpoint")}
+After unit: ${afterUnit}
+Challenge type: ${String(body.writingKind || "analysis")}
+Prompt: ${String(body.prompt || "")}
+Criteria:
+- ${criteria.join("\n- ")}
+
+Student response:
+${answer}`,
           },
         ],
       }), 90_000)

@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react"
 import { curriculum, lessonId, stageOrder, stageXp, type LessonStage } from "@/lib/curriculum"
+import { checkpointKey, getCheckpointBeforeUnit, checkpoints, type Checkpoint } from "@/lib/checkpoints"
 import { deleteMedia } from "@/lib/media-store"
 import {
   deleteCloudRecording,
@@ -429,6 +430,7 @@ type AppContextValue = {
   ready: boolean
   syncStatus: SyncStatus
   completeStage: (unitId: string, stage: LessonStage, response?: string, quizScore?: number) => void
+  completeCheckpoint: (checkpointId: string, response: string, score: number, xp: number) => void
   saveResponse: (key: string, value: string) => void
   addRecording: (recording: Recording) => void
   deleteRecording: (id: string) => Promise<void>
@@ -715,6 +717,22 @@ export function AppProvider({
     })
   }, [])
 
+  const completeCheckpoint = useCallback((checkpointId: string, response: string, score: number, xp: number) => {
+    const key = checkpointKey(checkpointId)
+    setState((current) => {
+      const alreadyDone = current.completed.includes(key)
+      const next = {
+        ...current,
+        completed: alreadyDone ? current.completed : [...current.completed, key],
+        responses: { ...current.responses, [key]: response },
+        quizScores: { ...current.quizScores, [checkpointId]: score },
+        xpLifetime: current.xpLifetime + (alreadyDone ? 0 : xp),
+        xpBalance: current.xpBalance + (alreadyDone ? 0 : xp),
+      }
+      return applyActivity(next)
+    })
+  }, [])
+
   const saveResponse = useCallback((key: string, value: string) => {
     setState((current) => ({ ...current, responses: { ...current.responses, [key]: value } }))
   }, [])
@@ -960,6 +978,7 @@ export function AppProvider({
       ready,
       syncStatus,
       completeStage,
+      completeCheckpoint,
       saveResponse,
       addRecording,
       deleteRecording,
@@ -984,6 +1003,7 @@ export function AppProvider({
       ready,
       syncStatus,
       completeStage,
+      completeCheckpoint,
       saveResponse,
       addRecording,
       deleteRecording,
@@ -1039,22 +1059,51 @@ export function hasUnitPlanAccess(state: AppState, index: number) {
   return state.premium || index <= FREE_UNIT_LIMIT
 }
 
-export function isUnitUnlocked(state: AppState, index: number) {
-  if (!hasUnitPlanAccess(state, index)) return false
-  if (index <= 1) return true
-  const previous = curriculum.find((unit) => unit.index === index - 1)
-  return previous ? unitProgress(state, previous.id).done === 3 : false
+export function isCheckpointComplete(state: AppState, checkpointId: string) {
+  return state.completed.includes(checkpointKey(checkpointId))
 }
 
-export function nextLesson(state: AppState) {
+export function isCheckpointUnlocked(state: AppState, checkpoint: Checkpoint) {
+  if (!hasUnitPlanAccess(state, checkpoint.afterUnit)) return false
+  const priorUnit = curriculum.find((unit) => unit.index === checkpoint.afterUnit)
+  return priorUnit ? unitProgress(state, priorUnit.id).done === 3 : false
+}
+
+export function isUnitUnlocked(state: AppState, index: number) {
+  if (!hasUnitPlanAccess(state, index)) return false
+  const currentUnit = curriculum.find((unit) => unit.index === index)
+  if (currentUnit && unitProgress(state, currentUnit.id).done > 0) return true
+  if (index <= 1) return true
+  const previous = curriculum.find((unit) => unit.index === index - 1)
+  if (!previous || unitProgress(state, previous.id).done !== 3) return false
+  const checkpoint = getCheckpointBeforeUnit(index)
+  return checkpoint ? isCheckpointComplete(state, checkpoint.id) : true
+}
+
+export type NextCourseItem =
+  | { type: "lesson"; unit: (typeof curriculum)[number]; stage: LessonStage; id: string }
+  | { type: "checkpoint"; checkpoint: Checkpoint; id: string }
+
+export function nextCourseItem(state: AppState): NextCourseItem | null {
   for (const unit of curriculum) {
     if (!hasUnitPlanAccess(state, unit.index)) break
     if (!isUnitUnlocked(state, unit.index)) break
     for (const stage of stageOrder) {
-      if (!state.completed.includes(lessonId(unit.id, stage))) return { unit, stage, id: lessonId(unit.id, stage) }
+      if (!state.completed.includes(lessonId(unit.id, stage))) {
+        return { type: "lesson", unit, stage, id: lessonId(unit.id, stage) }
+      }
+    }
+    const checkpoint = checkpoints.find((item) => item.afterUnit === unit.index)
+    if (checkpoint && !isCheckpointComplete(state, checkpoint.id)) {
+      return { type: "checkpoint", checkpoint, id: checkpointKey(checkpoint.id) }
     }
   }
   return null
+}
+
+export function nextLesson(state: AppState) {
+  const item = nextCourseItem(state)
+  return item?.type === "lesson" ? item : null
 }
 
 export function freeLessonLimitReached(state: AppState) {

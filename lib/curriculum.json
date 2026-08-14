@@ -80,10 +80,10 @@
           "The story will feel overly dramatic because strong stakes should be avoided unless the narrator changes immediately",
           "The story will feel too short",
           "The story will feel too funny",
-          "The story will feel like it just stops, without a real payoff"
+          "The story will feel like it just stops, without a meaningful ending"
         ],
         "correct": 3,
-        "explanation": "Shape and stakes without change tends to leave an audience unsatisfied. It builds tension but never resolves into a shift, so it feels like it simply stops rather than lands."
+        "explanation": "Shape and stakes without change tends to leave an audience unsatisfied. It creates expectation but never resolves into a meaningful shift, so the story feels like it simply stops rather than lands."
       }
     ]
   },
@@ -103,7 +103,7 @@
       },
       {
         "heading": "Four Places Good Material Hides",
-        "body": "- Sensory triggers. A smell, an object, an old message, a specific room. These surface sharper memories than trying to \"think of a good story\" cold.\n- Decisions. Any moment a choice was made comes with a built-in before-and-after, exactly the structure a story needs.\n- The stories you already retell. If you keep bringing up the same memory at parties without quite knowing why, your instincts have already flagged it as meaningful.\n- Discomfort, more often than triumph. A clean win is often flat to tell, because there is no tension. A mistake or embarrassment usually has real tension already built in."
+        "body": "- Sensory triggers. A smell, an object, an old message, a specific room. These surface sharper memories than trying to \"think of a good story\" cold.\n- Decisions. Any moment a choice was made comes with a built-in before-and-after, exactly the structure a story needs.\n- The stories you already retell. If you keep bringing up the same memory at parties without quite knowing why, your instincts have already flagged it as meaningful.\n- Discomfort, more often than triumph. A clean win is often flat to tell, because there is no tension, the feeling that something might not go the way the narrator hopes. A mistake or embarrassment usually has that uncertainty already built in."
       },
       {
         "heading": "Worked Example",
@@ -111,7 +111,7 @@
       },
       {
         "heading": "A Note on Ownership",
-        "body": "Before digging further into any memory, ask: is this story actually mine to tell? If a memory is mostly about someone else's private pain, culture, or identity, and telling it well would require guessing at their inner thoughts, it is not yet fully yours. The test: can it be told using only what you personally witnessed, felt, and did? If you keep needing to imagine what someone else was thinking, the story needs a different frame, one that keeps you as the true subject."
+        "body": "Before digging further into any memory, ask: is this story actually mine to tell? If a memory is mostly about someone else's private pain, culture, or identity, and telling it well would require guessing at their inner thoughts, it is not yet fully yours. The test: can it be told using only what you personally witnessed, felt, and did? If you keep needing to imagine what someone else was thinking, the story needs a different point of view or focus, one that keeps you as the true subject."
       }
     ],
     "drill": {
@@ -130,7 +130,7 @@
           "They are too boring for an audience",
           "Audiences struggle to believe a large event unless the narrator explains every major consequence from beginning to end",
           "They contain dozens of tangled, competing stories, making them hard to shape into one clean narrative",
-          "They always require too much backstory to explain"
+          "They always require too much earlier context to explain"
         ],
         "correct": 2,
         "explanation": "Huge events are not a single story; they are a container holding many possible stories. Trying to tell \"the whole year\" instead of one specific moment usually produces a confusing, unfocused draft."
@@ -138,7 +138,7 @@
       {
         "question": "Which of the following is NOT one of the four places this unit suggests digging for material?",
         "options": [
-          "Stories you already find yourself retelling, especially ones whose sequence and payoff are already familiar",
+          "Stories you already find yourself retelling, especially ones whose sequence and ending are already familiar",
           "Sensory triggers like a smell or object",
           "The most objectively impressive achievement of your life",
           "Moments involving a clear decision"
@@ -191,7 +191,7 @@
     "readSections": [
       {
         "heading": "Core Concept",
-        "body": "Stakes are whatever the narrator wanted, feared, needed, or stood to lose in the specific moment the story is built around. Everything else, the details, the pacing, the voice, sits on top of the stakes. If a listener cannot tell, within the first minute, what the narrator cared about, nothing built on top will hold their attention."
+        "body": "Stakes are whatever the narrator wanted, feared, needed, or stood to lose in the specific moment the story is built around. Everything else, the details, how quickly or slowly the story moves, and the narrator's natural way of speaking, sits on top of the stakes. If a listener cannot tell, within the first minute, what the narrator cared about, nothing built on top will hold their attention."
       },
       {
         "heading": "How Stakes Work",
@@ -283,7 +283,7 @@
       },
       {
         "heading": "The One-Sentence Test",
-        "body": "Before drafting further, try to summarize what your story is really about, not what happened, but what it means, in a single sentence.\n\n- \"I stopped trying to be everyone's favorite person\" is a sentence about meaning.\n- \"I went to a party and something happened\" is a sentence about plot.\n\nIf you can only produce the second kind of sentence, the real story is probably still hiding somewhere inside the events."
+        "body": "Before drafting further, try to summarize what your story is really about, not what happened, but what it means, in a single sentence.\n\n- \"I stopped trying to be everyone's favorite person\" is a sentence about meaning.\n- \"I went to a party and something happened\" is a sentence about plot, meaning only the sequence of events.\n\nIf you can only produce the second kind of sentence, the real story is probably still hiding somewhere inside the events."
       },
       {
         "heading": "Worked Example",
@@ -292,8 +292,14 @@
     ],
     "drill": {
       "title": "Try It: Arc-Type Identification",
-      "prompt": "Using the five categories of change, decide which type your story involves, then write one sentence naming the \"before\" state and one sentence naming the \"after\" state. | Type | Example shift | |---|---| | Physical | Out of shape → training for a race | | Situational | Stuck in conflict → resolved and moved on | | Emotional | Dreading each day → feeling hopeful | | Behavioral | Avoiding something → doing it | | Attitudinal | Dismissive of something → valuing it deeply |",
-      "steps": []
+      "prompt": "Using the five categories of change, decide which type your story involves: physical, situational, emotional, behavioral, or attitudinal. Then write one sentence naming the \"before\" state and one sentence naming the \"after\" state.",
+      "steps": [
+        "Physical change: for example, out of shape → training for a race.",
+        "Situational change: for example, stuck in a conflict → resolved and moved on.",
+        "Emotional change: for example, dreading each day → feeling hopeful.",
+        "Behavioral change: for example, avoiding something → doing it.",
+        "Attitudinal change: for example, dismissive of something → valuing it deeply."
+      ]
     },
     "quiz": [
       {
@@ -367,7 +373,7 @@
       },
       {
         "heading": "The Three Modes",
-        "body": "- Scene: a specific moment played out in real time, with sensory detail, so the listener feels present inside it. The most important moment in a story is almost always told as a scene.\n- Summary: a compressed statement that moves the audience through time efficiently (\"over the next few months\"). It exists to skip the boring parts without losing the thread.\n- Reflection: the narrator briefly stepping outside the action to share a feeling, a realization, or context.\n\nA story that is almost entirely summary tends to read like a report instead of an experience. A well-balanced short story usually has two or three real scenes connected by brief summary, with reflection used sparingly, mostly near the end. Not every literal step needs to appear: jump cuts are allowed. You do not need to narrate opening a car door and starting the engine."
+        "body": "- Scene: a specific moment played out in real time, with sensory detail, so the listener feels present inside it. The most important moment in a story is almost always told as a scene.\n- Summary: a compressed statement that moves the audience through time efficiently (\"over the next few months\"). It exists to skip the boring parts without losing the thread.\n- Reflection: the narrator briefly stepping outside the action to share a feeling, a realization, or context.\n\nA story that is almost entirely summary tends to read like a report instead of an experience. A well-balanced short story usually has two or three real scenes connected by brief summary, with reflection used sparingly, mostly near the end. Not every literal step needs to appear. You can make a jump cut, meaning skip directly from one meaningful moment to the next. You do not need to narrate opening a car door and starting the engine."
       },
       {
         "heading": "Worked Example",
@@ -380,7 +386,7 @@
       "steps": [
         "List every stepping stone your story needs, in order, to make sense to a stranger.",
         "Label each one S (scene), Su (summary), or R (reflection).",
-        "Count your labels. If reflection is more than about one-fifth of the total, the story may be telling rather than showing. Pick one summary line and rewrite it as a specific scene."
+        "Count your labels. If reflection is more than about one-fifth of the total, the story may contain too much explanation and not enough lived scene. Pick one summary line and rewrite it as a specific scene."
       ]
     },
     "quiz": [
@@ -390,7 +396,7 @@
           "Summary",
           "Scene",
           "Reflection",
-          "Backstory"
+          "Earlier context"
         ],
         "correct": 1,
         "explanation": "Scene is the mode that slows down and shows a moment happening in real time. The most important moment in a story is almost always told this way."
@@ -427,7 +433,7 @@
         "explanation": "Jump cuts are allowed and expected. Only the stepping stones an audience actually needs to follow the logic of the story should be included; everything else can be skipped without dishonesty."
       },
       {
-        "question": "According to the ratio check, roughly what proportion of a story being reflection is a signal that a draft may be \"telling\" rather than \"showing\"?",
+        "question": "According to the ratio check, roughly what proportion of reflection is a signal that a draft may contain too much explanation and not enough lived scene?",
         "options": [
           "Reflection amount never matters",
           "Exactly one-half",
@@ -435,7 +441,7 @@
           "More than about one-fifth of the total"
         ],
         "correct": 3,
-        "explanation": "If reflection makes up more than roughly a fifth of the total stepping stones, it is worth checking whether a summarized feeling could instead be shown through a specific scene."
+        "explanation": "If reflection makes up more than roughly a fifth of the total stepping stones, it is worth checking whether an explained feeling could instead come through a specific scene."
       }
     ]
   },
@@ -455,7 +461,7 @@
       },
       {
         "heading": "The Relevance Test, and the Limits of Memory",
-        "body": "Detail can be overused. A story bogged down with too many specific dates, too many named minor characters, or too many graphic specifics risks losing its audience, because every extra detail is a small tax on attention. A useful test: if a detail does not support the one-sentence meaning of the story (Unit 4), it is probably safe to cut, no matter how vivid it is on its own.\n\nIt is also worth being honest about memory itself. Human memory is not a video recording. It is normal, not dishonest, to condense two similar conversations into one, simplify the order of events slightly, or admit uncertainty about a minor detail, as long as the emotional truth is preserved. What is not acceptable is stating, as fact, what someone else was thinking or feeling without any real way of knowing; that should always be framed as the narrator's own impression."
+        "body": "Detail can be overused. A story bogged down with too many specific dates, too many named minor characters, or too many graphic specifics risks losing its audience, because every extra detail is a small tax on attention. A useful test: if a detail does not support the one-sentence meaning of the story (Unit 4), it is probably safe to cut, no matter how vivid it is on its own.\n\nIt is also worth being honest about memory itself. Human memory is not a video recording. It is normal, not dishonest, to condense two similar conversations into one, simplify the order of events slightly, or admit uncertainty about a minor detail, as long as you stay honest about what the experience felt like and meant to you. What is not acceptable is stating, as fact, what someone else was thinking or feeling without any real way of knowing; that should always be framed as the narrator's own impression."
       },
       {
         "heading": "Worked Example",
@@ -506,7 +512,7 @@
         "explanation": "Every extra specific detail asks the listener to track one more piece of information. Beyond a certain point, this creates clutter rather than richness."
       },
       {
-        "question": "True or false: it is dishonest to slightly simplify a timeline, for example combining two very similar conversations into one, as long as the emotional truth of the story is preserved.",
+        "question": "True or false: it is dishonest to slightly simplify a timeline, for example combining two very similar conversations into one, as long as the story stays honest about what the experience felt like and meant to the narrator.",
         "options": [
           "False",
           "True"
@@ -539,7 +545,7 @@
     "readSections": [
       {
         "heading": "Core Concept",
-        "body": "A story without emotion is like an instruction manual: technically informative, but not something anyone wants to sit with. Emotion connects a narrator to an audience, and it works through specificity, not announcement. Saying \"I was devastated\" does far less work than describing the exact physical sensation of that devastation, or the small, strange thing that happened right after it.\n\nBeing emotionally honest requires a kind of vulnerability many people are taught to avoid. But showing the full range of what was actually felt, including the unflattering parts, is what creates real connection. A narrator who never admits to jealousy, cowardice, or pettiness is not more likeable; they are less believable."
+        "body": "Emotional truth means being honest about what an experience actually felt like and meant to you, even when every tiny factual detail of memory is imperfect. A story without emotion is like an instruction manual: technically informative, but not something anyone wants to sit with. Emotion connects a narrator to an audience, and it works through specificity, not announcement. Saying \"I was devastated\" does far less work than describing the exact physical sensation of that devastation, or the small, strange thing that happened right after it.\n\nBeing emotionally honest requires a kind of vulnerability many people are taught to avoid. But showing the full range of what was actually felt, including the unflattering parts, is what creates real connection. A narrator who never admits to jealousy, cowardice, or pettiness is not more likeable; they are less believable."
       },
       {
         "heading": "Is This Story Ready to Tell?",
@@ -621,7 +627,7 @@
     "kind": "unit",
     "title": "Humor as a Tool, Not a Decoration",
     "skill": "Humor",
-    "description": "Learn the two comic registers, why jokes need to earn their place, and how humor can deepen even a serious story.",
+    "description": "Learn two different comic approaches, why jokes need to earn their place, and how humor can deepen even a serious story.",
     "accent": "ink",
     "xp": 25,
     "readSections": [
@@ -635,7 +641,7 @@
       },
       {
         "heading": "Worked Example",
-        "body": "> **Humor as deflection:** A narrator describing a painful breakup interrupts a genuinely emotional moment with an unrelated joke about a pet, seemingly to avoid sitting in the discomfort. The audience laughs, but the emotional momentum of the story is lost.\n\n> **Humor as connection:** The same narrator mentions one small, true, absurd detail (crying while eating cereal directly from the box because they could not find a bowl) that is funny precisely because it is specific and human, and deepens the emotional core rather than distracting from it."
+        "body": "> **Humor as deflection:** A narrator describing a painful breakup interrupts a genuinely emotional moment with an unrelated joke about a pet, seemingly to avoid sitting in the discomfort. The audience laughs, but the story loses its emotional forward movement.\n\n> **Humor as connection:** The same narrator mentions one small, true, absurd detail (crying while eating cereal directly from the box because they could not find a bowl) that is funny precisely because it is specific and human, and deepens the emotional core rather than distracting from it."
       }
     ],
     "drill": {
@@ -643,7 +649,7 @@
       "prompt": "The Decoration Test",
       "steps": [
         "Find any joke or funny aside in your draft.",
-        "Ask: does this detail also reveal character, advance the plot, or build atmosphere?",
+        "Ask: does this detail also reveal character, move the events forward, or strengthen the story’s sense of place or mood?",
         "If the honest answer is no, consider cutting it, no matter how funny it is."
       ]
     },
@@ -657,10 +663,10 @@
           "The straight-faced build works only when the subject is sad or serious, while engineered punchlines are reserved for comic stories"
         ],
         "correct": 2,
-        "explanation": "Both are valid registers. The engineered punchline is a constructed, signaled joke; the straight-faced build lets absurdity surface naturally through a sincere telling."
+        "explanation": "Both approaches can work. The engineered punchline is a constructed, signaled joke; the straight-faced build lets absurdity surface naturally through a sincere telling."
       },
       {
-        "question": "What problem does mixing both comic registers inconsistently within one story tend to cause?",
+        "question": "What problem does mixing the two comic approaches inconsistently within one story tend to cause?",
         "options": [
           "It confuses the audience about how they are supposed to feel or react",
           "It makes the story too long",
@@ -668,7 +674,7 @@
           "It makes the story too short"
         ],
         "correct": 0,
-        "explanation": "Switching unpredictably between a signaled, constructed joke style and a sincere, deadpan style tends to disorient listeners about the story’s tone."
+        "explanation": "Switching unpredictably between a signaled, constructed joke style and a sincere, straight-faced style tends to disorient listeners about how the story is meant to feel."
       },
       {
         "question": "What is meant by using humor \"defensively\" or \"as deflection\" in a story?",
@@ -686,11 +692,11 @@
         "options": [
           "Is it based on a real event?",
           "Would a comedian approve of it?",
-          "Does it also reveal character, advance the plot, or build atmosphere, or is it only funny?",
+          "Does it also reveal character, advance what happens, or strengthen the story’s sense of place or mood, or is it only funny?",
           "Would every possible audience consider this detail appropriate and harmless, regardless of the story's subject or setting?"
         ],
         "correct": 2,
-        "explanation": "A funny detail earns its place if it does double duty (character, plot, or atmosphere) in addition to being funny. If it does nothing else, it is likely just decoration and can usually be cut."
+        "explanation": "A funny detail earns its place if it also reveals character, moves events forward, or strengthens the sense of place or mood. If it does nothing else, it is likely just decoration and can usually be cut."
       },
       {
         "question": "True or false: a single genuine light moment inside an otherwise heavy, serious story can strengthen the story rather than undercut it.",
@@ -751,7 +757,7 @@
       {
         "question": "When does straight chronological order work especially well?",
         "options": [
-          "Never; chronological order is outdated because a strong story should always begin near its climax and then move backward",
+          "Never; chronological order is outdated because a strong story should always begin near its most dramatic moment and then move backward",
           "Only for very short stories",
           "Only for stories about historical events",
           "When a surprise or mystery depends on the audience not knowing what is coming yet"
@@ -890,7 +896,7 @@
     "kind": "unit",
     "title": "From Draft to Delivery",
     "skill": "Delivery",
-    "description": "Learn why familiarization beats memorization, and the small technical habits that make a spoken story land.",
+    "description": "Learn why knowing your story deeply beats memorizing every word, and the small technical habits that make a spoken story land.",
     "accent": "ink",
     "xp": 25,
     "readSections": [
@@ -932,7 +938,7 @@
         "question": "Which two parts of a story does this unit suggest are worth memorizing closely, as an exception to the general rule?",
         "options": [
           "The opening line and the closing line",
-          "The middle section and all necessary backstory, since those parts contain the most names, dates, and factual information",
+          "The middle section and all necessary earlier context, since those parts contain the most names, dates, and factual information",
           "The stepping stones only",
           "Every piece of dialogue"
         ],
@@ -962,13 +968,13 @@
       {
         "question": "What is the purpose of a deliberate pause placed right before an important line?",
         "options": [
-          "To give the line more weight and let the audience’s imagination lean toward the gap, so the payoff lands harder",
+          "To give the line more weight and let the audience’s imagination lean toward the gap, so the important line lands harder",
           "To signal the story is now over",
           "To fill time when a story is running short",
           "To give the speaker extra time to remember the next sentence, even when the line itself is not especially important"
         ],
         "correct": 0,
-        "explanation": "A brief, well-placed silence builds anticipation, so that when the important line finally arrives, it lands with more impact."
+        "explanation": "A brief, well-placed silence builds anticipation, so the important line arrives with more impact."
       }
     ]
   },
@@ -988,11 +994,11 @@
       },
       {
         "heading": "Reading the Room",
-        "body": "A story is a live exchange with whoever happens to be listening, which means an audience's makeup deserves real consideration. Two adjustments matter most:\n\n- Necessary context versus condescension. An audience unfamiliar with specific details may need one brief clarifying phrase to follow along, but over-explaining kills momentum just as effectively as leaving too much unexplained. The skill is a single bridging phrase, not a lecture.\n- Relatability is not guaranteed, and that is acceptable. A story that lands very differently with different audiences is not a failed story. A narrator should never distort or soften an honest account based on a guess about what a particular audience wants to hear."
+        "body": "A story is a live exchange with whoever happens to be listening, which means an audience's makeup deserves real consideration. Two adjustments matter most:\n\n- Necessary context versus condescension. An audience unfamiliar with specific details may need one brief clarifying phrase to follow along, but over-explaining kills momentum, the sense that the story is continuing to move, just as effectively as leaving too much unexplained. The skill is a single bridging phrase, a short clarifying line that gives only the context the listener needs, not a lecture.\n- Relatability is not guaranteed, and that is acceptable. A story that lands very differently with different audiences is not a failed story. A narrator should never distort or soften an honest account based on a guess about what a particular audience wants to hear."
       },
       {
         "heading": "Worked Example",
-        "body": "> **Over-explaining (kills momentum):** A story about a specific neighborhood tradition stops for thirty seconds to define five separate cultural terms before continuing, and the audience loses the emotional thread entirely.\n\n> **One bridging phrase (keeps momentum):** The same story instead says, \"It's a tradition my block still does every August, something like a block party crossed with a talent show,\" and moves directly back into the scene."
+        "body": "> **Over-explaining (stops the story’s movement):** A story about a specific neighborhood tradition stops for thirty seconds to define five separate cultural terms before continuing, and the audience loses the emotional thread entirely.\n\n> **One bridging phrase (keeps the story moving):** The same story instead says, \"It's a tradition my block still does every August, something like a block party crossed with a talent show,\" and moves directly back into the scene."
       }
     ],
     "drill": {
@@ -1030,7 +1036,7 @@
       {
         "question": "What is the difference between a helpful bridging phrase and over-explaining?",
         "options": [
-          "A bridging phrase is one short clarifying line that keeps momentum; over-explaining stops the story to define multiple terms at length, killing momentum",
+          "A bridging phrase is one short clarifying line that keeps the story moving; over-explaining stops the story to define multiple terms at length",
           "There is no real difference",
           "Over-explaining is more respectful because it gives the audience every definition, name, and piece of context before the story continues",
           "Bridging phrases are only for comedic stories"
@@ -1076,7 +1082,7 @@
       },
       {
         "heading": "Four Adaptations Worth Knowing",
-        "body": "- The short-form story (under two minutes). Useful for interviews, toasts, and icebreakers. The same three ingredients (shape, stakes, change) still apply, but the number of scenes shrinks to one, and backstory compresses to the bare minimum.\n- Story as evidence. In an interview or essay, a short personal story demonstrates a quality (resilience, integrity) far more convincingly than simply asserting it. \"I am a hard worker\" is a claim. A specific twenty-second story showing genuine effort is evidence.\n- Story as advocacy. When using a personal story to support a cause, the same craft applies, with one addition: a clear call to action at the end, so the audience knows what to do with the feeling the story just gave them.\n- Story as connection across generations. Personal storytelling is one of the most reliable ways to preserve a family's or community's history. Asking a concrete question (\"What is the story everyone in the family tells about you?\") surfaces far richer material than a broad request like \"tell me about your life.\""
+        "body": "- The short-form story (under two minutes). Useful for interviews, toasts, and icebreakers. The same three ingredients (shape, stakes, change) still apply, but the number of scenes shrinks to one, and backstory, the earlier context needed to understand the moment, compresses to the bare minimum.\n- Story as evidence. In an interview or essay, a short personal story demonstrates a quality (resilience, integrity) far more convincingly than simply asserting it. \"I am a hard worker\" is a claim. A specific twenty-second story showing genuine effort is evidence.\n- Story as advocacy. When using a personal story to support a cause, the same craft applies, with one addition: a clear call to action at the end, so the audience knows what to do with the feeling the story just gave them.\n- Story as connection across generations. Personal storytelling is one of the most reliable ways to preserve a family's or community's history. Asking a concrete question (\"What is the story everyone in the family tells about you?\") surfaces far richer material than a broad request like \"tell me about your life.\""
       },
       {
         "heading": "Worked Example",
@@ -1164,7 +1170,7 @@
       },
       {
         "heading": "Why Listening Builds Better Tellers",
-        "body": "Listening to a wide range of other people's true stories is also, quite simply, how storytelling craft is learned in the first place, the same way musicians learn largely by listening to thousands of hours of music before ever performing themselves. Paying attention to a strong turn of phrase, an especially well-earned pause, or a particularly clean ending in someone else's story is direct, transferable education.\n\nListening well is also, on its own, a real form of generosity: being fully present for another person's story, without interrupting or redirecting to a story of your own, is a gift."
+        "body": "Listening to a wide range of other people's true stories is also, quite simply, how storytelling craft is learned in the first place, the same way musicians learn largely by listening to thousands of hours of music before ever performing themselves. Paying attention to a strong turn of phrase, meaning a memorable wording choice, an especially well-earned pause, or a particularly clean ending in someone else's story is direct, transferable education.\n\nListening well is also, on its own, a real form of generosity: being fully present for another person's story, without interrupting or redirecting to a story of your own, is a gift."
       }
     ],
     "drill": {
@@ -1238,21 +1244,21 @@
     "kind": "capstone",
     "title": "The Full Story Workshop",
     "skill": "Full workshop",
-    "description": "Bring every unit together. Run one piece of raw material through all ten passes, and finish with a story ready to tell.",
+    "description": "Bring the whole course together. Run one piece of raw material through twelve deliberate passes, then finish with a story ready for a real audience.",
     "accent": "streak",
     "xp": 50,
     "readSections": [
       {
         "heading": "Overview",
-        "body": "The capstone asks you to take a single piece of raw material, developed back in Unit 1 or Unit 2, all the way through the full process this course has taught, ending in an actual telling to a real audience: your class, a small group, a family member, or beyond."
+        "body": "The capstone asks you to take a single piece of raw material, developed back in Unit 1 or Unit 2, through the full craft process this course has taught, ending in an actual telling for a real audience: your class, a small group, a family member, an interview, or another setting that fits the story."
       },
       {
-        "heading": "The Ten-Pass Process",
-        "body": "1. Confirm the three ingredients (Unit 1): shape, stakes, and change. Write one sentence for each.\n2. Confirm ownership (Unit 2): can this story be told using only what you personally witnessed, felt, and did?\n3. Write the one-sentence meaning (Unit 4), and confirm it describes meaning, not plot.\n4. Map your stepping stones (Unit 5), labeling each as scene, summary, or reflection, and check the ratio.\n5. Select your details (Unit 6), checking each against your one-sentence meaning, and audit for unearned assumptions about other people's inner thoughts.\n6. Check your readiness (Unit 7). Is this story ready to tell publicly, or does it need more time?\n7. Decide your comic register, if any (Unit 8), and run the decoration test on any jokes.\n8. Choose your structure (Unit 9) and test it against at least one alternative.\n9. Draft and refine your opening and ending (Unit 10), and memorize both closely.\n10. Rehearse aloud (Unit 11) using the bullet-point method, and prepare your grounding routine (Unit 12)."
+        "heading": "The Twelve-Pass Process",
+        "body": "1. Confirm the three ingredients (Unit 1): shape, stakes, and change. Write one sentence for each.\n2. Confirm ownership (Unit 2): can this story be told using only what you personally witnessed, felt, and did?\n3. Make the stakes specific (Unit 3): name exactly what you wanted, feared, needed, or stood to lose.\n4. Write the one-sentence meaning (Unit 4), and confirm it describes meaning, not only plot.\n5. Map your stepping stones (Unit 5), labeling each as scene, summary, or reflection, and check the ratio.\n6. Select your details (Unit 6), checking each against your one-sentence meaning, and audit for unearned assumptions about other people's inner thoughts.\n7. Check your readiness (Unit 7), then decide your comic approach, if any (Unit 8), and run the decoration test on any jokes.\n8. Choose your structure (Unit 9) and test it against at least one alternative.\n9. Draft and refine your opening and ending (Unit 10), and memorize both closely.\n10. Rehearse aloud (Unit 11) using bullet-point stepping stones, then prepare your grounding routine and any needed bridging phrase (Unit 12).\n11. Adapt the story for its actual purpose and audience (Unit 13): decide what length, formality, context, or call to action the situation requires.\n12. Listen to a practice audience (Unit 14). Ask what landed, where they got lost, and what they remembered, then make only the revisions that strengthen the story you actually mean to tell."
       },
       {
         "heading": "Final Deliverables",
-        "body": "- A written outline showing all ten passes completed, with brief notes at each stage.\n- A live telling of the finished story, timed to three to five minutes.\n- A short written reflection (250 to 400 words) describing what changed between the first draft and the final version, and which unit's tools made the biggest difference."
+        "body": "- A written outline showing all twelve passes completed, with brief notes at each stage.\n- A live telling of the finished story, timed to three to five minutes.\n- A short written reflection (250 to 400 words) describing what changed between the first draft and the final version, and which unit's tools made the biggest difference."
       },
       {
         "heading": "Assessment Rubric",
@@ -1260,19 +1266,20 @@
       }
     ],
     "drill": {
-      "title": "Complete the ten-pass workshop",
-      "prompt": "Work through all ten passes with one true story. Save brief notes for each pass, then prepare a three-to-five-minute telling and a 250-to-400-word reflection.",
+      "title": "Complete the twelve-pass workshop",
+      "prompt": "Work through all twelve passes with one true story. Save brief notes for each pass, then prepare a three-to-five-minute telling and a 250-to-400-word reflection.",
       "steps": [
-        "Write one specific sentence each for shape, stakes, and change.",
+        "Write one specific sentence each for shape, stakes, and change, then make the stakes personally specific.",
         "Confirm ownership and keep the story anchored in what you witnessed, felt, and did.",
         "State the story’s meaning in one sentence, then map scenes, summaries, and reflections.",
         "Audit details, emotional readiness, humor, structure, opening, and ending.",
-        "Rehearse aloud from bullet points and prepare a grounding routine."
+        "Rehearse aloud from bullet points, prepare a grounding routine, and adapt the telling for its real audience and purpose.",
+        "Listen to one practice audience, note what landed or confused them, and make a final deliberate revision."
       ]
     },
     "quiz": [
       {
-        "question": "What is the first pass in the ten-pass capstone process?",
+        "question": "What is the first pass in the twelve-pass capstone process?",
         "options": [
           "Rehearsing aloud",
           "Writing the final reflection",
@@ -1305,13 +1312,13 @@
         "explanation": "The rubric rewards endings that show change through a concrete image or action and stop cleanly, consistent with Unit 10’s guidance."
       },
       {
-        "question": "True or false: the capstone’s ten passes should be completed in any order the student prefers, since order does not matter.",
+        "question": "True or false: the capstone’s twelve passes should be completed in any order the student prefers, since order does not matter.",
         "options": [
           "False",
           "True"
         ],
         "correct": 0,
-        "explanation": "The ten passes are designed to build on each other in sequence, from confirming the core ingredients through to final rehearsal, similar to how the units themselves build on one another."
+        "explanation": "The twelve passes are designed to build on each other in sequence, from confirming the core ingredients through to final rehearsal, similar to how the units themselves build on one another."
       },
       {
         "question": "What are the three final deliverables required by the capstone project?",
@@ -1319,10 +1326,10 @@
           "A video, a poster, and a group presentation",
           "A multiple-choice test only",
           "A peer-graded rubric only",
-          "A written ten-pass outline, a live telling of the finished story, and a short written reflection"
+          "A written twelve-pass outline, a live telling of the finished story, and a short written reflection"
         ],
         "correct": 3,
-        "explanation": "The capstone asks for a completed written outline of all ten passes, an actual live telling timed to three to five minutes, and a reflection on what changed and which tools mattered most."
+        "explanation": "The capstone asks for a completed written outline of all twelve passes, an actual live telling timed to three to five minutes, and a reflection on what changed and which tools mattered most."
       }
     ]
   }
