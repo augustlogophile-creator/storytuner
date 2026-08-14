@@ -61,6 +61,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
   const currentPageRef = useRef(page)
   const programmaticRef = useRef(false)
   const pendingTargetRef = useRef<number | null>(null)
+  const flipFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastFlipAtRef = useRef(0)
   const [isFlipping, setIsFlipping] = useState(false)
   const [bookSize, setBookSize] = useState({ width: 448, height: 800 })
@@ -92,43 +93,61 @@ const BookSlider = forwardRef<BookSliderHandle, {
     currentPageRef.current = page
   }, [page])
 
+  useEffect(() => () => {
+    if (flipFallbackRef.current) clearTimeout(flipFallbackRef.current)
+  }, [])
+
   function isInteractiveTarget(target: EventTarget | null) {
     return target instanceof Element
       && Boolean(target.closest("button, a, input, textarea, select, label, [data-book-no-turn='true']"))
   }
 
-  // react-pageflip supports grabbing either side. For onboarding, manual page
-  // interaction is deliberately restricted to the right-most quarter so the
-  // left side behaves like a normal reading surface. Going back uses the arrow.
+  // Keep the middle 50% of the page inert so normal reading/selection never
+  // starts a physical fold. The outer 25% on either side stays available for
+  // natural page interaction, and simple taps there are handled below.
   useEffect(() => {
     const shell = shellRef.current
     if (!shell) return
 
-    const blockNonForwardGrab = (event: Event) => {
+    const blockMiddleGrab = (event: Event) => {
       if (isInteractiveTarget(event.target)) return
 
       const point = event instanceof TouchEvent ? event.touches[0] : event instanceof MouseEvent ? event : null
       if (!point) return
 
       const rect = shell.getBoundingClientRect()
-      if (point.clientX - rect.left < rect.width * 0.75) {
+      const x = point.clientX - rect.left
+      if (x > rect.width * 0.25 && x < rect.width * 0.75) {
         event.preventDefault()
         event.stopPropagation()
         if ("stopImmediatePropagation" in event) event.stopImmediatePropagation()
       }
     }
 
-    shell.addEventListener("mousedown", blockNonForwardGrab, true)
-    shell.addEventListener("touchstart", blockNonForwardGrab, { capture: true, passive: false })
+    shell.addEventListener("mousedown", blockMiddleGrab, true)
+    shell.addEventListener("touchstart", blockMiddleGrab, { capture: true, passive: false })
 
     return () => {
-      shell.removeEventListener("mousedown", blockNonForwardGrab, true)
-      shell.removeEventListener("touchstart", blockNonForwardGrab, true)
+      shell.removeEventListener("mousedown", blockMiddleGrab, true)
+      shell.removeEventListener("touchstart", blockMiddleGrab, true)
     }
   }, [])
 
   function api() {
     return bookRef.current?.pageFlip?.()
+  }
+
+  function markProgrammaticFlip() {
+    programmaticRef.current = true
+    setIsFlipping(true)
+    if (flipFallbackRef.current) clearTimeout(flipFallbackRef.current)
+    // A safety valve so a missed library state event can never permanently
+    // disable the navigation controls.
+    flipFallbackRef.current = setTimeout(() => {
+      setIsFlipping(false)
+      programmaticRef.current = false
+      flipFallbackRef.current = null
+    }, 900)
   }
 
   function performGoTo(target: number) {
@@ -145,7 +164,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       return
     }
 
-    programmaticRef.current = true
+    markProgrammaticFlip()
     if (nextPage === current + 1) flip.flipNext("bottom")
     else if (nextPage === current - 1) flip.flipPrev("bottom")
     else flip.flip(nextPage, "bottom")
@@ -155,29 +174,39 @@ const BookSlider = forwardRef<BookSliderHandle, {
     performGoTo(target)
   }
 
-  function blockNonForwardMouseTurn(event: ReactMouseEvent<HTMLDivElement>) {
+  function blockMiddleMouseTurn(event: ReactMouseEvent<HTMLDivElement>) {
     if (isInteractiveTarget(event.target)) return
     const rect = event.currentTarget.getBoundingClientRect()
-    if (event.clientX - rect.left < rect.width * 0.75) event.stopPropagation()
+    const x = event.clientX - rect.left
+    if (x > rect.width * 0.25 && x < rect.width * 0.75) event.stopPropagation()
   }
 
-  function blockNonForwardTouchTurn(event: ReactTouchEvent<HTMLDivElement>) {
+  function blockMiddleTouchTurn(event: ReactTouchEvent<HTMLDivElement>) {
     if (isInteractiveTarget(event.target)) return
     const touch = event.touches[0]
     if (!touch) return
     const rect = event.currentTarget.getBoundingClientRect()
-    if (touch.clientX - rect.left < rect.width * 0.75) event.stopPropagation()
+    const x = touch.clientX - rect.left
+    if (x > rect.width * 0.25 && x < rect.width * 0.75) event.stopPropagation()
   }
 
   function handleShellClick(event: ReactMouseEvent<HTMLDivElement>) {
-    if (isInteractiveTarget(event.target) || isFlipping || !canGoNext) return
-    if (Date.now() - lastFlipAtRef.current < 350) return
+    if (isInteractiveTarget(event.target) || isFlipping) return
+    if (Date.now() - lastFlipAtRef.current < 300) return
 
     const rect = event.currentTarget.getBoundingClientRect()
     const x = event.clientX - rect.left
-    if (x >= rect.width * 0.75) {
+    const current = currentPageRef.current
+
+    if (x <= rect.width * 0.25 && current > 0) {
+      onTurn?.("previous")
+      goTo(current - 1)
+      return
+    }
+
+    if (x >= rect.width * 0.75 && current < lastPage && canGoNext) {
       onTurn?.("next")
-      goTo(currentPageRef.current + 1)
+      goTo(current + 1)
     }
   }
 
@@ -191,8 +220,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
     <div
       ref={shellRef}
       className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
-      onMouseDownCapture={blockNonForwardMouseTurn}
-      onTouchStartCapture={blockNonForwardTouchTurn}
+      onMouseDownCapture={blockMiddleMouseTurn}
+      onTouchStartCapture={blockMiddleTouchTurn}
       onClickCapture={handleShellClick}
     >
       <HTMLFlipBook
@@ -209,15 +238,15 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={560}
+        flippingTime={520}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.24}
+        maxShadowOpacity={0.22}
         showCover
         mobileScrollSupport
         clickEventForward
-        useMouseEvents={canGoNext}
+        useMouseEvents
         swipeDistance={10}
         showPageCorners={false}
         disableFlipByClick
@@ -237,6 +266,10 @@ const BookSlider = forwardRef<BookSliderHandle, {
           currentPageRef.current = nextPage
           lastFlipAtRef.current = Date.now()
           setIsFlipping(false)
+          if (flipFallbackRef.current) {
+            clearTimeout(flipFallbackRef.current)
+            flipFallbackRef.current = null
+          }
 
           if (!programmaticRef.current && nextPage !== previousPage) {
             onTurn?.(nextPage > previousPage ? "next" : "previous")

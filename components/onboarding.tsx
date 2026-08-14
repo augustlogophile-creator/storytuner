@@ -228,10 +228,9 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
         ))}
       </div>
 
-      {(goals.length > 0 || preferences.blocker) && (
+      {goals.length > 0 && (
         <p className="book-focus-note">
-          {goals.length > 0 ? `Starting focus: ${goals.map((goal) => goalLabels[goal]).join(", ")}. ` : ""}
-          Your setup will make coaching more relevant.
+          Starting focus: {goals.map((goal) => goalLabels[goal]).join(", ")}.
         </p>
       )}
 
@@ -239,10 +238,6 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
         <Link href="/sign-up" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={() => triggerIntroHaptic("action")} className="book-start-link">
           Start learning <span aria-hidden="true">→</span>
         </Link>
-        <p>
-          Already have an account?{" "}
-          <Link href="/sign-up?mode=sign-in" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={() => triggerIntroHaptic("selection")}>Log in</Link>
-        </p>
       </div>
     </PaperLayout>
   )

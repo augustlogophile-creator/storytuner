@@ -2260,3 +2260,78 @@ label:has(input[type="radio"]):active {
     left: 4.15rem;
   }
 }
+
+/* August 14 intro navigation + cover color cleanup. */
+.story-book-wrap::before {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+.story-book-cover-inner {
+  background:
+    radial-gradient(circle at 86% 8%, rgba(255, 255, 255, .035), transparent 27%),
+    radial-gradient(circle at 22% 32%, rgba(255, 255, 255, .022), transparent 30%),
+    repeating-radial-gradient(circle at 40% 40%, rgba(255,255,255,.011) 0 .55px, transparent .7px 2.2px),
+    linear-gradient(100deg, #080808 0%, #111111 11%, #171717 52%, #0f0f0f 100%);
+  box-shadow:
+    inset 22px 0 34px rgba(0, 0, 0, .5),
+    inset -10px 0 24px rgba(0, 0, 0, .24),
+    inset 0 0 0 1px rgba(255, 255, 255, .08),
+    0 20px 42px rgba(0, 0, 0, .36);
+}
+
+.story-book-cover-inner::before {
+  border-color: rgba(255, 255, 255, .19);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.32),
+    0 0 0 1px rgba(255,255,255,.016);
+}
+
+.story-book-cover-inner::after {
+  border-right-color: rgba(255,255,255,.055);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.76), rgba(62,62,62,.30) 38%, rgba(0,0,0,.5) 68%, rgba(255,255,255,.028));
+}
+
+/* No decorative rule over the title. The cover is monochrome except for the book icon. */
+.book-cover-content::before {
+  display: none !important;
+}
+
+.book-cover-rule {
+  background: rgba(255,255,255,.28);
+}
+
+.book-cover-kicker {
+  color: rgba(255,255,255,.62);
+}
+
+.book-cover-subtitle {
+  color: rgba(255,255,255,.70);
+}
+
+/* The book mark is the single warm accent on the cover. */
+.book-cover-icon {
+  color: #c89b5b;
+}
+
+.book-cover-open {
+  border-bottom-color: rgba(255,255,255,.34);
+  color: rgba(255,255,255,.9);
+}
+
+.book-cover-open span {
+  color: rgba(255,255,255,.9);
+}
+
+@media (max-height: 710px) {
+  .book-cover-content::before {
+    display: none !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .book-cover-content::before {
+    display: none !important;
+  }
+}
