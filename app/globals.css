@@ -2540,3 +2540,13 @@ label:has(input[type="radio"]):active {
     transition: none;
   }
 }
+
+/* August 14: stable word-by-word typewriter layout. Every word reserves its
+   final width before reveal so multi-line headlines never jump between lines. */
+.book-typewriter-word {
+  white-space: nowrap;
+}
+
+.book-typewriter-pending {
+  visibility: hidden;
+}
