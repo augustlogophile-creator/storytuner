@@ -114,7 +114,7 @@ function CoverPage({ onNext }: { onNext: () => void }) {
         <p className="book-cover-subtitle">Learn to tell stories people actually want to hear.</p>
       </div>
       <BookOpen className="book-cover-icon" strokeWidth={1.5} aria-hidden="true" />
-      <button type="button" className="book-cover-open" onClick={onNext}>
+      <button type="button" className="book-cover-open" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={onNext}>
         Let’s start <span aria-hidden="true">→</span>
       </button>
     </div>
@@ -194,6 +194,13 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
         <p className="book-secret-copy">
           They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
         </p>
+        <img
+          src="/magnifying-glass-sketch.png"
+          alt=""
+          aria-hidden="true"
+          className="book-secret-magnifier"
+          draggable={false}
+        />
       </div>
       <PageTurnAction onClick={onNext}>Continue</PageTurnAction>
     </PaperLayout>
@@ -229,12 +236,12 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
       )}
 
       <div className="book-final-actions" data-book-no-turn="true">
-        <Link href="/sign-up" onClick={() => triggerIntroHaptic("action")} className="book-start-link">
+        <Link href="/sign-up" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={() => triggerIntroHaptic("action")} className="book-start-link">
           Start learning <span aria-hidden="true">→</span>
         </Link>
         <p>
           Already have an account?{" "}
-          <Link href="/sign-up?mode=sign-in" onClick={() => triggerIntroHaptic("selection")}>Log in</Link>
+          <Link href="/sign-up?mode=sign-in" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={() => triggerIntroHaptic("selection")}>Log in</Link>
         </p>
       </div>
     </PaperLayout>
@@ -255,7 +262,7 @@ function PaperLayout({
   return (
     <div className={centered ? "book-paper-content is-centered" : "book-paper-content"}>
       <div className="book-paper-topline">
-        <button type="button" onClick={onBack} aria-label="Turn to the previous page">←</button>
+        <button type="button" data-book-no-turn="true" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={onBack} aria-label="Turn to the previous page">←</button>
         <span>StoryTuner</span>
       </div>
       <div className="book-paper-body">{children}</div>
@@ -278,6 +285,9 @@ function BookChoice({
   return (
     <button
       type="button"
+      onPointerDown={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
+      onTouchStart={(event) => event.stopPropagation()}
       onClick={onClick}
       aria-pressed={selected}
       data-book-no-turn="true"
@@ -300,7 +310,7 @@ function PageTurnAction({
   children: ReactNode
 }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} data-book-no-turn="true" className="book-turn-action">
+    <button type="button" onPointerDown={(event) => event.stopPropagation()} onMouseDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()} onClick={onClick} disabled={disabled} data-book-no-turn="true" className="book-turn-action">
       {children} <span aria-hidden="true">→</span>
     </button>
   )
