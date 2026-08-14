@@ -223,7 +223,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         pendingTargetRef.current = null
         window.setTimeout(() => requestPage(pending), 0)
       }
-    }, 680)
+    }, 450)
   }
 
   function requestPage(target: number) {
@@ -282,7 +282,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
 
   function handleShellClick(event: ReactMouseEvent<HTMLDivElement>) {
     if (isInteractiveTarget(event.target) || isFlippingRef.current) return
-    if (Date.now() - lastFlipAtRef.current < 300) return
+    if (Date.now() - lastFlipAtRef.current < 210) return
 
     const rect = event.currentTarget.getBoundingClientRect()
     const x = event.clientX - rect.left
@@ -328,7 +328,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={520}
+        flippingTime={320}
         usePortrait
         startZIndex={10}
         autoSize={false}

@@ -2352,3 +2352,98 @@ label:has(input[type="radio"]):active {
 .book-paper-topline > span {
   pointer-events: none;
 }
+
+/* August 14: readable content reveals + lighter, faster onboarding interactions. */
+.book-typewriter-cursor {
+  display: inline-block;
+  width: .32em;
+  margin-left: .02em;
+  color: currentColor;
+  font-weight: 400;
+  opacity: .76;
+  animation: book-typewriter-blink .72s steps(1, end) infinite;
+}
+
+@keyframes book-typewriter-blink {
+  0%, 48% { opacity: .76; }
+  49%, 100% { opacity: 0; }
+}
+
+.book-content-fade {
+  opacity: 0;
+  transform: translateY(5px);
+  pointer-events: none;
+  transition:
+    opacity 240ms ease-out,
+    transform 280ms cubic-bezier(.2, .72, .2, 1);
+}
+
+.book-content-fade.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Keep navigation and chrome immediate. Only page content is typed/revealed. */
+.book-paper-topline,
+.book-page-number,
+.book-turn-action,
+.book-final-actions,
+.book-cover-kicker,
+.book-cover-icon,
+.book-cover-open {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-typewriter-cursor {
+    display: none;
+    animation: none;
+  }
+
+  .book-content-fade,
+  .book-content-fade.is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.book-choice-list.book-content-fade .book-choice {
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+.book-choice-list.book-content-fade.is-visible .book-choice {
+  animation: book-choice-reveal 260ms cubic-bezier(.2, .72, .2, 1) forwards;
+}
+
+.book-choice-list.book-content-fade.is-visible .book-choice:nth-child(2) { animation-delay: 45ms; }
+.book-choice-list.book-content-fade.is-visible .book-choice:nth-child(3) { animation-delay: 90ms; }
+.book-choice-list.book-content-fade.is-visible .book-choice:nth-child(4) { animation-delay: 135ms; }
+.book-choice-list.book-content-fade.is-visible .book-choice:nth-child(5) { animation-delay: 180ms; }
+.book-choice-list.book-content-fade.is-visible .book-choice:nth-child(6) { animation-delay: 225ms; }
+
+@keyframes book-choice-reveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-choice-list.book-content-fade .book-choice,
+  .book-choice-list.book-content-fade.is-visible .book-choice {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+.book-choice:active,
+.book-turn-action:active:not(:disabled),
+.book-cover-open:active,
+.book-start-link:active,
+.book-paper-topline button:active {
+  transform: scale(.985);
+}
