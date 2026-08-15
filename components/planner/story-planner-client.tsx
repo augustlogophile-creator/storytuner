@@ -342,12 +342,12 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               </div>
             )}
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link href="/studio?mode=free&planned=1" onClick={prepareForStudio} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
-                <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <Link href="/studio?mode=free&planned=1" onClick={prepareForStudio} className="flex min-h-14 items-center justify-center gap-2 rounded-[1.25rem] border border-brand/20 bg-brand px-3.5 py-3 text-[0.8rem] font-semibold text-brand-foreground shadow-[0_8px_20px_rgba(57,104,158,0.16)] transition-transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]">
+                <Mic2 className="h-4 w-4 shrink-0" /> <span className="text-center leading-tight">Practice this plan</span>
               </Link>
-              <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">
-                <RefreshCw className="h-4 w-4" /> Start another plan
+              <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex min-h-14 items-center justify-center gap-2 rounded-[1.25rem] border border-border bg-card px-3.5 py-3 text-[0.8rem] font-semibold text-foreground shadow-[0_6px_18px_rgba(39,35,31,0.06)] transition-all hover:border-foreground/25 hover:bg-secondary/45 active:scale-[0.98]">
+                <RefreshCw className="h-4 w-4 shrink-0" /> <span className="text-center leading-tight">Start another plan</span>
               </button>
             </div>
           </div>

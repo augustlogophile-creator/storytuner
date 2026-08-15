@@ -826,17 +826,17 @@ a {
 }
 
 @keyframes storytuner-confetti {
-  0% { opacity: 0; transform: translate3d(0,-14px,0) rotate(0deg) scale(.72); }
-  10% { opacity: 1; }
-  72% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), var(--confetti-y, 190px), 0) rotate(var(--confetti-rotate, 320deg)) scale(var(--confetti-scale, 1)); }
+  0% { opacity: 0; transform: translate3d(0,-20px,0) rotate(0deg) scale(.7); }
+  7% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), var(--confetti-y, 108svh), 0) rotate(var(--confetti-rotate, 520deg)) scale(var(--confetti-scale, 1)); }
 }
 
 @keyframes storytuner-celebration-label {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(.82); }
-  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
-  82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -56%) scale(.985); }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.86); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.045); }
+  86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -54%) scale(.99); }
 }
 
 .skeleton-block {
@@ -911,7 +911,7 @@ label:has(input[type="radio"]):active {
   background: var(--brand);
   opacity: 0;
   box-shadow: 0 1px 2px rgba(31, 27, 23, .12);
-  animation: storytuner-confetti 1.75s cubic-bezier(.16,.72,.28,1) both;
+  animation: storytuner-confetti 4.2s cubic-bezier(.18,.55,.3,1) both;
 }
 
 .celebration-piece[data-hue="1"] {
@@ -944,7 +944,7 @@ label:has(input[type="radio"]):active {
   letter-spacing: -.02em;
   box-shadow: 0 16px 42px rgba(37, 32, 27, .13);
   backdrop-filter: blur(10px);
-  animation: storytuner-celebration-label 2.55s ease both;
+  animation: storytuner-celebration-label 5.25s ease both;
 }
 
 @keyframes storytuner-typewriter-cursor {
@@ -3885,4 +3885,9 @@ body {
 
 .story-book-wrap:not(.is-flipping) .stf__item {
   filter: none;
+}
+
+/* Dialogs must cover and blur the fixed bottom navigation as part of the page backdrop. */
+.app-dialog-overlay {
+  z-index: 160 !important;
 }

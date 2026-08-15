@@ -65,8 +65,8 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
   }
 
   return (
-    <div className="app-dialog-overlay fixed inset-0 z-[90] flex items-end justify-center bg-black/35 p-3 backdrop-blur-[2px] sm:items-center" role="dialog" aria-modal="true" aria-labelledby="share-recording-title">
-      <div className="app-dialog-panel w-full max-w-md rounded-[2rem] border border-border bg-background p-5 shadow-2xl">
+    <div className="app-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="share-recording-title">
+      <div className="app-dialog-panel rounded-[2rem] border border-border bg-background p-5 shadow-2xl" style={{ width: "calc(100% - 2.5rem)", maxWidth: "24rem" }}>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0"><p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">Share a story</p><h2 id="share-recording-title" className="mt-1 text-lg font-semibold">Choose what people can see</h2><p className="mt-1 truncate text-xs text-muted-foreground">{activeRecording.title}</p></div>
           <button type="button" onClick={onClose} disabled={sharing} className="rounded-full p-2 text-muted-foreground hover:bg-secondary" aria-label="Close sharing options"><X className="h-4 w-4" /></button>

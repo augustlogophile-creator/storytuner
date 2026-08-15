@@ -46,8 +46,8 @@ export const stageLabels: Record<LessonStage, string> = {
 
 export const stageXp: Record<LessonStage, number> = {
   read: 10,
-  drill: 15,
-  quiz: 20,
+  drill: 30,
+  quiz: 25,
 }
 
 export function getUnit(unitId: string) {

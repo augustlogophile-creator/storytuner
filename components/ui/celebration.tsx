@@ -18,17 +18,17 @@ export function Celebration({
 
   const pieces = useMemo(() => {
     if (!active) return []
-    return Array.from({ length: 30 }, (_, index) => ({
+    return Array.from({ length: 40 }, (_, index) => ({
       id: `${index}-${Math.round(Math.random() * 10_000)}`,
-      left: 8 + Math.random() * 84,
-      top: 10 + Math.random() * 58,
-      rotate: -30 + Math.random() * 60,
-      drift: `${-40 + Math.random() * 80}px`,
-      drop: `${150 + Math.random() * 140}px`,
-      spin: `${180 + Math.random() * 420}deg`,
-      duration: `${1.1 + Math.random() * 0.62}s`,
-      delay: `${index * 16 + Math.random() * 52}ms`,
-      scale: `${0.8 + Math.random() * 0.55}`,
+      left: 2 + Math.random() * 96,
+      top: -3 - Math.random() * 5,
+      rotate: -40 + Math.random() * 80,
+      drift: `${-34 + Math.random() * 68}px`,
+      drop: `${102 + Math.random() * 18}svh`,
+      spin: `${320 + Math.random() * 620}deg`,
+      duration: `${3.6 + Math.random() * 1.35}s`,
+      delay: `${index * 20 + Math.random() * 180}ms`,
+      scale: `${0.78 + Math.random() * 0.62}`,
       hue: index % 4,
     }))
   }, [active])
@@ -42,14 +42,14 @@ export function Celebration({
     const timeout = window.setTimeout(() => {
       setVisible(false)
       onDone?.()
-    }, 2700)
+    }, 5700)
     return () => window.clearTimeout(timeout)
   }, [active, onDone])
 
   if (!visible) return null
 
   return (
-    <div className={cn("celebration-layer", mobileOnly && "celebration-layer-mobile")} aria-hidden="true">
+    <div className={cn("celebration-layer", "celebration-layer-mobile")} aria-hidden="true">
       {pieces.map((piece) => {
         const style: CSSProperties & Record<`--${string}`, string> = {
           left: `${piece.left}%`,

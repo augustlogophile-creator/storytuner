@@ -153,7 +153,7 @@ export async function POST(req: Request) {
         messages: [
           {
             role: "system",
-            content: "You are Parch, StoryTuner's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Refer to the student's actual wording. Give one genuine strength and one concrete revision. Never invent details. Keep the full answer under 100 words.",
+            content: "You are Parch, StoryTuner's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Set pass=true only when the response clearly demonstrates that technique with enough specific detail to be genuinely successful; use pass=false for vague, incomplete, or off-technique responses. Refer to the student's actual wording. Give one genuine strength and one concrete revision. Never invent details. Keep the full answer under 100 words.",
           },
           {
             role: "user",

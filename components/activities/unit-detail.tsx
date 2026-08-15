@@ -4,7 +4,7 @@ import Link from "next/link"
 import { BookOpen, Check, ChevronRight, FilePenLine, Lock, ListChecks } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ProgressBar } from "@/components/progress-bar"
-import { hasUnitPlanAccess, isUnitUnlocked, unitProgress, useApp } from "@/lib/app-state"
+import { hasUnitPlanAccess, isLessonStageComplete, isUnitUnlocked, unitProgress, useApp } from "@/lib/app-state"
 import { lessonId, stageLabels, stageOrder, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
 import { cn } from "@/lib/utils"
 
@@ -51,17 +51,17 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
       <ol className="flex flex-col gap-3">
         {stages.map((stage, index) => {
           const key = lessonId(unit.id, stage)
-          const done = state.completed.includes(key)
-          const priorDone = index === 0 || state.completed.includes(lessonId(unit.id, stages[index - 1]))
+          const done = isLessonStageComplete(state, unit.id, stage)
+          const priorDone = index === 0 || isLessonStageComplete(state, unit.id, stages[index - 1])
           const unlocked = unitUnlocked && priorDone
           const Icon = stageMeta[stage].icon
           const quizScore = stage === "quiz" ? state.quizScores[unit.id] : undefined
           const quizScoreTone = typeof quizScore === "number"
             ? quizScore >= 80
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              ? "text-emerald-700"
               : quizScore >= 60
-                ? "border-amber-200 bg-amber-50 text-amber-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "text-amber-700"
+                : "text-red-700"
             : ""
           const row = (
             <div className={cn("flex items-center gap-4 rounded-2xl border p-4 transition-colors", unlocked ? "border-border bg-card hover:border-brand/50" : "border-border/70 bg-card/60 opacity-75")}>
@@ -72,12 +72,13 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">Step {index + 1}</p>
                 <h2 className="mt-0.5 text-sm font-semibold text-foreground">{stageLabels[stage]}</h2>
                 <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{stageMeta[stage].detail}</p>
-                {stage === "quiz" && typeof quizScore === "number" && (
-                  <span className={cn("mt-2 inline-flex rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold", quizScoreTone)}>
-                    {quizScore}%{quizScore <= 40 && !done ? " · Redo" : ""}
-                  </span>
-                )}
               </div>
+              {stage === "quiz" && typeof quizScore === "number" && (
+                <div className="shrink-0 text-right">
+                  <span className={cn("block font-serif text-[1.05rem] font-semibold leading-none tracking-[-0.04em] tabular-nums", quizScoreTone)}>{quizScore}%</span>
+                  {quizScore <= 40 && !done && <span className="mt-1 block font-mono text-[0.48rem] uppercase tracking-[0.12em] text-red-600">Redo</span>}
+                </div>
+              )}
               {unlocked && <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />}
             </div>
           )

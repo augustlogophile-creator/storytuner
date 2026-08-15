@@ -8,7 +8,7 @@ import { ProgressBar } from "@/components/progress-bar"
 import { Celebration } from "@/components/ui/celebration"
 import { CountUp } from "@/components/ui/count-up"
 import { RichText } from "@/components/rich-text"
-import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isUnitUnlocked, useApp } from "@/lib/app-state"
+import { courseProgress, FREE_UNIT_LIMIT, hasUnitPlanAccess, isLessonStageComplete, isUnitUnlocked, useApp } from "@/lib/app-state"
 import { curriculum, lessonId, stageLabels, stageOrder, stageXp, type CurriculumUnit, type LessonStage } from "@/lib/curriculum"
 import { getCheckpointAfterUnit } from "@/lib/checkpoints"
 import { cn } from "@/lib/utils"
@@ -22,13 +22,21 @@ function quizScoreTone(score: number) {
   return "border-red-200 bg-red-50 text-red-700"
 }
 
+function quizXp(score: number) {
+  if (score >= 100) return 25
+  if (score >= 80) return 20
+  if (score >= 60) return 15
+  return 0
+}
+
 export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: LessonStage }) {
   const { state, ready, completeStage, saveResponse } = useApp()
   const key = lessonId(unit.id, stage)
-  const alreadyDone = state.completed.includes(key)
+  const alreadyDone = isLessonStageComplete(state, unit.id, stage)
   const [completed, setCompleted] = useState(alreadyDone)
   const [reviewing, setReviewing] = useState(false)
   const [earnedThisVisit, setEarnedThisVisit] = useState(false)
+  const [earnedXpThisVisit, setEarnedXpThisVisit] = useState(0)
   const [failedQuizScore, setFailedQuizScore] = useState<number | null>(null)
   const [lastQuizScore, setLastQuizScore] = useState<number | null>(null)
   const [response, setResponse] = useState(state.responses[key] ?? "")
@@ -37,7 +45,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const stageIndex = stages.indexOf(stage)
   const priorStage = stages[stageIndex - 1]
   const planAccess = hasUnitPlanAccess(state, unit.index)
-  const unlocked = isUnitUnlocked(state, unit.index) && (!priorStage || state.completed.includes(lessonId(unit.id, priorStage)))
+  const unlocked = isUnitUnlocked(state, unit.index) && (!priorStage || isLessonStageComplete(state, unit.id, priorStage))
 
   useEffect(() => { if (!reviewing) setCompleted(alreadyDone) }, [alreadyDone, reviewing])
   useEffect(() => {
@@ -45,13 +53,21 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     return () => window.clearTimeout(timeout)
   }, [key, response, saveResponse])
 
-  function finish(responseText?: string, quizScore?: number) {
+  function finish(responseText?: string, quizScore?: number, awardedXp?: number) {
     const failedRequiredQuiz = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !alreadyDone
+    const xpForAttempt = Math.max(0, awardedXp ?? stageXp[stage])
     if (quizScore !== undefined) setLastQuizScore(quizScore)
-    if (!alreadyDone && !failedRequiredQuiz) setEarnedThisVisit(true)
-    completeStage(unit.id, stage, responseText, quizScore)
+    if (!alreadyDone && !failedRequiredQuiz) {
+      setEarnedThisVisit(true)
+      setEarnedXpThisVisit(xpForAttempt)
+    } else {
+      setEarnedThisVisit(false)
+      setEarnedXpThisVisit(0)
+    }
+    completeStage(unit.id, stage, responseText, quizScore, xpForAttempt)
     if (failedRequiredQuiz) {
       setEarnedThisVisit(false)
+      setEarnedXpThisVisit(0)
       setFailedQuizScore(quizScore ?? 0)
       setCompleted(false)
       setReviewing(false)
@@ -115,7 +131,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     ? Math.max(savedQuizScore ?? -1, lastQuizScore ?? -1)
     : undefined
 
-  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} quizScore={displayedQuizScore !== undefined && displayedQuizScore >= 0 ? displayedQuizScore : undefined} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
+  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} earnedXp={earnedXpThisVisit} quizScore={displayedQuizScore !== undefined && displayedQuizScore >= 0 ? displayedQuizScore : undefined} onReview={() => { setEarnedThisVisit(false); setEarnedXpThisVisit(0); setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
@@ -123,7 +139,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
       <header>
         <div className="flex items-center justify-between gap-3">
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">
-            {stageLabels[stage]} · {alreadyDone ? "Review anytime" : `+${stageXp[stage]} XP`}
+            {stageLabels[stage]} · {alreadyDone ? "Review anytime" : stage === "quiz" ? "Up to +25 XP" : stage === "drill" ? "+30 XP · +5 bonus" : `+${stageXp[stage]} XP`}
           </p>
           <span className="font-mono text-[0.62rem] text-muted-foreground">{course.percent}% course</span>
         </div>
@@ -132,8 +148,8 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
         </h1>
       </header>
       {stage === "read" && <ReadStage unit={unit} onFinish={() => finish()} />}
-      {stage === "drill" && <DrillStage unit={unit} response={response} setResponse={setResponse} onFinish={(value) => finish(value)} />}
-      {stage === "quiz" && <QuizStage unit={unit} onFinish={(score) => finish(undefined, score)} />}
+      {stage === "drill" && <DrillStage unit={unit} response={response} setResponse={setResponse} onFinish={(value, xp) => finish(value, undefined, xp)} />}
+      {stage === "quiz" && <QuizStage unit={unit} onFinish={(score) => finish(undefined, score, quizXp(score))} />}
     </div>
   )
 }
@@ -219,7 +235,7 @@ function groupReadingSections(unit: CurriculumUnit) {
   ]
 }
 
-function DrillStage({ unit, response, setResponse, onFinish }: { unit: CurriculumUnit; response: string; setResponse: (value: string) => void; onFinish: (value: string) => void }) {
+function DrillStage({ unit, response, setResponse, onFinish }: { unit: CurriculumUnit; response: string; setResponse: (value: string) => void; onFinish: (value: string, xp: number) => void }) {
   const [feedback, setFeedback] = useState<LessonFeedback | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -277,7 +293,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
           {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Reading your response…</> : <><Sparkles className="h-4 w-4" /> Get focused feedback</>}
         </button>
       ) : (
-        <button type="button" onClick={() => onFinish(response)} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
+        <button type="button" onClick={() => onFinish(response, feedback.pass ? 35 : 30)} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">
           Save and complete <ArrowRight className="h-4 w-4" />
         </button>
       )}
@@ -355,7 +371,7 @@ function QuizRetryResult({ unit, score, onRetry }: { unit: CurriculumUnit; score
   )
 }
 
-function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, quizScore, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; premium: boolean; earnedThisVisit: boolean; quizScore?: number; onReview: () => void }) {
+function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, earnedXp, quizScore, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; premium: boolean; earnedThisVisit: boolean; earnedXp: number; quizScore?: number; onReview: () => void }) {
   const stageIndex = stageOrder.indexOf(stage)
   const nextStage = stageOrder[stageIndex + 1]
   const unitIndex = curriculum.findIndex((item) => item.id === unit.id)
@@ -375,13 +391,13 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, quizS
       : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
     <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
-      <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${stageXp[stage]} XP` : undefined} />
+      <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${earnedXp} XP` : undefined} />
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
       {stage === "quiz" && typeof quizScore === "number" && (
         <div className={cn("rounded-full border px-4 py-2 text-sm font-semibold", quizScoreTone(quizScore))}>Score {quizScore}%</div>
       )}
-      <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? <><span>+</span><CountUp value={stageXp[stage]} /><span>XP earned</span></> : "Progress already saved"}</div>
+      <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? <><span>+</span><CountUp value={earnedXp} /><span>XP earned</span></> : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is <CountUp value={coursePercent} suffix="%" /> complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
         <Link href={primaryHref} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">{primaryLabel}<ArrowRight className="h-4 w-4" /></Link>

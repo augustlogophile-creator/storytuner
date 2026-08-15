@@ -29,17 +29,19 @@ export async function POST(request: Request) {
 
   const source = typeof body.source === "string" ? body.source.trim().toLowerCase() : ""
   const content = typeof body.content === "string" ? body.content.trim().slice(0, 12_000) : ""
-  if (!sources.has(source) || !content) {
+  const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 1000) : ""
+  if (!sources.has(source) || !content || reason.length < 3) {
     return Response.json({ error: "That AI response could not be reported." }, { status: 400, headers: { "Cache-Control": "no-store" } })
   }
 
-  const contentHash = createHash("sha256").update(`${source}\n${content}`).digest("hex")
+  const contentHash = createHash("sha256").update(`${source}\n${content}\n${reason}`).digest("hex")
+  const storedContent = `AI response:\n${content}\n\nUser report reason:\n${reason}`
   try {
     const admin = createAdminClient()
     const { error } = await admin.from("ai_output_reports").insert({
       reporter_id: auth.user.id,
       source,
-      content,
+      content: storedContent,
       content_hash: contentHash,
       status: "open",
     })

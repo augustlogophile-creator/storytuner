@@ -444,7 +444,7 @@ type AppContextValue = {
   state: AppState
   ready: boolean
   syncStatus: SyncStatus
-  completeStage: (unitId: string, stage: LessonStage, response?: string, quizScore?: number) => void
+  completeStage: (unitId: string, stage: LessonStage, response?: string, quizScore?: number, earnedXp?: number) => void
   completeCheckpoint: (checkpointId: string, response: string, score: number, xp: number) => void
   saveResponse: (key: string, value: string) => void
   addRecording: (recording: Recording) => void
@@ -713,13 +713,14 @@ export function AppProvider({
     }
   }, [ready, pullCloudState])
 
-  const completeStage = useCallback((unitId: string, stage: LessonStage, response?: string, quizScore?: number) => {
+  const completeStage = useCallback((unitId: string, stage: LessonStage, response?: string, quizScore?: number, earnedXp?: number) => {
     const key = lessonId(unitId, stage)
     setState((current) => {
       const unit = curriculum.find((item) => item.id === unitId)
       if (unit && !hasUnitPlanAccess(current, unit.index)) return current
-      const alreadyDone = current.completed.includes(key)
-      const failedQuizAttempt = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !alreadyDone
+      const priorQuizPassed = stage === "quiz" && (current.quizScores[unitId] ?? -1) > 40
+      const alreadyDone = stage === "quiz" ? priorQuizPassed : current.completed.includes(key)
+      const failedQuizAttempt = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !priorQuizPassed
       let next = { ...current }
       if (response !== undefined) next.responses = { ...next.responses, [key]: response }
       if (quizScore !== undefined) {
@@ -730,8 +731,8 @@ export function AppProvider({
         }
       }
       if (!alreadyDone && !failedQuizAttempt) {
-        const earned = stageXp[stage]
-        next.completed = [...next.completed, key]
+        const earned = Math.max(0, Math.round(earnedXp ?? stageXp[stage]))
+        next.completed = next.completed.includes(key) ? next.completed : [...next.completed, key]
         next.xpLifetime += earned
         next.xpBalance += earned
       }
@@ -1056,9 +1057,15 @@ export function useApp() {
   return context
 }
 
+export function isLessonStageComplete(state: AppState, unitId: string, stage: LessonStage) {
+  if (!state.completed.includes(lessonId(unitId, stage))) return false
+  if (stage === "quiz") return (state.quizScores[unitId] ?? -1) > 40
+  return true
+}
+
 export function unitProgress(state: AppState, unitId: string) {
   const stages = stageOrder.filter((stage) =>
-    state.completed.includes(lessonId(unitId, stage)),
+    isLessonStageComplete(state, unitId, stage),
   )
   return { done: stages.length, total: 3, percent: Math.round((stages.length / 3) * 100) }
 }
@@ -1066,7 +1073,7 @@ export function unitProgress(state: AppState, unitId: string) {
 export function courseProgress(state: AppState) {
   const total = curriculum.length
   const done = curriculum.filter((unit) => unitProgress(state, unit.id).done === 3).length
-  const completedSteps = state.completed.filter((id) => id.includes("--")).length
+  const completedSteps = curriculum.reduce((total, unit) => total + unitProgress(state, unit.id).done, 0)
   const totalSteps = curriculum.length * 3
   return { done, total, percent: Math.round((completedSteps / totalSteps) * 100) }
 }
@@ -1112,7 +1119,7 @@ export function nextCourseItem(state: AppState): NextCourseItem | null {
     if (!hasUnitPlanAccess(state, unit.index)) break
     if (!isUnitUnlocked(state, unit.index)) break
     for (const stage of stageOrder) {
-      if (!state.completed.includes(lessonId(unit.id, stage))) {
+      if (!isLessonStageComplete(state, unit.id, stage)) {
         return { type: "lesson", unit, stage, id: lessonId(unit.id, stage) }
       }
     }
