@@ -28,15 +28,19 @@ export function ReportAiOutput({
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle")
+  const [errorMessage, setErrorMessage] = useState("")
   if (!content.trim()) return null
 
   async function report() {
     const cleanReason = reason.trim()
     if (status === "sending" || status === "sent" || cleanReason.length < 3) return
     setStatus("sending")
+    setErrorMessage("")
     try {
       const response = await fetch("/api/ai/report", {
         method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           surface: source,
@@ -49,10 +53,11 @@ export function ReportAiOutput({
         }),
       })
       const payload = await response.json().catch(() => ({})) as { error?: string }
-      if (!response.ok) throw new Error(payload.error || "Report failed")
+      if (!response.ok) throw new Error(payload.error || "Could not send this report. Try again.")
       setStatus("sent")
       window.setTimeout(() => setOpen(false), 650)
-    } catch {
+    } catch (error) {
+      setErrorMessage(error instanceof Error && error.message ? error.message : "Could not send this report. Try again.")
       setStatus("error")
     }
   }
@@ -60,7 +65,7 @@ export function ReportAiOutput({
   const reportButton = (
     <button
       type="button"
-      onClick={() => { if (status !== "sent") { setStatus("idle"); setOpen(true) } }}
+      onClick={() => { if (status !== "sent") { setStatus("idle"); setErrorMessage(""); setOpen(true) } }}
       disabled={status === "sent"}
       className={`group inline-flex min-h-7 w-fit items-center gap-2 py-1 text-[0.7rem] font-semibold text-destructive transition-colors hover:text-red-700 disabled:cursor-default disabled:text-muted-foreground ${className}`}
       aria-label={status === "sent" ? "AI response reported" : "Report this AI response"}
@@ -86,7 +91,7 @@ export function ReportAiOutput({
 
         <textarea
           value={reason}
-          onChange={(event) => { setReason(event.target.value.slice(0, 1000)); if (status === "error") setStatus("idle") }}
+          onChange={(event) => { setReason(event.target.value.slice(0, 1000)); if (status === "error") { setStatus("idle"); setErrorMessage("") } }}
           rows={5}
           maxLength={1000}
           autoFocus
@@ -94,7 +99,7 @@ export function ReportAiOutput({
           className="mt-5 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-destructive/60"
         />
         <div className="mt-1 flex items-center justify-between text-[0.65rem] text-muted-foreground">
-          <span>{status === "error" ? "Could not send. Try again." : status === "sent" ? "Report sent." : "At least 3 characters"}</span>
+          <span className={status === "error" ? "text-destructive" : undefined}>{status === "error" ? errorMessage : status === "sent" ? "Report sent." : "At least 3 characters"}</span>
           <span className="font-mono">{reason.length}/1000</span>
         </div>
 

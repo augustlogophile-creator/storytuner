@@ -8,11 +8,14 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, "../..")
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8")
 
-test("AI response reports are stored in the authenticated user's Supabase report table", () => {
+test("AI response reports are stored through the authenticated Supabase session", () => {
   const route = read("app/api/ai/report/route.ts")
   assert.match(route, /from\("ai_response_reports"\)/)
-  assert.match(route, /reporter_id:\s*auth\.user\.id/)
-  assert.match(route, /getActiveAuthenticatedUser\(\)/)
+  assert.match(route, /reporter_id:\s*auth\.id/)
+  assert.match(route, /getAuthenticatedUser\(\)/)
+  assert.match(route, /auth\.supabase\.from\("ai_response_reports"\)/)
+  assert.match(route, /SUPABASE_SERVICE_ROLE_KEY/)
+  assert.match(route, /ai_response_report_admin_fallback_failed/)
   assert.doesNotMatch(route, /body\.reporter(?:Id|_id)/)
 })
 
@@ -23,6 +26,8 @@ test("AI report UI sends the response, reason, surface and optional context", ()
   assert.match(component, /reason:\s*cleanReason/)
   assert.match(component, /recordingId:/)
   assert.match(component, /lessonId:/)
+  assert.match(component, /credentials:\s*"same-origin"/)
+  assert.match(component, /errorMessage/)
 })
 
 test("AI report administration is owner-protected", () => {
