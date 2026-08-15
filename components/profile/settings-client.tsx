@@ -24,7 +24,7 @@ export function SettingsClient() {
 
   const cleanDisplayName = displayName.trim().slice(0, 15)
   const nameChanged = cleanDisplayName.length > 0 && cleanDisplayName !== state.profile.name
-  const displayNameError = notice.startsWith("Choose a different display name.") || notice.startsWith("Display names can")
+  const displayNameError = notice.startsWith("Choose a different display name.") || notice.startsWith("Display names can") || notice.startsWith("Display names must")
 
   useEffect(() => setDisplayName(state.profile.name.slice(0, 15)), [state.profile.name])
 
@@ -114,27 +114,6 @@ export function SettingsClient() {
     router.refresh()
   }, [router])
 
-  const updatePersonalization = useCallback(async (enabled: boolean) => {
-    const previous = state.settings.aiOptIn
-    updateSettings({ aiOptIn: enabled })
-    setNotice("")
-    const supabase = createClient()
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) {
-      updateSettings({ aiOptIn: previous })
-      return setNotice("Your session expired. Log in again to change this preference.")
-    }
-    const { error } = await supabase
-      .from("profiles")
-      .update({ ai_personalization_enabled: enabled })
-      .eq("id", data.user.id)
-    if (error) {
-      updateSettings({ aiOptIn: previous })
-      return setNotice("Run the new Supabase personalization migration, then try this setting again.")
-    }
-    setNotice(enabled ? "Parch can now use patterns from your past recordings when you ask for general coaching." : "Past recordings will no longer be used to personalize future coaching.")
-  }, [state.settings.aiOptIn, updateSettings])
-
   async function confirmAction() {
     if (dialog === "save-name") return void saveDisplayName()
     if (dialog === "logout") return void logOut()
@@ -210,7 +189,7 @@ export function SettingsClient() {
       {notice && <p role="status" className={displayNameError ? "rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm leading-relaxed text-destructive" : "rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground"}>{notice}</p>}
 
       <Section title="Profile">
-        <Row title="Display name" detail="Used on your profile and on Community posts you choose to share.">
+        <Row title="Display name" detail="Used on your profile and on Community posts you choose to share. Must contain at least 3 letters, up to 15 characters.">
           <div className="flex items-center gap-2">
             <input
               value={displayName}
@@ -223,9 +202,9 @@ export function SettingsClient() {
             <span id="display-name-limit" className="sr-only">Maximum 15 characters.</span>
             <button
               type="button"
-              disabled={!nameChanged}
+              disabled={!nameChanged || busy}
               onClick={() => setDialog("save-name")}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-brand-foreground transition active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-[#9d9993] disabled:text-white"
+              className={`flex h-10 w-10 items-center justify-center rounded-full transition ${nameChanged && !busy ? "bg-brand text-brand-foreground active:scale-[0.97]" : "cursor-not-allowed bg-[#c8c4bd] text-white"}`}
               aria-label="Confirm display name change"
             >
               <Check className="h-5 w-5" strokeWidth={2.7} />
@@ -258,20 +237,6 @@ export function SettingsClient() {
           <LockKeyhole className="h-5 w-5 shrink-0 text-accent-foreground" />
           <p className="text-sm leading-relaxed">Recordings are private by default. A story only appears in Community when you deliberately share it.</p>
         </div>
-        <Row
-          title="Personalize Parch with past recordings"
-          detail="When enabled, Parch can privately use patterns from your transcripts, scores, strengths, and revisions to give more useful long-term coaching. Raw video is not sent as context."
-        >
-          <label className="relative inline-flex cursor-pointer items-center">
-            <input
-              type="checkbox"
-              checked={state.settings.aiOptIn}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => void updatePersonalization(event.target.checked)}
-              className="peer sr-only"
-            />
-            <span className="h-7 w-12 rounded-full bg-secondary transition peer-checked:bg-brand after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition peer-checked:after:translate-x-5" />
-          </label>
-        </Row>
         <Row title="Delete all recordings" detail="Remove every saved recording, transcript, grade, revision, and linked shared post.">
           <button type="button" onClick={() => setDialog("delete-recordings")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete

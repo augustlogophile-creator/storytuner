@@ -203,11 +203,6 @@ export function ShopClient() {
               </div>
             </div>
 
-            <div className="mt-4 shrink-0 border-t border-[#e2ddd5] pt-4">
-              <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#aa7a35]">Archive note</p>
-              <p className="mt-1 text-sm text-[#716b64]">{selectedLore.note}</p>
-            </div>
-
             <button
               type="button"
               onClick={chooseSelected}

@@ -164,7 +164,7 @@ export function AccountSetup({
                 aria-describedby="display-name-limit"
                 className="auth-input mt-2"
               />
-              <span id="display-name-limit" className="mt-1 block text-[0.65rem] text-muted-foreground">15 characters maximum.</span>
+              <span id="display-name-limit" className="mt-1 block text-[0.65rem] text-muted-foreground">At least 3 letters, 15 characters maximum.</span>
             </label>}
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-brand/35">
               <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />

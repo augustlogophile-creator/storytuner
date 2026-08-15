@@ -39,7 +39,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
 
       <LegalSection title="AI features">
         <p>When you use AI-powered features, relevant text, transcripts, instructions, and other necessary context may be sent to OpenAI to generate transcription, feedback, moderation, planning, or coaching results. StoryTuner limits the information sent to what is reasonably needed for the feature you chose.</p>
-        <p>Personalization with patterns from past recordings is controlled by the setting labeled “Personalize Parch with past recordings.”</p>
+        <p>If personalization from past recordings is enabled for your account, StoryTuner may use patterns from prior transcripts, scores, strengths, and revisions as coaching context. Raw video is not used as long-term personalization context.</p>
       </LegalSection>
 
       <LegalSection title="Service providers">
@@ -57,7 +57,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       </LegalSection>
 
       <LegalSection title="Your choices and requests">
-        <p>You can update your display name and personalization settings, delete recordings, erase app data, or permanently delete your account from Settings. If you cannot access the app, use the public <Link prefetch href={legalChildHref("/delete-account", params)}>account deletion page</Link> or email storytunerapp@gmail.com to request deletion.</p>
+        <p>You can update your display name, delete recordings, erase app data, or permanently delete your account from Settings. If you cannot access the app, use the public <Link prefetch href={legalChildHref("/delete-account", params)}>account deletion page</Link> or email storytunerapp@gmail.com to request deletion.</p>
         <p>If you withdraw permission for a browser or device feature such as microphone or camera access, you can continue using portions of StoryTuner that do not require that permission.</p>
       </LegalSection>
 
