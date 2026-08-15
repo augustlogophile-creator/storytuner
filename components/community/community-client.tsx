@@ -359,6 +359,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   const [liking, setLiking] = useState(false)
   const [postError, setPostError] = useState("")
   const [editing, setEditing] = useState(false)
+  const [editTitleDraft, setEditTitleDraft] = useState(post.title ?? "")
   const [editDraft, setEditDraft] = useState(post.body)
   const [savingEdit, setSavingEdit] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -381,8 +382,11 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   const replyComposerRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    if (!editing) setEditDraft(post.body)
-  }, [editing, post.body])
+    if (!editing) {
+      setEditTitleDraft(post.title ?? "")
+      setEditDraft(post.body)
+    }
+  }, [editing, post.title, post.body])
 
   async function togglePostLike() {
     if (liking) return
@@ -410,6 +414,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   }
 
   async function savePostEdit() {
+    const title = editTitleDraft.trim()
     const body = editDraft.trim()
     if (savingEdit || (post.postType === "text" && !body)) return
     setSavingEdit(true)
@@ -418,7 +423,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
       const response = await fetch(`/api/community/posts/${post.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ title, body }),
       })
       const payload = (await response.json()) as { post?: CommunityFeedPost; heldForReview?: boolean; message?: string } & ApiErrorPayload
       if (isMembershipDenial(response, payload)) {
@@ -641,22 +646,49 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
         <ActionMenu label="Post options" items={menuItems} />
       </div>
 
-      {post.title && <h3 className="mt-4 text-base font-semibold">{post.title}</h3>}
+      {!editing && post.title && <h3 className="mt-4 text-base font-semibold">{post.title}</h3>}
 
       {editing ? (
-        <div className="mt-4">
-          <textarea
-            value={editDraft}
-            maxLength={5000}
-            rows={4}
-            onChange={(event) => setEditDraft(event.target.value)}
-            placeholder={post.postType === "text" ? "Edit your post…" : "Edit the note on this shared story…"}
-            className="w-full resize-y rounded-2xl border border-brand bg-background px-4 py-3 text-sm leading-6 outline-none"
-          />
-          <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="mt-4 flex flex-col gap-4">
+          <label className="block">
+            <span className="mb-1.5 block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Title</span>
+            <input
+              value={editTitleDraft}
+              maxLength={120}
+              onChange={(event) => setEditTitleDraft(event.target.value)}
+              placeholder="Add a title…"
+              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-semibold outline-none transition-colors focus:border-brand"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Message</span>
+            <textarea
+              value={editDraft}
+              maxLength={5000}
+              rows={4}
+              onChange={(event) => setEditDraft(event.target.value)}
+              placeholder={post.postType === "text" ? "Edit your post…" : "Edit the note on this shared story…"}
+              className="w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors focus:border-brand"
+            />
+          </label>
+
+          {post.sharedTranscript && (
+            <div className="rounded-2xl border border-border bg-secondary/35 px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <FileText className="h-4 w-4 text-muted-foreground" /> Transcript
+                </span>
+                <span className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-muted-foreground">Read only</span>
+              </div>
+              <p className="mt-1.5 text-xs leading-5 text-muted-foreground">You cannot edit the transcript at this time.</p>
+            </div>
+          )}
+
+          <div className="flex items-end justify-between gap-3">
             <CharacterCount value={editDraft.length} maximum={5000} warningAt={4500} />
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => { setEditing(false); setEditDraft(post.body) }} disabled={savingEdit} className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground">Cancel</button>
+            <div className="flex shrink-0 items-center gap-2">
+              <button type="button" onClick={() => { setEditing(false); setEditTitleDraft(post.title ?? ""); setEditDraft(post.body) }} disabled={savingEdit} className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground">Cancel</button>
               <button type="button" onClick={savePostEdit} disabled={(post.postType === "text" && !editDraft.trim()) || savingEdit} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-40">
                 {savingEdit ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
               </button>

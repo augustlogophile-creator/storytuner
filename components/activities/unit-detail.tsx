@@ -55,6 +55,14 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
           const priorDone = index === 0 || state.completed.includes(lessonId(unit.id, stages[index - 1]))
           const unlocked = unitUnlocked && priorDone
           const Icon = stageMeta[stage].icon
+          const quizScore = stage === "quiz" ? state.quizScores[unit.id] : undefined
+          const quizScoreTone = typeof quizScore === "number"
+            ? quizScore >= 80
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : quizScore >= 60
+                ? "border-amber-200 bg-amber-50 text-amber-700"
+                : "border-red-200 bg-red-50 text-red-700"
+            : ""
           const row = (
             <div className={cn("flex items-center gap-4 rounded-2xl border p-4 transition-colors", unlocked ? "border-border bg-card hover:border-brand/50" : "border-border/70 bg-card/60 opacity-75")}>
               <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", done ? "bg-brand text-brand-foreground" : unlocked ? "bg-brand-soft text-accent-foreground" : "bg-secondary text-muted-foreground")}>
@@ -64,6 +72,11 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">Step {index + 1}</p>
                 <h2 className="mt-0.5 text-sm font-semibold text-foreground">{stageLabels[stage]}</h2>
                 <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{stageMeta[stage].detail}</p>
+                {stage === "quiz" && typeof quizScore === "number" && (
+                  <span className={cn("mt-2 inline-flex rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold", quizScoreTone)}>
+                    {quizScore}%{quizScore <= 40 && !done ? " · Redo" : ""}
+                  </span>
+                )}
               </div>
               {unlocked && <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />}
             </div>

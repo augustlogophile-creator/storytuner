@@ -11,6 +11,7 @@ export const runtime = "nodejs"
 
 const paramsSchema = z.object({ postId: z.string().uuid() })
 const editSchema = z.object({
+  title: z.string().trim().max(120, "Titles can be at most 120 characters.").optional(),
   body: z.string().trim().max(5000, "Posts can be at most 5,000 characters."),
 })
 
@@ -64,10 +65,12 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return noStoreJson({ error: "A text post cannot be empty." }, { status: 400 })
   }
 
+  const nextTitle = parsedBody.data.title === undefined ? existing.title : (parsedBody.data.title || null)
   let moderation: Awaited<ReturnType<typeof moderateCommunityText>> | null = null
-  if (parsedBody.data.body) {
+  const textForModeration = [nextTitle, parsedBody.data.body].filter(Boolean).join("\n\n")
+  if (textForModeration) {
     try {
-      moderation = await moderateCommunityText(parsedBody.data.body)
+      moderation = await moderateCommunityText(textForModeration)
     } catch (moderationError) {
       backendError("community_post_edit_moderation_unavailable", moderationError, { userId: context.userId, postId })
       return noStoreJson(
@@ -80,7 +83,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   const editedAt = new Date().toISOString()
   const { data: updated, error: updateError } = await context.admin
     .from("community_posts")
-    .update({ body: parsedBody.data.body, edited_at: editedAt, status: moderation?.flagged ? "removed" : "active" })
+    .update({ title: nextTitle, body: parsedBody.data.body, edited_at: editedAt, status: moderation?.flagged ? "removed" : "active" })
     .eq("id", existing.id)
     .eq("author_id", context.userId)
     .eq("status", "active")
@@ -104,7 +107,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       backendError("community_post_edit_ai_report_create_failed", reportError, { userId: context.userId, postId })
       await context.admin
         .from("community_posts")
-        .update({ body: existing.body, edited_at: existing.edited_at, status: "active" })
+        .update({ title: existing.title, body: existing.body, edited_at: existing.edited_at, status: "active" })
         .eq("id", existing.id)
       return noStoreJson({ error: "The safety review could not be saved. Please try again." }, { status: 500 })
     }

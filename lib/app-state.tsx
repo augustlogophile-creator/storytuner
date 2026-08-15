@@ -200,6 +200,21 @@ function freshState(accountOwnerId: string | null = null, premium = false, displ
   }
 }
 
+function normalizeLessonQuizScores(raw: unknown): Record<string, number> {
+  if (!raw || typeof raw !== "object") return {}
+  const scores = { ...(raw as Record<string, number>) }
+  for (const unit of curriculum) {
+    const score = scores[unit.id]
+    if (typeof score !== "number" || !Number.isFinite(score)) continue
+    // Older builds stored lesson Checks as a raw 0–5 correct-answer count.
+    // Convert those values once into the new 0–100 percentage scale.
+    if (score >= 0 && score <= unit.quiz.length) {
+      scores[unit.id] = Math.round((score / unit.quiz.length) * 100)
+    }
+  }
+  return scores
+}
+
 function normalize(raw: unknown, accountOwnerId: string | null = null, premium = false, displayName = "Storyteller"): AppState {
   const base = freshState(accountOwnerId, premium, displayName)
   if (!raw || typeof raw !== "object") return base
@@ -228,7 +243,7 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
         }
       : base.coach,
     responses: value.responses ?? {},
-    quizScores: value.quizScores ?? {},
+    quizScores: normalizeLessonQuizScores(value.quizScores),
     premium,
   }
 }
@@ -704,10 +719,17 @@ export function AppProvider({
       const unit = curriculum.find((item) => item.id === unitId)
       if (unit && !hasUnitPlanAccess(current, unit.index)) return current
       const alreadyDone = current.completed.includes(key)
+      const failedQuizAttempt = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !alreadyDone
       let next = { ...current }
       if (response !== undefined) next.responses = { ...next.responses, [key]: response }
-      if (quizScore !== undefined) next.quizScores = { ...next.quizScores, [unitId]: quizScore }
-      if (!alreadyDone) {
+      if (quizScore !== undefined) {
+        const previousScore = current.quizScores[unitId]
+        next.quizScores = {
+          ...next.quizScores,
+          [unitId]: previousScore === undefined ? quizScore : Math.max(previousScore, quizScore),
+        }
+      }
+      if (!alreadyDone && !failedQuizAttempt) {
         const earned = stageXp[stage]
         next.completed = [...next.completed, key]
         next.xpLifetime += earned

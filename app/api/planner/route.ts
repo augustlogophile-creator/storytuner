@@ -15,8 +15,8 @@ const inputSchema = z.object({
   audienceContext: z.string().trim().min(3, "Describe where or to whom you will tell the story.").max(1000),
   goal: z.string().trim().min(3, "Describe what you hope the listener understands or feels.").max(1500),
   roughPlan: z.string().trim().min(10, "Give Parch a basic sequence of what happens.").max(5000),
-  mustInclude: z.string().trim().max(3000).default(""),
-  nervousAbout: z.string().trim().max(2000).default(""),
+  mustInclude: z.string().trim().min(1, "Add any facts or details that should stay, or write ‘None’." ).max(3000),
+  nervousAbout: z.string().trim().min(1, "Tell Parch what you are uncertain about, or write ‘None’." ).max(2000),
 })
 
 const outputSchema = {
@@ -209,7 +209,7 @@ Rules:
         },
         {
           role: "user",
-          content: `AUDIENCE OR SITUATION:\n${input.audienceContext}\n\nWHAT I WANT TO GET ACROSS:\n${input.goal}\n\nMY BASIC PLAN OR SEQUENCE:\n${input.roughPlan}\n\nFACTS OR DETAILS I WANT TO INCLUDE:\n${input.mustInclude || "None supplied."}\n\nWHAT I AM NERVOUS OR UNCERTAIN ABOUT:\n${input.nervousAbout || "Nothing supplied."}`,
+          content: `AUDIENCE OR SITUATION:\n${input.audienceContext}\n\nWHAT I WANT TO GET ACROSS:\n${input.goal}\n\nMY BASIC PLAN OR SEQUENCE:\n${input.roughPlan}\n\nFACTS OR DETAILS I WANT TO INCLUDE:\n${input.mustInclude}\n\nWHAT I AM NERVOUS OR UNCERTAIN ABOUT:\n${input.nervousAbout}`,
         },
       ],
     }), 90_000)

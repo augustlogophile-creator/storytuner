@@ -66,6 +66,8 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
     form.audienceContext.trim().length >= 3
     && form.goal.trim().length >= 3
     && form.roughPlan.trim().length >= 10
+    && form.mustInclude.trim().length >= 1
+    && form.nervousAbout.trim().length >= 1
   ), [form])
 
   useEffect(() => {
@@ -240,6 +242,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               placeholder="The keyboard was sticky, it was finals week, and I do not want the story to make my brother look careless..."
               maxLength={3000}
               rows={4}
+              required
             />
             <PlannerField
               number={5}
@@ -251,6 +254,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               placeholder="I am worried the beginning is boring and that I will forget what comes next..."
               maxLength={2000}
               rows={4}
+              required
             />
           </div>
 
@@ -268,7 +272,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <Sparkles className="h-4 w-4" />
             Build my story plan
           </button>
-          <p className="mt-2 text-center text-xs text-muted-foreground">Plans are private and saved to your account. Membership includes up to 10 plans per day.</p>
+          <p className="mt-2 text-center text-xs text-muted-foreground">{ready ? "Plans are private and saved to your account. Membership includes up to 10 plans per day." : "Answer all five questions before Parch can build your plan."}</p>
         </section>
       )}
 

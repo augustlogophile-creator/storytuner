@@ -16,6 +16,12 @@ import { ReportAiOutput } from "@/components/ai/report-ai-output"
 
 type LessonFeedback = { pass: boolean; working: string; fix: string }
 
+function quizScoreTone(score: number) {
+  if (score >= 80) return "border-emerald-200 bg-emerald-50 text-emerald-700"
+  if (score >= 60) return "border-amber-200 bg-amber-50 text-amber-700"
+  return "border-red-200 bg-red-50 text-red-700"
+}
+
 export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: LessonStage }) {
   const { state, ready, completeStage, saveResponse } = useApp()
   const key = lessonId(unit.id, stage)
@@ -23,6 +29,8 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const [completed, setCompleted] = useState(alreadyDone)
   const [reviewing, setReviewing] = useState(false)
   const [earnedThisVisit, setEarnedThisVisit] = useState(false)
+  const [failedQuizScore, setFailedQuizScore] = useState<number | null>(null)
+  const [lastQuizScore, setLastQuizScore] = useState<number | null>(null)
   const [response, setResponse] = useState(state.responses[key] ?? "")
   const course = courseProgress(state)
   const stages = stageOrder
@@ -38,8 +46,19 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   }, [key, response, saveResponse])
 
   function finish(responseText?: string, quizScore?: number) {
-    if (!alreadyDone) setEarnedThisVisit(true)
+    const failedRequiredQuiz = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !alreadyDone
+    if (quizScore !== undefined) setLastQuizScore(quizScore)
+    if (!alreadyDone && !failedRequiredQuiz) setEarnedThisVisit(true)
     completeStage(unit.id, stage, responseText, quizScore)
+    if (failedRequiredQuiz) {
+      setEarnedThisVisit(false)
+      setFailedQuizScore(quizScore ?? 0)
+      setCompleted(false)
+      setReviewing(false)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      return
+    }
+    setFailedQuizScore(null)
     setCompleted(true)
     setReviewing(false)
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -83,7 +102,20 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     )
   }
 
-  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
+  if (failedQuizScore !== null && !completed) return (
+    <QuizRetryResult
+      unit={unit}
+      score={failedQuizScore}
+      onRetry={() => { setFailedQuizScore(null); window.scrollTo({ top: 0, behavior: "smooth" }) }}
+    />
+  )
+
+  const savedQuizScore = state.quizScores[unit.id]
+  const displayedQuizScore = stage === "quiz"
+    ? Math.max(savedQuizScore ?? -1, lastQuizScore ?? -1)
+    : undefined
+
+  if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} quizScore={displayedQuizScore !== undefined && displayedQuizScore >= 0 ? displayedQuizScore : undefined} onReview={() => { setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
@@ -264,7 +296,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
   function next() {
     const nextScore = score + (correct ? 1 : 0)
     if (index === unit.quiz.length - 1) {
-      onFinish(nextScore)
+      onFinish(Math.round((nextScore / unit.quiz.length) * 100))
       return
     }
     setScore(nextScore)
@@ -306,7 +338,24 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
   )
 }
 
-function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; premium: boolean; earnedThisVisit: boolean; onReview: () => void }) {
+function QuizRetryResult({ unit, score, onRetry }: { unit: CurriculumUnit; score: number; onRetry: () => void }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-5">
+      <BackLink href={`/activities/${unit.id}`} label={unit.title} />
+      <section className="rounded-3xl border border-red-200 bg-card px-6 py-9 text-center">
+        <span className={cn("mx-auto inline-flex rounded-full border px-4 py-2 text-lg font-semibold", quizScoreTone(score))}>{score}%</span>
+        <h1 className="mt-4 text-xl font-semibold tracking-tight">Redo this check.</h1>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">You need more than 40% to complete Check and unlock Practice. Review the answers, then try again.</p>
+        <div className="mt-6 flex flex-col gap-2">
+          <button type="button" onClick={onRetry} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">Redo check <ArrowRight className="h-4 w-4" /></button>
+          <Link href={`/activities/${unit.id}`} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" />Back to the unit</Link>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, quizScore, onReview }: { unit: CurriculumUnit; stage: LessonStage; coursePercent: number; premium: boolean; earnedThisVisit: boolean; quizScore?: number; onReview: () => void }) {
   const stageIndex = stageOrder.indexOf(stage)
   const nextStage = stageOrder[stageIndex + 1]
   const unitIndex = curriculum.findIndex((item) => item.id === unit.id)
@@ -329,6 +378,9 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
       <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${stageXp[stage]} XP` : undefined} />
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
+      {stage === "quiz" && typeof quizScore === "number" && (
+        <div className={cn("rounded-full border px-4 py-2 text-sm font-semibold", quizScoreTone(quizScore))}>Score {quizScore}%</div>
+      )}
       <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? <><span>+</span><CountUp value={stageXp[stage]} /><span>XP earned</span></> : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is <CountUp value={coursePercent} suffix="%" /> complete.</p>
       <div className="flex w-full flex-col gap-2 pt-2">
