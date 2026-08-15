@@ -167,7 +167,7 @@ export function ShopClient() {
             <h2 className="relative z-10 mt-1 text-[1.42rem] font-semibold tracking-[-0.035em] text-[#27231f]">{selected.name}</h2>
           </div>
 
-          <div className="relative mt-2 flex min-h-[18rem] shrink-0 flex-col rounded-[1.55rem] border border-[#ded9cf] bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,35,31,0.045)] backdrop-blur-sm sm:min-h-[18.6rem] sm:p-6">
+          <div className="relative mt-2 flex min-h-[18.65rem] shrink-0 flex-col rounded-[1.55rem] border border-[#ded9cf] bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,35,31,0.045)] backdrop-blur-sm sm:min-h-[19.25rem] sm:p-6">
             <div className="flex h-7 shrink-0 items-center justify-between gap-3">
               <div className="inline-flex rounded-full border border-[#d7d0c5] bg-[#f6f3ed] px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-[#746d64]">{selectedLore.rarity}</div>
               <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-[#989187]">Archive {String(selectedIndex + 1).padStart(2, "0")}</span>
