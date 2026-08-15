@@ -288,7 +288,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
           <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent-foreground" /><h2 className="text-sm font-semibold">Coach's read</h2></div>
           <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What is working</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.working}</p></div>
           <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">One useful revision</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.fix}</p></div>
-          <ReportAiOutput source="lesson" content={`${feedback.working}\n\n${feedback.fix}`} />
+          <ReportAiOutput source="practice" content={`${feedback.working}\n\n${feedback.fix}`} lessonId={unit.id} />
         </section>
       )}
       {!feedback ? (

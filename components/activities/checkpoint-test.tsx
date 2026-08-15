@@ -244,7 +244,7 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
             <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What to review</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.gaps}</p></div>
             <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Next step</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.nextStep}</p></div>
           </div>
-          <ReportAiOutput source="checkpoint" content={`${feedback.working}\n\n${feedback.gaps}\n\n${feedback.nextStep}`} className="mt-4" />
+          <ReportAiOutput source="check" content={`${feedback.working}\n\n${feedback.gaps}\n\n${feedback.nextStep}`} responseId={checkpoint.id} className="mt-4" />
         </section>
 
         <div className="flex flex-col gap-2">

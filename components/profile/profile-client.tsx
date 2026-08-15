@@ -7,6 +7,7 @@ import {
   BarChart3,
   ChevronRight,
   Mail,
+  Flag,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -108,6 +109,8 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
           <SectionLabel>Admin</SectionLabel>
           <div className="story-card overflow-hidden rounded-[1.3rem] px-4">
             <ProfileRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Reports and account actions" />
+            <Divider />
+            <ProfileRow href="/admin/ai-reports" icon={Flag} title="AI response reports" detail="Review replies members flagged" />
             <Divider />
             <ProfileRow href="/admin/system" icon={Activity} title="System health" detail="Usage, failures, and maintenance" />
           </div>

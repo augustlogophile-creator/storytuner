@@ -4,9 +4,27 @@ import { useState } from "react"
 import { createPortal } from "react-dom"
 import { Check, Flag, Loader2, X } from "lucide-react"
 
-type AiReportSource = "coach" | "arena" | "lesson" | "checkpoint" | "planner"
+type AiReportSource = "coach" | "practice" | "check" | "studio" | "planner" | "other"
 
-export function ReportAiOutput({ source, content, className = "" }: { source: AiReportSource; content: string; className?: string }) {
+type ReportAiOutputProps = {
+  source: AiReportSource
+  content: string
+  className?: string
+  responseId?: string | null
+  lessonId?: string | null
+  recordingId?: string | null
+  conversationId?: string | null
+}
+
+export function ReportAiOutput({
+  source,
+  content,
+  className = "",
+  responseId,
+  lessonId,
+  recordingId,
+  conversationId,
+}: ReportAiOutputProps) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle")
@@ -19,10 +37,19 @@ export function ReportAiOutput({ source, content, className = "" }: { source: Ai
     try {
       const response = await fetch("/api/ai/report", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source, content, reason: cleanReason }),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          surface: source,
+          responseText: content,
+          reason: cleanReason,
+          responseId: responseId ?? null,
+          lessonId: lessonId ?? null,
+          recordingId: recordingId ?? null,
+          conversationId: conversationId ?? null,
+        }),
       })
-      if (!response.ok) throw new Error("report failed")
+      const payload = await response.json().catch(() => ({})) as { error?: string }
+      if (!response.ok) throw new Error(payload.error || "Report failed")
       setStatus("sent")
       window.setTimeout(() => setOpen(false), 650)
     } catch {
