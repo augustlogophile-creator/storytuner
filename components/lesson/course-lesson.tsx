@@ -33,6 +33,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   const { state, ready, completeStage, saveResponse } = useApp()
   const key = lessonId(unit.id, stage)
   const alreadyDone = isLessonStageComplete(state, unit.id, stage)
+  const hasEverCompletedStage = state.completed.includes(key)
   const [completed, setCompleted] = useState(alreadyDone)
   const [reviewing, setReviewing] = useState(false)
   const [earnedThisVisit, setEarnedThisVisit] = useState(false)
@@ -54,10 +55,10 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
   }, [key, response, saveResponse])
 
   function finish(responseText?: string, quizScore?: number, awardedXp?: number) {
-    const failedRequiredQuiz = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !alreadyDone
+    const failedRequiredQuiz = stage === "quiz" && quizScore !== undefined && quizScore <= 40
     const xpForAttempt = Math.max(0, awardedXp ?? stageXp[stage])
     if (quizScore !== undefined) setLastQuizScore(quizScore)
-    if (!alreadyDone && !failedRequiredQuiz) {
+    if (!hasEverCompletedStage && !failedRequiredQuiz) {
       setEarnedThisVisit(true)
       setEarnedXpThisVisit(xpForAttempt)
     } else {
@@ -128,7 +129,7 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
 
   const savedQuizScore = state.quizScores[unit.id]
   const displayedQuizScore = stage === "quiz"
-    ? Math.max(savedQuizScore ?? -1, lastQuizScore ?? -1)
+    ? (lastQuizScore ?? savedQuizScore)
     : undefined
 
   if (completed && !reviewing) return <Completed unit={unit} stage={stage} coursePercent={course.percent} premium={state.premium} earnedThisVisit={earnedThisVisit} earnedXp={earnedXpThisVisit} quizScore={displayedQuizScore !== undefined && displayedQuizScore >= 0 ? displayedQuizScore : undefined} onReview={() => { setEarnedThisVisit(false); setEarnedXpThisVisit(0); setReviewing(true); setCompleted(false); window.scrollTo({ top: 0, behavior: "smooth" }) }} />

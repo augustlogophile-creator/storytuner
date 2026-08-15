@@ -35,7 +35,7 @@ export const checkpoints: Checkpoint[] = [
     subtitle: "Units 1–3",
     description: "Story shape, finding material, ownership, and specific stakes.",
     xp: 35,
-    estimatedMinutes: 11,
+    estimatedMinutes: 13,
     questions: [
       {
         question: "A memory has a clean beginning, middle, and end, but the narrator never makes clear why the event mattered to them. Which diagnosis is most accurate?",
@@ -108,7 +108,7 @@ export const checkpoints: Checkpoint[] = [
     subtitle: "Units 4–6",
     description: "Arc, meaning, scene and summary, reflection, detail, and memory.",
     xp: 40,
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     questions: [
       {
         question: "Which sentence passes the Unit 4 one-sentence test because it describes meaning rather than plot?",
@@ -182,7 +182,7 @@ export const checkpoints: Checkpoint[] = [
     subtitle: "Units 7–9",
     description: "Emotional honesty, readiness, purposeful humor, and structure.",
     xp: 40,
-    estimatedMinutes: 8,
+    estimatedMinutes: 10,
     questions: [
       {
         question: "Which line communicates emotion most effectively through specificity?",
@@ -255,7 +255,7 @@ export const checkpoints: Checkpoint[] = [
     subtitle: "Units 10–12",
     description: "Openings, endings, delivery, rehearsal, nerves, and audience awareness.",
     xp: 45,
-    estimatedMinutes: 9,
+    estimatedMinutes: 11,
     questions: [
       {
         question: "Which opening is closest to a strong cold open?",
@@ -329,7 +329,7 @@ export const checkpoints: Checkpoint[] = [
     subtitle: "Units 13–15",
     description: "Adaptation, listening, and integrating the full storytelling process.",
     xp: 50,
-    estimatedMinutes: 10,
+    estimatedMinutes: 12,
     questions: [
       {
         question: "When adapting the same underlying story from a five-minute telling to an interview answer, what should change most?",

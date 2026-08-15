@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { createPortal } from "react-dom"
 import { cn } from "@/lib/utils"
 
 export function Celebration({
@@ -15,6 +16,11 @@ export function Celebration({
   mobileOnly?: boolean
 }) {
   const [visible, setVisible] = useState(active)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
 
   const pieces = useMemo(() => {
     if (!active) return []
@@ -46,9 +52,9 @@ export function Celebration({
     return () => window.clearTimeout(timeout)
   }, [active, onDone])
 
-  if (!visible) return null
+  if (!visible || !portalTarget) return null
 
-  return (
+  return createPortal(
     <div className={cn("celebration-layer", "celebration-layer-mobile")} aria-hidden="true">
       {pieces.map((piece) => {
         const style: CSSProperties & Record<`--${string}`, string> = {
@@ -73,6 +79,7 @@ export function Celebration({
         )
       })}
       {label && <span className="celebration-label">{label}</span>}
-    </div>
+    </div>,
+    portalTarget,
   )
 }

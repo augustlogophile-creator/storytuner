@@ -933,7 +933,7 @@ label:has(input[type="radio"]):active {
 .celebration-label {
   position: absolute;
   left: 50%;
-  top: 44%;
+  top: 50%;
   border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
   border-radius: 999px;
   background: color-mix(in oklch, var(--card) 94%, transparent);

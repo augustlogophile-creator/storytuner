@@ -718,21 +718,22 @@ export function AppProvider({
     setState((current) => {
       const unit = curriculum.find((item) => item.id === unitId)
       if (unit && !hasUnitPlanAccess(current, unit.index)) return current
-      const priorQuizPassed = stage === "quiz" && (current.quizScores[unitId] ?? -1) > 40
-      const alreadyDone = stage === "quiz" ? priorQuizPassed : current.completed.includes(key)
-      const failedQuizAttempt = stage === "quiz" && quizScore !== undefined && quizScore <= 40 && !priorQuizPassed
+
+      // A Check's visible/pass state is always based on the newest attempt.
+      // `completed` remains the one-time XP receipt so re-taking a Check cannot farm XP.
+      const hasEverCompletedStage = current.completed.includes(key)
+      const failedQuizAttempt = stage === "quiz" && quizScore !== undefined && quizScore <= 40
       let next = { ...current }
       if (response !== undefined) next.responses = { ...next.responses, [key]: response }
       if (quizScore !== undefined) {
-        const previousScore = current.quizScores[unitId]
         next.quizScores = {
           ...next.quizScores,
-          [unitId]: previousScore === undefined ? quizScore : Math.max(previousScore, quizScore),
+          [unitId]: quizScore,
         }
       }
-      if (!alreadyDone && !failedQuizAttempt) {
+      if (!hasEverCompletedStage && !failedQuizAttempt) {
         const earned = Math.max(0, Math.round(earnedXp ?? stageXp[stage]))
-        next.completed = next.completed.includes(key) ? next.completed : [...next.completed, key]
+        next.completed = [...next.completed, key]
         next.xpLifetime += earned
         next.xpBalance += earned
       }
