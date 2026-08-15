@@ -54,7 +54,7 @@ export function MobileShell({
       <main
         ref={mainRef}
         data-app-scroll-root="true"
-        className={`app-content-reveal book-app-content w-full min-w-0 flex-1 overflow-x-clip px-5 pt-6 ${nav ? (fitViewport ? "pb-[4.8rem]" : "pb-28") : "pb-10"} ${fitViewport ? `min-h-0 ${scrollable ? "overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch] [overflow-anchor:none]" : "overflow-y-hidden"}` : ""}`}
+        className={`app-content-reveal book-app-content w-full min-w-0 flex-1 overflow-x-clip px-5 pt-6 ${nav ? (fitViewport ? "pb-[4.8rem]" : "pb-28") : "pb-10"} ${fitViewport ? `min-h-0 ${scrollable ? "overflow-y-auto overscroll-y-none [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch] [overflow-anchor:none]" : "overflow-y-hidden"}` : ""}`}
       >
         {children}
       </main>

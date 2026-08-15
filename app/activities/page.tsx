@@ -4,5 +4,5 @@ import { requireStoryTunerUser } from "@/lib/require-auth"
 
 export default async function ActivitiesPage() {
   await requireStoryTunerUser("/activities")
-  return <MobileShell><ActivitiesClient /></MobileShell>
+  return <MobileShell><div className="learning-page"><ActivitiesClient /></div></MobileShell>
 }

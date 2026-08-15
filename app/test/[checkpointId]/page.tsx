@@ -18,5 +18,5 @@ export default async function CheckpointPage({ params }: { params: Promise<{ che
     const membership = await getMembershipByUserId(user.id)
     if (!membership.active) redirect("/membership")
   }
-  return <MobileShell><CheckpointTest checkpoint={checkpoint} /></MobileShell>
+  return <MobileShell><div className="learning-page"><CheckpointTest checkpoint={checkpoint} /></div></MobileShell>
 }

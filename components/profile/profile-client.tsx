@@ -61,7 +61,9 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       <section>
         <SectionLabel>StoryTuner</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, and activity" />
+          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
+          <Divider />
+          <ProfileRow href="/shop" icon={ShoppingBag} title="Shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
           <Divider />
           <ProfileRow
             href="/membership"
@@ -71,9 +73,14 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
             value={state.premium ? "Active" : undefined}
           />
           <Divider />
-          <ProfileRow href="/shop" icon={ShoppingBag} title="Shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
-          <Divider />
-          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
+          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, and activity" />
+        </div>
+      </section>
+
+      <section>
+        <SectionLabel>Legal</SectionLabel>
+        <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
+          <ProfileRow href="/legal" icon={ShieldCheck} title="Legal and accessibility" detail="Privacy, terms, accessibility, Community rules, and account deletion" />
         </div>
       </section>
 

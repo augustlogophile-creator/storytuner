@@ -291,34 +291,6 @@ export function SettingsClient() {
 
 
 
-      <Section title="Legal and accessibility">
-        <Row title="Privacy Policy" detail="What StoryTuner collects, how it is used, and how to request deletion.">
-          <Link href="/privacy" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Privacy Policy">
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Row>
-        <Row title="Terms of Service" detail="Accounts, subscriptions, Community, AI features, and acceptable use.">
-          <Link href="/terms" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Terms of Service">
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Row>
-        <Row title="Accessibility" detail="Accessibility approach and a direct way to report a barrier.">
-          <Link href="/accessibility" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Accessibility statement">
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Row>
-        <Row title="Community Guidelines" detail="Safety, reporting, blocking, moderation, and member conduct.">
-          <Link href="/community-guidelines" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Community Guidelines">
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Row>
-        <Row title="Account deletion help" detail="Public instructions for deleting your StoryTuner account, even without app access.">
-          <Link href="/delete-account" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open account deletion help">
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Row>
-      </Section>
-
       <Link href="/membership" className="flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>

@@ -185,17 +185,19 @@ export function ShopClient() {
               <button type="button" onClick={() => select(selectedIndex + 1)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#d7d0c5] bg-[#fbfaf7] text-[#39342e] hover:bg-[#f2eee7]" aria-label="Next Parch">
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="text-[0.7rem] font-medium text-[#777069]">Browse the collection</p>
-                <div className="mt-2 flex gap-1.5">
+                <div className="mt-1.5 grid w-full grid-cols-9 gap-1" aria-label="Parch collection markers">
                   {weaverColors.map((item, index) => (
                     <button
                       type="button"
                       key={item.id}
                       onClick={() => select(index)}
-                      className={`h-1.5 rounded-full transition-all ${index === selectedIndex ? "w-5 bg-[#2b2823]" : "w-1.5 bg-[#d2cdc5] hover:bg-[#aaa39a]"}`}
+                      className="group flex h-4 min-w-0 items-center justify-center overflow-hidden"
                       aria-label={`View ${item.name}`}
-                    />
+                    >
+                      <span className={`block h-1.5 max-w-full rounded-full transition-[width,background-color] duration-150 ${index === selectedIndex ? "w-full bg-[#2b2823]" : "w-1.5 bg-[#d2cdc5] group-hover:bg-[#aaa39a]"}`} />
+                    </button>
                   ))}
                 </div>
               </div>

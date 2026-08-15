@@ -3183,3 +3183,50 @@ body {
   transform: none;
   transition: none;
 }
+
+
+/* August 14, late polish: keep every app surface contained and prevent rubber-band blank areas. */
+html, body {
+  min-height: 100%;
+  background: #eee9de;
+  overscroll-behavior-y: none;
+}
+body {
+  overflow-x: hidden;
+}
+.app-shell,
+[data-app-scroll-root="true"],
+.legal-page {
+  overscroll-behavior-y: contain;
+}
+
+/* The home typewriter may grow a touch when space allows, but never wider than its slot. */
+.book-home-typewriter {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
+  font-size: clamp(.86rem, 2.45vw, .91rem) !important;
+}
+@media (min-height: 860px) {
+  .book-home-typewriter { font-size: .93rem !important; }
+}
+
+/* Learning surfaces use a slightly tighter type scale than the rest of the app. */
+.learning-page .text-2xl { font-size: 1.4rem !important; }
+.learning-page .text-xl { font-size: 1.16rem !important; }
+.learning-page .text-lg { font-size: 1.06rem !important; }
+.learning-page .text-base { font-size: .94rem !important; }
+.learning-page .text-sm { font-size: .84rem !important; }
+.learning-page .text-xs { font-size: .71rem !important; }
+.learning-page [class*="text-[0.98rem]"] { font-size: .92rem !important; }
+
+/* Legal documents share one restrained, consistent hierarchy. */
+.legal-page .legal-copy h2 {
+  font-size: 1.18rem !important;
+  line-height: 1.2 !important;
+}
+.legal-page .legal-copy p,
+.legal-page .legal-copy li {
+  font-size: .88rem !important;
+  line-height: 1.5rem !important;
+}

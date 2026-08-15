@@ -45,7 +45,15 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  if (!ready) return <div className="h-72 animate-pulse rounded-3xl bg-secondary" />
+  if (!ready) return (
+    <div className="flex min-w-0 flex-col gap-5">
+      <BackLink href={`/activities/${unit.id}`} label={unit.title} />
+      <section className="rounded-3xl border border-border bg-card p-5">
+        <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">{stageLabels[stage]}</p>
+        <h1 className="mt-2 text-xl font-semibold">{stage === "read" ? unit.title : stage === "drill" ? unit.drill.title : `${unit.title}: Check`}</h1>
+      </section>
+    </div>
+  )
 
   if (!planAccess) {
     return (

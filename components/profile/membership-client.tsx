@@ -215,13 +215,16 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
                 <p>{FOUNDING_PRICE} billed annually. Renews automatically.</p>
                 <p className="mt-1.5">Cancel anytime to stop future charges by going to Profile → Membership. Email storytunerapp@gmail.com for help.</p>
               </div>
-              <label className="flex min-h-11 cursor-pointer items-center gap-3 border-t border-white/15 px-4 py-3 text-xs leading-5 text-primary-foreground/90">
+              <label className="group flex min-h-12 cursor-pointer items-center gap-3 border-t border-white/15 px-4 py-3 text-sm leading-5 text-primary-foreground/90">
                 <input
                   type="checkbox"
                   checked={renewalConsent}
                   onChange={(event) => setRenewalConsent(event.target.checked)}
-                  className="h-4 w-4 shrink-0 accent-[var(--brand)]"
+                  className="peer sr-only"
                 />
+                <span aria-hidden="true" className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[0.38rem] border border-white/45 bg-white/5 text-transparent transition-colors duration-150 peer-checked:border-[#6f99c8] peer-checked:bg-[#4e79aa] peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-white/45 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#302c27]">
+                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                </span>
                 <span>I understand</span>
               </label>
             </div>

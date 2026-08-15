@@ -14,7 +14,7 @@ import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
-  const { state, ready } = useApp()
+  const { state } = useApp()
   const [celebrateStreak, setCelebrateStreak] = useState(false)
   const progress = courseProgress(state)
   const next = nextCourseItem(state)
@@ -33,8 +33,6 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       return
     }
   }, [ready, state.activityDates, state.streak])
-
-  if (!ready) return null
 
   const courseTitle = next
     ? next.type === "lesson" ? next.unit.title : next.checkpoint.title
@@ -144,8 +142,8 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
         </div>
 
-        <div className="mt-auto flex h-[2.55rem] shrink-0 items-center justify-center overflow-hidden px-2 pb-3 text-center">
-          <TypewriterText className="book-home-typewriter block w-full whitespace-nowrap text-[0.82rem] font-light italic leading-none text-muted-foreground/80 sm:text-[0.86rem]" />
+        <div className="mt-auto flex h-[3rem] shrink-0 items-end justify-center overflow-hidden px-3 pb-3 pt-3 text-center">
+          <TypewriterText className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />
         </div>
       </section>
     </div>

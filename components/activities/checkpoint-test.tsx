@@ -116,7 +116,18 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
     window.scrollTo({ top: 0, behavior: "auto" })
   }
 
-  if (!ready) return null
+  if (!ready) {
+    return (
+      <div className="flex flex-col gap-5">
+        <BackLink href="/activities" label="Curriculum" />
+        <section className={cn("rounded-3xl border bg-card p-5", isFoundations && "border-[#b9a3dc] bg-[#f7f3fb]")}>
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">{checkpoint.subtitle}</p>
+          <h1 className="mt-2 text-xl font-semibold">{checkpoint.title}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your saved test state is loading.</p>
+        </section>
+      </div>
+    )
+  }
 
   if (!unlocked) {
     return (
