@@ -76,7 +76,7 @@ export function RecordingsClient() {
                     </div>
                     <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{hasGrade ? recording.overall : "Saved"}</span>
                   </div>
-                  <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} cloudStoragePath={recording.cloudStoragePath} />
+                  <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} cloudStoragePath={recording.cloudStoragePath} durationSeconds={recording.duration} />
                   {hasGrade && (
                     <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                       <Score label="Hook" value={recording.scores.hook} />
@@ -110,7 +110,14 @@ export function RecordingsClient() {
                     {sharedPosts[recording.id] ? (
                       <Link href={`/community#${sharedPosts[recording.id]}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
                     ) : state.premium ? (
-                      <button type="button" onClick={() => setShareTarget(recording)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Share to Community</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.dispatchEvent(new Event("storytuner:pause-media"))
+                          setShareTarget(recording)
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"
+                      ><Share2 className="h-3.5 w-3.5" />Share to Community</button>
                     ) : (
                       <Link href="/membership" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
                     )}

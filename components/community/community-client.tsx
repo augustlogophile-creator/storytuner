@@ -366,6 +366,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  const [blockOpen, setBlockOpen] = useState(false)
+  const [blocking, setBlocking] = useState(false)
   const [notice, setNotice] = useState("")
   const [noticeTitle, setNoticeTitle] = useState("Report received")
   const [threadOpen, setThreadOpen] = useState(false)
@@ -589,6 +591,8 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   }
 
   async function blockPostAuthor() {
+    if (blocking) return
+    setBlocking(true)
     setPostError("")
     try {
       const response = await fetch("/api/community/blocks", {
@@ -598,12 +602,21 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
       })
       const payload = await response.json() as { blocked?: boolean; error?: string }
       if (!response.ok || !payload.blocked) throw new Error(payload.error || "The member could not be blocked.")
+      setBlockOpen(false)
       setNoticeTitle("Member blocked")
       setNotice("Their Community posts and replies are now hidden from you.")
-      window.dispatchEvent(new Event("storytuner:community-blocked"))
     } catch (error) {
       setPostError(errorMessage(error, "The member could not be blocked."))
+      setBlockOpen(false)
+    } finally {
+      setBlocking(false)
     }
+  }
+
+  function closePostNotice() {
+    const refreshBlocks = noticeTitle === "Member blocked"
+    setNotice("")
+    if (refreshBlocks) window.dispatchEvent(new Event("storytuner:community-blocked"))
   }
 
   const replyAuthors = useMemo(() => new Map(replies.map((reply) => [reply.id, publicAuthorLabel(reply.author)])), [replies])
@@ -615,7 +628,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
       ]
     : [
         { label: "Report post", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) },
-        { label: "Block member", icon: Ban, tone: "danger", onSelect: () => void blockPostAuthor() },
+        { label: "Block member", icon: Ban, tone: "danger", onSelect: () => setBlockOpen(true) },
       ]
 
   return (
@@ -766,6 +779,18 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
         The post and its visible conversation will be removed from Community. This cannot be undone.
       </ConfirmDialog>
 
+      <ConfirmDialog
+        open={blockOpen}
+        title="Block this member?"
+        confirmLabel="Block member"
+        tone="danger"
+        busy={blocking}
+        onCancel={() => { if (!blocking) setBlockOpen(false) }}
+        onConfirm={() => void blockPostAuthor()}
+      >
+        Their Community posts and replies will be hidden from you, and your Community content will be hidden from them.
+      </ConfirmDialog>
+
       <ReportDialog
         open={reportOpen}
         target="post"
@@ -774,7 +799,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
         onReported={(message) => { setReportOpen(false); setNoticeTitle("Report received"); setNotice(message) }}
       />
 
-      <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={() => setNotice("")}>{notice}</NoticeDialog>
+      <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={closePostNotice}>{notice}</NoticeDialog>
     </article>
   )
 }
@@ -1038,6 +1063,8 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  const [blockOpen, setBlockOpen] = useState(false)
+  const [blocking, setBlocking] = useState(false)
   const [notice, setNotice] = useState("")
   const [noticeTitle, setNoticeTitle] = useState("Report received")
   const [error, setError] = useState("")
@@ -1124,6 +1151,8 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
   }
 
   async function blockReplyAuthor() {
+    if (blocking) return
+    setBlocking(true)
     setError("")
     try {
       const response = await fetch("/api/community/blocks", {
@@ -1133,12 +1162,21 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
       })
       const payload = await response.json() as { blocked?: boolean; error?: string }
       if (!response.ok || !payload.blocked) throw new Error(payload.error || "The member could not be blocked.")
+      setBlockOpen(false)
       setNoticeTitle("Member blocked")
       setNotice("Their Community posts and replies are now hidden from you.")
-      window.dispatchEvent(new Event("storytuner:community-blocked"))
     } catch (caught) {
       setError(errorMessage(caught, "The member could not be blocked."))
+      setBlockOpen(false)
+    } finally {
+      setBlocking(false)
     }
+  }
+
+  function closeReplyNotice() {
+    const refreshBlocks = noticeTitle === "Member blocked"
+    setNotice("")
+    if (refreshBlocks) window.dispatchEvent(new Event("storytuner:community-blocked"))
   }
 
   const menuItems: MenuItem[] = reply.mine
@@ -1148,7 +1186,7 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
       ]
     : [
         { label: "Report reply", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) },
-        { label: "Block member", icon: Ban, tone: "danger", onSelect: () => void blockReplyAuthor() },
+        { label: "Block member", icon: Ban, tone: "danger", onSelect: () => setBlockOpen(true) },
       ]
 
   return (
@@ -1194,8 +1232,12 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
         The reply will be replaced with a deleted placeholder so the rest of the conversation still makes sense. This cannot be undone.
       </ConfirmDialog>
 
+      <ConfirmDialog open={blockOpen} title="Block this member?" confirmLabel="Block member" tone="danger" busy={blocking} onCancel={() => { if (!blocking) setBlockOpen(false) }} onConfirm={() => void blockReplyAuthor()}>
+        Their Community posts and replies will be hidden from you, and your Community content will be hidden from them.
+      </ConfirmDialog>
+
       <ReportDialog open={reportOpen} target="reply" targetId={reply.id} onCancel={() => setReportOpen(false)} onReported={(message) => { setReportOpen(false); setNoticeTitle("Report received"); setNotice(message) }} />
-      <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={() => setNotice("")}>{notice}</NoticeDialog>
+      <NoticeDialog open={Boolean(notice)} title={noticeTitle} onClose={closeReplyNotice}>{notice}</NoticeDialog>
     </div>
   )
 }

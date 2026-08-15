@@ -14,8 +14,8 @@ export function LegalPage({
   children: ReactNode
 }) {
   return (
-    <main className="book-app min-h-svh bg-background px-5 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] text-foreground">
-      <article className="mx-auto w-full max-w-2xl">
+    <main className="book-app mx-auto min-h-svh w-full max-w-md bg-background px-5 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] text-foreground">
+      <article className="mx-auto w-full">
         <div className="mb-8 flex items-center justify-between gap-4">
           <Link href="/" className="inline-flex min-h-11 items-center gap-2 rounded-full px-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />

@@ -47,6 +47,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
   canGoNext?: boolean
   className?: string
   onTurn?: (direction: "next" | "previous") => void
+  onPreparePage?: (page: number) => void
 }>(function BookSlider({
   children,
   page,
@@ -54,6 +55,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
   canGoNext = true,
   className,
   onTurn,
+  onPreparePage,
 }, forwardedRef) {
   const pages = useMemo(() => Children.toArray(children), [children])
   const bookRef = useRef<any>(null)
@@ -245,6 +247,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       return
     }
 
+    onPreparePage?.(nextPage)
     requestedTargetRef.current = nextPage
     programmaticRef.current = true
     setFlipping(true)
@@ -271,6 +274,9 @@ const BookSlider = forwardRef<BookSliderHandle, {
     if (isInteractiveTarget(event.target)) return
     const rect = event.currentTarget.getBoundingClientRect()
     const x = event.clientX - rect.left
+    if (x >= rect.width * 0.75 && currentPageRef.current < lastPage && canGoNext) {
+      onPreparePage?.(currentPageRef.current + 1)
+    }
     if (x > rect.width * 0.25 && x < rect.width * 0.75) event.stopPropagation()
   }
 
@@ -280,6 +286,9 @@ const BookSlider = forwardRef<BookSliderHandle, {
     if (!touch) return
     const rect = event.currentTarget.getBoundingClientRect()
     const x = touch.clientX - rect.left
+    if (x >= rect.width * 0.75 && currentPageRef.current < lastPage && canGoNext) {
+      onPreparePage?.(currentPageRef.current + 1)
+    }
     if (x > rect.width * 0.25 && x < rect.width * 0.75) event.stopPropagation()
   }
 

@@ -429,7 +429,7 @@ html {
 }
 
 .app-content-reveal {
-  animation: storytuner-content-in 150ms ease-out both;
+  animation: none;
 }
 
 .app-page-enter {
@@ -3085,4 +3085,69 @@ body {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform-style: preserve-3d;
+}
+
+
+/* August 14 reliability polish: keep media progress honest and controls touch-friendly. */
+.recording-audio-player {
+  touch-action: manipulation;
+}
+
+.recording-audio-range {
+  touch-action: pan-x;
+}
+
+.recording-audio-range::-webkit-slider-runnable-track {
+  height: 1rem;
+  background: transparent;
+}
+
+.recording-audio-range::-webkit-slider-thumb {
+  width: .78rem;
+  height: .78rem;
+  margin-top: .11rem;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid #fffdf8;
+  border-radius: 999px;
+  background: #2f2b26;
+  box-shadow: 0 1px 4px rgba(47,43,38,.16);
+}
+
+.recording-audio-range::-moz-range-track {
+  height: 1rem;
+  background: transparent;
+}
+
+.recording-audio-range::-moz-range-progress {
+  background: transparent;
+}
+
+.recording-audio-range::-moz-range-thumb {
+  width: .7rem;
+  height: .7rem;
+  border: 2px solid #fffdf8;
+  border-radius: 999px;
+  background: #2f2b26;
+  box-shadow: 0 1px 4px rgba(47,43,38,.16);
+}
+
+/* Keep pageflip layers GPU-backed without moving the visible page content. */
+.book-pageflip-shell .stf__item,
+.book-pageflip-shell .stf__block {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+@media (max-width: 480px) {
+  .recording-audio-player {
+    gap: .5rem;
+    padding-inline: .6rem;
+  }
+
+  .recording-audio-player button {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+  }
 }

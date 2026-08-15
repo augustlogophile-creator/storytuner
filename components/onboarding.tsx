@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState, type ElementType, type ReactNode } from "react"
+import { flushSync } from "react-dom"
 import { BookOpen, Check } from "lucide-react"
 import BookSlider, { BookPage, type BookSliderHandle } from "@/components/ui/book-slider"
 import {
@@ -28,6 +29,7 @@ const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring",
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const [page, setPage] = useState(() => Math.max(0, Math.min(4, initialPage)))
+  const [preparedPage, setPreparedPage] = useState<number | null>(null)
   const pageRef = useRef(page)
   const bookRef = useRef<BookSliderHandle>(null)
   const [seenPages, setSeenPages] = useState<Set<number>>(() => new Set(initialPage > 0 ? [initialPage] : []))
@@ -63,13 +65,28 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     save({ ...preferences, blocker })
   }
 
+  function preparePage(target: number) {
+    const next = Math.max(0, Math.min(4, target))
+    // react-pageflip begins drawing the incoming sheet immediately. Commit the
+    // incoming page before the library starts the physical flip so there is no
+    // one-frame blank sheet between the cover and page one on slower devices.
+    flushSync(() => setPreparedPage(next))
+  }
+
+  function prepareTurn(direction: "next" | "previous") {
+    const target = direction === "next" ? pageRef.current + 1 : pageRef.current - 1
+    preparePage(target)
+  }
+
   function nextPage() {
     if (!canAdvance) return
+    prepareTurn("next")
     triggerIntroFeedback("page")
     bookRef.current?.next()
   }
 
   function previousPage() {
+    prepareTurn("previous")
     triggerIntroFeedback("back")
     bookRef.current?.previous()
   }
@@ -86,9 +103,12 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     })
     pageRef.current = nextPage
     setPage(nextPage)
+    setPreparedPage(null)
   }
 
-  const pageAnimation = (index: number) => page === index && !seenPages.has(index)
+  const visiblePage = preparedPage ?? page
+  const pageIsActive = (index: number) => visiblePage === index
+  const pageAnimation = (index: number) => pageIsActive(index) && !seenPages.has(index)
 
   return (
     <main className={page === 0 ? "book-intro-canvas is-cover" : "book-intro-canvas"}>
@@ -97,26 +117,27 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
         page={page}
         onPageChange={handlePageChange}
         canGoNext={canAdvance}
+        onPreparePage={preparePage}
         onTurn={(direction) => triggerIntroFeedback(direction === "next" ? "page" : "back")}
       >
         <BookPage cover>
-          <CoverPage active={page === 0} animate={pageAnimation(0)} onNext={nextPage} />
+          <CoverPage active={pageIsActive(0)} animate={pageAnimation(0)} onNext={nextPage} />
         </BookPage>
 
         <BookPage>
-          <GoalPage active={page === 1} animate={pageAnimation(1)} values={selectedGoals} onToggle={toggleGoal} onNext={nextPage} onBack={previousPage} />
+          <GoalPage active={pageIsActive(1)} animate={pageAnimation(1)} values={selectedGoals} onToggle={toggleGoal} onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
-          <BlockerPage active={page === 2} animate={pageAnimation(2)} value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
+          <BlockerPage active={pageIsActive(2)} animate={pageAnimation(2)} value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
-          <SecretPage active={page === 3} animate={pageAnimation(3)} onNext={nextPage} onBack={previousPage} />
+          <SecretPage active={pageIsActive(3)} animate={pageAnimation(3)} onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
-          <ReadyPage active={page === 4} animate={pageAnimation(4)} preferences={preferences} onBack={previousPage} />
+          <ReadyPage active={pageIsActive(4)} animate={pageAnimation(4)} preferences={preferences} onBack={previousPage} />
         </BookPage>
       </BookSlider>
     </main>
@@ -531,9 +552,10 @@ function RichTypewriterText({
     }
   }, [active, delay, fullText, instant, speed])
 
+  const displayedCharacters = active && instant ? fullText.length : visibleCharacters
   let offset = 0
   let cursorPlaced = false
-  const isTyping = active && !instant && visibleCharacters > 0 && visibleCharacters < fullText.length
+  const isTyping = active && !instant && displayedCharacters > 0 && displayedCharacters < fullText.length
 
   // Keep every complete word in the DOM at its final width from the first frame.
   // Only the letters change visibility. This prevents a partly typed word such as
@@ -548,7 +570,7 @@ function RichTypewriterText({
       const key = `${segmentIndex}-${tokenIndex}`
 
       if (/^\s+$/.test(token)) {
-        const cursorBelongsHere = isTyping && !cursorPlaced && visibleCharacters >= start && visibleCharacters <= end
+        const cursorBelongsHere = isTyping && !cursorPlaced && displayedCharacters >= start && displayedCharacters <= end
         if (cursorBelongsHere) cursorPlaced = true
         return (
           <span key={key}>
@@ -558,10 +580,10 @@ function RichTypewriterText({
         )
       }
 
-      const visibleAmount = Math.max(0, Math.min(token.length, visibleCharacters - start))
+      const visibleAmount = Math.max(0, Math.min(token.length, displayedCharacters - start))
       const visible = token.slice(0, visibleAmount)
       const pending = token.slice(visibleAmount)
-      const cursorBelongsHere = isTyping && !cursorPlaced && visibleCharacters >= start && visibleCharacters <= end
+      const cursorBelongsHere = isTyping && !cursorPlaced && displayedCharacters >= start && displayedCharacters <= end
       if (cursorBelongsHere) cursorPlaced = true
 
       const word = (
@@ -603,7 +625,7 @@ function useRevealAfter(active: boolean, delay: number, instant = false) {
     return () => clearTimeout(timer)
   }, [active, delay, instant])
 
-  return visible
+  return instant && active ? true : visible
 }
 
 function typeDuration(text: string, speed = TYPE_SPEED) {

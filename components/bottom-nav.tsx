@@ -23,7 +23,7 @@ export function BottomNav() {
   }, [router])
 
   return (
-    <nav aria-label="Primary" className="book-bottom-nav fixed inset-x-0 bottom-0 z-[100] border-t border-border bg-background/97 backdrop-blur-xl">
+    <nav aria-label="Primary" className="book-bottom-nav fixed bottom-0 left-1/2 z-[100] w-full max-w-md -translate-x-1/2 border-t border-border bg-background/97 backdrop-blur-xl">
       <ul className="mx-auto flex max-w-md items-stretch justify-between px-1 pb-[max(.5rem,env(safe-area-inset-bottom))] pt-2">
         {items.map(({ href, label, icon: Icon }) => {
           const active = isActivePath(pathname, href)

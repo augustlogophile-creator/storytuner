@@ -210,19 +210,21 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
           </>
         ) : (
           <>
-            <div className="mt-5 rounded-2xl border border-white/15 bg-white/5 p-4 text-sm leading-6 text-primary-foreground/90">
-              <p><strong>{FOUNDING_PRICE} per year, billed annually.</strong> Your membership renews automatically every year until canceled.</p>
-              <p className="mt-2">Cancel anytime online from Profile → Membership → Cancel renewal before the next renewal charge. If you cannot access your account, email storytunerapp@gmail.com for cancellation help.</p>
+            <div className="mt-5 overflow-hidden rounded-2xl border border-white/20 bg-white/5 text-primary-foreground/90">
+              <div className="p-4 text-sm leading-6">
+                <p>{FOUNDING_PRICE} billed annually. Renews automatically.</p>
+                <p className="mt-1.5">Cancel anytime to stop future charges by going to Profile → Membership. Email storytunerapp@gmail.com for help.</p>
+              </div>
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 border-t border-white/15 px-4 py-3 text-xs leading-5 text-primary-foreground/90">
+                <input
+                  type="checkbox"
+                  checked={renewalConsent}
+                  onChange={(event) => setRenewalConsent(event.target.checked)}
+                  className="h-4 w-4 shrink-0 accent-[var(--brand)]"
+                />
+                <span>I understand</span>
+              </label>
             </div>
-            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/20 bg-white/5 p-3.5 text-xs leading-5 text-primary-foreground/85">
-              <input
-                type="checkbox"
-                checked={renewalConsent}
-                onChange={(event) => setRenewalConsent(event.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--brand)]"
-              />
-              <span>I understand this is an automatically renewing annual subscription and authorize the recurring charge until I cancel.</span>
-            </label>
             <button type="button" onClick={openCheckout} disabled={busy !== null || !renewalConsent} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground disabled:opacity-50">
               {busy === "checkout" && <Loader2 className="h-4 w-4 animate-spin" />} Join for {FOUNDING_PRICE}/year
             </button>
