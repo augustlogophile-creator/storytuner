@@ -3234,10 +3234,13 @@ body {
 }
 
 .app-shell {
+  width: 100%;
+  max-width: 28rem;
   min-height: 100vh;
   min-height: 100dvh;
   height: auto;
   max-height: none;
+  margin-inline: auto;
   overflow: visible;
 }
 
@@ -3499,10 +3502,25 @@ body {
 /* August 14 full-app mobile containment audit. */
 .book-app,
 .legal-page,
-.app-shell,
 .book-app-content {
   box-sizing: border-box;
   max-width: 100%;
+}
+
+/* The product intentionally stays a phone-sized canvas even in a desktop
+   browser. Desktop adds outer margins only, never a wider app layout. */
+.app-shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem !important;
+  margin-inline: auto;
+}
+
+.legal-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem !important;
+  margin-inline: auto;
 }
 
 .book-app :is(a, button, input, textarea, select),

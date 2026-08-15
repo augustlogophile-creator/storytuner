@@ -5,7 +5,6 @@ import {
   Children,
   forwardRef,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
@@ -66,7 +65,15 @@ const BookSlider = forwardRef<BookSliderHandle, {
   const requestedTargetRef = useRef<number | null>(null)
   const pendingTargetRef = useRef<number | null>(null)
   const flipFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const edgeGestureRef = useRef<{ pointerId: number; startX: number; startY: number; side: "left" | "right" } | null>(null)
+  const ignoreForwardFlipUntilRef = useRef(0)
+  const dragGestureRef = useRef<{
+    pointerId: number
+    pointerType: string
+    startX: number
+    startY: number
+    side: "left" | "right"
+    dragging: boolean
+  } | null>(null)
   const canGoNextRef = useRef(canGoNext)
   const [isFlipping, setIsFlippingState] = useState(false)
   const [bookSize, setBookSize] = useState({ width: 448, height: 800 })
@@ -115,6 +122,125 @@ const BookSlider = forwardRef<BookSliderHandle, {
     return bookRef.current?.pageFlip?.()
   }
 
+  function isBookControl(target: EventTarget | null) {
+    return target instanceof Element && Boolean(target.closest('[data-book-no-turn="true"]'))
+  }
+
+  function edgeForClientX(clientX: number) {
+    const shell = shellRef.current
+    if (!shell) return null
+    const rect = shell.getBoundingClientRect()
+    const x = clientX - rect.left
+    if (x <= rect.width * 0.25) return "left" as const
+    if (x >= rect.width * 0.75) return "right" as const
+    return null
+  }
+
+  function pointForClient(clientX: number, clientY: number) {
+    const flip = api()
+    const distElement = flip?.getUI?.()?.getDistElement?.()
+    const rect = distElement instanceof Element
+      ? distElement.getBoundingClientRect()
+      : shellRef.current?.getBoundingClientRect()
+
+    return {
+      x: clientX - (rect?.left ?? 0),
+      y: clientY - (rect?.top ?? 0),
+    }
+  }
+
+  function handleDragPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (isBookControl(event.target)) return
+    if (event.pointerType === "mouse" && event.button !== 0) return
+
+    const side = edgeForClientX(event.clientX)
+    if (!side) return
+
+    const current = currentPageRef.current
+    if (side === "right" && (!canGoNextRef.current || current >= lastPage)) return
+    if (side === "left" && current <= 0) return
+
+    dragGestureRef.current = {
+      pointerId: event.pointerId,
+      pointerType: event.pointerType,
+      startX: event.clientX,
+      startY: event.clientY,
+      side,
+      dragging: false,
+    }
+
+    try { event.currentTarget.setPointerCapture(event.pointerId) } catch {}
+    event.preventDefault()
+  }
+
+  function handleDragPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const gesture = dragGestureRef.current
+    if (!gesture || gesture.pointerId !== event.pointerId) return
+
+    const deltaX = event.clientX - gesture.startX
+    const deltaY = event.clientY - gesture.startY
+    const horizontalDistance = Math.abs(deltaX)
+    const verticalDistance = Math.abs(deltaY)
+
+    if (!gesture.dragging) {
+      // A tap/press never starts the page-flip engine. Only a deliberate drag
+      // inward from the outer quarter does, so tapping the page is inert.
+      if (horizontalDistance < 7) return
+
+      if (verticalDistance > horizontalDistance * 1.25) {
+        dragGestureRef.current = null
+        try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
+        return
+      }
+
+      const movingInward = gesture.side === "right" ? deltaX < -7 : deltaX > 7
+      if (!movingInward) {
+        if (horizontalDistance > 14) {
+          dragGestureRef.current = null
+          try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
+        }
+        return
+      }
+
+      const flip = api()
+      if (!flip?.startUserTouch || !flip?.userMove || !flip?.userStop) {
+        dragGestureRef.current = null
+        try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
+        return
+      }
+
+      onPreparePage?.(gesture.side === "right" ? currentPageRef.current + 1 : currentPageRef.current - 1)
+      flip.startUserTouch(pointForClient(gesture.startX, gesture.startY))
+      gesture.dragging = true
+    }
+
+    api()?.userMove?.(pointForClient(event.clientX, event.clientY), gesture.pointerType !== "mouse")
+    event.preventDefault()
+  }
+
+  function finishDragGesture(event: ReactPointerEvent<HTMLDivElement>, cancelled = false) {
+    const gesture = dragGestureRef.current
+    if (!gesture || gesture.pointerId !== event.pointerId) return
+    dragGestureRef.current = null
+
+    try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
+
+    if (gesture.dragging) {
+      const flip = api()
+      if (cancelled) {
+        flip?.turnToPage?.(currentPageRef.current)
+        setFlipping(false)
+      } else {
+        flip?.userStop?.(pointForClient(event.clientX, event.clientY), false)
+      }
+    }
+
+    // Suppress the browser click generated after pointerup. Buttons/links never
+    // enter this gesture path because they are marked data-book-no-turn.
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   function finishNavigationFallback(target: number, waitMs: number) {
     if (flipFallbackRef.current) clearTimeout(flipFallbackRef.current)
     flipFallbackRef.current = setTimeout(() => {
@@ -130,6 +256,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       const synced = Number(flip?.getCurrentPageIndex?.() ?? target)
       currentPageRef.current = synced
       requestedTargetRef.current = null
+      ignoreForwardFlipUntilRef.current = Date.now() + 220
       programmaticRef.current = false
       setFlipping(false)
       flipFallbackRef.current = null
@@ -156,6 +283,10 @@ const BookSlider = forwardRef<BookSliderHandle, {
       onPageChange(nextPage)
       return
     }
+
+    // A button/click sequence can occasionally dispatch twice while the page
+    // is still animating. Never queue the same destination twice.
+    if (requestedTargetRef.current === nextPage || pendingTargetRef.current === nextPage) return
 
     if (isFlippingRef.current) {
       pendingTargetRef.current = nextPage
@@ -186,77 +317,15 @@ const BookSlider = forwardRef<BookSliderHandle, {
     previous: () => requestPage(currentPageRef.current - 1),
     goTo: requestPage,
   }), [canGoNext, lastPage])
-  function isBookControl(target: EventTarget | null) {
-    return target instanceof Element && Boolean(target.closest('[data-book-no-turn="true"]'))
-  }
-
-  function edgeForClientX(clientX: number) {
-    const shell = shellRef.current
-    if (!shell) return null
-    const rect = shell.getBoundingClientRect()
-    const x = clientX - rect.left
-    if (x <= rect.width * 0.25) return "left" as const
-    if (x >= rect.width * 0.75) return "right" as const
-    return null
-  }
-
-  function handleEdgePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (isBookControl(event.target)) return
-    if (event.pointerType === "mouse" && event.button !== 0) return
-    const side = edgeForClientX(event.clientX)
-    if (!side) return
-
-    edgeGestureRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      side,
-    }
-    // Do not let react-pageflip react to a simple press in the outer quarters.
-    event.stopPropagation()
-  }
-
-  function handleEdgePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = edgeGestureRef.current
-    if (!gesture || gesture.pointerId !== event.pointerId) return
-    event.stopPropagation()
-  }
-
-  function handleEdgePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = edgeGestureRef.current
-    if (!gesture || gesture.pointerId !== event.pointerId) return
-    edgeGestureRef.current = null
-    event.stopPropagation()
-
-    const deltaX = event.clientX - gesture.startX
-    const deltaY = event.clientY - gesture.startY
-    const isHorizontalFlip = Math.abs(deltaX) >= 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15
-    if (!isHorizontalFlip) return
-
-    if (gesture.side === "right" && deltaX < 0) requestPage(currentPageRef.current + 1)
-    if (gesture.side === "left" && deltaX > 0) requestPage(currentPageRef.current - 1)
-  }
-
-  function handleEdgePointerCancel(event: ReactPointerEvent<HTMLDivElement>) {
-    if (edgeGestureRef.current?.pointerId === event.pointerId) edgeGestureRef.current = null
-  }
-
-  function handleEdgeClick(event: ReactMouseEvent<HTMLDivElement>) {
-    if (isBookControl(event.target)) return
-    if (!edgeForClientX(event.clientX)) return
-    event.preventDefault()
-    event.stopPropagation()
-  }
 
   return (
     <div
       ref={shellRef}
       className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
-      onPointerDownCapture={handleEdgePointerDown}
-      onPointerMoveCapture={handleEdgePointerMove}
-      onPointerUpCapture={handleEdgePointerUp}
-      onPointerCancelCapture={handleEdgePointerCancel}
-      onClickCapture={handleEdgeClick}
+      onPointerDownCapture={handleDragPointerDown}
+      onPointerMoveCapture={handleDragPointerMove}
+      onPointerUpCapture={(event) => finishDragGesture(event)}
+      onPointerCancelCapture={(event) => finishDragGesture(event, true)}
     >
       <HTMLFlipBook
         key={`${bookSize.width}-${bookSize.height}`}
@@ -297,9 +366,22 @@ const BookSlider = forwardRef<BookSliderHandle, {
         onFlip={(event: any) => {
           const nextPage = Number(event?.data ?? 0)
           const previousPage = currentPageRef.current
+          const now = Date.now()
 
-          // Required onboarding questions cannot be bypassed with a drag or
-          // swipe. Ordinary taps never turn pages because click flipping is off.
+          // After a Continue/back command settles, ignore any stray second
+          // forward flip emitted by the same pointer sequence. This prevents a
+          // newly-landed page, especially the magnifying-glass page, from being
+          // skipped before the user interacts with it.
+          if (!programmaticRef.current && nextPage > previousPage && now < ignoreForwardFlipUntilRef.current) {
+            api()?.turnToPage(previousPage)
+            requestedTargetRef.current = null
+            pendingTargetRef.current = null
+            setFlipping(false)
+            return
+          }
+
+          // Required onboarding questions cannot be bypassed with a drag.
+          // Ordinary taps never enter the page-flip engine at all.
           if (!programmaticRef.current && nextPage > previousPage && !canGoNextRef.current) {
             const flip = api()
             flip?.turnToPage(previousPage)
@@ -318,6 +400,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
 
           if (!programmaticRef.current && nextPage !== previousPage) {
             onTurn?.(nextPage > previousPage ? "next" : "previous")
+          } else if (programmaticRef.current && nextPage !== previousPage) {
+            ignoreForwardFlipUntilRef.current = Date.now() + 220
           }
           programmaticRef.current = false
           requestedTargetRef.current = null

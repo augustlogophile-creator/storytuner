@@ -21,6 +21,7 @@ export function MobileShell({
 }) {
   const pathname = usePathname()
   const { ready } = useApp()
+  void wide
   void fitViewport
   void scrollable
 
@@ -44,7 +45,7 @@ export function MobileShell({
 
   return (
     <div
-      className={`app-shell book-app mx-auto flex min-h-dvh w-full min-w-0 flex-col bg-background ${wide ? "max-w-3xl" : "max-w-md"}`}
+      className="app-shell book-app mx-auto flex min-h-dvh w-full max-w-md min-w-0 flex-col bg-background"
     >
       <main
         data-app-scroll-root="true"
