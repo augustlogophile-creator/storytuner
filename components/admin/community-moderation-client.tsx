@@ -424,7 +424,7 @@ function PastDecisionCard({
           {needsDuration && (
             <label className="mt-3 block">
               <span className="text-xs font-semibold">Duration</span>
-              <div className="mt-2 grid grid-cols-4 gap-2">
+              <div className="moderation-duration-grid mt-2 grid grid-cols-4 gap-2">
                 {[1, 7, 30, 365].map((days) => <button key={days} type="button" onClick={() => setDurationDays(days)} className={cn("rounded-xl border px-2 py-2 text-xs font-semibold", durationDays === days ? "border-brand bg-brand-soft" : "border-border bg-card")}>{days === 365 ? "1 year" : `${days}d`}</button>)}
               </div>
               <input type="number" min={1} max={3650} value={durationDays} onChange={(event) => setDurationDays(Math.min(3650, Math.max(1, Number(event.target.value) || 1)))} className="mt-2 w-full rounded-2xl border border-border bg-card px-3 py-3 text-sm outline-none focus:border-brand" aria-label="Custom suspension duration in days" />

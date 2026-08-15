@@ -36,24 +36,21 @@ export function TypewriterText({
   pauseMs = 1800,
 }: TypewriterTextProps) {
   const source = useMemo(() => prompts.filter(Boolean), [prompts])
-  const [queue, setQueue] = useState<string[]>([])
   const [promptIndex, setPromptIndex] = useState(0)
   const [visibleCharacters, setVisibleCharacters] = useState(0)
   const [deleting, setDeleting] = useState(false)
+  const current = source[promptIndex % Math.max(1, source.length)] ?? ""
 
   useEffect(() => {
-    const shuffled = [...source]
-    for (let index = shuffled.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1))
-      ;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]]
-    }
-    setQueue(shuffled)
     setPromptIndex(0)
     setVisibleCharacters(0)
     setDeleting(false)
   }, [source])
 
-  const current = queue[promptIndex] ?? ""
+  useEffect(() => {
+    if (promptIndex < source.length) return
+    setPromptIndex(0)
+  }, [promptIndex, source.length])
 
   useEffect(() => {
     if (!current) return
@@ -75,15 +72,15 @@ export function TypewriterText({
 
     if (deleting && visibleCharacters === 0) {
       const timeout = window.setTimeout(() => {
-        setPromptIndex((value) => (queue.length ? (value + 1) % queue.length : 0))
+        setPromptIndex((value) => source.length ? (value + 1) % source.length : 0)
         setDeleting(false)
       }, 320)
       return () => window.clearTimeout(timeout)
     }
-  }, [current, deleting, deletingMs, pauseMs, queue.length, typingMs, visibleCharacters])
+  }, [current, deleting, deletingMs, pauseMs, source.length, typingMs, visibleCharacters])
 
   return (
-    <span className={`typewriter-text ${className}`} aria-live="polite">
+    <span className={`typewriter-text ${className}`} aria-live="off">
       <span>{current.slice(0, visibleCharacters)}</span>
       <span className="typewriter-cursor" aria-hidden="true">|</span>
     </span>

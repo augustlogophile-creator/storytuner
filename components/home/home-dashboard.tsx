@@ -127,7 +127,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           </ul>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="book-practice-grid grid grid-cols-2 gap-3">
           <PracticeCard
             href="/arena?mode=free"
             icon={<Mic2 className="h-4 w-4" strokeWidth={2} />}

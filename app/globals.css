@@ -188,7 +188,7 @@ body {
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
 }
 
 img,
@@ -3229,4 +3229,275 @@ body {
 .legal-page .legal-copy li {
   font-size: .88rem !important;
   line-height: 1.5rem !important;
+}
+
+
+/* August 14 mobile reliability pass: one stable scroll surface on every app route. */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+}
+
+body {
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.app-shell {
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+}
+
+[data-app-scroll-root="true"] {
+  min-height: 0;
+  max-width: 100%;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: auto;
+}
+
+.book-app-content {
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+}
+
+.book-app :is(div, main, section, article, header, footer, nav, form, ul, ol, li) {
+  min-width: 0;
+}
+
+.book-app :is(img, video, canvas, svg) {
+  max-width: 100%;
+}
+
+.book-app pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Keep the homepage completely stable while the persisted app state hydrates. */
+.home-dashboard {
+  width: 100%;
+}
+
+.book-home-typewriter {
+  width: 100%;
+  min-height: 1.1em;
+  text-align: center;
+}
+
+/* Seven weekday markers must fit even on the narrowest phone widths. */
+.book-week-card li span {
+  width: clamp(1.72rem, 8.6vw, 2.25rem) !important;
+  height: clamp(1.72rem, 8.6vw, 2.25rem) !important;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 360px) {
+  .book-app-content {
+    padding-left: max(clamp(.8rem, 4.5vw, 1.25rem), env(safe-area-inset-left)) !important;
+    padding-right: max(clamp(.8rem, 4.5vw, 1.25rem), env(safe-area-inset-right)) !important;
+  }
+
+  .book-home-header {
+    gap: .75rem;
+  }
+
+  .book-home-greeting {
+    font-size: clamp(1.62rem, 9vw, 2rem) !important;
+  }
+
+  .book-streak-card {
+    width: 3.55rem !important;
+    padding-inline: .4rem !important;
+  }
+
+  .book-week-card {
+    padding-inline: .75rem !important;
+  }
+
+  .book-week-card ul {
+    gap: .2rem !important;
+  }
+
+  .book-practice-card {
+    padding: .78rem !important;
+  }
+
+  .book-bottom-nav ul {
+    padding-inline: 0 !important;
+  }
+
+  .book-nav-pill {
+    width: 2.45rem !important;
+  }
+
+  .book-nav-label {
+    font-size: .61rem !important;
+  }
+
+  .app-dialog-overlay {
+    padding: .65rem;
+  }
+
+  .app-dialog-panel {
+    border-radius: 1.15rem;
+    padding: .9rem;
+  }
+}
+
+@media (max-width: 330px) {
+  .book-practice-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .book-practice-card {
+    min-height: 6.9rem !important;
+  }
+
+  .book-home-subtitle {
+    max-width: 15rem !important;
+  }
+}
+
+/* Intro pages stay usable on both very narrow and very short mobile screens. */
+@media (max-width: 340px) {
+  .book-paper-content {
+    padding-inline: 1.15rem .95rem;
+  }
+
+  .book-cover-content {
+    padding-right: 1.1rem;
+    padding-left: 3.35rem;
+  }
+
+  .book-cover-rule {
+    left: 3.35rem;
+  }
+
+  .book-cover-content h1 {
+    font-size: 2.35rem;
+  }
+
+  .book-cover-subtitle {
+    font-size: .9rem;
+  }
+
+  .book-choice-title {
+    font-size: .96rem;
+  }
+}
+
+@media (max-height: 640px) {
+  .book-paper-content {
+    padding-top: .8rem;
+    padding-bottom: .72rem;
+  }
+
+  .book-paper-topline {
+    min-height: 1.75rem;
+  }
+
+  .book-paper-body {
+    padding-top: .35rem;
+  }
+
+  .book-paper-heading h1,
+  .book-secret-title {
+    font-size: 1.38rem;
+  }
+
+  .book-paper-heading > p:last-child {
+    margin-top: .4rem;
+    font-size: .78rem;
+    line-height: 1.35;
+  }
+
+  .book-choice-list {
+    gap: .2rem;
+    margin-top: .4rem;
+  }
+
+  .book-choice {
+    min-height: 3rem;
+    padding-block: .22rem;
+  }
+
+  .book-choice.is-compact {
+    min-height: 2.18rem;
+  }
+
+  .book-choice-title {
+    font-size: .91rem;
+  }
+
+  .book-choice-detail {
+    font-size: .69rem;
+    line-height: 1.25;
+  }
+
+  .book-ready-list {
+    margin-top: .5rem;
+  }
+
+  .book-ready-line {
+    padding-block: .34rem;
+  }
+
+  .book-focus-note {
+    margin-top: .55rem;
+    font-size: .69rem;
+  }
+
+  .book-cover-content {
+    padding-top: 2.8rem;
+    padding-bottom: 1.65rem;
+  }
+
+  .book-cover-rule {
+    top: 2rem;
+  }
+
+  .book-cover-content h1 {
+    font-size: 2.28rem;
+  }
+
+  .book-cover-kicker {
+    margin-bottom: .9rem;
+  }
+
+  .book-cover-subtitle {
+    margin-top: .85rem;
+    font-size: .86rem;
+    line-height: 1.4;
+  }
+
+  .book-cover-icon {
+    margin-top: 1rem;
+  }
+
+  .book-paper-content.is-centered .book-paper-body {
+    padding-top: 1.15rem;
+  }
+
+  .book-secret-copy {
+    margin-top: .7rem;
+    font-size: .82rem;
+    line-height: 1.45;
+  }
+
+  .book-secret-magnifier {
+    width: min(38%, 7rem);
+    margin-top: .45rem;
+  }
+}
+
+@media (max-width: 330px) {
+  .moderation-duration-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
