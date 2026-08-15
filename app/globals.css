@@ -3151,3 +3151,35 @@ body {
     min-height: 2.25rem;
   }
 }
+
+/* August 14 intro stability: never blank the visible sheet while a reader is
+   holding or cancelling a page corner. react-pageflip handles the reverse face. */
+.story-book-wrap.is-flipping .stf__item.--left .story-book-page-inner:not(.story-book-cover-inner)::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* The onboarding copy is now intentionally static. No typewriter/cursor/fade
+   effects should run on text or answer lists. */
+.book-typewriter-cursor,
+.book-typewriter-pending {
+  display: none !important;
+}
+
+.book-content-fade,
+.book-content-fade.is-visible,
+.book-choice-list.book-content-fade .book-choice,
+.book-choice-list.book-content-fade.is-visible .book-choice {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  pointer-events: auto;
+}
+
+.book-secret-magnifier,
+.book-secret-magnifier.is-visible {
+  opacity: .78;
+  transform: none;
+  transition: none;
+}

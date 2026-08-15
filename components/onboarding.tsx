@@ -1,8 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useRef, useState, type ElementType, type ReactNode } from "react"
-import { flushSync } from "react-dom"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { BookOpen, Check } from "lucide-react"
 import BookSlider, { BookPage, type BookSliderHandle } from "@/components/ui/book-slider"
 import {
@@ -15,9 +14,6 @@ import {
   type StoryGoalChoice,
 } from "@/lib/onboarding-preferences"
 
-const TYPE_SPEED = 40
-const TYPE_GAP = 165
-
 const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string }> = [
   { value: "everyday", title: "Everyday stories", detail: "Tell better stories with friends." },
   { value: "speaking", title: "Interviews & speaking", detail: "Answer clearly and confidently." },
@@ -29,10 +25,8 @@ const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring",
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const [page, setPage] = useState(() => Math.max(0, Math.min(4, initialPage)))
-  const [preparedPage, setPreparedPage] = useState<number | null>(null)
   const pageRef = useRef(page)
   const bookRef = useRef<BookSliderHandle>(null)
-  const [seenPages, setSeenPages] = useState<Set<number>>(() => new Set(initialPage > 0 ? [initialPage] : []))
   const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", goals: [], blocker: "" })
 
   useEffect(() => {
@@ -65,50 +59,22 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     save({ ...preferences, blocker })
   }
 
-  function preparePage(target: number) {
-    const next = Math.max(0, Math.min(4, target))
-    // react-pageflip begins drawing the incoming sheet immediately. Commit the
-    // incoming page before the library starts the physical flip so there is no
-    // one-frame blank sheet between the cover and page one on slower devices.
-    flushSync(() => setPreparedPage(next))
-  }
-
-  function prepareTurn(direction: "next" | "previous") {
-    const target = direction === "next" ? pageRef.current + 1 : pageRef.current - 1
-    preparePage(target)
-  }
-
   function nextPage() {
     if (!canAdvance) return
-    prepareTurn("next")
     triggerIntroFeedback("page")
     bookRef.current?.next()
   }
 
   function previousPage() {
-    prepareTurn("previous")
+    if (pageRef.current <= 0) return
     triggerIntroFeedback("back")
     bookRef.current?.previous()
   }
 
   function handlePageChange(nextPage: number) {
-    const previous = pageRef.current
-    setSeenPages((current) => {
-      const next = new Set(current)
-      next.add(previous)
-      // A backwards turn always lands on a page the reader has already seen,
-      // so its content should be fully present instead of replaying reveals.
-      if (nextPage < previous) next.add(nextPage)
-      return next
-    })
     pageRef.current = nextPage
     setPage(nextPage)
-    setPreparedPage(null)
   }
-
-  const visiblePage = preparedPage ?? page
-  const pageIsActive = (index: number) => visiblePage === index
-  const pageAnimation = (index: number) => pageIsActive(index) && !seenPages.has(index)
 
   return (
     <main className={page === 0 ? "book-intro-canvas is-cover" : "book-intro-canvas"}>
@@ -117,46 +83,40 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
         page={page}
         onPageChange={handlePageChange}
         canGoNext={canAdvance}
-        onPreparePage={preparePage}
         onTurn={(direction) => triggerIntroFeedback(direction === "next" ? "page" : "back")}
       >
         <BookPage cover>
-          <CoverPage active={pageIsActive(0)} animate={pageAnimation(0)} onNext={nextPage} />
+          <CoverPage onNext={nextPage} />
         </BookPage>
 
         <BookPage>
-          <GoalPage active={pageIsActive(1)} animate={pageAnimation(1)} values={selectedGoals} onToggle={toggleGoal} onNext={nextPage} onBack={previousPage} />
+          <GoalPage values={selectedGoals} onToggle={toggleGoal} onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
-          <BlockerPage active={pageIsActive(2)} animate={pageAnimation(2)} value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
+          <BlockerPage value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
-          <SecretPage active={pageIsActive(3)} animate={pageAnimation(3)} onNext={nextPage} onBack={previousPage} />
+          <SecretPage onNext={nextPage} onBack={previousPage} />
         </BookPage>
 
         <BookPage>
-          <ReadyPage active={pageIsActive(4)} animate={pageAnimation(4)} preferences={preferences} onBack={previousPage} />
+          <ReadyPage preferences={preferences} onBack={previousPage} />
         </BookPage>
       </BookSlider>
     </main>
   )
 }
 
-function CoverPage({ active, animate, onNext }: { active: boolean; animate: boolean; onNext: () => void }) {
-  const title = "Welcome to StoryTuner."
-  const subtitle = "Learn to tell stories people actually want to hear."
-  const titleDelay = 220
-  const subtitleDelay = titleDelay + typeDuration(title, 42) + 170
-
+function CoverPage({ onNext }: { onNext: () => void }) {
   return (
     <div className="book-cover-content">
       <div className="book-cover-rule" aria-hidden="true" />
       <div>
         <p className="book-cover-kicker">STORYTUNER</p>
-        <TypewriterText as="h1" text={title} active={active} instant={!animate} delay={titleDelay} speed={42} />
-        <TypewriterText className="book-cover-subtitle" as="p" text={subtitle} active={active} instant={!animate} delay={subtitleDelay} speed={40} />
+        <h1>Welcome to StoryTuner.</h1>
+        <p className="book-cover-subtitle">Learn to tell stories people actually want to hear.</p>
       </div>
       <BookOpen className="book-cover-icon" strokeWidth={1.5} aria-hidden="true" />
       <button
@@ -175,38 +135,25 @@ function CoverPage({ active, animate, onNext }: { active: boolean; animate: bool
 }
 
 function GoalPage({
-  active,
-  animate,
   values,
   onToggle,
   onNext,
   onBack,
 }: {
-  active: boolean
-  animate: boolean
   values: StoryGoalChoice[]
   onToggle: (value: StoryGoalChoice) => void
   onNext: () => void
   onBack: () => void
 }) {
-  const eyebrow = "A note about you"
-  const title = "What do you want to get better at?"
-  const helper = "Choose as many as you want."
-  const eyebrowDelay = 120
-  const titleDelay = eyebrowDelay + typeDuration(eyebrow) + TYPE_GAP
-  const helperDelay = titleDelay + typeDuration(title) + TYPE_GAP
-  const choicesDelay = helperDelay + typeDuration(helper) + 120
-  const choicesVisible = useRevealAfter(active, choicesDelay, !animate)
-
   return (
     <PaperLayout pageNumber={1} onBack={onBack}>
       <div className="book-paper-heading">
-        <TypewriterText className="book-paper-eyebrow" as="p" text={eyebrow} active={active} instant={!animate} delay={eyebrowDelay} />
-        <TypewriterText as="h1" text={title} active={active} instant={!animate} delay={titleDelay} />
-        <TypewriterText as="p" text={helper} active={active} instant={!animate} delay={helperDelay} />
+        <p className="book-paper-eyebrow">A note about you</p>
+        <h1>What do you want to get better at?</h1>
+        <p>Choose as many as you want.</p>
       </div>
 
-      <div className={choicesVisible ? "book-choice-list book-content-fade is-visible" : "book-choice-list book-content-fade"}>
+      <div className="book-choice-list is-visible">
         {goalDetails.map((option) => (
           <BookChoice key={option.value} selected={values.includes(option.value)} onClick={() => onToggle(option.value)}>
             <span className="book-choice-title">{option.title}</span>
@@ -221,35 +168,24 @@ function GoalPage({
 }
 
 function BlockerPage({
-  active,
-  animate,
   value,
   onChoose,
   onNext,
   onBack,
 }: {
-  active: boolean
-  animate: boolean
   value: StoryBlocker
   onChoose: (value: Exclude<StoryBlocker, "">) => void
   onNext: () => void
   onBack: () => void
 }) {
-  const eyebrow = "Be honest"
-  const title = "What usually gets in your way?"
-  const eyebrowDelay = 120
-  const titleDelay = eyebrowDelay + typeDuration(eyebrow) + TYPE_GAP
-  const choicesDelay = titleDelay + typeDuration(title) + 130
-  const choicesVisible = useRevealAfter(active, choicesDelay, !animate)
-
   return (
     <PaperLayout pageNumber={2} onBack={onBack}>
       <div className="book-paper-heading compact">
-        <TypewriterText className="book-paper-eyebrow" as="p" text={eyebrow} active={active} instant={!animate} delay={eyebrowDelay} />
-        <TypewriterText as="h1" text={title} active={active} instant={!animate} delay={titleDelay} />
+        <p className="book-paper-eyebrow">Be honest</p>
+        <h1>What usually gets in your way?</h1>
       </div>
 
-      <div className={choicesVisible ? "book-choice-list book-choice-list-compact book-content-fade is-visible" : "book-choice-list book-choice-list-compact book-content-fade"}>
+      <div className="book-choice-list book-choice-list-compact is-visible">
         {blockers.map((blocker) => (
           <BookChoice key={blocker} selected={value === blocker} compact onClick={() => onChoose(blocker)}>
             <span className="book-choice-title">{blockerLabels[blocker]}</span>
@@ -262,39 +198,20 @@ function BlockerPage({
   )
 }
 
-function SecretPage({ active, animate, onNext, onBack }: { active: boolean; animate: boolean; onNext: () => void; onBack: () => void }) {
-  const eyebrow = "Here’s the secret."
-  const title = "Great stories aren’t about having an extraordinary life."
-  const copyLead = "They’re about knowing "
-  const copyStrong = "what to notice, what to leave out, and what to make people care about."
-  const eyebrowDelay = 130
-  const titleDelay = eyebrowDelay + typeDuration(eyebrow) + TYPE_GAP
-  const copyDelay = titleDelay + typeDuration(title, 40) + 150
-  const artDelay = copyDelay + typeDuration(copyLead + copyStrong, 38) + 180
-  const artVisible = useRevealAfter(active, artDelay, !animate)
-
+function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   return (
     <PaperLayout pageNumber={3} onBack={onBack} centered>
       <div className="book-secret-reveal">
-        <TypewriterText className="book-paper-eyebrow" as="p" text={eyebrow} active={active} instant={!animate} delay={eyebrowDelay} />
-        <TypewriterText className="book-secret-title" as="h1" text={title} active={active} instant={!animate} delay={titleDelay} speed={40} />
-        <RichTypewriterText
-          className="book-secret-copy"
-          as="p"
-          active={active}
-          instant={!animate}
-          delay={copyDelay}
-          speed={38}
-          segments={[
-            { text: copyLead },
-            { text: copyStrong, strong: true },
-          ]}
-        />
+        <p className="book-paper-eyebrow">Here’s the secret.</p>
+        <h1 className="book-secret-title">Great stories aren’t about having an extraordinary life.</h1>
+        <p className="book-secret-copy">
+          They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
+        </p>
         <img
           src="/magnifying-glass-sketch.png"
           alt=""
           aria-hidden="true"
-          className={artVisible ? "book-secret-magnifier is-visible" : "book-secret-magnifier"}
+          className="book-secret-magnifier is-visible"
           draggable={false}
         />
       </div>
@@ -303,48 +220,34 @@ function SecretPage({ active, animate, onNext, onBack }: { active: boolean; anim
   )
 }
 
-function ReadyPage({ active, animate, preferences, onBack }: { active: boolean; animate: boolean; preferences: OnboardingPreferences; onBack: () => void }) {
+function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences; onBack: () => void }) {
   const items = ["Learn", "Practice", "Get feedback", "Improve"]
   const goals = preferences.goals ?? []
-  const eyebrow = "Your next chapter"
-  const title = "StoryTuner is ready."
-  const subtitle = "You’ll learn one idea at a time, then implement those ideas in stories of your own."
   const focus = goals.length > 0 ? `Starting focus: ${goals.map((goal) => goalLabels[goal]).join(", ")}.` : ""
-
-  const eyebrowDelay = 120
-  const titleDelay = eyebrowDelay + typeDuration(eyebrow) + TYPE_GAP
-  const subtitleDelay = titleDelay + typeDuration(title) + TYPE_GAP
-  const listStartDelay = subtitleDelay + typeDuration(subtitle, 38) + 150
-  const listStep = 180
-  const focusDelay = listStartDelay + items.reduce((total, item) => total + typeDuration(item, 38) + listStep, 0)
 
   return (
     <PaperLayout pageNumber={4} onBack={onBack}>
       <div className="book-paper-heading">
-        <TypewriterText className="book-paper-eyebrow" as="p" text={eyebrow} active={active} instant={!animate} delay={eyebrowDelay} />
-        <TypewriterText as="h1" text={title} active={active} instant={!animate} delay={titleDelay} />
-        <TypewriterText as="p" text={subtitle} active={active} instant={!animate} delay={subtitleDelay} speed={38} />
+        <p className="book-paper-eyebrow">Your next chapter</p>
+        <h1>StoryTuner is ready.</h1>
+        <p>You’ll learn one idea at a time, then implement those ideas in stories of your own.</p>
       </div>
 
       <div className="book-ready-list">
-        {items.map((item, index) => {
-          const itemDelay = listStartDelay + items.slice(0, index).reduce((total, previous) => total + typeDuration(previous, 38) + listStep, 0)
-          return (
-            <div key={item} className="book-ready-line">
-              <span>{index + 1}.</span>
-              <TypewriterText as="strong" text={item} active={active} instant={!animate} delay={itemDelay} speed={38} />
-            </div>
-          )
-        })}
+        {items.map((item, index) => (
+          <div key={item} className="book-ready-line">
+            <span>{index + 1}.</span>
+            <strong>{item}</strong>
+          </div>
+        ))}
       </div>
 
-      {focus && (
-        <TypewriterText className="book-focus-note" as="p" text={focus} active={active} instant={!animate} delay={focusDelay} speed={38} />
-      )}
+      {focus && <p className="book-focus-note">{focus}</p>}
 
       <div className="book-final-actions" data-book-no-turn="true">
         <Link
           href="/sign-up"
+          prefetch
           data-book-no-turn="true"
           onPointerDown={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
@@ -376,19 +279,13 @@ function PaperLayout({
         <button
           type="button"
           data-book-no-turn="true"
-          onPointerDown={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-          }}
-          onPointerUp={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            onBack()
-          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.preventDefault()
             event.stopPropagation()
-            if (event.detail === 0) onBack()
+            onBack()
           }}
           aria-label="Turn to the previous page"
         >
@@ -456,187 +353,6 @@ function PageTurnAction({
   )
 }
 
-type TypewriterSegment = {
-  text: string
-  strong?: boolean
-}
-
-function TypewriterText({
-  text,
-  active,
-  instant = false,
-  delay = 0,
-  speed = TYPE_SPEED,
-  as = "span",
-  className,
-}: {
-  text: string
-  active: boolean
-  instant?: boolean
-  delay?: number
-  speed?: number
-  as?: ElementType
-  className?: string
-}) {
-  return (
-    <RichTypewriterText
-      segments={[{ text }]}
-      active={active}
-      instant={instant}
-      delay={delay}
-      speed={speed}
-      as={as}
-      className={className}
-    />
-  )
-}
-
-function RichTypewriterText({
-  segments,
-  active,
-  instant = false,
-  delay = 0,
-  speed = TYPE_SPEED,
-  as: Tag = "span",
-  className,
-}: {
-  segments: TypewriterSegment[]
-  active: boolean
-  instant?: boolean
-  delay?: number
-  speed?: number
-  as?: ElementType
-  className?: string
-}) {
-  const fullText = segments.map((segment) => segment.text).join("")
-  const [visibleCharacters, setVisibleCharacters] = useState(0)
-
-  useEffect(() => {
-    let cancelled = false
-    let timer: ReturnType<typeof setTimeout> | null = null
-
-    if (!active) {
-      setVisibleCharacters(0)
-      return
-    }
-
-    if (instant || prefersReducedMotion()) {
-      setVisibleCharacters(fullText.length)
-      return
-    }
-
-    setVisibleCharacters(0)
-
-    const revealNext = (index: number) => {
-      if (cancelled || index > fullText.length) return
-      setVisibleCharacters(index)
-
-      // A restrained, bright paper/type tick while text is being revealed.
-      // It only plays after the reader has already interacted with the intro,
-      // because the shared AudioContext is unlocked by that first tap.
-      const currentCharacter = fullText[index - 1] ?? ""
-      if (/\S/.test(currentCharacter) && index % 2 === 0) {
-        playIntroTypingSound(index)
-      }
-
-      if (index < fullText.length) {
-        timer = setTimeout(() => revealNext(index + 1), speed)
-      }
-    }
-
-    timer = setTimeout(() => revealNext(1), delay)
-
-    return () => {
-      cancelled = true
-      if (timer) clearTimeout(timer)
-    }
-  }, [active, delay, fullText, instant, speed])
-
-  const displayedCharacters = active && instant ? fullText.length : visibleCharacters
-  let offset = 0
-  let cursorPlaced = false
-  const isTyping = active && !instant && displayedCharacters > 0 && displayedCharacters < fullText.length
-
-  // Keep every complete word in the DOM at its final width from the first frame.
-  // Only the letters change visibility. This prevents a partly typed word such as
-  // “gets” from briefly fitting on one line and then jumping to the next.
-  const rendered = segments.flatMap((segment, segmentIndex) => {
-    const tokens = segment.text.match(/\s+|[^\s]+/g) ?? []
-
-    return tokens.map((token, tokenIndex) => {
-      const start = offset
-      const end = start + token.length
-      offset = end
-      const key = `${segmentIndex}-${tokenIndex}`
-
-      if (/^\s+$/.test(token)) {
-        const cursorBelongsHere = isTyping && !cursorPlaced && displayedCharacters >= start && displayedCharacters <= end
-        if (cursorBelongsHere) cursorPlaced = true
-        return (
-          <span key={key}>
-            {token}
-            {cursorBelongsHere && <span className="book-typewriter-cursor" aria-hidden="true" />}
-          </span>
-        )
-      }
-
-      const visibleAmount = Math.max(0, Math.min(token.length, displayedCharacters - start))
-      const visible = token.slice(0, visibleAmount)
-      const pending = token.slice(visibleAmount)
-      const cursorBelongsHere = isTyping && !cursorPlaced && displayedCharacters >= start && displayedCharacters <= end
-      if (cursorBelongsHere) cursorPlaced = true
-
-      const word = (
-        <span className="book-typewriter-word">
-          {visible}
-          {cursorBelongsHere && <span className="book-typewriter-cursor" aria-hidden="true" />}
-          {pending && <span className="book-typewriter-pending" aria-hidden="true">{pending}</span>}
-        </span>
-      )
-
-      return segment.strong
-        ? <strong key={key}>{word}</strong>
-        : <span key={key}>{word}</span>
-    })
-  })
-
-  return (
-    <Tag className={className} aria-label={fullText}>
-      {rendered}
-    </Tag>
-  )
-}
-
-function useRevealAfter(active: boolean, delay: number, instant = false) {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (!active) {
-      setVisible(false)
-      return
-    }
-
-    if (instant || prefersReducedMotion()) {
-      setVisible(true)
-      return
-    }
-
-    const timer = setTimeout(() => setVisible(true), delay)
-    return () => clearTimeout(timer)
-  }, [active, delay, instant])
-
-  return instant && active ? true : visible
-}
-
-function typeDuration(text: string, speed = TYPE_SPEED) {
-  return text.length * speed
-}
-
-function prefersReducedMotion() {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
-}
-
 let introAudioContext: AudioContext | null = null
 
 function getIntroAudioContext(create: boolean) {
@@ -659,8 +375,6 @@ function playIntroSound(kind: "selection" | "action" | "page" | "back") {
     try {
       const now = context.currentTime
 
-      // Choices use a soft, low tactile "tap" rather than another bright
-      // synthesized chirp, so they feel clearly different from typing.
       if (kind === "selection") {
         const body = context.createOscillator()
         const bodyGain = context.createGain()
@@ -728,32 +442,6 @@ function playIntroSound(kind: "selection" | "action" | "page" | "back") {
   }
 }
 
-function playIntroTypingSound(index: number) {
-  // Do not try to create or unlock audio from a timer. The context is created
-  // by a real reader interaction, which keeps this reliable on mobile Safari.
-  const context = getIntroAudioContext(false)
-  if (!context || context.state !== "running") return
-
-  try {
-    const now = context.currentTime
-    const oscillator = context.createOscillator()
-    const gain = context.createGain()
-    const pitchVariation = (index % 5) * 14
-
-    oscillator.type = "triangle"
-    oscillator.frequency.setValueAtTime(560 + pitchVariation, now)
-    oscillator.frequency.exponentialRampToValueAtTime(500 + pitchVariation, now + 0.022)
-    gain.gain.setValueAtTime(0.0001, now)
-    gain.gain.linearRampToValueAtTime(0.0135, now + 0.003)
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.023)
-
-    oscillator.connect(gain)
-    gain.connect(context.destination)
-    oscillator.start(now)
-    oscillator.stop(now + 0.027)
-  } catch {}
-}
-
 function triggerIntroFeedback(kind: "selection" | "action" | "page" | "back") {
   if (typeof window === "undefined") return
 
@@ -765,4 +453,3 @@ function triggerIntroFeedback(kind: "selection" | "action" | "page" | "back") {
     window.navigator.vibrate(duration)
   } catch {}
 }
-
