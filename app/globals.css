@@ -2629,6 +2629,10 @@ body {
   line-height: 1.08;
 }
 
+.book-app .planner-hero-title {
+  color: #fffdf8;
+}
+
 .book-app :is(p, li) {
   text-rendering: optimizeLegibility;
 }
@@ -3084,6 +3088,18 @@ body {
 
 .recording-audio-range {
   touch-action: pan-x;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  padding: 0 !important;
+}
+
+.book-app .recording-audio-range,
+.book-app .recording-audio-range:focus {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 .recording-audio-range::-webkit-slider-runnable-track {

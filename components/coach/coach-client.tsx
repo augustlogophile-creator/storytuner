@@ -30,7 +30,7 @@ declare global {
 }
 
 export function CoachClient() {
-  const { state, addCoachExchange } = useApp()
+  const { state, ready, syncStatus, addCoachExchange } = useApp()
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -44,6 +44,7 @@ export function CoachClient() {
   const endRef = useRef<HTMLDivElement | null>(null)
   const requestKeyRef = useRef<string | null>(null)
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const initialContextAppliedRef = useRef(false)
 
   const localMessages = useMemo(() => state.coach.messages.filter((message) => Boolean(message) && (message.role === "user" || message.role === "assistant") && typeof message.id === "string" && typeof message.content === "string"), [state.coach.messages])
   const safeMessages = useMemo(() => mergeCoachMessages(archivedMessages, localMessages), [archivedMessages, localMessages])
@@ -75,10 +76,33 @@ export function CoachClient() {
   }, [loadCoachHistory])
 
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get("recording")
-    if (id && state.recordings.some((item) => item.id === id)) setRecordingId(id)
-    else if (recordingId && !state.recordings.some((item) => item.id === recordingId)) setRecordingId("")
-  }, [state.recordings, recordingId])
+    if (!ready || initialContextAppliedRef.current) return
+    const id = new URLSearchParams(window.location.search).get("recording") ?? ""
+    if (!id) {
+      setRecordingId("")
+      initialContextAppliedRef.current = true
+      return
+    }
+    if (state.recordings.some((item) => item.id === id)) {
+      setRecordingId(id)
+      initialContextAppliedRef.current = true
+      return
+    }
+    // A linked cloud recording can arrive just after local hydration. Do not
+    // discard the requested context until account sync has actually settled.
+    if (syncStatus === "syncing") return
+    setRecordingId("")
+    const url = new URL(window.location.href)
+    url.searchParams.delete("recording")
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`)
+    initialContextAppliedRef.current = true
+  }, [ready, state.recordings, syncStatus])
+
+  useEffect(() => {
+    if (!ready || !initialContextAppliedRef.current || !recordingId) return
+    if (state.recordings.some((item) => item.id === recordingId)) return
+    changeCoachContext("")
+  }, [ready, recordingId, state.recordings])
 
   useEffect(() => {
     const node = endRef.current
@@ -96,6 +120,18 @@ export function CoachClient() {
   }, [state.premium])
 
   useEffect(() => () => { recognitionRef.current?.stop(); window.speechSynthesis?.cancel() }, [])
+
+  function changeCoachContext(nextId: string) {
+    const validId = nextId && state.recordings.some((item) => item.id === nextId) ? nextId : ""
+    setRecordingId(validId)
+    setError("")
+    requestKeyRef.current = null
+    initialContextAppliedRef.current = true
+    const url = new URL(window.location.href)
+    if (validId) url.searchParams.set("recording", validId)
+    else url.searchParams.delete("recording")
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`)
+  }
 
   async function send(override?: string) {
     const clean = (override ?? input).trim()
@@ -215,22 +251,64 @@ export function CoachClient() {
       </header>
 
       <section className="rounded-3xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0"><p className="text-[0.65rem] font-semibold uppercase tracking-[0.13em] text-muted-foreground">Story context</p><p className="mt-1 truncate text-sm font-semibold">{recording ? recording.title : "General storytelling"}</p></div>
-          <div className="relative shrink-0">
-            <select value={recordingId} onChange={(event) => setRecordingId(event.target.value)} className="max-w-36 appearance-none rounded-full border border-border bg-background py-2 pl-3 pr-8 text-xs font-semibold outline-none focus:border-brand" aria-label="Choose story context">
-              <option value="">General</option>
-              {state.recordings.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.13em] text-muted-foreground">Conversation focus</p>
+            <p className="mt-1 truncate text-sm font-semibold">{recording ? recording.title : "General storytelling"}</p>
           </div>
+          <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1 text-[0.65rem] font-semibold text-muted-foreground">{recording ? "Story" : "General"}</span>
         </div>
-        {recording && <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">Parch can reference this story’s transcript, feedback, and scores while you chat.</p>}
+
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-secondary/65 p-1.5">
+          <button
+            type="button"
+            onClick={() => changeCoachContext("")}
+            className={`rounded-xl px-3 py-2.5 text-left transition-colors ${!recordingId ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            aria-pressed={!recordingId}
+          >
+            <span className="block text-xs font-semibold">General</span>
+            <span className="mt-0.5 block text-[0.65rem] leading-4">Any storytelling question</span>
+          </button>
+          <button
+            type="button"
+            disabled={state.recordings.length === 0}
+            onClick={() => changeCoachContext(recordingId || state.recordings[0]?.id || "")}
+            className={`rounded-xl px-3 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${recordingId ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            aria-pressed={Boolean(recordingId)}
+          >
+            <span className="block text-xs font-semibold">Saved story</span>
+            <span className="mt-0.5 block text-[0.65rem] leading-4">{state.recordings.length ? `${state.recordings.length} available` : "No stories yet"}</span>
+          </button>
+        </div>
+
+        {recordingId && state.recordings.length > 0 && (
+          <div className="mt-3">
+            <label htmlFor="coach-story-context" className="mb-1.5 block text-[0.65rem] font-semibold text-muted-foreground">Choose which story Parch should use</label>
+            <div className="relative">
+              <select
+                id="coach-story-context"
+                value={recordingId}
+                onChange={(event) => changeCoachContext(event.target.value)}
+                className="w-full appearance-none rounded-2xl border border-border bg-background py-2.5 pl-3.5 pr-9 text-xs font-semibold outline-none focus:border-brand"
+                aria-label="Choose saved story context"
+              >
+                {state.recordings.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            </div>
+          </div>
+        )}
+
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">
+          {recording
+            ? "Parch will use this story’s transcript, feedback, and scores until you switch the focus."
+            : "Parch will answer as a general storytelling coach without tying the conversation to one saved story."}
+        </p>
       </section>
 
       <div className="flex items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
-        <span>{state.premium ? "Unlimited coaching with Membership" : `${used} of ${FREE_COACH_LIMIT} free messages used`}</span>
-        <span className="hidden sm:inline">{recording ? `Talking about: ${recording.title}` : "General coaching"}</span>
+        <span>{state.premium ? "Unlimited coaching" : `${used} of ${FREE_COACH_LIMIT} free messages used`}</span>
+        <span className="truncate text-right">{recording ? `Using: ${recording.title}` : "General coaching"}</span>
       </div>
 
       <section className="flex min-h-[30rem] flex-1 flex-col overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">

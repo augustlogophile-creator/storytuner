@@ -175,8 +175,8 @@ function AudioPlayer({ src, durationSeconds, className }: { src: string; duratio
         </button>
         <span className="w-9 shrink-0 text-[0.72rem] tabular-nums text-foreground">{formatMediaTime(currentTime)}</span>
         <div className="relative min-w-0 flex-1">
-          <div className="pointer-events-none absolute inset-y-1/2 left-0 h-1 w-full -translate-y-1/2 rounded-full bg-foreground/20" />
-          <div className="pointer-events-none absolute inset-y-1/2 left-0 h-1 -translate-y-1/2 rounded-full bg-foreground" style={{ width: `${progress}%` }} />
+          <div className="pointer-events-none absolute inset-y-1/2 left-0 h-1 w-full -translate-y-1/2 rounded-full bg-white/90" />
+          <div className="pointer-events-none absolute inset-y-1/2 left-0 h-1 -translate-y-1/2 rounded-full bg-white" style={{ width: `${progress}%` }} />
           <input
             type="range"
             min={0}

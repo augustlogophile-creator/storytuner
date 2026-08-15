@@ -794,7 +794,7 @@ export function ArenaClient() {
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Parch grades the craft, not the topic.</p>
-        <span className="mt-3 inline-flex rounded-full border border-border bg-secondary/45 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{state.premium ? "Unlimited with Membership" : `${remainingFreeStories} of ${FREE_ARENA_LIMIT} free stories remaining`}</span>
+        {!state.premium && <span className="mt-3 inline-flex rounded-full border border-border bg-secondary/45 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>}
       </header>
 
       {phase === "setup" && (
@@ -874,7 +874,7 @@ export function ArenaClient() {
             </section>
           ) : (
             <div className="flex justify-end">
-              <Link href="/planner" className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-foreground">
+              <Link href="/planner?from=arena" prefetch className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-foreground">
                 <Map className="h-3.5 w-3.5 text-accent-foreground" />
                 Need help planning?
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -1432,7 +1432,7 @@ function meaningfulWordCount(text: string) {
   const words = text.toLowerCase().match(/[a-z0-9]+(?:['’][a-z0-9]+)*/g) ?? []
   return words.filter((word) => !fillerWords.has(word)).length
 }
-function recordingCountLabel(count: number) { return `${count} ${count === 1 ? "recording" : "recordings"}` }
+function recordingCountLabel(count: number) { return `${count} saved ${count === 1 ? "recording" : "recordings"}` }
 function formatTime(seconds: number) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` }
 function firstSentence(text: string) { const sentence = text.split(/(?<=[.!?])\s/)[0] || "Untitled story"; return sentence.length > 70 ? `${sentence.slice(0, 67)}…` : sentence }
 function labelArea(area: ScoreArea) { return area === "development" ? "Development" : area[0].toUpperCase() + area.slice(1) }

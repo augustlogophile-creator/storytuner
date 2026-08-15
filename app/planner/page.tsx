@@ -4,9 +4,14 @@ import { StoryPlannerClient } from "@/components/planner/story-planner-client"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { requireStoryTunerUser } from "@/lib/require-auth"
 
-export default async function StoryPlannerPage() {
-  const user = await requireStoryTunerUser("/planner")
+type StoryPlannerSearchParams = Promise<Record<string, string | string[] | undefined>>
+
+export default async function StoryPlannerPage({ searchParams }: { searchParams: StoryPlannerSearchParams }) {
+  const params = await searchParams
+  const from = Array.isArray(params.from) ? params.from[0] : params.from
+  const fromArena = from === "arena"
+  const user = await requireStoryTunerUser(fromArena ? "/planner?from=arena" : "/planner")
   const membership = await getMembershipByUserId(user.id)
   if (!membership.active) redirect("/membership")
-  return <MobileShell><StoryPlannerClient /></MobileShell>
+  return <MobileShell><StoryPlannerClient fromArena={fromArena} /></MobileShell>
 }

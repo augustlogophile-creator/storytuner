@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   ChevronDown,
@@ -49,7 +50,7 @@ type FieldProps = {
   required?: boolean
 }
 
-export function StoryPlannerClient() {
+export function StoryPlannerClient({ fromArena = false }: { fromArena?: boolean }) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [plan, setPlan] = useState<StoryPlanRecord | null>(null)
   const [history, setHistory] = useState<StoryPlanRecord[]>([])
@@ -162,6 +163,11 @@ export function StoryPlannerClient() {
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
+      {fromArena && (
+        <Link href="/arena" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" /> Arena
+        </Link>
+      )}
       <header className="rounded-[2rem] bg-primary p-6 text-primary-foreground">
         <div className="flex items-start gap-4">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
@@ -169,7 +175,7 @@ export function StoryPlannerClient() {
           </span>
           <div>
             <Eyebrow className="text-primary-foreground/60">AI Story Planner</Eyebrow>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Know where your story is going before you tell it.</h1>
+            <h1 className="planner-hero-title mt-2 text-2xl font-semibold tracking-tight text-balance">Know where your story is going before you tell it.</h1>
             <p className="mt-2 max-w-2xl text-sm leading-7 text-primary-foreground/70">
               Give Parch the situation, your goal, the facts, and what feels difficult. You will get a clear structure, a stronger plan, and practical delivery guidance without losing your voice.
             </p>
@@ -184,7 +190,7 @@ export function StoryPlannerClient() {
               <Eyebrow>Build your plan</Eyebrow>
               <h2 className="mt-2 text-xl font-semibold tracking-tight">Start with what you already know</h2>
             </div>
-            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">About 3 minutes</span>
+            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">~3 min</span>
           </div>
 
           <div className="flex flex-col gap-4">
