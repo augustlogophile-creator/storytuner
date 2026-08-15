@@ -7,19 +7,23 @@ import { ArrowRight, Check, Flame, Mic2, Shuffle } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
-import { CountUp } from "@/components/ui/count-up"
 import { Celebration } from "@/components/ui/celebration"
 import { TypewriterText } from "@/components/ui/typewriter-text"
 import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
-  const { state, ready } = useApp()
+  const { state, ready, syncStatus } = useApp()
   const [celebrateStreak, setCelebrateStreak] = useState(false)
+  const [homeReady, setHomeReady] = useState(() => ready && syncStatus !== "syncing")
   const progress = courseProgress(state)
   const next = nextCourseItem(state)
   const freeLimitReached = freeLessonLimitReached(state) && progress.done < progress.total
   const week = getCurrentWeek(state.activityDates)
+
+  useEffect(() => {
+    if (!homeReady && ready && syncStatus !== "syncing") setHomeReady(true)
+  }, [homeReady, ready, syncStatus])
 
   useEffect(() => {
     if (!ready || state.streak < 1 || !state.activityDates.includes(localDateKey(new Date()))) return
@@ -73,7 +77,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
         <div className="book-streak-card flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
           <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
-          <CountUp value={state.streak} className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]" />
+          <span className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]">{state.streak}</span>
           <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">days</span>
         </div>
       </header>
@@ -89,7 +93,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         <p className="book-course-subtitle mt-1.5 text-[0.72rem] leading-relaxed text-[#bdb7af] text-pretty">{courseSubtitle}</p>
 
         <div className="mt-3">
-          <ProgressBar value={progress.percent} className="h-1.5 bg-white/15 [&>div]:bg-white/65" />
+          <ProgressBar value={progress.percent} className="h-1.5 bg-white/15" barClassName="bg-white/65 transition-none" />
         </div>
 
         <Link
@@ -114,7 +118,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
               <p className="text-[0.8rem] font-semibold">This week</p>
               <p className="mt-0.5 text-[0.65rem] text-muted-foreground">Keep the habit moving.</p>
             </div>
-            <p className="text-[0.69rem] text-muted-foreground"><CountUp value={activeDays} /> of 7 days</p>
+            <p className="text-[0.69rem] text-muted-foreground">{activeDays} of 7 days</p>
           </div>
           <ul className="mt-3.5 flex items-center justify-between gap-1.5">
             {week.map((day) => (
@@ -143,7 +147,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         </div>
 
         <div className="mt-auto flex h-[3rem] shrink-0 items-end justify-center overflow-hidden px-3 pb-3 pt-3 text-center">
-          <TypewriterText className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />
+          <TypewriterText active={homeReady} typingMs={90} deletingMs={42} pauseMs={1900} className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />
         </div>
       </section>
     </div>

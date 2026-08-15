@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { useEffect, useLayoutEffect } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import { BottomNav } from "@/components/bottom-nav"
 import { useApp } from "@/lib/app-state"
@@ -12,18 +12,30 @@ export function MobileShell({
   wide = false,
   fitViewport = false,
   scrollable = false,
+  waitForInitialSync = false,
 }: {
   children: ReactNode
   nav?: boolean
   wide?: boolean
   fitViewport?: boolean
   scrollable?: boolean
+  waitForInitialSync?: boolean
 }) {
   const pathname = usePathname()
-  const { ready } = useApp()
+  const { ready, syncStatus } = useApp()
+  const [initialSyncSettled, setInitialSyncSettled] = useState(
+    () => !waitForInitialSync || syncStatus !== "syncing",
+  )
   void wide
   void fitViewport
   void scrollable
+
+  useEffect(() => {
+    if (initialSyncSettled || !ready) return
+    if (!waitForInitialSync || syncStatus !== "syncing") setInitialSyncSettled(true)
+  }, [initialSyncSettled, ready, syncStatus, waitForInitialSync])
+
+  const contentReady = ready && initialSyncSettled
 
   useLayoutEffect(() => {
     // StoryTuner uses native document scrolling. Clear any stale inline lock
@@ -49,13 +61,13 @@ export function MobileShell({
     >
       <main
         data-app-scroll-root="true"
-        aria-busy={!ready}
-        style={{ visibility: ready ? "visible" : "hidden" }}
+        aria-busy={!contentReady}
+        style={{ visibility: contentReady ? "visible" : "hidden" }}
         className={`app-content-reveal book-app-content w-full min-w-0 flex-1 overflow-x-hidden px-5 pt-6 ${nav ? "pb-28" : "pb-10"}`}
       >
         {children}
       </main>
-      {nav && <BottomNav />}
+      {nav && contentReady && <BottomNav />}
     </div>
   )
 }

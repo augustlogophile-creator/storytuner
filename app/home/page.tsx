@@ -10,5 +10,5 @@ export default async function HomePage() {
   const restorationNotice = restriction?.accountStatus === "active" && restriction?.publicMessage?.startsWith("Your StoryTuner access has been restored")
     ? restriction?.publicMessage ?? null
     : null
-  return <MobileShell fitViewport scrollable><HomeDashboard accountNotice={restorationNotice} accountNoticeUpdatedAt={restriction?.updatedAt ?? null} /></MobileShell>
+  return <MobileShell fitViewport scrollable waitForInitialSync><HomeDashboard accountNotice={restorationNotice} accountNoticeUpdatedAt={restriction?.updatedAt ?? null} /></MobileShell>
 }

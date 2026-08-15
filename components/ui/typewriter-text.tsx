@@ -26,14 +26,16 @@ type TypewriterTextProps = {
   typingMs?: number
   deletingMs?: number
   pauseMs?: number
+  active?: boolean
 }
 
 export function TypewriterText({
   prompts = writingPrompts,
   className = "",
-  typingMs = 68,
-  deletingMs = 34,
-  pauseMs = 1800,
+  typingMs = 90,
+  deletingMs = 42,
+  pauseMs = 1900,
+  active = true,
 }: TypewriterTextProps) {
   const source = useMemo(() => prompts.filter(Boolean), [prompts])
   const [promptIndex, setPromptIndex] = useState(0)
@@ -53,7 +55,7 @@ export function TypewriterText({
   }, [promptIndex, source.length])
 
   useEffect(() => {
-    if (!current) return
+    if (!active || !current) return
 
     if (!deleting && visibleCharacters < current.length) {
       const timeout = window.setTimeout(() => setVisibleCharacters((value) => value + 1), typingMs)
@@ -77,12 +79,12 @@ export function TypewriterText({
       }, 320)
       return () => window.clearTimeout(timeout)
     }
-  }, [current, deleting, deletingMs, pauseMs, source.length, typingMs, visibleCharacters])
+  }, [active, current, deleting, deletingMs, pauseMs, source.length, typingMs, visibleCharacters])
 
   return (
     <span className={`typewriter-text ${className}`} aria-live="off">
       <span>{current.slice(0, visibleCharacters)}</span>
-      <span className="typewriter-cursor" aria-hidden="true">|</span>
+      {active && <span className="typewriter-cursor" aria-hidden="true">|</span>}
     </span>
   )
 }
