@@ -45,11 +45,11 @@ const unitIcons: Record<number, LucideIcon> = {
   15: Trophy,
 }
 
-export function ProgressClient() {
+export function ProgressClient({ sharedStoryCount }: { sharedStoryCount: number | null }) {
   const { state } = useApp()
   const course = courseProgress(state)
   const completedUnits = curriculum.filter((unit) => unitProgress(state, unit.id).done === 3).length
-  const shared = state.recordings.filter((item) => item.shared).length
+  const shared = sharedStoryCount ?? state.recordings.filter((item) => item.shared).length
   const week = getCurrentWeek(state.activityDates)
   const activeDays = week.filter((day) => day.active).length
   return <div className="flex flex-col gap-6">

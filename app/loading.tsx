@@ -3,7 +3,7 @@ export default function Loading() {
     <main
       aria-busy="true"
       aria-label="Loading StoryTuner"
-      className="book-app mx-auto min-h-dvh w-full max-w-md bg-background px-5 pb-24 pt-6"
+      className="app-shell route-loading-shell book-app mx-auto min-h-dvh w-full bg-background px-5 pb-24 pt-6"
     >
       <div className="route-stability-shell" aria-hidden="true">
         <div className="route-stability-kicker skeleton-block" />

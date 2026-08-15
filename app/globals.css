@@ -4013,3 +4013,11 @@ body {
     animation: none !important;
   }
 }
+
+/* Route-level skeletons must never expand beyond StoryTuner's phone canvas. */
+.route-loading-shell {
+  box-sizing: border-box;
+  width: min(100%, 28rem) !important;
+  max-width: 28rem !important;
+  margin-inline: auto;
+}
