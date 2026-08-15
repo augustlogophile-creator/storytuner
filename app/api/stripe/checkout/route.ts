@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from "@/lib/require-auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripePost } from "@/lib/stripe-rest"
 import { backendError, backendLog } from "@/lib/backend-log"
-import { requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { readJsonBody, rejectLargeRequest, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -16,6 +16,16 @@ export async function POST(request: Request) {
   if (crossSite) return crossSite
   const user = await getAuthenticatedUser()
   if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
+
+  const oversized = rejectLargeRequest(request, 5_000)
+  if (oversized) return oversized
+  const body = await readJsonBody(request, 5_000)
+  if (!body.ok) return body.response
+  const renewalConsent = typeof body.value === "object" && body.value !== null && (body.value as { renewalConsent?: unknown }).renewalConsent === true
+  if (!renewalConsent) {
+    return Response.json({ error: "Confirm the automatic-renewal terms before starting checkout." }, { status: 400 })
+  }
+
   const limited = rateLimitResponse(rateLimitUser(user.id, "stripe_checkout", [{ limit: 4, windowMs: 10 * 60 * 1000, label: "4/10m" }]), "Too many checkout attempts. Wait a few minutes and try again.")
   if (limited) return limited
 
@@ -47,6 +57,12 @@ export async function POST(request: Request) {
       if (error) throw error
     }
 
+    const consentedAt = new Date().toISOString()
+    const consentVersion = "annual-auto-renew-v1"
+    const consentSummary = "$11.99/year billed annually; auto-renews yearly until canceled; online cancellation available."
+
+    // Keep the consent on Stripe objects even if the optional local compliance
+    // ledger migration has not been applied yet.
     const session = await stripePost<CheckoutSession>("/checkout/sessions", {
       mode: "subscription",
       customer: customerId,
@@ -56,12 +72,33 @@ export async function POST(request: Request) {
       cancel_url: `${origin}/membership?checkout=cancelled`,
       client_reference_id: user.id,
       "metadata[supabase_user_id]": user.id,
+      "metadata[renewal_consent_version]": consentVersion,
+      "metadata[renewal_consent_at]": consentedAt,
       "subscription_data[metadata][supabase_user_id]": user.id,
+      "subscription_data[metadata][renewal_consent_version]": consentVersion,
+      "subscription_data[metadata][renewal_consent_at]": consentedAt,
       allow_promotion_codes: true,
     })
 
     if (!session.url) throw new Error("Stripe did not return a checkout URL.")
-    backendLog("info", "stripe_checkout_created", { userId: user.id, customerId })
+
+    try {
+      const admin = createAdminClient()
+      const { error: consentError } = await admin.from("subscription_consent_records").insert({
+        user_id: user.id,
+        stripe_customer_id: customerId,
+        stripe_checkout_session_id: session.id,
+        consent_version: consentVersion,
+        consent_summary: consentSummary,
+        consented_at: consentedAt,
+        retain_until: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      if (consentError) backendError("stripe_consent_ledger_write_failed", consentError, { userId: user.id, checkoutSessionId: session.id })
+    } catch (consentError) {
+      backendError("stripe_consent_ledger_unavailable", consentError, { userId: user.id, checkoutSessionId: session.id })
+    }
+
+    backendLog("info", "stripe_checkout_created", { userId: user.id, customerId, consentVersion, consentedAt })
     return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     backendError("stripe_checkout_failed", error, { userId: user.id })

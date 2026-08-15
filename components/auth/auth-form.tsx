@@ -108,6 +108,10 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         <ShieldCheck className="h-4 w-4" strokeWidth={1.8} />
         <span>Secure Google sign-in. No password to remember.</span>
       </div>
+
+      <p className="mt-4 text-center text-[0.68rem] leading-5 text-muted-foreground">
+        By continuing, you agree to the <a href="/terms" className="underline underline-offset-2">Terms of Service</a> and acknowledge the <a href="/privacy" className="underline underline-offset-2">Privacy Policy</a>.
+      </p>
     </div>
   )
 }

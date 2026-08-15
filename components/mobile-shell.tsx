@@ -6,18 +6,20 @@ export function MobileShell({
   nav = true,
   wide = false,
   fitViewport = false,
+  scrollable = false,
 }: {
   children: ReactNode
   nav?: boolean
   wide?: boolean
   fitViewport?: boolean
+  scrollable?: boolean
 }) {
   return (
     <div
       className={`app-shell book-app mx-auto flex w-full min-w-0 flex-col overflow-x-clip bg-background ${wide ? "max-w-3xl" : "max-w-md"} ${fitViewport ? "h-svh overflow-hidden" : "min-h-screen"}`}
     >
       <main
-        className={`app-content-reveal book-app-content w-full min-w-0 flex-1 overflow-x-clip px-5 pt-6 ${nav ? (fitViewport ? "pb-[4.8rem]" : "pb-28") : "pb-10"} ${fitViewport ? "min-h-0 overflow-y-hidden" : ""}`}
+        className={`app-content-reveal book-app-content w-full min-w-0 flex-1 overflow-x-clip px-5 pt-6 ${nav ? (fitViewport ? "pb-[4.8rem]" : "pb-28") : "pb-10"} ${fitViewport ? `min-h-0 ${scrollable ? "overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]" : "overflow-y-hidden"}` : ""}`}
       >
         {children}
       </main>

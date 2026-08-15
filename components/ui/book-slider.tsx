@@ -198,7 +198,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
     return bookRef.current?.pageFlip?.()
   }
 
-  function finishNavigationFallback(target: number) {
+  function finishNavigationFallback(target: number, waitMs: number) {
     if (flipFallbackRef.current) clearTimeout(flipFallbackRef.current)
     flipFallbackRef.current = setTimeout(() => {
       const flip = api()
@@ -223,7 +223,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         pendingTargetRef.current = null
         window.setTimeout(() => requestPage(pending), 0)
       }
-    }, 340)
+    }, waitMs)
   }
 
   function requestPage(target: number) {
@@ -249,6 +249,9 @@ const BookSlider = forwardRef<BookSliderHandle, {
     programmaticRef.current = true
     setFlipping(true)
 
+    const isOpeningCover = current === 0 && nextPage === 1
+    const flipDuration = isOpeningCover ? 430 : 290
+
     try {
       if (nextPage === current + 1) flip.flipNext("bottom")
       else if (nextPage === current - 1) flip.flipPrev("bottom")
@@ -257,7 +260,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       flip.turnToPage(nextPage)
     }
 
-    finishNavigationFallback(nextPage)
+    finishNavigationFallback(nextPage, flipDuration + 120)
   }
 
   function goTo(target: number) {
@@ -328,7 +331,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={255}
+        flippingTime={page === 0 ? 430 : 290}
         usePortrait
         startZIndex={10}
         autoSize={false}

@@ -74,7 +74,7 @@ export function validateUsername(value: string) {
 export function validateDisplayName(value: string) {
   const clean = value.trim()
   if (!clean) return "Enter a display name."
-  if (clean.length > 40) return "Display names can be no longer than 40 characters."
+  if (clean.length > 15) return "Display names can be no longer than 15 characters."
   if (!isPublicNameAppropriate(clean)) {
     return "Choose a different display name. Vulgar, sexual, hateful, or harassing terms are not allowed."
   }

@@ -34,7 +34,7 @@ export function AccountSetup({
   const recoveryMode = searchParams.get("mode") === "login-recovery"
   const suggestions = useMemo(() => usernameSuggestionsFromEmail(initialEmail), [initialEmail])
   const [username, setUsername] = useState(initialProfile?.username ?? suggestions[0] ?? "story_weaves")
-  const [displayName, setDisplayName] = useState(initialProfile?.display_name ?? initialName)
+  const [displayName, setDisplayName] = useState((initialProfile?.display_name ?? initialName).slice(0, 15))
   const [ageConfirmed, setAgeConfirmed] = useState(Boolean(initialProfile?.confirmed_age_13_plus))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -157,11 +157,14 @@ export function AccountSetup({
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Display name</span>
               <input
                 value={displayName}
-                onChange={(event) => setDisplayName(event.target.value.slice(0, 40))}
+                onChange={(event) => setDisplayName(event.target.value.slice(0, 15))}
                 placeholder="Your first name or nickname"
                 autoComplete="name"
+                maxLength={15}
+                aria-describedby="display-name-limit"
                 className="auth-input mt-2"
               />
+              <span id="display-name-limit" className="mt-1 block text-[0.65rem] text-muted-foreground">15 characters maximum.</span>
             </label>}
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-brand/35">
               <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />

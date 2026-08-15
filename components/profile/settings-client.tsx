@@ -16,17 +16,17 @@ type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | 
 export function SettingsClient() {
   const router = useRouter()
   const { state, syncStatus, updateSettings, updateProfileName, deleteAllRecordings, resetAll } = useApp()
-  const [displayName, setDisplayName] = useState(state.profile.name)
+  const [displayName, setDisplayName] = useState(state.profile.name.slice(0, 15))
   const [accountEmail, setAccountEmail] = useState("")
   const [dialog, setDialog] = useState<DialogKind>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState("")
 
-  const cleanDisplayName = displayName.trim().slice(0, 40)
+  const cleanDisplayName = displayName.trim().slice(0, 15)
   const nameChanged = cleanDisplayName.length > 0 && cleanDisplayName !== state.profile.name
-  const displayNameError = notice.startsWith("Choose a different display name.")
+  const displayNameError = notice.startsWith("Choose a different display name.") || notice.startsWith("Display names can")
 
-  useEffect(() => setDisplayName(state.profile.name), [state.profile.name])
+  useEffect(() => setDisplayName(state.profile.name.slice(0, 15)), [state.profile.name])
 
   useEffect(() => {
     const supabase = createClient()
@@ -214,11 +214,13 @@ export function SettingsClient() {
           <div className="flex items-center gap-2">
             <input
               value={displayName}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value.slice(0, 40))}
-              maxLength={40}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setDisplayName(event.target.value.slice(0, 15))}
+              maxLength={15}
               aria-label="Display name"
+              aria-describedby="display-name-limit"
               className="w-32 rounded-2xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15 sm:w-40"
             />
+            <span id="display-name-limit" className="sr-only">Maximum 15 characters.</span>
             <button
               type="button"
               disabled={!nameChanged}
@@ -284,6 +286,36 @@ export function SettingsClient() {
           <button type="button" onClick={() => setDialog("delete-account")} className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-destructive/90 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete account
           </button>
+        </Row>
+      </Section>
+
+
+
+      <Section title="Legal and accessibility">
+        <Row title="Privacy Policy" detail="What StoryTuner collects, how it is used, and how to request deletion.">
+          <Link href="/privacy" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Privacy Policy">
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Row>
+        <Row title="Terms of Service" detail="Accounts, subscriptions, Community, AI features, and acceptable use.">
+          <Link href="/terms" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Terms of Service">
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Row>
+        <Row title="Accessibility" detail="Accessibility approach and a direct way to report a barrier.">
+          <Link href="/accessibility" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Accessibility statement">
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Row>
+        <Row title="Community Guidelines" detail="Safety, reporting, blocking, moderation, and member conduct.">
+          <Link href="/community-guidelines" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open Community Guidelines">
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Row>
+        <Row title="Account deletion help" detail="Public instructions for deleting your StoryTuner account, even without app access.">
+          <Link href="/delete-account" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-background" aria-label="Open account deletion help">
+            <ChevronRight className="h-4 w-4" />
+          </Link>
         </Row>
       </Section>
 

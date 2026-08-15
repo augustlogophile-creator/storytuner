@@ -23,7 +23,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
   const goal = state.onboardingPreferences.goal
 
   return (
-    <div className="profile-page flex h-full min-h-0 flex-col gap-3 overflow-hidden pb-1">
+    <div className="profile-page flex min-h-full flex-col gap-3 pb-4">
       <header className="px-1">
         <h1 className="text-[1.58rem] font-semibold tracking-[-0.035em]">Profile</h1>
         <p className="mt-0.5 max-w-sm text-[0.74rem] leading-[1.2rem] text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>

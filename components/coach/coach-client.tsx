@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react"
 import { ArrowLeft, ArrowUp, ChevronDown, Lock, Mic, Square, Volume2, VolumeX } from "lucide-react"
 import { RichText } from "@/components/rich-text"
+import { ReportAiOutput } from "@/components/ai/report-ai-output"
 import { Weaver } from "@/components/weaver"
 import { FREE_COACH_LIMIT, useApp, type CoachMessage, type Recording } from "@/lib/app-state"
 
@@ -241,7 +242,7 @@ export function CoachClient() {
               {safeMessages.map((message: CoachMessage) => message.role === "user" ? (
                 <div key={message.id} className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{message.content}</div>
               ) : (
-                <div key={message.id} className="coach-assistant-in group flex items-start gap-3"><CoachMark className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[0.68rem] font-semibold text-muted-foreground opacity-75 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button></div></div>
+                <div key={message.id} className="coach-assistant-in group flex items-start gap-3"><CoachMark className="mt-1" /><div className="min-w-0 flex-1 rounded-2xl rounded-tl-md bg-secondary/55 px-4 py-3 text-sm"><RichText markdown={message.content} /><div className="mt-2 flex flex-wrap items-center gap-1"><button type="button" onClick={() => toggleSpeech(message.id, message.content)} className="inline-flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] font-semibold text-muted-foreground opacity-75 transition-colors hover:bg-background hover:opacity-100" aria-pressed={speakingMessageId === message.id}>{speakingMessageId === message.id ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />} {speakingMessageId === message.id ? "Mute" : "Listen"}</button><ReportAiOutput source="coach" content={message.content} /></div></div></div>
               ))}
               {pendingUserMessage && <div className="coach-message-in ml-10 self-end rounded-3xl rounded-br-lg bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">{pendingUserMessage}</div>}
               {loading && <div className="coach-message-in flex items-center gap-3"><CoachMark /><div className="flex items-center gap-1.5 rounded-2xl bg-secondary/55 px-4 py-3" aria-label="Parch is thinking"><span className="weaver-thinking-dot" /><span className="weaver-thinking-dot [animation-delay:120ms]" /><span className="weaver-thinking-dot [animation-delay:240ms]" /></div></div>}

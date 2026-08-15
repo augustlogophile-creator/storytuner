@@ -31,6 +31,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
 import { Celebration } from "@/components/ui/celebration"
 import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
+import { ReportAiOutput } from "@/components/ai/report-ai-output"
 import { FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
 import {
@@ -1376,6 +1377,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
           <Eyebrow>Revised story</Eyebrow>
           <h3 className="mt-1.5 text-base font-semibold tracking-[-0.015em]">A stronger version in your voice</h3>
           <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p>
+          <ReportAiOutput source="arena" content={`${feedback.levelUp}\n\n${feedback.revisedStory}`} className="mt-3" />
         </section>
 
         <div className="grid grid-cols-2 gap-2.5">

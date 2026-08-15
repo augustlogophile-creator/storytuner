@@ -1,4 +1,3 @@
-import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Handlee } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
@@ -20,8 +19,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: "light",
   themeColor: "#faf8f2",
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: "cover",
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -39,7 +37,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         .maybeSingle<{ display_name: string }>(),
     ])
     initialMembershipActive = membership.active
-    initialDisplayName = profileResult.data?.display_name?.trim() || "Storyteller"
+    initialDisplayName = profileResult.data?.display_name?.trim().slice(0, 15) || "Storyteller"
   }
 
   return (
@@ -52,7 +50,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         >
           {children}
         </AppProviders>
-        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
   )

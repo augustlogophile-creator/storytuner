@@ -55,17 +55,18 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
     : freeLimitReached ? "/membership" : "/activities"
   const courseAction = next ? (next.type === "lesson" ? "Continue learning" : "Take unit test") : freeLimitReached ? "Unlock lessons" : "Review course"
   const activeDays = week.filter((day) => day.active).length
+  const displayName = state.profile.name.trim().slice(0, 15) || "Storyteller"
 
   return (
-    <div className="home-dashboard flex h-full min-h-0 flex-col">
+    <div className="home-dashboard flex min-h-full flex-col">
       <Celebration active={celebrateStreak} label={`${state.streak} day streak`} onDone={() => setCelebrateStreak(false)} />
       {accountNotice && <AccountRestoredNotice message={accountNotice} updatedAt={accountNoticeUpdatedAt} />}
 
       <header className="book-home-header flex items-start justify-between gap-4">
         <div className="min-w-0">
           <Eyebrow className="book-home-date text-[0.64rem] tracking-[0.2em]">{today()}</Eyebrow>
-          <h1 className="book-home-greeting mt-2 text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
-            {greeting()},<br />{state.profile.name}.
+          <h1 className="book-home-greeting mt-2 max-w-full break-words text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
+            {greeting()},<br />{displayName}.
           </h1>
           <p className="book-home-subtitle mt-2 max-w-[19rem] text-[0.77rem] leading-[1.42] text-muted-foreground text-pretty">
             Learn one idea, then test it in a story of your own.

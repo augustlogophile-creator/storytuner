@@ -11,7 +11,7 @@ const GENERIC_PROFILE_NAMES = new Set(["storytuner member", "storyteller"])
 export default async function ProfilePage() {
   const user = await requireStoryTunerUser("/profile")
   const moderatorRole = moderatorRoleFromClaims(user.claims)
-  let displayName = user.profile?.display_name?.trim() || "Storyteller"
+  let displayName = user.profile?.display_name?.trim().slice(0, 15) || "Storyteller"
 
   // Older moderation/test migrations could replace an unsafe public name with
   // the generic placeholder "StoryTuner member". If Google already provides a
@@ -20,9 +20,9 @@ export default async function ProfilePage() {
     const { data } = await user.supabase.auth.getUser()
     const metadata = data.user?.user_metadata
     const candidate = typeof metadata?.full_name === "string"
-      ? metadata.full_name.trim()
+      ? metadata.full_name.trim().slice(0, 15)
       : typeof metadata?.name === "string"
-        ? metadata.name.trim()
+        ? metadata.name.trim().slice(0, 15)
         : ""
 
     if (candidate && !GENERIC_PROFILE_NAMES.has(candidate.toLowerCase()) && !validateDisplayName(candidate)) {
@@ -32,7 +32,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <MobileShell fitViewport>
+    <MobileShell fitViewport scrollable>
       <ProfileClient
         moderatorRole={moderatorRole}
         displayName={displayName}

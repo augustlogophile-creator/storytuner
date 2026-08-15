@@ -3010,3 +3010,85 @@ body {
     radial-gradient(circle at 50% 0%, rgba(255,255,255,.62), transparent 34%),
     #eee9de;
 }
+
+
+/* August 14 legal/mobile polish: keep the reverse of a turning intro sheet visually blank. */
+.story-book-wrap.is-flipping .stf__item.--left .story-book-page-inner:not(.story-book-cover-inner)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(73, 61, 47, .018), transparent 7%),
+    #fffefa;
+}
+
+/* Accessible keyboard focus without changing the printed-book visual language. */
+:where(a, button, input, textarea, select, [role="button"]):focus-visible {
+  outline: 3px solid rgba(55, 115, 177, .58);
+  outline-offset: 3px;
+}
+
+/* Respect reduced-motion preferences while preserving functionality. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Prevent long user-provided strings from forcing the mobile canvas wider. */
+.book-app :is(h1, h2, h3, p, span, button, a, label) {
+  overflow-wrap: anywhere;
+}
+
+
+.legal-copy strong {
+  font-weight: 650;
+}
+.legal-copy a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* August 14 mobile/accessibility hardening. */
+:where(button, [role="button"], summary) {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  /* Prevent iOS focus zoom while keeping controls comfortably readable. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  :where(button, a, [role="button"], label) {
+    touch-action: manipulation;
+  }
+}
+
+/* The reverse side of an intro sheet is intentionally plain paper while it turns. */
+.story-book-wrap.is-flipping .stf__item.--left .story-book-page-inner:not(.story-book-cover-inner)::before {
+  background-color: #fffefa;
+  background-image: none !important;
+}
+
+/* Keep the physical reverse of every intro sheet plain. The visible face keeps its
+   own styling, but when react-pageflip rotates it away the parent sheet remains paper. */
+.book-pageflip-shell .stf__item {
+  background: #fffefa !important;
+}
+
+.story-book-page-inner {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}

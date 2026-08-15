@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react"
 import {
+  Ban,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -153,6 +154,12 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
 
   useEffect(() => {
     void loadPage(0, true)
+  }, [loadPage])
+
+  useEffect(() => {
+    const refreshAfterBlock = () => void loadPage(0, true)
+    window.addEventListener("storytuner:community-blocked", refreshAfterBlock)
+    return () => window.removeEventListener("storytuner:community-blocked", refreshAfterBlock)
   }, [loadPage])
 
   useEffect(() => {
@@ -581,6 +588,24 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
     if (replyingTo?.id === replyId) setReplyingTo(null)
   }
 
+  async function blockPostAuthor() {
+    setPostError("")
+    try {
+      const response = await fetch("/api/community/blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ userId: post.author.id }),
+      })
+      const payload = await response.json() as { blocked?: boolean; error?: string }
+      if (!response.ok || !payload.blocked) throw new Error(payload.error || "The member could not be blocked.")
+      setNoticeTitle("Member blocked")
+      setNotice("Their Community posts and replies are now hidden from you.")
+      window.dispatchEvent(new Event("storytuner:community-blocked"))
+    } catch (error) {
+      setPostError(errorMessage(error, "The member could not be blocked."))
+    }
+  }
+
   const replyAuthors = useMemo(() => new Map(replies.map((reply) => [reply.id, publicAuthorLabel(reply.author)])), [replies])
   const groupedReplies = useMemo(() => groupConversationReplies(replies), [replies])
   const menuItems: MenuItem[] = post.mine
@@ -588,7 +613,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
         ...(post.postType === "text" ? [{ label: "Edit post", icon: Pencil, onSelect: () => setEditing(true) } satisfies MenuItem] : []),
         { label: "Delete post", icon: Trash2, tone: "danger", onSelect: () => setDeleteOpen(true) },
       ]
-    : [{ label: "Report post", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
+    : [
+        { label: "Report post", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) },
+        { label: "Block member", icon: Ban, tone: "danger", onSelect: () => void blockPostAuthor() },
+      ]
 
   return (
     <article id={post.id} className="app-surface scroll-mt-24 rounded-3xl border border-border bg-card p-5">
@@ -1095,12 +1123,33 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
     }
   }
 
+  async function blockReplyAuthor() {
+    setError("")
+    try {
+      const response = await fetch("/api/community/blocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ userId: reply.author.id }),
+      })
+      const payload = await response.json() as { blocked?: boolean; error?: string }
+      if (!response.ok || !payload.blocked) throw new Error(payload.error || "The member could not be blocked.")
+      setNoticeTitle("Member blocked")
+      setNotice("Their Community posts and replies are now hidden from you.")
+      window.dispatchEvent(new Event("storytuner:community-blocked"))
+    } catch (caught) {
+      setError(errorMessage(caught, "The member could not be blocked."))
+    }
+  }
+
   const menuItems: MenuItem[] = reply.mine
     ? [
         { label: "Edit reply", icon: Pencil, onSelect: () => setEditing(true) },
         { label: "Delete reply", icon: Trash2, tone: "danger", onSelect: () => setDeleteOpen(true) },
       ]
-    : [{ label: "Report reply", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) }]
+    : [
+        { label: "Report reply", icon: Flag, tone: "danger", onSelect: () => setReportOpen(true) },
+        { label: "Block member", icon: Ban, tone: "danger", onSelect: () => void blockReplyAuthor() },
+      ]
 
   return (
     <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3 transition-colors", nested && "bg-secondary/30")}>
