@@ -11,7 +11,7 @@ export const runtime = "nodejs"
 
 const paramsSchema = z.object({ postId: z.string().uuid() })
 const editSchema = z.object({
-  body: z.string().trim().min(1, "A post cannot be empty.").max(5000, "Posts can be at most 5,000 characters."),
+  body: z.string().trim().max(5000, "Posts can be at most 5,000 characters."),
 })
 
 type RouteContext = { params: Promise<{ postId: string }> }
@@ -60,23 +60,27 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   }
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That post is no longer available." }, { status: 404 })
   if (existing.author_id !== context.userId) return noStoreJson({ error: "You can edit only your own posts." }, { status: 403 })
-  if (existing.post_type !== "text") return noStoreJson({ error: "This shared item cannot be edited here." }, { status: 400 })
+  if (existing.post_type === "text" && !parsedBody.data.body) {
+    return noStoreJson({ error: "A text post cannot be empty." }, { status: 400 })
+  }
 
-  let moderation
-  try {
-    moderation = await moderateCommunityText(parsedBody.data.body)
-  } catch (moderationError) {
-    backendError("community_post_edit_moderation_unavailable", moderationError, { userId: context.userId, postId })
-    return noStoreJson(
-      { error: "Community safety checks are temporarily unavailable. Please try saving again in a moment." },
-      { status: 503 },
-    )
+  let moderation: Awaited<ReturnType<typeof moderateCommunityText>> | null = null
+  if (parsedBody.data.body) {
+    try {
+      moderation = await moderateCommunityText(parsedBody.data.body)
+    } catch (moderationError) {
+      backendError("community_post_edit_moderation_unavailable", moderationError, { userId: context.userId, postId })
+      return noStoreJson(
+        { error: "Community safety checks are temporarily unavailable. Please try saving again in a moment." },
+        { status: 503 },
+      )
+    }
   }
 
   const editedAt = new Date().toISOString()
   const { data: updated, error: updateError } = await context.admin
     .from("community_posts")
-    .update({ body: parsedBody.data.body, edited_at: editedAt, status: moderation.flagged ? "removed" : "active" })
+    .update({ body: parsedBody.data.body, edited_at: editedAt, status: moderation?.flagged ? "removed" : "active" })
     .eq("id", existing.id)
     .eq("author_id", context.userId)
     .eq("status", "active")
@@ -88,7 +92,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return noStoreJson({ error: "The post could not be updated." }, { status: 500 })
   }
 
-  if (moderation.flagged) {
+  if (moderation?.flagged) {
     try {
       await createAiModerationReport({
         admin: context.admin,
@@ -107,15 +111,22 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return noStoreJson({ heldForReview: true, message: COMMUNITY_AI_HOLD_MESSAGE }, { status: 202 })
   }
 
-  const [{ count: likeCount }, repliesResult] = await Promise.all([
+  const [{ count: likeCount }, repliesResult, audioResult] = await Promise.all([
     context.admin.from("community_post_likes").select("post_id", { count: "exact", head: true }).eq("post_id", updated.id),
     context.userClient
       .from("community_replies")
       .select("id, parent_reply_id, status")
       .eq("post_id", updated.id)
       .returns<Array<{ id: string; parent_reply_id: string | null; status: string }>>(),
+    context.admin
+      .from("community_audio")
+      .select("duration_seconds,status")
+      .eq("post_id", updated.id)
+      .eq("status", "ready")
+      .maybeSingle<{ duration_seconds: number; status: string }>(),
   ])
   if (repliesResult.error) backendError("community_post_reply_count_refresh_failed", repliesResult.error, { userId: context.userId, postId })
+  if (audioResult.error) backendError("community_post_audio_refresh_failed", audioResult.error, { userId: context.userId, postId })
   const replyCount = countActiveRenderableReplies(repliesResult.data ?? [])
 
   const post: CommunityFeedPost = {
@@ -124,8 +135,8 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     title: updated.title,
     body: updated.body,
     sharedTranscript: updated.shared_transcript,
-    hasAudio: false,
-    audioDurationSeconds: null,
+    hasAudio: Boolean(audioResult.data),
+    audioDurationSeconds: audioResult.data?.duration_seconds ?? null,
     createdAt: updated.created_at,
     editedAt: updated.edited_at,
     author: {

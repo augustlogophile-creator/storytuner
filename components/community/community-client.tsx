@@ -411,7 +411,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
 
   async function savePostEdit() {
     const body = editDraft.trim()
-    if (!body || savingEdit) return
+    if (savingEdit || (post.postType === "text" && !body)) return
     setSavingEdit(true)
     setPostError("")
     try {
@@ -621,7 +621,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
   const groupedReplies = useMemo(() => groupConversationReplies(replies), [replies])
   const menuItems: MenuItem[] = post.mine
     ? [
-        ...(post.postType === "text" ? [{ label: "Edit post", icon: Pencil, onSelect: () => setEditing(true) } satisfies MenuItem] : []),
+        { label: "Edit post", icon: Pencil, onSelect: () => setEditing(true) },
         { label: "Delete post", icon: Trash2, tone: "danger", onSelect: () => setDeleteOpen(true) },
       ]
     : [
@@ -650,13 +650,14 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
             maxLength={5000}
             rows={4}
             onChange={(event) => setEditDraft(event.target.value)}
+            placeholder={post.postType === "text" ? "Edit your post…" : "Edit the note on this shared story…"}
             className="w-full resize-y rounded-2xl border border-brand bg-background px-4 py-3 text-sm leading-6 outline-none"
           />
           <div className="mt-2 flex items-center justify-between gap-3">
             <CharacterCount value={editDraft.length} maximum={5000} warningAt={4500} />
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => { setEditing(false); setEditDraft(post.body) }} disabled={savingEdit} className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground">Cancel</button>
-              <button type="button" onClick={savePostEdit} disabled={!editDraft.trim() || savingEdit} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-40">
+              <button type="button" onClick={savePostEdit} disabled={(post.postType === "text" && !editDraft.trim()) || savingEdit} className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:opacity-40">
                 {savingEdit ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
               </button>
             </div>
@@ -1266,7 +1267,10 @@ function ActionMenu({ label, items, compact = false }: { label: string; items: M
         <MoreHorizontal className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+0.35rem)] z-30 min-w-40 overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-[0_16px_40px_rgba(37,32,27,0.14)]">
+        <div
+          className="absolute right-0 top-[calc(100%+0.35rem)] z-30 overflow-hidden rounded-2xl border border-border bg-popover p-1.5 shadow-[0_16px_40px_rgba(37,32,27,0.14)]"
+          style={{ width: "11rem", minWidth: "11rem" }}
+        >
           {items.map((item) => {
             const Icon = item.icon
             return (
@@ -1274,9 +1278,10 @@ function ActionMenu({ label, items, compact = false }: { label: string; items: M
                 key={item.label}
                 type="button"
                 onClick={() => { setOpen(false); item.onSelect() }}
-                className={cn("flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition", item.tone === "danger" ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-secondary")}
+                className={cn("flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-xs font-semibold whitespace-nowrap transition", item.tone === "danger" ? "text-destructive hover:bg-destructive/10" : "text-foreground hover:bg-secondary")}
               >
-                <Icon className="h-3.5 w-3.5" /> {item.label}
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="whitespace-nowrap">{item.label}</span>
               </button>
             )
           })}
