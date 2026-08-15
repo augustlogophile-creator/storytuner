@@ -3081,12 +3081,6 @@ body {
   background-image: none !important;
 }
 
-/* Keep the physical reverse of every intro sheet plain. The visible face keeps its
-   own styling, but when react-pageflip rotates it away the parent sheet remains paper. */
-.book-pageflip-shell .stf__item {
-  background: #fffefa !important;
-}
-
 .story-book-page-inner {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
