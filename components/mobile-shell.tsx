@@ -62,12 +62,24 @@ export function MobileShell({
       <main
         data-app-scroll-root="true"
         aria-busy={!contentReady}
-        style={{ visibility: contentReady ? "visible" : "hidden" }}
         className={`app-content-reveal book-app-content w-full min-w-0 flex-1 overflow-x-hidden px-5 pt-6 ${nav ? "pb-28" : "pb-10"}`}
       >
-        {children}
+        {contentReady ? children : <ShellLoadingSurface />}
       </main>
-      {nav && contentReady && <BottomNav />}
+      {nav && <BottomNav />}
+    </div>
+  )
+}
+
+
+function ShellLoadingSurface() {
+  return (
+    <div className="route-stability-shell" aria-hidden="true">
+      <div className="route-stability-kicker skeleton-block" />
+      <div className="route-stability-title skeleton-block" />
+      <div className="route-stability-subtitle skeleton-block" />
+      <div className="route-stability-card skeleton-block" />
+      <div className="route-stability-card route-stability-card-short skeleton-block" />
     </div>
   )
 }

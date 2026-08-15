@@ -35,12 +35,12 @@ export function ReportAiOutput({ source, content, className = "" }: { source: Ai
       type="button"
       onClick={() => { if (status !== "sent") { setStatus("idle"); setOpen(true) } }}
       disabled={status === "sent"}
-      className={`group relative inline-flex min-h-7 w-fit items-center py-1 text-[0.7rem] font-semibold text-muted-foreground transition-colors hover:text-destructive disabled:cursor-default disabled:hover:text-muted-foreground ${className}`}
+      className={`group inline-flex min-h-7 w-fit items-center gap-2 py-1 text-[0.7rem] font-semibold text-destructive transition-colors hover:text-red-700 disabled:cursor-default disabled:text-muted-foreground ${className}`}
       aria-label={status === "sent" ? "AI response reported" : "Report this AI response"}
     >
       {status === "sent"
-        ? <Check className="absolute -left-[1.35rem] h-3.5 w-3.5" />
-        : <Flag className="absolute -left-[1.35rem] h-3.5 w-3.5 transition-colors group-hover:text-destructive" />}
+        ? <Check className="h-3.5 w-3.5 shrink-0" />
+        : <Flag className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:-translate-y-px" />}
       <span>{status === "sent" ? "Reported" : status === "error" ? "Try report again" : "Report AI response"}</span>
     </button>
   )

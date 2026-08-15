@@ -26,8 +26,8 @@ export function Celebration({
       drift: `${-34 + Math.random() * 68}px`,
       drop: `${102 + Math.random() * 18}svh`,
       spin: `${320 + Math.random() * 620}deg`,
-      duration: `${3.6 + Math.random() * 1.35}s`,
-      delay: `${index * 20 + Math.random() * 180}ms`,
+      duration: `${2.75 + Math.random() * 0.85}s`,
+      delay: `${index * 14 + Math.random() * 110}ms`,
       scale: `${0.78 + Math.random() * 0.62}`,
       hue: index % 4,
     }))
@@ -42,7 +42,7 @@ export function Celebration({
     const timeout = window.setTimeout(() => {
       setVisible(false)
       onDone?.()
-    }, 5700)
+    }, 4000)
     return () => window.clearTimeout(timeout)
   }, [active, onDone])
 

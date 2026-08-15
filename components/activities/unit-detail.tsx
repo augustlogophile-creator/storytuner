@@ -60,7 +60,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
             ? quizScore >= 80
               ? "text-emerald-700"
               : quizScore >= 60
-                ? "text-amber-700"
+                ? "text-orange-500"
                 : "text-red-700"
             : ""
           const row = (
@@ -79,7 +79,9 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
                   {quizScore <= 40 && !done && <span className="mt-1 block font-mono text-[0.48rem] uppercase tracking-[0.12em] text-red-600">Redo</span>}
                 </div>
               )}
-              {unlocked && <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />}
+              {(unlocked || stage === "drill") && (
+                <ChevronRight className={cn("h-5 w-5 shrink-0 text-muted-foreground", !unlocked && "opacity-45")} />
+              )}
             </div>
           )
           return <li key={stage}>{unlocked ? <Link prefetch href={`/lesson/${key}`}>{row}</Link> : row}</li>

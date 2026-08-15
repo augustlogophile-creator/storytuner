@@ -827,15 +827,15 @@ a {
 
 @keyframes storytuner-confetti {
   0% { opacity: 0; transform: translate3d(0,-20px,0) rotate(0deg) scale(.7); }
-  7% { opacity: 1; }
-  86% { opacity: 1; }
+  4% { opacity: 1; }
+  94% { opacity: 1; }
   100% { opacity: 0; transform: translate3d(var(--confetti-x, 16px), var(--confetti-y, 108svh), 0) rotate(var(--confetti-rotate, 520deg)) scale(var(--confetti-scale, 1)); }
 }
 
 @keyframes storytuner-celebration-label {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(.86); }
-  10% { opacity: 1; transform: translate(-50%, -50%) scale(1.045); }
-  86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(1.045); }
+  72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -54%) scale(.99); }
 }
 
@@ -3890,4 +3890,126 @@ body {
 /* Dialogs must cover and blur the fixed bottom navigation as part of the page backdrop. */
 .app-dialog-overlay {
   z-index: 160 !important;
+}
+
+
+/* August 15 lesson motion and route-stability polish. */
+@keyframes storytuner-lesson-stage-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes storytuner-lesson-section-swap {
+  from { opacity: 0; transform: translateY(6px) scale(.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes storytuner-lesson-feedback-in {
+  0% { opacity: 0; transform: translateY(8px) scale(.99); }
+  70% { opacity: 1; transform: translateY(-1px) scale(1.002); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes storytuner-answer-correct {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+
+@keyframes storytuner-answer-wrong {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+}
+
+@keyframes storytuner-complete-in {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.lesson-stage-enter {
+  animation: storytuner-lesson-stage-in 260ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+.lesson-section-swap,
+.lesson-question-enter {
+  animation: storytuner-lesson-section-swap 230ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+.lesson-feedback-enter {
+  animation: storytuner-lesson-feedback-in 300ms cubic-bezier(.18,.82,.25,1) both;
+}
+
+.lesson-answer-option {
+  transition: transform 150ms cubic-bezier(.22,1.25,.32,1), border-color 180ms ease, background-color 180ms ease, opacity 180ms ease;
+}
+
+.lesson-answer-option.is-correct {
+  animation: storytuner-answer-correct 300ms cubic-bezier(.2,.8,.25,1) both;
+}
+
+.lesson-answer-option.is-wrong {
+  animation: storytuner-answer-wrong 220ms ease-out both;
+}
+
+.lesson-complete-enter {
+  animation: storytuner-complete-in 320ms cubic-bezier(.18,.82,.25,1) both;
+}
+
+.route-stability-shell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .85rem;
+  padding-top: .15rem;
+}
+
+.route-stability-kicker {
+  width: 5.5rem;
+  height: .7rem;
+  border-radius: 999px;
+}
+
+.route-stability-title {
+  width: min(82%, 18rem);
+  height: 2.25rem;
+  border-radius: .75rem;
+}
+
+.route-stability-subtitle {
+  width: min(94%, 22rem);
+  height: 1rem;
+  border-radius: 999px;
+  margin-bottom: .35rem;
+}
+
+.route-stability-card {
+  width: 100%;
+  height: 8.75rem;
+  border-radius: 1.75rem;
+}
+
+.route-stability-card-short {
+  height: 6.5rem;
+}
+
+.celebration-piece {
+  animation-timing-function: linear;
+}
+
+.celebration-label {
+  animation-duration: 2.8s;
+  animation-timing-function: cubic-bezier(.18,.8,.25,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-stage-enter,
+  .lesson-section-swap,
+  .lesson-question-enter,
+  .lesson-feedback-enter,
+  .lesson-answer-option.is-correct,
+  .lesson-answer-option.is-wrong,
+  .lesson-complete-enter {
+    animation: none !important;
+  }
 }

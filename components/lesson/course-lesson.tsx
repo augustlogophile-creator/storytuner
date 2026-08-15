@@ -18,7 +18,7 @@ type LessonFeedback = { pass: boolean; working: string; fix: string }
 
 function quizScoreTone(score: number) {
   if (score >= 80) return "border-emerald-200 bg-emerald-50 text-emerald-700"
-  if (score >= 60) return "border-amber-200 bg-amber-50 text-amber-700"
+  if (score >= 60) return "border-orange-200 bg-orange-50 text-orange-500"
   return "border-red-200 bg-red-50 text-red-700"
 }
 
@@ -147,9 +147,11 @@ export function CourseLesson({ unit, stage }: { unit: CurriculumUnit; stage: Les
           {stage === "read" ? unit.title : stage === "drill" ? unit.drill.title : `${unit.title}: Check`}
         </h1>
       </header>
-      {stage === "read" && <ReadStage unit={unit} onFinish={() => finish()} />}
-      {stage === "drill" && <DrillStage unit={unit} response={response} setResponse={setResponse} onFinish={(value, xp) => finish(value, undefined, xp)} />}
-      {stage === "quiz" && <QuizStage unit={unit} onFinish={(score) => finish(undefined, score, quizXp(score))} />}
+      <div className="lesson-stage-enter flex flex-col gap-6">
+        {stage === "read" && <ReadStage unit={unit} onFinish={() => finish()} />}
+        {stage === "drill" && <DrillStage unit={unit} response={response} setResponse={setResponse} onFinish={(value, xp) => finish(value, undefined, xp)} />}
+        {stage === "quiz" && <QuizStage unit={unit} onFinish={(score) => finish(undefined, score, quizXp(score))} />}
+      </div>
     </div>
   )
 }
@@ -180,7 +182,7 @@ function ReadStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: () => v
         </div>
       </div>
 
-      <div className="flex flex-col gap-5">
+      <div key={active} className="lesson-section-swap flex flex-col gap-5">
         {group.sections.map((section, index) => (
           <section key={section.heading} className={cn("rounded-3xl border p-5", active === 0 && index === 0 ? "border-brand/40 bg-brand-soft/35" : "border-border bg-card")}>
             <p className="font-mono text-[0.6rem] uppercase tracking-[0.16em] text-muted-foreground">{group.label}</p>
@@ -281,7 +283,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
       </section>
       {error && <p className="rounded-2xl bg-destructive/5 px-4 py-3 text-sm text-destructive">{error}</p>}
       {feedback && (
-        <section className="flex flex-col gap-3 rounded-3xl border border-brand/40 bg-brand-soft/35 p-5">
+        <section className="lesson-feedback-enter flex flex-col gap-3 rounded-3xl border border-brand/40 bg-brand-soft/35 p-5">
           <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-accent-foreground" /><h2 className="text-sm font-semibold">Coach's read</h2></div>
           <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">What is working</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.working}</p></div>
           <div><p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">One useful revision</p><p className="mt-1 text-sm leading-relaxed text-foreground">{feedback.fix}</p></div>
@@ -327,14 +329,14 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
         <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground"><span>Question {index + 1} of {unit.quiz.length}</span><span>{score} correct so far</span></div>
         <ProgressBar value={((index + (answered ? 1 : 0)) / unit.quiz.length) * 100} />
       </div>
-      <section className="rounded-3xl border border-border bg-card p-5">
+      <section key={index} className="lesson-question-enter rounded-3xl border border-border bg-card p-5">
         <h2 className="text-lg font-semibold leading-snug text-balance">{question.question}</h2>
         <div className="mt-5 flex flex-col gap-2.5">
           {question.options.map((option, optionIndex) => {
             const isChosen = selected === optionIndex
             const isCorrect = optionIndex === question.correct
             return (
-              <button key={option} type="button" disabled={answered} onClick={() => setSelected(optionIndex)} className={cn("rounded-2xl border p-4 text-left text-sm leading-relaxed transition-colors", !answered && "border-border bg-background hover:border-brand", answered && isCorrect && "border-brand bg-brand-soft/60", answered && isChosen && !isCorrect && "border-destructive/40 bg-destructive/5", answered && !isChosen && !isCorrect && "border-border bg-background opacity-60")}>
+              <button key={option} type="button" disabled={answered} onClick={() => setSelected(optionIndex)} className={cn("lesson-answer-option rounded-2xl border p-4 text-left text-sm leading-relaxed transition-colors", !answered && "border-border bg-background hover:border-brand", answered && isCorrect && "is-correct border-brand bg-brand-soft/60", answered && isChosen && !isCorrect && "is-wrong border-destructive/40 bg-destructive/5", answered && !isChosen && !isCorrect && "border-border bg-background opacity-60")}>
                 <span className="mr-2 font-mono text-xs text-muted-foreground">{String.fromCharCode(65 + optionIndex)}</span>{option}
               </button>
             )
@@ -342,7 +344,7 @@ function QuizStage({ unit, onFinish }: { unit: CurriculumUnit; onFinish: (score:
         </div>
       </section>
       {answered && (
-        <section className={cn("rounded-3xl border p-5", correct ? "border-brand/40 bg-brand-soft/40" : "border-streak/30 bg-streak-soft/50")}>
+        <section className={cn("lesson-feedback-enter rounded-3xl border p-5", correct ? "border-brand/40 bg-brand-soft/40" : "border-streak/30 bg-streak-soft/50")}>
           <div className="flex items-center gap-2"><span className={cn("flex h-7 w-7 items-center justify-center rounded-full", correct ? "bg-brand text-brand-foreground" : "bg-destructive text-destructive-foreground")}>{correct ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" strokeWidth={2.8} />}</span><h3 className="text-sm font-semibold">{correct ? "Exactly." : "Not quite."}</h3></div>
           <p className="mt-3 text-sm leading-relaxed text-foreground/90">{question.explanation}</p>
         </section>
@@ -390,7 +392,7 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, earne
       ? checkpointNeedsMembership ? "Unlock the full course" : "Take the unit test"
       : nextUnitNeedsMembership ? "Unlock the full course" : nextUnit ? `Open Unit ${nextUnit.index}` : "Record your capstone"
   return (
-    <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
+    <div className="lesson-complete-enter relative flex flex-col items-center gap-5 rounded-3xl border border-border bg-card px-6 py-10 text-center">
       <Celebration active={earnedThisVisit} label={earnedThisVisit ? `+${earnedXp} XP` : undefined} />
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
