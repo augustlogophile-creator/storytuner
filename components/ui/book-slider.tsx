@@ -5,6 +5,8 @@ import {
   Children,
   forwardRef,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
   useImperativeHandle,
@@ -64,6 +66,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
   const requestedTargetRef = useRef<number | null>(null)
   const pendingTargetRef = useRef<number | null>(null)
   const flipFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const edgeGestureRef = useRef<{ pointerId: number; startX: number; startY: number; side: "left" | "right" } | null>(null)
   const canGoNextRef = useRef(canGoNext)
   const [isFlipping, setIsFlippingState] = useState(false)
   const [bookSize, setBookSize] = useState({ width: 448, height: 800 })
@@ -183,11 +186,77 @@ const BookSlider = forwardRef<BookSliderHandle, {
     previous: () => requestPage(currentPageRef.current - 1),
     goTo: requestPage,
   }), [canGoNext, lastPage])
+  function isBookControl(target: EventTarget | null) {
+    return target instanceof Element && Boolean(target.closest('[data-book-no-turn="true"]'))
+  }
+
+  function edgeForClientX(clientX: number) {
+    const shell = shellRef.current
+    if (!shell) return null
+    const rect = shell.getBoundingClientRect()
+    const x = clientX - rect.left
+    if (x <= rect.width * 0.25) return "left" as const
+    if (x >= rect.width * 0.75) return "right" as const
+    return null
+  }
+
+  function handleEdgePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (isBookControl(event.target)) return
+    if (event.pointerType === "mouse" && event.button !== 0) return
+    const side = edgeForClientX(event.clientX)
+    if (!side) return
+
+    edgeGestureRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      side,
+    }
+    // Do not let react-pageflip react to a simple press in the outer quarters.
+    event.stopPropagation()
+  }
+
+  function handleEdgePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const gesture = edgeGestureRef.current
+    if (!gesture || gesture.pointerId !== event.pointerId) return
+    event.stopPropagation()
+  }
+
+  function handleEdgePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    const gesture = edgeGestureRef.current
+    if (!gesture || gesture.pointerId !== event.pointerId) return
+    edgeGestureRef.current = null
+    event.stopPropagation()
+
+    const deltaX = event.clientX - gesture.startX
+    const deltaY = event.clientY - gesture.startY
+    const isHorizontalFlip = Math.abs(deltaX) >= 48 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15
+    if (!isHorizontalFlip) return
+
+    if (gesture.side === "right" && deltaX < 0) requestPage(currentPageRef.current + 1)
+    if (gesture.side === "left" && deltaX > 0) requestPage(currentPageRef.current - 1)
+  }
+
+  function handleEdgePointerCancel(event: ReactPointerEvent<HTMLDivElement>) {
+    if (edgeGestureRef.current?.pointerId === event.pointerId) edgeGestureRef.current = null
+  }
+
+  function handleEdgeClick(event: ReactMouseEvent<HTMLDivElement>) {
+    if (isBookControl(event.target)) return
+    if (!edgeForClientX(event.clientX)) return
+    event.preventDefault()
+    event.stopPropagation()
+  }
 
   return (
     <div
       ref={shellRef}
       className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
+      onPointerDownCapture={handleEdgePointerDown}
+      onPointerMoveCapture={handleEdgePointerMove}
+      onPointerUpCapture={handleEdgePointerUp}
+      onPointerCancelCapture={handleEdgePointerCancel}
+      onClickCapture={handleEdgeClick}
     >
       <HTMLFlipBook
         key={`${bookSize.width}-${bookSize.height}`}
@@ -211,7 +280,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         showCover
         mobileScrollSupport
         clickEventForward
-        useMouseEvents
+        useMouseEvents={false}
         swipeDistance={18}
         showPageCorners={false}
         disableFlipByClick

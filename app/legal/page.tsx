@@ -1,7 +1,5 @@
 import Link from "next/link"
-import { ChevronRight, Scale } from "lucide-react"
 import { MobileShell } from "@/components/mobile-shell"
-import { BackLink } from "@/components/page-header"
 
 const items = [
   { href: "/privacy", title: "Privacy Policy", detail: "What StoryTuner collects, how it is used, and how to request deletion." },
@@ -11,11 +9,18 @@ const items = [
   { href: "/delete-account", title: "Account deletion help", detail: "Public instructions for deleting your StoryTuner account, even without app access." },
 ]
 
-export default function LegalHubPage() {
+type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
+
+export default async function LegalHubPage({ searchParams }: { searchParams?: LegalSearchParams }) {
+  const params = searchParams ? await searchParams : {}
+  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
+  const fromProfile = rawFrom === "profile"
+  const itemHref = (href: string) => fromProfile ? `${href}?from=profile` : href
+
   return (
     <MobileShell>
       <div className="flex flex-col gap-5">
-        <BackLink href="/profile" label="Profile" />
+        <Link href="/profile" className="inline-flex min-h-10 items-center text-sm font-medium text-muted-foreground hover:text-foreground">Back to profile</Link>
         <header>
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Account information</p>
           <h1 className="mt-2 text-[1.65rem] font-semibold tracking-[-0.03em]">Legal and accessibility</h1>
@@ -26,15 +31,9 @@ export default function LegalHubPage() {
           {items.map((item, index) => (
             <div key={item.href}>
               {index > 0 && <div className="h-px bg-border" />}
-              <Link prefetch href={item.href} className="group flex items-center gap-3 py-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
-                  <Scale className="h-4 w-4" strokeWidth={1.8} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[0.94rem] font-semibold">{item.title}</span>
-                  <span className="mt-0.5 block text-[0.72rem] leading-5 text-muted-foreground">{item.detail}</span>
-                </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              <Link prefetch href={itemHref(item.href)} className="group block py-4">
+                <span className="block text-[0.94rem] font-semibold">{item.title}</span>
+                <span className="mt-0.5 block text-[0.72rem] leading-5 text-muted-foreground">{item.detail}</span>
               </Link>
             </div>
           ))}

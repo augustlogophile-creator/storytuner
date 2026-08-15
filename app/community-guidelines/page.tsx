@@ -6,9 +6,17 @@ export const metadata: Metadata = {
   description: "Rules for StoryTuner Community.",
 }
 
-export default function CommunityGuidelinesPage() {
+type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
+
+export default async function CommunityGuidelinesPage({ searchParams }: { searchParams?: LegalSearchParams }) {
+  const params = searchParams ? await searchParams : {}
+  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
+  const fromProfile = rawFrom === "profile"
+
   return (
     <LegalPage
+      backHref={fromProfile ? "/profile" : "/"}
+      backLabel={fromProfile ? "Back to profile" : "StoryTuner"}
       eyebrow="Community"
       title="Community Guidelines"
       summary="Share stories, not harm. These rules apply to Community posts, transcripts, audio, replies, profile names, and other member-visible content."

@@ -6,9 +6,17 @@ export const metadata: Metadata = {
   description: "StoryTuner accessibility statement.",
 }
 
-export default function AccessibilityPage() {
+type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
+
+export default async function AccessibilityPage({ searchParams }: { searchParams?: LegalSearchParams }) {
+  const params = searchParams ? await searchParams : {}
+  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
+  const fromProfile = rawFrom === "profile"
+
   return (
     <LegalPage
+      backHref={fromProfile ? "/profile" : "/"}
+      backLabel={fromProfile ? "Back to profile" : "StoryTuner"}
       eyebrow="Accessibility"
       title="Accessibility"
       summary="StoryTuner aims to make its core learning, recording, account, and Community experiences usable with keyboard, touch, zoom, and assistive technology."

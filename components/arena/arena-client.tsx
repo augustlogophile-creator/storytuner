@@ -768,7 +768,7 @@ export function ArenaClient() {
     return (
       <div className="flex min-w-0 flex-col gap-6">
         <header className="min-w-0">
-          <div className="flex items-center justify-between gap-3">
+          <div className="arena-heading-row flex items-center justify-between gap-3">
             <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight">Your two free story reviews are complete.</h1></div>
             <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold">{recordingCountLabel(state.recordings.length)}</Link>
           </div>
@@ -789,7 +789,7 @@ export function ArenaClient() {
     <div className="flex min-w-0 flex-col gap-6">
       <Celebration active={showCaptureCelebration} mobileOnly label="Story captured" onDone={() => setShowCaptureCelebration(false)} />
       <header className="min-w-0">
-        <div className="flex items-center justify-between gap-3">
+        <div className="arena-heading-row flex items-center justify-between gap-3">
           <div className="min-w-0"><Eyebrow>Arena</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
           <Link href="/arena/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
@@ -1090,11 +1090,8 @@ function DurationOptionsDialog({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose()
     }
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
     window.addEventListener("keydown", onKeyDown)
     return () => {
-      document.body.style.overflow = previousOverflow
       window.removeEventListener("keydown", onKeyDown)
     }
   }, [onClose, open])

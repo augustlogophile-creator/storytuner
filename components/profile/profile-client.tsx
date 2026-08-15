@@ -80,7 +80,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       <section>
         <SectionLabel>Legal</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/legal" icon={ShieldCheck} title="Legal and accessibility" detail="Privacy, terms, accessibility, Community rules, and account deletion" />
+          <ProfileRow href="/legal?from=profile" icon={ShieldCheck} title="Legal and accessibility" detail="Privacy, terms, accessibility, Community rules, and account deletion" />
         </div>
       </section>
 

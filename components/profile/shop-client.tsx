@@ -123,7 +123,7 @@ export function ShopClient() {
       <BackLink href="/profile" label="Profile" />
 
       <header className="px-1">
-        <div className="flex items-end justify-between gap-4">
+        <div className="shop-heading-row flex items-end justify-between gap-4">
           <div>
             <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Parch collection</p>
             <h1 className="mt-1.5 text-[1.65rem] font-semibold leading-tight tracking-[-0.035em]">Choose your Parch.</h1>
@@ -137,7 +137,7 @@ export function ShopClient() {
       </header>
 
       <section
-        className="parch-archive relative isolate h-[45.5rem] overflow-hidden rounded-[2rem] border border-[#ded9cf] bg-[#fbfaf7] text-[#27231f] shadow-[0_16px_44px_rgba(39,35,31,0.07)] outline-none sm:h-[47rem]"
+        className="parch-archive relative isolate min-h-[45.5rem] overflow-hidden rounded-[2rem] border border-[#ded9cf] bg-[#fbfaf7] text-[#27231f] shadow-[0_16px_44px_rgba(39,35,31,0.07)] outline-none sm:min-h-[47rem]"
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft") select(selectedIndex - 1)
@@ -167,7 +167,7 @@ export function ShopClient() {
             <h2 className="relative z-10 mt-1 text-[1.42rem] font-semibold tracking-[-0.035em] text-[#27231f]">{selected.name}</h2>
           </div>
 
-          <div className="relative mt-2 flex h-[22.8rem] shrink-0 flex-col rounded-[1.55rem] border border-[#ded9cf] bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,35,31,0.045)] backdrop-blur-sm sm:h-[23.5rem] sm:p-6">
+          <div className="relative mt-2 flex min-h-[22.8rem] shrink-0 flex-col rounded-[1.55rem] border border-[#ded9cf] bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,35,31,0.045)] backdrop-blur-sm sm:min-h-[23.5rem] sm:p-6">
             <div className="flex h-7 shrink-0 items-center justify-between gap-3">
               <div className="inline-flex rounded-full border border-[#d7d0c5] bg-[#f6f3ed] px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-[#746d64]">{selectedLore.rarity}</div>
               <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-[#989187]">Archive {String(selectedIndex + 1).padStart(2, "0")}</span>
@@ -187,23 +187,23 @@ export function ShopClient() {
               </button>
               <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="text-[0.7rem] font-medium text-[#777069]">Browse the collection</p>
-                <div className="mt-1.5 grid w-full grid-cols-9 gap-1" aria-label="Parch collection markers">
+                <div className="mt-1.5 grid w-full grid-cols-9 place-items-center gap-1" aria-label="Parch collection markers">
                   {weaverColors.map((item, index) => (
                     <button
                       type="button"
                       key={item.id}
                       onClick={() => select(index)}
-                      className="group flex h-4 min-w-0 items-center justify-center overflow-hidden"
+                      className="group flex h-4 w-full min-w-0 items-center justify-center"
                       aria-label={`View ${item.name}`}
                     >
-                      <span className={`block h-1.5 max-w-full rounded-full transition-[width,background-color] duration-150 ${index === selectedIndex ? "w-full bg-[#2b2823]" : "w-1.5 bg-[#d2cdc5] group-hover:bg-[#aaa39a]"}`} />
+                      <span className={`block h-2 w-2 shrink-0 rounded-full transition-[transform,background-color] duration-150 ${index === selectedIndex ? "scale-110 bg-[#2b2823]" : "bg-[#d2cdc5] group-hover:bg-[#aaa39a]"}`} />
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 grid h-[4.4rem] shrink-0 grid-cols-2 gap-4 border-t border-[#e2ddd5] pt-4">
+            <div className="parch-status-grid mt-4 grid min-h-[4.4rem] shrink-0 grid-cols-2 gap-4 border-t border-[#e2ddd5] pt-4">
               <div>
                 <p className="font-mono text-[0.56rem] uppercase tracking-[0.16em] text-[#aa7a35]">Archive note</p>
                 <p className="mt-1 text-sm text-[#716b64]">{selectedLore.note}</p>

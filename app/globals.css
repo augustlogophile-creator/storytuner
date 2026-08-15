@@ -1614,17 +1614,6 @@ label:has(input[type="radio"]):active {
   overflow: hidden !important;
 }
 
-/* Hard guard against accidental backwards page grabs. The manual flip zone is
-   intentionally only on the right side; back navigation uses the page control. */
-.story-book-wrap::before {
-  content: "";
-  position: absolute;
-  z-index: 9999;
-  inset: 0 auto 0 0;
-  width: 24px;
-  pointer-events: auto;
-}
-
 .story-pageflip,
 .book-pageflip-shell .stf__parent {
   width: 100% !important;
@@ -3185,19 +3174,18 @@ body {
 }
 
 
-/* August 14, late polish: keep every app surface contained and prevent rubber-band blank areas. */
+/* August 14, late polish: keep every app surface contained without blocking native scrolling. */
 html, body {
   min-height: 100%;
   background: #eee9de;
-  overscroll-behavior-y: none;
+}
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 body {
   overflow-x: hidden;
-}
-.app-shell,
-[data-app-scroll-root="true"],
-.legal-page {
-  overscroll-behavior-y: contain;
+  overflow-y: auto;
 }
 
 /* The home typewriter may grow a touch when space allows, but never wider than its slot. */
@@ -3232,7 +3220,7 @@ body {
 }
 
 
-/* August 14 mobile reliability pass: one stable scroll surface on every app route. */
+/* August 14 mobile reliability pass: use the browser's native vertical scroll. */
 html,
 body {
   width: 100%;
@@ -3242,22 +3230,27 @@ body {
 body {
   min-width: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-shell {
-  height: 100vh;
   min-height: 100vh;
-  max-height: 100vh;
-  height: 100dvh;
   min-height: 100dvh;
-  max-height: 100dvh;
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 [data-app-scroll-root="true"] {
   min-height: 0;
   max-width: 100%;
-  overscroll-behavior-y: contain;
-  scrollbar-gutter: auto;
+  overflow-y: visible;
+}
+
+.legal-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: visible;
 }
 
 .book-app-content {
@@ -3499,5 +3492,87 @@ body {
 @media (max-width: 330px) {
   .moderation-duration-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+
+/* August 14 full-app mobile containment audit. */
+.book-app,
+.legal-page,
+.app-shell,
+.book-app-content {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.book-app :is(a, button, input, textarea, select),
+.legal-page :is(a, button) {
+  min-width: 0;
+}
+
+.book-app .flex > *,
+.book-app .grid > *,
+.legal-page .flex > *,
+.legal-page .grid > * {
+  min-width: 0;
+}
+
+.book-app :is(p, h1, h2, h3, h4, li),
+.legal-page :is(p, h1, h2, h3, li, a) {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 360px) {
+  .parch-archive {
+    border-radius: 1.45rem !important;
+  }
+
+  .parch-archive > div.relative {
+    padding-left: .85rem !important;
+    padding-right: .85rem !important;
+  }
+
+  .parch-archive [aria-label="Parch collection markers"] {
+    gap: .15rem !important;
+  }
+
+  .shop-heading-row,
+  .arena-heading-row {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+
+  .shop-heading-row > :last-child,
+  .arena-heading-row > a {
+    align-self: flex-start;
+  }
+
+  .parch-status-grid {
+    gap: .75rem !important;
+  }
+
+  .legal-page {
+    padding-left: max(.95rem, env(safe-area-inset-left)) !important;
+    padding-right: max(.95rem, env(safe-area-inset-right)) !important;
+  }
+}
+
+@media (max-width: 330px) {
+  .profile-page .grid-cols-3 {
+    font-size: .92em;
+  }
+}
+
+
+/* Auth and public documents must never become fixed-height scroll traps. */
+.auth-canvas-polished {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+@media (min-width: 640px) {
+  .auth-canvas.auth-canvas-polished {
+    height: auto;
+    min-height: 100svh;
+    overflow-y: auto;
   }
 }

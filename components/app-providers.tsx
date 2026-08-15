@@ -1,5 +1,7 @@
 "use client"
 
+import { useLayoutEffect } from "react"
+import { usePathname } from "next/navigation"
 import { AppProvider } from "@/lib/app-state"
 import { MembershipSync } from "@/components/membership-sync"
 
@@ -14,6 +16,15 @@ export function AppProviders({
   initialDisplayName: string
   initialMembershipActive: boolean
 }) {
+  const pathname = usePathname()
+
+  useLayoutEffect(() => {
+    // Never let a stale modal/body lock survive navigation. Native vertical
+    // scrolling is the default for every StoryTuner route, including legal pages.
+    document.documentElement.style.removeProperty("overflow")
+    document.body.style.removeProperty("overflow")
+  }, [pathname])
+
   return (
     <AppProvider
       initialUserId={initialUserId}

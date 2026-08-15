@@ -6,9 +6,17 @@ export const metadata: Metadata = {
   description: "StoryTuner Terms of Service.",
 }
 
-export default function TermsPage() {
+type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
+
+export default async function TermsPage({ searchParams }: { searchParams?: LegalSearchParams }) {
+  const params = searchParams ? await searchParams : {}
+  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
+  const fromProfile = rawFrom === "profile"
+
   return (
     <LegalPage
+      backHref={fromProfile ? "/profile" : "/"}
+      backLabel={fromProfile ? "Back to profile" : "StoryTuner"}
       eyebrow="Terms"
       title="Terms of Service"
       summary="These terms govern use of StoryTuner, including accounts, Community, AI features, XP, and paid membership."
