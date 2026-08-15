@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { LegalPage, LegalSection } from "@/components/legal/legal-page"
+import { legalBackTarget } from "@/lib/legal-navigation"
 
 export const metadata: Metadata = {
   title: "Terms of Service · StoryTuner",
@@ -10,13 +11,12 @@ type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
 
 export default async function TermsPage({ searchParams }: { searchParams?: LegalSearchParams }) {
   const params = searchParams ? await searchParams : {}
-  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
-  const fromProfile = rawFrom === "profile"
+  const back = legalBackTarget(params)
 
   return (
     <LegalPage
-      backHref={fromProfile ? "/profile" : "/"}
-      backLabel={fromProfile ? "Back to profile" : "StoryTuner"}
+      backHref={back.href}
+      backLabel={back.label}
       eyebrow="Terms"
       title="Terms of Service"
       summary="These terms govern use of StoryTuner, including accounts, Community, AI features, XP, and paid membership."

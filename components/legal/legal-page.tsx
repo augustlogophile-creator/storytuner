@@ -1,5 +1,5 @@
-import Link from "next/link"
 import type { ReactNode } from "react"
+import { BackLink } from "@/components/page-header"
 
 export function LegalPage({
   eyebrow,
@@ -20,9 +20,7 @@ export function LegalPage({
     <main className="book-app legal-page mx-auto min-h-svh w-full max-w-md bg-background px-5 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] text-foreground">
       <article className="mx-auto w-full">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <Link href={backHref} className="inline-flex min-h-11 items-center rounded-full px-1 text-sm text-muted-foreground hover:text-foreground">
-            {backLabel}
-          </Link>
+          <BackLink href={backHref} label={backLabel} />
           <span className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Public document</span>
         </div>
 

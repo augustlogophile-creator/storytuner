@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { MobileShell } from "@/components/mobile-shell"
+import { BackLink } from "@/components/page-header"
 
 const items = [
   { href: "/privacy", title: "Privacy Policy", detail: "What StoryTuner collects, how it is used, and how to request deletion." },
@@ -15,12 +16,12 @@ export default async function LegalHubPage({ searchParams }: { searchParams?: Le
   const params = searchParams ? await searchParams : {}
   const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
   const fromProfile = rawFrom === "profile"
-  const itemHref = (href: string) => fromProfile ? `${href}?from=profile` : href
+  const itemHref = (href: string) => fromProfile ? `${href}?from=legal-profile` : `${href}?from=legal`
 
   return (
     <MobileShell>
       <div className="flex flex-col gap-5">
-        <Link href="/profile" className="inline-flex min-h-10 items-center text-sm font-medium text-muted-foreground hover:text-foreground">Back to profile</Link>
+        <BackLink href="/profile" label="Profile" />
         <header>
           <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Account information</p>
           <h1 className="mt-2 text-[1.65rem] font-semibold tracking-[-0.03em]">Legal and accessibility</h1>

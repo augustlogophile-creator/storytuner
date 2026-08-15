@@ -72,6 +72,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
     startX: number
     startY: number
     side: "left" | "right"
+    corner: "top" | "bottom" | "middle"
     dragging: boolean
   } | null>(null)
   const canGoNextRef = useRef(canGoNext)
@@ -105,7 +106,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
     currentPageRef.current = page
   }, [page])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     canGoNextRef.current = canGoNext
   }, [canGoNext])
 
@@ -126,46 +127,81 @@ const BookSlider = forwardRef<BookSliderHandle, {
     return target instanceof Element && Boolean(target.closest('[data-book-no-turn="true"]'))
   }
 
-  function edgeForClientX(clientX: number) {
+  function gestureRegion(clientX: number, clientY: number) {
     const shell = shellRef.current
     if (!shell) return null
     const rect = shell.getBoundingClientRect()
     const x = clientX - rect.left
-    if (x <= rect.width * 0.25) return "left" as const
-    if (x >= rect.width * 0.75) return "right" as const
-    return null
+    const y = clientY - rect.top
+
+    // Give readers a generous physical edge to grab, but never turn on tap.
+    // The actual fold still starts only after pointer movement is detected.
+    const side = x <= rect.width * 0.30
+      ? "left" as const
+      : x >= rect.width * 0.70
+        ? "right" as const
+        : null
+    if (!side) return null
+
+    const corner = y <= rect.height * 0.38
+      ? "top" as const
+      : y >= rect.height * 0.62
+        ? "bottom" as const
+        : "middle" as const
+
+    return { side, corner }
+  }
+
+  function flipRect() {
+    const flip = api()
+    const distElement = flip?.getUI?.()?.getDistElement?.()
+    return distElement instanceof Element
+      ? distElement.getBoundingClientRect()
+      : shellRef.current?.getBoundingClientRect()
   }
 
   function pointForClient(clientX: number, clientY: number) {
-    const flip = api()
-    const distElement = flip?.getUI?.()?.getDistElement?.()
-    const rect = distElement instanceof Element
-      ? distElement.getBoundingClientRect()
-      : shellRef.current?.getBoundingClientRect()
-
+    const rect = flipRect()
     return {
       x: clientX - (rect?.left ?? 0),
       y: clientY - (rect?.top ?? 0),
     }
   }
 
+  function pointForGestureStart(gesture: NonNullable<typeof dragGestureRef.current>) {
+    const rect = flipRect()
+    if (!rect) return pointForClient(gesture.startX, gesture.startY)
+
+    const edgeInset = 1.5
+    const x = gesture.side === "right" ? rect.width - edgeInset : edgeInset
+    const rawY = gesture.startY - rect.top
+    const y = gesture.corner === "top"
+      ? edgeInset
+      : gesture.corner === "bottom"
+        ? rect.height - edgeInset
+        : Math.max(edgeInset, Math.min(rect.height - edgeInset, rawY))
+
+    return { x, y }
+  }
+
   function handleDragPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (isBookControl(event.target)) return
     if (event.pointerType === "mouse" && event.button !== 0) return
 
-    const side = edgeForClientX(event.clientX)
-    if (!side) return
+    const region = gestureRegion(event.clientX, event.clientY)
+    if (!region) return
 
     const current = currentPageRef.current
-    if (side === "right" && (!canGoNextRef.current || current >= lastPage)) return
-    if (side === "left" && current <= 0) return
+    if (region.side === "right" && (!canGoNextRef.current || current >= lastPage)) return
+    if (region.side === "left" && current <= 0) return
 
     dragGestureRef.current = {
       pointerId: event.pointerId,
       pointerType: event.pointerType,
       startX: event.clientX,
       startY: event.clientY,
-      side,
+      side: region.side,
+      corner: region.corner,
       dragging: false,
     }
 
@@ -179,28 +215,23 @@ const BookSlider = forwardRef<BookSliderHandle, {
 
     const deltaX = event.clientX - gesture.startX
     const deltaY = event.clientY - gesture.startY
-    const horizontalDistance = Math.abs(deltaX)
-    const verticalDistance = Math.abs(deltaY)
+    const movement = Math.hypot(deltaX, deltaY)
 
     if (!gesture.dragging) {
-      // A tap/press never starts the page-flip engine. Only a deliberate drag
-      // inward from the outer quarter does, so tapping the page is inert.
-      if (horizontalDistance < 7) return
+      // A press/tap is completely inert. The fold begins only after a small
+      // physical pull. Corner pulls may travel vertically, just like grabbing
+      // the top or bottom corner of a real sheet of paper.
+      const threshold = gesture.pointerType === "mouse" ? 3 : 4
+      if (movement < threshold) return
 
-      if (verticalDistance > horizontalDistance * 1.25) {
-        dragGestureRef.current = null
-        try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
-        return
-      }
+      const movingInward = gesture.side === "right" ? deltaX < -threshold : deltaX > threshold
+      const movingFromCorner = gesture.corner === "top"
+        ? deltaY > threshold
+        : gesture.corner === "bottom"
+          ? deltaY < -threshold
+          : false
 
-      const movingInward = gesture.side === "right" ? deltaX < -7 : deltaX > 7
-      if (!movingInward) {
-        if (horizontalDistance > 14) {
-          dragGestureRef.current = null
-          try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
-        }
-        return
-      }
+      if (!movingInward && !movingFromCorner) return
 
       const flip = api()
       if (!flip?.startUserTouch || !flip?.userMove || !flip?.userStop) {
@@ -210,8 +241,9 @@ const BookSlider = forwardRef<BookSliderHandle, {
       }
 
       onPreparePage?.(gesture.side === "right" ? currentPageRef.current + 1 : currentPageRef.current - 1)
-      flip.startUserTouch(pointForClient(gesture.startX, gesture.startY))
+      flip.startUserTouch(pointForGestureStart(gesture))
       gesture.dragging = true
+      setFlipping(true)
     }
 
     api()?.userMove?.(pointForClient(event.clientX, event.clientY), gesture.pointerType !== "mouse")
@@ -321,7 +353,12 @@ const BookSlider = forwardRef<BookSliderHandle, {
   return (
     <div
       ref={shellRef}
-      className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
+      className={cn(
+        "story-book-wrap book-pageflip-shell",
+        isFlipping && "is-flipping",
+        page === 0 && isFlipping && "is-opening-cover",
+        className,
+      )}
       onPointerDownCapture={handleDragPointerDown}
       onPointerMoveCapture={handleDragPointerMove}
       onPointerUpCapture={(event) => finishDragGesture(event)}
@@ -340,17 +377,17 @@ const BookSlider = forwardRef<BookSliderHandle, {
         maxWidth={bookSize.width}
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
-        drawShadow
+        drawShadow={page !== 0}
         flippingTime={page === 0 ? 760 : 300}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.3}
+        maxShadowOpacity={0.16}
         showCover
         mobileScrollSupport
         clickEventForward
         useMouseEvents={false}
-        swipeDistance={18}
+        swipeDistance={10}
         showPageCorners={false}
         disableFlipByClick
         onChangeState={(event: any) => {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { LegalPage, LegalSection } from "@/components/legal/legal-page"
+import { legalBackTarget } from "@/lib/legal-navigation"
 
 export const metadata: Metadata = {
   title: "Delete your account · StoryTuner",
@@ -11,13 +12,12 @@ type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
 
 export default async function DeleteAccountPage({ searchParams }: { searchParams?: LegalSearchParams }) {
   const params = searchParams ? await searchParams : {}
-  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
-  const fromProfile = rawFrom === "profile"
+  const back = legalBackTarget(params)
 
   return (
     <LegalPage
-      backHref={fromProfile ? "/profile" : "/"}
-      backLabel={fromProfile ? "Back to profile" : "StoryTuner"}
+      backHref={back.href}
+      backLabel={back.label}
       eyebrow="Account control"
       title="Delete your StoryTuner account"
       summary="You can permanently delete your StoryTuner account and associated data from inside the app, or request deletion if you cannot access the app."

@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Loader2, ShieldCheck } from "lucide-react"
@@ -22,6 +23,12 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
     const queryError = searchParams.get("error")
     if (queryError) setError(queryError)
   }, [initialMode, searchParams])
+
+  useEffect(() => {
+    const modeQuery = isSignUp ? "" : "&mode=sign-in"
+    router.prefetch(`/terms?from=auth${modeQuery}`)
+    router.prefetch(`/privacy?from=auth${modeQuery}`)
+  }, [isSignUp, router])
 
   const next = useMemo(
     () => safeInternalPath(searchParams.get("next"), isSignUp ? "/onboarding" : "/home"),
@@ -109,8 +116,11 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
         <span>Secure Google sign-in. No password to remember.</span>
       </div>
 
-      <p className="mt-4 text-center text-[0.68rem] leading-5 text-muted-foreground">
-        By continuing, you agree to the <a href="/terms" className="underline underline-offset-2">Terms of Service</a> and acknowledge the <a href="/privacy" className="underline underline-offset-2">Privacy Policy</a>.
+      <p className="auth-legal-note">
+        By continuing, you agree to the{" "}
+        <Link prefetch href={isSignUp ? "/terms?from=auth" : "/terms?from=auth&mode=sign-in"}>Terms of Service</Link>
+        {" "}and acknowledge the{" "}
+        <Link prefetch href={isSignUp ? "/privacy?from=auth" : "/privacy?from=auth&mode=sign-in"}>Privacy Policy</Link>.
       </p>
     </div>
   )

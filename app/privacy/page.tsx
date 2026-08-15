@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { LegalPage, LegalSection } from "@/components/legal/legal-page"
+import { legalBackTarget, legalChildHref } from "@/lib/legal-navigation"
 
 export const metadata: Metadata = {
   title: "Privacy Policy · StoryTuner",
@@ -10,13 +12,12 @@ type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
 
 export default async function PrivacyPage({ searchParams }: { searchParams?: LegalSearchParams }) {
   const params = searchParams ? await searchParams : {}
-  const rawFrom = Array.isArray(params.from) ? params.from[0] : params.from
-  const fromProfile = rawFrom === "profile"
+  const back = legalBackTarget(params)
 
   return (
     <LegalPage
-      backHref={fromProfile ? "/profile" : "/"}
-      backLabel={fromProfile ? "Back to profile" : "StoryTuner"}
+      backHref={back.href}
+      backLabel={back.label}
       eyebrow="Privacy"
       title="Privacy Policy"
       summary="This policy explains what StoryTuner collects, why it is used, the services that process it, and how you can access or delete your information."
@@ -56,7 +57,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       </LegalSection>
 
       <LegalSection title="Your choices and requests">
-        <p>You can update your display name and personalization settings, delete recordings, erase app data, or permanently delete your account from Settings. If you cannot access the app, use the public <a href={fromProfile ? "/delete-account?from=profile" : "/delete-account"}>account deletion page</a> or email storytunerapp@gmail.com to request deletion.</p>
+        <p>You can update your display name and personalization settings, delete recordings, erase app data, or permanently delete your account from Settings. If you cannot access the app, use the public <Link prefetch href={legalChildHref("/delete-account", params)}>account deletion page</Link> or email storytunerapp@gmail.com to request deletion.</p>
         <p>If you withdraw permission for a browser or device feature such as microphone or camera access, you can continue using portions of StoryTuner that do not require that permission.</p>
       </LegalSection>
 

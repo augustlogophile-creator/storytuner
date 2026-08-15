@@ -9,23 +9,21 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <section className="auth-canvas auth-canvas-polished">
         <div className="auth-canvas-inner">
           <header className="auth-header-row">
-            <Link href="/?introPage=4" className="auth-back-link">
-              <ArrowLeft className="h-4 w-4" />
-              Introduction
+            <Link prefetch href="/?introPage=4" className="auth-back-link">
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.7} />
+              <span>Introduction</span>
             </Link>
             <span className="auth-wordmark">StoryTuner</span>
           </header>
 
           <div className="auth-content auth-content-polished">
             <div className="auth-stage" aria-hidden="true">
-              <span className="auth-stage-glow" />
-              <span className="auth-stage-sparkle auth-stage-sparkle-one">✦</span>
-              <span className="auth-stage-sparkle auth-stage-sparkle-two">✦</span>
+              <span className="auth-stage-paper" />
               <Image
-                src="/parch-confident.png"
+                src="/parch-classic.png"
                 alt=""
-                width={340}
-                height={347}
+                width={294}
+                height={244}
                 priority
                 className="auth-parch"
               />
