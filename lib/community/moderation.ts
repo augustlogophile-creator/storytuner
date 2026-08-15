@@ -25,7 +25,7 @@ export async function getModeratorContext() {
   if (!role) {
     return {
       ok: false as const,
-      response: Response.json({ error: `Only ${STORYTUNER_OWNER_EMAIL} can access moderation.` }, { status: 403 }),
+      response: Response.json({ error: "Admin access required." }, { status: 403 }),
     }
   }
 

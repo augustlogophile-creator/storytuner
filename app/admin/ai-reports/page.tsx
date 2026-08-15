@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { AiResponseReportsClient } from "@/components/admin/ai-response-reports-client"
 import { MobileShell } from "@/components/mobile-shell"
 import { moderatorRoleFromClaims } from "@/lib/community/moderation"
@@ -8,6 +8,6 @@ export const dynamic = "force-dynamic"
 
 export default async function AiResponseReportsPage() {
   const user = await requireStoryTunerUser("/admin/ai-reports")
-  if (!moderatorRoleFromClaims(user.claims)) redirect("/profile")
+  if (moderatorRoleFromClaims(user.claims) !== "admin") notFound()
   return <MobileShell><AiResponseReportsClient /></MobileShell>
 }

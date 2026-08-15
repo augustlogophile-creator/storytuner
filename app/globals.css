@@ -3017,10 +3017,25 @@ body {
     #fffefa;
 }
 
-/* Accessible keyboard focus without changing the printed-book visual language. */
-:where(a, button, input, textarea, select, [role="button"]):focus-visible {
-  outline: 3px solid rgba(55, 115, 177, .58);
+/* Accessible keyboard focus without the bright browser-blue box around text fields. */
+:where(a, button, [role="button"]):focus-visible {
+  outline: 2px solid rgba(92, 80, 65, .42);
   outline-offset: 3px;
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select
+):focus,
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select
+):focus-visible {
+  outline: none !important;
+  border-color: rgba(111, 96, 77, .34) !important;
+  box-shadow: 0 0 0 2px rgba(111, 96, 77, .07) !important;
 }
 
 /* Respect reduced-motion preferences while preserving functionality. */

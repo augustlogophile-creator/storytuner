@@ -37,3 +37,20 @@ test("AI report administration is owner-protected", () => {
   assert.match(updateRoute, /getModeratorContext\(\)/)
   assert.match(updateRoute, /requireSameOrigin\(request\)/)
 })
+
+test("owner tools are hidden and server-blocked for non-owner accounts", () => {
+  for (const file of [
+    "app/admin/page.tsx",
+    "app/admin/community/page.tsx",
+    "app/admin/ai-reports/page.tsx",
+    "app/admin/system/page.tsx",
+  ]) {
+    const page = read(file)
+    assert.match(page, /moderatorRoleFromClaims\(user\.claims\)/)
+    assert.match(page, /notFound\(\)/)
+  }
+
+  const profile = read("components/profile/profile-client.tsx")
+  assert.match(profile, /moderatorRole === "admin"/)
+  assert.match(profile, /href="\/admin"/)
+})

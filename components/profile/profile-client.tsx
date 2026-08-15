@@ -3,11 +3,9 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 import {
-  Activity,
   BarChart3,
   ChevronRight,
   Mail,
-  Flag,
   ScrollText,
   Settings,
   ShieldCheck,
@@ -104,15 +102,11 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </a>
       </section>
 
-      {moderatorRole && (
+      {moderatorRole === "admin" && (
         <section>
-          <SectionLabel>Admin</SectionLabel>
+          <SectionLabel>Owner</SectionLabel>
           <div className="story-card overflow-hidden rounded-[1.3rem] px-4">
-            <ProfileRow href="/admin/community" icon={ShieldCheck} title="Community moderation" detail="Reports and account actions" />
-            <Divider />
-            <ProfileRow href="/admin/ai-reports" icon={Flag} title="AI response reports" detail="Review replies members flagged" />
-            <Divider />
-            <ProfileRow href="/admin/system" icon={Activity} title="System health" detail="Usage, failures, and maintenance" />
+            <ProfileRow href="/admin" icon={ShieldCheck} title="Owner tools" detail="Community reports, AI replies, and app status" />
           </div>
         </section>
       )}

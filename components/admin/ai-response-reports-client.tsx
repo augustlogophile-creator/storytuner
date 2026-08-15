@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { CheckCircle2, Flag, Loader2, RefreshCw } from "lucide-react"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Eyebrow } from "@/components/eyebrow"
 import { BackLink } from "@/components/page-header"
 import type { AiResponseReportItem, AiResponseReportsResponse, AiResponseReportStatus } from "@/lib/admin/ai-report-types"
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils"
 const statuses: { value: AiResponseReportStatus; label: string }[] = [
   { value: "open", label: "New" },
   { value: "reviewed", label: "Reviewed" },
-  { value: "actioned", label: "Actioned" },
+  { value: "actioned", label: "Handled" },
   { value: "dismissed", label: "Dismissed" },
 ]
 
@@ -59,11 +60,11 @@ export function AiResponseReportsClient() {
 
   return (
     <div className="flex min-w-0 flex-col gap-5 pb-6">
-      <BackLink href="/profile" label="Profile" />
+      <BackLink href="/admin" label="Owner tools" />
       <header>
-        <Eyebrow>Owner tools</Eyebrow>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">AI response reports</h1>
-        <p className="mt-1 text-sm leading-6 text-muted-foreground">Review replies that members flagged as incorrect, unhelpful, unsafe, or otherwise off.</p>
+        <Eyebrow>AI replies</Eyebrow>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">AI reply reports</h1>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">See what the member reported, read the exact Parch reply, then choose what happened next.</p>
       </header>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -97,7 +98,7 @@ export function AiResponseReportsClient() {
       ) : reports.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border bg-card py-12 text-center">
           <CheckCircle2 className="mx-auto h-6 w-6 text-brand" />
-          <p className="mt-3 text-sm font-semibold">Nothing here.</p>
+          <p className="mt-3 text-sm font-semibold">No reports in this section.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -111,6 +112,7 @@ export function AiResponseReportsClient() {
 function AiReportCard({ report, onMoved }: { report: AiResponseReportItem; onMoved: (id: string, status: AiResponseReportStatus) => void }) {
   const [note, setNote] = useState(report.adminNote ?? "")
   const [busy, setBusy] = useState<AiResponseReportStatus | null>(null)
+  const [pendingStatus, setPendingStatus] = useState<AiResponseReportStatus | null>(null)
   const [error, setError] = useState("")
 
   async function update(nextStatus: AiResponseReportStatus) {
@@ -125,6 +127,7 @@ function AiReportCard({ report, onMoved }: { report: AiResponseReportItem; onMov
       })
       const payload = await response.json() as { error?: string }
       if (!response.ok) throw new Error(payload.error || "The report could not be updated.")
+      setPendingStatus(null)
       onMoved(report.id, nextStatus)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The report could not be updated.")
@@ -166,13 +169,13 @@ function AiReportCard({ report, onMoved }: { report: AiResponseReportItem; onMov
       )}
 
       <label className="mt-4 block">
-        <span className="text-xs font-semibold text-muted-foreground">Admin note, optional</span>
+        <span className="text-xs font-semibold text-muted-foreground">Private note <span className="font-normal">optional</span></span>
         <textarea
           value={note}
           onChange={(event) => setNote(event.target.value.slice(0, 2000))}
           rows={2}
           maxLength={2000}
-          placeholder="What did you find or change?"
+          placeholder="Add a short note for yourself about what you found."
           className="mt-2 w-full resize-y rounded-2xl border border-border bg-background px-3 py-3 text-sm leading-6 outline-none focus:border-brand"
         />
       </label>
@@ -181,14 +184,50 @@ function AiReportCard({ report, onMoved }: { report: AiResponseReportItem; onMov
       <div className="mt-4 grid grid-cols-2 gap-2">
         {report.status === "open" ? (
           <>
-            <button type="button" onClick={() => void update("reviewed")} disabled={Boolean(busy)} className="rounded-full bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground disabled:opacity-50">{busy === "reviewed" ? "Saving..." : "Mark reviewed"}</button>
-            <button type="button" onClick={() => void update("dismissed")} disabled={Boolean(busy)} className="rounded-full border border-border bg-background px-4 py-3 text-xs font-semibold disabled:opacity-50">{busy === "dismissed" ? "Saving..." : "Dismiss"}</button>
-            <button type="button" onClick={() => void update("actioned")} disabled={Boolean(busy)} className="col-span-2 rounded-full border border-brand/35 bg-brand-soft px-4 py-3 text-xs font-semibold text-brand disabled:opacity-50">{busy === "actioned" ? "Saving..." : "Mark actioned"}</button>
+            <button type="button" onClick={() => setPendingStatus("reviewed")} disabled={Boolean(busy)} className="rounded-full bg-primary px-4 py-3 text-xs font-semibold text-primary-foreground disabled:opacity-50">Mark reviewed</button>
+            <button type="button" onClick={() => setPendingStatus("dismissed")} disabled={Boolean(busy)} className="rounded-full border border-border bg-background px-4 py-3 text-xs font-semibold disabled:opacity-50">Dismiss</button>
+            <button type="button" onClick={() => setPendingStatus("actioned")} disabled={Boolean(busy)} className="col-span-2 rounded-full border border-brand/35 bg-brand-soft px-4 py-3 text-xs font-semibold text-brand disabled:opacity-50">Mark handled</button>
           </>
         ) : (
-          <button type="button" onClick={() => void update("open")} disabled={Boolean(busy)} className="col-span-2 rounded-full border border-border bg-background px-4 py-3 text-xs font-semibold disabled:opacity-50">{busy === "open" ? "Saving..." : "Reopen report"}</button>
+          <button type="button" onClick={() => setPendingStatus("open")} disabled={Boolean(busy)} className="col-span-2 rounded-full border border-border bg-background px-4 py-3 text-xs font-semibold disabled:opacity-50">Reopen report</button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={Boolean(pendingStatus)}
+        title={confirmationTitle(pendingStatus)}
+        confirmLabel={confirmationButton(pendingStatus)}
+        tone={pendingStatus === "dismissed" ? "danger" : "brand"}
+        busy={Boolean(busy)}
+        onCancel={() => { if (!busy) setPendingStatus(null) }}
+        onConfirm={() => { if (pendingStatus) void update(pendingStatus) }}
+      >
+        {confirmationMessage(pendingStatus)}
+      </ConfirmDialog>
     </article>
   )
+}
+
+function confirmationTitle(status: AiResponseReportStatus | null) {
+  if (status === "dismissed") return "Dismiss this report?"
+  if (status === "actioned") return "Mark this report handled?"
+  if (status === "reviewed") return "Mark this report reviewed?"
+  if (status === "open") return "Reopen this report?"
+  return "Update this report?"
+}
+
+function confirmationButton(status: AiResponseReportStatus | null) {
+  if (status === "dismissed") return "Dismiss report"
+  if (status === "actioned") return "Mark handled"
+  if (status === "reviewed") return "Mark reviewed"
+  if (status === "open") return "Reopen"
+  return "Confirm"
+}
+
+function confirmationMessage(status: AiResponseReportStatus | null) {
+  if (status === "dismissed") return "This records that you reviewed the report and decided no action is needed. You can reopen it later."
+  if (status === "actioned") return "Use this after you have actually handled the issue. The report will move to Handled."
+  if (status === "reviewed") return "This records that you read the report. It does not change the member's account or content."
+  if (status === "open") return "The report will return to New so you can review it again."
+  return "The report status will be updated."
 }

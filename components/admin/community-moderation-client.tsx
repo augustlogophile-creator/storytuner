@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { CheckCircle2, Loader2, RefreshCw, RotateCcw, ShieldAlert } from "lucide-react"
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { Eyebrow } from "@/components/eyebrow"
+import { BackLink } from "@/components/page-header"
 import type {
   ModerationAction,
   ModerationReportItem,
@@ -67,10 +68,11 @@ export function CommunityModerationClient({ role: _role }: { role: "admin" }) {
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
+      <BackLink href="/admin" label="Owner tools" />
       <header>
-        <Eyebrow>Owner tools</Eyebrow>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Community moderation</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Review new reports or revisit past decisions.</p>
+        <Eyebrow>Community</Eyebrow>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Community reports</h1>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">Review reported posts and replies. Choose a clear action, or dismiss the report if nothing needs to change.</p>
       </header>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
