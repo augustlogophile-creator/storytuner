@@ -14,7 +14,7 @@ import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
-  const { state } = useApp()
+  const { state, ready } = useApp()
   const [celebrateStreak, setCelebrateStreak] = useState(false)
   const progress = courseProgress(state)
   const next = nextCourseItem(state)
