@@ -146,8 +146,8 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
   if (phase === "complete") {
     const savedScore = state.quizScores[checkpoint.id]
     const nextUnit = curriculum.find((unit) => unit.index === checkpoint.afterUnit + 1)
-    const nextHref = nextUnit ? `/activities/${nextUnit.id}` : "/arena"
-    const nextLabel = nextUnit ? `Continue to Unit ${nextUnit.index}` : "Practice in the Arena"
+    const nextHref = nextUnit ? `/activities/${nextUnit.id}` : "/studio"
+    const nextLabel = nextUnit ? `Continue to Unit ${nextUnit.index}` : "Practice in the Studio"
     const theme = isFoundations
       ? foundationsCompleteTheme
       : resultTheme(typeof savedScore === "number" ? savedScore : 100)
@@ -176,8 +176,8 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
     const theme = resultTheme(result.finalScore)
     const resultPanel = isFoundations ? "border-[#b9a3dc] bg-[#f5f0fb]" : theme.panel
     const nextUnit = curriculum.find((unit) => unit.index === checkpoint.afterUnit + 1)
-    const nextHref = nextUnit ? `/activities/${nextUnit.id}` : "/arena"
-    const nextLabel = nextUnit ? `Continue to Unit ${nextUnit.index}` : "Practice in the Arena"
+    const nextHref = nextUnit ? `/activities/${nextUnit.id}` : "/studio"
+    const nextLabel = nextUnit ? `Continue to Unit ${nextUnit.index}` : "Practice in the Studio"
 
     return (
       <div className="relative flex min-w-0 flex-col gap-5">

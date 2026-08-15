@@ -18,7 +18,7 @@ const metricLabels: Record<string, string> = {
   openReports: "Open moderation reports",
   moderationActions24h: "Moderation actions, 24h",
   coachMessages24h: "Coach requests, 24h",
-  arenaReviews24h: "Arena AI requests, 24h",
+  arenaReviews24h: "Studio AI requests, 24h",
   storyPlans24h: "Story plans, 24h",
   communityPosts24h: "Community posts, 24h",
   communityReplies24h: "Community replies, 24h",

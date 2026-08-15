@@ -46,7 +46,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       : `${next.checkpoint.subtitle} · Test what you remember`
     : freeLimitReached
       ? "Founding Membership unlocks the remaining ten lessons."
-      : "Review any lesson or record a complete story in the Arena."
+      : "Review any lesson or record a complete story in the Studio."
 
   const courseHref = next
     ? next.type === "lesson" ? `/activities/${next.unit.id}` : `/test/${next.checkpoint.id}`
@@ -105,7 +105,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       <section className="mt-4 flex min-h-0 flex-1 flex-col">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h2 className="book-practice-heading text-[1rem] font-semibold tracking-[-0.015em]">Practice</h2>
-          <Link prefetch href="/arena/recordings" className="book-past-recordings text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
+          <Link prefetch href="/studio/recordings" className="book-past-recordings text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
         </div>
 
         <div className="story-card book-week-card mb-2.5 min-h-[6.85rem] rounded-[1.5rem] px-3.5 py-3.5">
@@ -129,13 +129,13 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
         <div className="book-practice-grid grid grid-cols-2 gap-3">
           <PracticeCard
-            href="/arena?mode=free"
+            href="/studio?mode=free"
             icon={<Mic2 className="h-4 w-4" strokeWidth={2} />}
             title="Tell your own story"
             description="No prompt. Choose any moment you want to tell."
           />
           <PracticeCard
-            href="/arena?mode=scenario"
+            href="/studio?mode=scenario"
             icon={<Shuffle className="h-4 w-4" strokeWidth={2} />}
             title="Choose a scenario"
             description="Practice an interview, personal question, or real situation."

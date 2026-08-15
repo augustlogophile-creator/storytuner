@@ -7,9 +7,9 @@ import { BookOpen, House, Mic2, MessageCircle, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const items = [
-  { href: "/home", label: "Today", icon: House },
+  { href: "/home", label: "Home", icon: House },
   { href: "/activities", label: "Learn", icon: BookOpen },
-  { href: "/arena", label: "Arena", icon: Mic2 },
+  { href: "/studio", label: "Studio", icon: Mic2 },
   { href: "/community", label: "Community", icon: MessageCircle },
   { href: "/profile", label: "Profile", icon: User },
 ]
@@ -46,7 +46,7 @@ export function BottomNav() {
 function isActivePath(pathname: string, href: string) {
   if (href === "/home") return pathname === "/home"
   if (href === "/activities") return pathname.startsWith("/activities") || pathname.startsWith("/lesson")
-  if (href === "/arena") return pathname.startsWith("/arena") || pathname.startsWith("/planner")
+  if (href === "/studio") return pathname.startsWith("/studio") || pathname.startsWith("/arena") || pathname.startsWith("/planner")
   if (href === "/profile") return ["/profile", "/progress", "/membership", "/shop", "/settings", "/legal"].some((path) => pathname.startsWith(path))
   return pathname.startsWith(href)
 }

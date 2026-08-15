@@ -39,10 +39,10 @@ export function RecordingsClient() {
     <>
       <div className="flex min-w-0 flex-col gap-6">
         <header>
-          <Link href="/arena" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Arena</Link>
+          <Link href="/studio" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Studio</Link>
           <div className="mt-4 flex items-start justify-between gap-4">
             <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
-            <Link href="/arena" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
+            <Link href="/studio" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private audio, transcripts, scores, and revisions follow your account across devices. Full video remains on the device where it was recorded.</p>
         </header>
@@ -59,7 +59,7 @@ export function RecordingsClient() {
             <Mic2 className="mx-auto h-7 w-7 text-muted-foreground" />
             <h2 className="mt-3 text-base font-semibold">No recordings yet</h2>
             <p className="mt-1 text-sm text-muted-foreground">Record a story and it will appear here.</p>
-            <Link href="/arena" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Open Arena</Link>
+            <Link href="/studio" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Open Studio</Link>
           </section>
         ) : (
           <div className="flex flex-col gap-4">
@@ -106,7 +106,7 @@ export function RecordingsClient() {
                   </details>
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Parch</Link>
-                    <Link href="/arena" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
+                    <Link href="/studio" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
                     {sharedPosts[recording.id] ? (
                       <Link href={`/community#${sharedPosts[recording.id]}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
                     ) : state.premium ? (

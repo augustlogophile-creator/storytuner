@@ -153,7 +153,7 @@ Deno.serve(async (request: Request) => {
         feature: "arena_review",
         request_key: recordingId,
       }, { onConflict: "user_id,feature,request_key", ignoreDuplicates: true });
-      if (paidUsageError) throw new Error(`Could not record Arena usage: ${paidUsageError.message}`);
+      if (paidUsageError) throw new Error(`Could not record Studio usage: ${paidUsageError.message}`);
     }
 
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -162,13 +162,13 @@ Deno.serve(async (request: Request) => {
       adminClient.from("user_usage_events").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "arena_review").gte("created_at", hourAgo),
       adminClient.from("user_usage_events").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feature", "arena_review").gte("created_at", dayAgo),
     ]);
-    if (hourCountError || dayCountError) throw new Error(`Could not verify Arena request rate: ${(hourCountError || dayCountError)?.message}`);
+    if (hourCountError || dayCountError) throw new Error(`Could not verify Studio request rate: ${(hourCountError || dayCountError)?.message}`);
     if ((hourCount ?? 0) > 40 || (dayCount ?? 0) > 120) {
       if (usageReservedNow) {
         await adminClient.from("user_usage_events").delete().eq("user_id", user.id).eq("feature", "arena_review").eq("request_key", recordingId);
         usageReservedNow = false;
       }
-      return jsonResponse({ code: "RATE_LIMITED", error: "Arena has received unusually many transcription requests from this account. Wait and try again later." }, 429);
+      return jsonResponse({ code: "RATE_LIMITED", error: "Studio has received unusually many transcription requests from this account. Wait and try again later." }, 429);
     }
 
     const { error: statusError } = await userClient

@@ -42,7 +42,7 @@
       "hono": "4.12.25"
     }
   },
-  "description": "A complete storytelling curriculum, private recording arena, and community built with Next.js.",
+  "description": "A complete storytelling curriculum, private recording studio, and community built with Next.js.",
   "engines": {
     "node": ">=22.0.0"
   },

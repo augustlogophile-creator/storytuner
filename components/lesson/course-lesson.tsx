@@ -318,7 +318,7 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, onRev
     ? `/lesson/${lessonId(unit.id, nextStage)}`
     : checkpoint
       ? checkpointNeedsMembership ? "/membership" : `/test/${checkpoint.id}`
-      : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/arena"
+      : nextUnitNeedsMembership ? "/membership" : nextUnit ? `/activities/${nextUnit.id}` : "/studio"
   const primaryLabel = nextStage
     ? `Continue to ${stageLabels[nextStage].toLowerCase()}`
     : checkpoint

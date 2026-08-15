@@ -377,12 +377,12 @@ const BookSlider = forwardRef<BookSliderHandle, {
         maxWidth={bookSize.width}
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
-        drawShadow={page !== 0}
+        drawShadow
         flippingTime={page === 0 ? 760 : 300}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.16}
+        maxShadowOpacity={0.38}
         showCover
         mobileScrollSupport
         clickEventForward

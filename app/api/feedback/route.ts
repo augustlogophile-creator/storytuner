@@ -276,7 +276,7 @@ ${answer}`,
       ])
       if (!durableRate.allowed) {
         if (reservation && !reservation.alreadyReserved) await releaseUsage(user.id, "arena_review", requestKey).catch(() => undefined)
-        return Response.json({ code: "RATE_LIMITED", error: "Arena has received unusually many AI review requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
+        return Response.json({ code: "RATE_LIMITED", error: "Studio has received unusually many AI review requests from this account. Wait and try again later." }, { status: 429, headers: { "Cache-Control": "no-store" } })
       }
 
       try {

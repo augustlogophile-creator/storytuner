@@ -9,9 +9,9 @@ type StoryPlannerSearchParams = Promise<Record<string, string | string[] | undef
 export default async function StoryPlannerPage({ searchParams }: { searchParams: StoryPlannerSearchParams }) {
   const params = await searchParams
   const from = Array.isArray(params.from) ? params.from[0] : params.from
-  const fromArena = from === "arena"
-  const user = await requireStoryTunerUser(fromArena ? "/planner?from=arena" : "/planner")
+  const fromStudio = from === "studio" || from === "arena"
+  const user = await requireStoryTunerUser(fromStudio ? "/planner?from=studio" : "/planner")
   const membership = await getMembershipByUserId(user.id)
   if (!membership.active) redirect("/membership")
-  return <MobileShell><StoryPlannerClient fromArena={fromArena} /></MobileShell>
+  return <MobileShell><StoryPlannerClient fromStudio={fromStudio} /></MobileShell>
 }

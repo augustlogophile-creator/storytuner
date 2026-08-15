@@ -50,7 +50,7 @@ type FieldProps = {
   required?: boolean
 }
 
-export function StoryPlannerClient({ fromArena = false }: { fromArena?: boolean }) {
+export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolean }) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [plan, setPlan] = useState<StoryPlanRecord | null>(null)
   const [history, setHistory] = useState<StoryPlanRecord[]>([])
@@ -134,7 +134,7 @@ export function StoryPlannerClient({ fromArena = false }: { fromArena?: boolean 
     window.setTimeout(() => setCopied(false), 1800)
   }
 
-  function prepareForArena() {
+  function prepareForStudio() {
     if (!plan) return
     try {
       window.sessionStorage.setItem("storytuner:planner-plan", JSON.stringify({
@@ -147,7 +147,7 @@ export function StoryPlannerClient({ fromArena = false }: { fromArena?: boolean 
         tips: plan.output.deliveryTips.slice(0, 2).map(secondPersonDirection),
       }))
     } catch {
-      // The Arena link still works when session storage is unavailable.
+      // The Studio link still works when session storage is unavailable.
     }
   }
 
@@ -163,9 +163,9 @@ export function StoryPlannerClient({ fromArena = false }: { fromArena?: boolean 
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
-      {fromArena && (
-        <Link href="/arena" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Arena
+      {fromStudio && (
+        <Link href="/studio" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" /> Studio
         </Link>
       )}
       <header className="rounded-[2rem] bg-primary p-6 text-primary-foreground">
@@ -339,7 +339,7 @@ export function StoryPlannerClient({ fromArena = false }: { fromArena?: boolean 
             )}
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link href="/arena?mode=free&planned=1" onClick={prepareForArena} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
+              <Link href="/studio?mode=free&planned=1" onClick={prepareForStudio} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground">
                 <Mic2 className="h-4 w-4" /> Practice this plan <ArrowRight className="h-4 w-4" />
               </Link>
               <button type="button" onClick={() => { setPlan(null); setPlanOrigin(null); setPlanExpanded(false); setForm(emptyForm); setError(""); window.scrollTo({ top: 0, behavior: "smooth" }) }} className="flex items-center justify-center gap-2 rounded-full border border-border px-5 py-3.5 text-sm font-semibold">

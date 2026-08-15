@@ -3875,3 +3875,14 @@ body {
     margin-top: .55rem;
   }
 }
+
+/* August 15: realistic intro page-turn depth. The page-flip engine draws the
+   moving fold/cast shadow; this adds only a soft paper-edge depth while a sheet
+   is in motion, then disappears completely when the page settles. */
+.story-book-wrap.is-flipping .stf__item {
+  filter: drop-shadow(-3px 5px 8px rgba(47, 43, 38, .10));
+}
+
+.story-book-wrap:not(.is-flipping) .stf__item {
+  filter: none;
+}
