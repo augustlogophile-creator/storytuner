@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import { safeInternalPath } from "@/lib/auth/redirects"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 
 const otpTypes = new Set<EmailOtpType>(["signup", "invite", "magiclink", "recovery", "email_change", "email"])
@@ -58,38 +59,51 @@ export async function GET(request: Request) {
       .maybeSingle<{ user_id: string }>(),
   ])
 
-  if (profile?.onboarding_completed) {
+  const hasUsername = Boolean(profile?.username?.trim())
+
+  if (profile?.onboarding_completed && hasUsername) {
     return NextResponse.redirect(new URL(requestedNext, url.origin))
   }
 
   if (intent === "sign-in") {
-    // Some older accounts were created before profile onboarding was finalized.
-    // If age confirmation already exists, repair the completion flag silently.
-    if (profile?.confirmed_age_13_plus) {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ onboarding_completed: true })
-        .eq("id", userData.user.id)
-      if (!error) return NextResponse.redirect(new URL(requestedNext, url.origin))
-    }
+    // Existing accounts that already own a username never choose it again.
+    if (hasUsername) {
+      // Some older accounts were created before onboarding completion was finalized.
+      // If age confirmation already exists, repair only the completion flag.
+      if (profile?.confirmed_age_13_plus) {
+        try {
+          const admin = createAdminClient()
+          const { error } = await admin
+            .from("profiles")
+            .update({ onboarding_completed: true })
+            .eq("id", userData.user.id)
+          if (!error) return NextResponse.redirect(new URL(requestedNext, url.origin))
+        } catch {}
+      }
 
-    // Existing accounts should never be asked to choose a username again.
-    // Legacy accounts that still need the 13+ confirmation get a minimal recovery screen.
-    if (profile || existingState) {
       const recovery = new URL("/onboarding", url.origin)
       recovery.searchParams.set("mode", "login-recovery")
       recovery.searchParams.set("next", requestedNext)
       return NextResponse.redirect(recovery)
     }
 
+    // A known legacy StoryTuner account without a username must choose one once.
+    if (profile || existingState) {
+      const setup = new URL("/choose-username", url.origin)
+      setup.searchParams.set("next", requestedNext)
+      return NextResponse.redirect(setup)
+    }
+
     // Google OAuth can create an auth user even when someone clicked Log in.
-    // Do not silently turn that into a sign-up flow.
+    // Keep Log in and Sign up separate: an entirely new Google identity must use Sign up.
     await supabase.auth.signOut()
     const error = "No existing StoryTuner account was found for that Google account. Choose Sign up if you want to create one."
     return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent(error)}`, url.origin))
   }
 
-  const onboarding = new URL("/onboarding", url.origin)
-  onboarding.searchParams.set("next", requestedNext)
-  return NextResponse.redirect(onboarding)
+  // Sign up: existing users with usernames pass through; every genuinely new
+  // account must claim a username before any signed-in StoryTuner route opens.
+  const setup = new URL("/choose-username", url.origin)
+  setup.searchParams.set("next", requestedNext)
+  return NextResponse.redirect(setup)
 }

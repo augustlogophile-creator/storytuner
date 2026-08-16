@@ -1,173 +1,70 @@
 "use client"
 
-import { useMemo, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
+import { Check, Loader2 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowRight, Check, Loader2, ScrollText } from "lucide-react"
 import { useApp } from "@/lib/app-state"
 import { safeInternalPath } from "@/lib/auth/redirects"
-import { readOnboardingPreferences } from "@/lib/onboarding-preferences"
-import {
-  usernameSuggestionsFromEmail,
-  validateDisplayName,
-  validateUsername,
-} from "@/lib/profile/public-name"
-import { createClient } from "@/lib/supabase/client"
 
-type InitialProfile = {
-  username: string
-  display_name: string
-  confirmed_age_13_plus: boolean
-} | null
-
-export function AccountSetup({
-  initialName,
-  initialEmail,
-  initialProfile,
-}: {
-  initialName: string
-  initialEmail: string
-  initialProfile: InitialProfile
-}) {
+/**
+ * Legacy account recovery only. New accounts use /choose-username.
+ * Existing users who already own a username never have to choose it again.
+ */
+export function AccountSetup() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { completeOnboarding, updateOnboardingPreferences } = useApp()
-  const recoveryMode = searchParams.get("mode") === "login-recovery"
-  const suggestions = useMemo(() => usernameSuggestionsFromEmail(initialEmail), [initialEmail])
-  const [username, setUsername] = useState(initialProfile?.username ?? suggestions[0] ?? "story_weaves")
-  const [displayName, setDisplayName] = useState((initialProfile?.display_name ?? initialName).slice(0, 15))
-  const [ageConfirmed, setAgeConfirmed] = useState(Boolean(initialProfile?.confirmed_age_13_plus))
+  const { completeOnboarding } = useApp()
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
   async function finish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-    let cleanUsername = (recoveryMode && initialProfile?.username ? initialProfile.username : username).trim().toLowerCase()
-    let cleanDisplayName = (recoveryMode && initialProfile?.display_name ? initialProfile.display_name : displayName).trim()
-
-    const usernameError = validateUsername(cleanUsername)
-    const displayNameError = validateDisplayName(cleanDisplayName)
-    if (recoveryMode) {
-      if (usernameError) cleanUsername = "story_weaves"
-      if (displayNameError) cleanDisplayName = "Storyteller"
-    } else {
-      if (usernameError) return setError(usernameError)
-      if (displayNameError) return setError(displayNameError)
-    }
-    if (!ageConfirmed) return setError("You must confirm that you are at least 13 to use StoryTuner.")
+    if (!ageConfirmed) return setError("Confirm that you are at least 13 to continue.")
 
     setLoading(true)
-    const supabase = createClient()
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-    if (userError || !userData.user) {
+    try {
+      const response = await fetch("/api/account/setup", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ confirmedAge13Plus: true }),
+      })
+      const payload = await response.json() as { completed?: boolean; displayName?: string; error?: string }
+      if (!response.ok || !payload.completed) throw new Error(payload.error || "StoryTuner couldn't finish your account setup.")
+
+      completeOnboarding(payload.displayName)
+      const destination = safeInternalPath(searchParams.get("next"), "/home")
+      router.replace(destination === "/onboarding" ? "/home" : destination)
+      router.refresh()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "StoryTuner couldn't finish your account setup.")
       setLoading(false)
-      return setError("Your session expired. Log in again to finish setting up your profile.")
     }
-
-    let finalUsername = cleanUsername
-    let { error: profileError } = await supabase.from("profiles").upsert({
-      id: userData.user.id,
-      username: finalUsername,
-      display_name: cleanDisplayName,
-      confirmed_age_13_plus: true,
-      onboarding_completed: true,
-    }, { onConflict: "id" })
-
-    if (profileError?.code === "23505" && recoveryMode && !initialProfile) {
-      const fallbackUsernames = [
-        ...suggestions.slice(1),
-        `story_${userData.user.id.replace(/-/g, "").slice(0, 10)}`,
-      ]
-      for (const candidate of fallbackUsernames) {
-        const normalized = candidate.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24)
-        if (validateUsername(normalized)) continue
-        const result = await supabase.from("profiles").upsert({
-          id: userData.user.id,
-          username: normalized,
-          display_name: cleanDisplayName,
-          confirmed_age_13_plus: true,
-          onboarding_completed: true,
-        }, { onConflict: "id" })
-        profileError = result.error
-        if (!profileError) {
-          finalUsername = normalized
-          break
-        }
-        if (profileError.code !== "23505") break
-      }
-    }
-
-    if (profileError) {
-      setLoading(false)
-      if (profileError.code === "23505") return setError(recoveryMode ? "StoryTuner could not restore your public username automatically. Try logging in again." : "That username is already taken. Try another one.")
-      if (profileError.code === "23514" || profileError.message.toLowerCase().includes("public name")) {
-        return setError("Choose a different public name. Vulgar, sexual, hateful, or harassing terms are not allowed.")
-      }
-      return setError("StoryTuner could not save your profile. Check that the newest Supabase profile migration has been applied, then try again.")
-    }
-
-    setUsername(finalUsername)
-    updateOnboardingPreferences(readOnboardingPreferences())
-    completeOnboarding(cleanDisplayName)
-    const destination = safeInternalPath(searchParams.get("next"), "/home")
-    router.replace(destination === "/onboarding" ? "/home" : destination)
-    router.refresh()
   }
 
   return (
     <main className="entry-shell">
       <section className="auth-canvas">
         <div className="mx-auto w-full max-w-md">
-          <div className="flex justify-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-secondary text-foreground">
-              <ScrollText className="h-7 w-7" strokeWidth={1.8} />
-            </span>
-          </div>
-          <span className="mx-auto mt-5 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm"><Check className="h-4 w-4" /></span>
-          <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">{recoveryMode ? "Account confirmation" : "Profile setup"}</p>
-          <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">{recoveryMode ? "Welcome back." : "Choose how you appear in StoryTuner."}</h1>
-          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">{recoveryMode ? "Your existing StoryTuner identity will stay exactly the same. Confirm the age requirement once to continue." : "Your public name is separate from the email you use to log in."}</p>
+          <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm">
+            <Check className="h-4 w-4" />
+          </span>
+          <p className="mt-6 text-center font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Account confirmation</p>
+          <h1 className="mx-auto mt-3 max-w-sm text-center text-[2rem] font-semibold leading-[1.08] tracking-[-0.045em] text-balance">Welcome back.</h1>
+          <p className="mx-auto mt-4 max-w-sm text-center text-[0.95rem] leading-7 text-muted-foreground">
+            Your existing username stays exactly the same. Confirm the age requirement once to continue.
+          </p>
 
           <form onSubmit={finish} className="mt-8 space-y-5">
-            {!recoveryMode && <label className="block">
-              <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Public username</span>
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-foreground/15">
               <input
-                value={username}
-                onChange={(event) => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 24))}
-                placeholder={suggestions[0] ?? "story_weaves"}
-                autoComplete="username"
-                className="auth-input mt-2"
+                type="checkbox"
+                checked={ageConfirmed}
+                onChange={(event) => setAgeConfirmed(event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-[var(--brand)]"
               />
-            </label>}
-            {!recoveryMode && suggestions.length > 1 && (
-              <div className="-mt-2 flex flex-wrap gap-2" aria-label="Suggested usernames">
-                {suggestions.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => setUsername(suggestion)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${username === suggestion ? "border-brand bg-brand-soft text-accent-foreground" : "border-border bg-background text-muted-foreground hover:border-brand/40"}`}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
-            {!recoveryMode && <label className="block">
-              <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Display name</span>
-              <input
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value.slice(0, 15))}
-                placeholder="Your first name or nickname"
-                autoComplete="name"
-                maxLength={15}
-                aria-describedby="display-name-limit"
-                className="auth-input mt-2"
-              />
-              <span id="display-name-limit" className="mt-1 block text-[0.65rem] text-muted-foreground">At least 3 letters, 15 characters maximum.</span>
-            </label>}
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-brand/35">
-              <input type="checkbox" checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
               <span className="text-sm leading-relaxed">I confirm that I am at least 13 years old.</span>
             </label>
 
@@ -175,10 +72,10 @@ export function AccountSetup({
 
             <button
               type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_rgba(38,34,29,0.12)] transition active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={loading || !ageConfirmed}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_24px_rgba(38,34,29,0.12)] transition active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-45"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Enter StoryTuner <ArrowRight className="h-4 w-4" /></>}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
             </button>
           </form>
         </div>

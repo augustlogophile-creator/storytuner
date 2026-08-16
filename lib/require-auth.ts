@@ -38,7 +38,47 @@ export async function getActiveAuthenticatedUser() {
   if (!authenticated) {
     return { ok: false as const, response: Response.json({ error: "Authentication required." }, { status: 401 }) }
   }
-  const restriction = await getAccountRestriction(authenticated.id)
+
+  const [{ data: profile, error: profileError }, restriction] = await Promise.all([
+    authenticated.supabase
+      .from("profiles")
+      .select("username, onboarding_completed")
+      .eq("id", authenticated.id)
+      .maybeSingle<{ username: string; onboarding_completed: boolean }>(),
+    getAccountRestriction(authenticated.id),
+  ])
+
+  if (profileError) {
+    backendError("active_profile_lookup_failed", profileError, { userId: authenticated.id })
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "PROFILE_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your profile right now. Try again in a moment." },
+        { status: 503, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
+
+  if (!profile?.username?.trim()) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "USERNAME_SETUP_REQUIRED", error: "Choose your StoryTuner username before continuing." },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
+
+  if (!profile.onboarding_completed) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "ACCOUNT_SETUP_REQUIRED", error: "Finish your StoryTuner account setup before continuing." },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
+
   if (restriction.lookupFailed) {
     return {
       ok: false as const,
@@ -54,7 +94,7 @@ export async function getActiveAuthenticatedUser() {
       response: Response.json({ error: restriction.publicMessage || "This account is currently restricted." }, { status: 403 }),
     }
   }
-  return { ok: true as const, user: authenticated }
+  return { ok: true as const, user: authenticated, profile }
 }
 
 export async function getAccountRestriction(userId: string): Promise<AccountRestriction> {
@@ -174,8 +214,12 @@ export async function requireStoryTunerUser(
 
   if (restriction?.restricted) redirect("/account-restricted")
 
+  if (needsProfile && !profile?.username?.trim()) {
+    redirect(`/choose-username?next=${encodeURIComponent(safeReturn)}`)
+  }
+
   if (needsProfile && !profile?.onboarding_completed) {
-    redirect(`/onboarding?next=${encodeURIComponent(safeReturn)}`)
+    redirect(`/onboarding?mode=login-recovery&next=${encodeURIComponent(safeReturn)}`)
   }
 
   return { ...authenticated, profile, restriction }
@@ -188,10 +232,11 @@ export async function signedInDestination() {
   if (restriction.restricted) return "/account-restricted"
   const { data } = await authenticated.supabase
     .from("profiles")
-    .select("onboarding_completed")
+    .select("username, onboarding_completed")
     .eq("id", authenticated.id)
-    .maybeSingle<{ onboarding_completed: boolean }>()
-  return data?.onboarding_completed ? "/home" : "/onboarding"
+    .maybeSingle<{ username: string; onboarding_completed: boolean }>()
+  if (!data?.username?.trim()) return "/choose-username"
+  return data.onboarding_completed ? "/home" : "/onboarding?mode=login-recovery"
 }
 
 export type AccountRestrictionDecisionContext = {

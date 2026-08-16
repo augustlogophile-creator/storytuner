@@ -101,12 +101,22 @@ export async function getCommunityApiContext() {
     }
   }
 
-  if (!profile?.onboarding_completed) {
+  if (!profile?.username?.trim()) {
     return {
       ok: false as const,
       response: Response.json(
-        { error: "Complete StoryTuner onboarding before using Community." },
-        { status: 403 },
+        { code: "USERNAME_SETUP_REQUIRED", error: "Choose your StoryTuner username before using Community." },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
+      ),
+    }
+  }
+
+  if (!profile.onboarding_completed) {
+    return {
+      ok: false as const,
+      response: Response.json(
+        { code: "ACCOUNT_SETUP_REQUIRED", error: "Finish StoryTuner account setup before using Community." },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
       ),
     }
   }

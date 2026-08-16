@@ -1,5 +1,5 @@
 import { getSubscriptionByUserId, isMembershipActive } from "@/lib/membership-server"
-import { getAuthenticatedUser } from "@/lib/require-auth"
+import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripePost } from "@/lib/stripe-rest"
 import { backendError, backendLog } from "@/lib/backend-log"
@@ -14,8 +14,9 @@ type StripeCustomer = { id: string }
 export async function POST(request: Request) {
   const crossSite = requireSameOrigin(request)
   if (crossSite) return crossSite
-  const user = await getAuthenticatedUser()
-  if (!user) return Response.json({ error: "Authentication required." }, { status: 401 })
+  const auth = await getActiveAuthenticatedUser()
+  if (!auth.ok) return auth.response
+  const user = auth.user
 
   const oversized = rejectLargeRequest(request, 5_000)
   if (oversized) return oversized

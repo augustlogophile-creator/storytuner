@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation"
 
 type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | "delete-account" | null
 
-export function SettingsClient() {
+export function SettingsClient({ username }: { username: string }) {
   const router = useRouter()
   const { state, syncStatus, updateSettings, updateProfileName, deleteAllRecordings, resetAll } = useApp()
   const [displayName, setDisplayName] = useState(state.profile.name.slice(0, 15))
@@ -189,7 +189,10 @@ export function SettingsClient() {
       {notice && <p role="status" className={displayNameError ? "rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm leading-relaxed text-destructive" : "rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground"}>{notice}</p>}
 
       <Section title="Profile">
-        <Row title="Display name" detail="Used on your profile and on Community posts you choose to share. Must contain at least 3 letters, up to 15 characters.">
+        <Row title="Username" detail="Your public StoryTuner identity. This is what other members see.">
+          <span className="rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-foreground">@{username}</span>
+        </Row>
+        <Row title="Display name" detail="Used for personal greetings inside StoryTuner. Your @username is your public identity.">
           <div className="flex items-center gap-2">
             <input
               value={displayName}

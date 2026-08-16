@@ -34,9 +34,9 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
             <ScrollText className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[0.94rem] font-semibold tracking-[-0.015em]">{name}</p>
+            <p className="truncate text-[0.94rem] font-semibold tracking-[-0.015em]">@{username}</p>
             <div className="mt-0.5 flex min-w-0 items-center gap-2">
-              <p className="truncate text-[0.72rem] text-muted-foreground">@{username}</p>
+              <p className="truncate text-[0.72rem] text-muted-foreground">{name}</p>
               {goal && (
                 <span className="max-w-[9.5rem] truncate rounded-full bg-secondary px-2 py-0.5 text-[0.52rem] font-semibold text-muted-foreground">
                   {goalLabels[goal as Exclude<StoryGoal, "">]}

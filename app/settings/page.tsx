@@ -3,6 +3,6 @@ import { SettingsClient } from "@/components/profile/settings-client"
 import { requireStoryTunerUser } from "@/lib/require-auth"
 
 export default async function SettingsPage() {
-  await requireStoryTunerUser("/settings")
-  return <MobileShell><SettingsClient /></MobileShell>
+  const user = await requireStoryTunerUser("/settings")
+  return <MobileShell><SettingsClient username={user.profile?.username ?? "storyteller"} /></MobileShell>
 }

@@ -23,7 +23,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       summary="This policy explains what StoryTuner collects, why it is used, the services that process it, and how you can access or delete your information."
     >
       <LegalSection title="Information StoryTuner collects">
-        <p><strong className="text-foreground">Account information.</strong> If you create an account, StoryTuner receives your email address and authentication identifiers from the sign-in provider, plus the public username and display name you choose.</p>
+        <p><strong className="text-foreground">Account information.</strong> If you create an account, StoryTuner receives your email address and authentication identifiers from the sign-in provider, plus your required public username and any display name used for personal greetings.</p>
         <p><strong className="text-foreground">Learning and app activity.</strong> StoryTuner stores lesson progress, answers, XP, streak activity, preferences, membership status, and similar information needed to sync your experience.</p>
         <p><strong className="text-foreground">Stories and recordings.</strong> When you choose to record a story, StoryTuner may process audio, transcripts, scores, revisions, titles, and related metadata. Full video is designed to remain on the device where it was recorded unless a feature clearly tells you otherwise.</p>
         <p><strong className="text-foreground">Community content.</strong> If you deliberately share to Community, StoryTuner processes the post, transcript or audio you choose to share, replies, likes, reports, and moderation information.</p>
@@ -47,7 +47,7 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       </LegalSection>
 
       <LegalSection title="Community and public information">
-        <p>Your private recordings are not automatically posted to Community. Content becomes visible to other members only when you intentionally share or publish it. Your chosen public display name or username may appear with shared content.</p>
+        <p>Your private recordings are not automatically posted to Community. Content becomes visible to other members only when you intentionally share or publish it. Your public @username appears with shared Community content.</p>
         <p>Community content may be automatically screened and may be reviewed by moderators when it is reported or flagged for safety.</p>
       </LegalSection>
 

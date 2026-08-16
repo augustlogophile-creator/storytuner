@@ -2,7 +2,7 @@ import { z } from "zod"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { openAIJson } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
-import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
+import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import type { StoryPlanOutput, StoryPlanRecord } from "@/lib/planner/types"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
@@ -75,15 +75,9 @@ function toRecord(row: PlanRow): StoryPlanRecord {
 }
 
 async function activeMember() {
-  const user = await getAuthenticatedUser()
-  if (!user) return { ok: false as const, response: Response.json({ error: "Authentication required." }, { status: 401 }) }
-  const restriction = await getAccountRestriction(user.id)
-  if (restriction.lookupFailed) {
-    return { ok: false as const, response: Response.json({ code: "ACCOUNT_STATUS_UNAVAILABLE", error: "Story Planner could not verify your account status right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } }) }
-  }
-  if (restriction.restricted) {
-    return { ok: false as const, response: Response.json({ error: restriction.publicMessage || "This account is currently restricted." }, { status: 403 }) }
-  }
+  const auth = await getActiveAuthenticatedUser()
+  if (!auth.ok) return auth
+  const user = auth.user
   let membership
   try {
     membership = await getMembershipByUserId(user.id)

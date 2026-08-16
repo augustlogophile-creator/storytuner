@@ -1,5 +1,5 @@
 import { backendError } from "@/lib/backend-log"
-import { getAuthenticatedUser } from "@/lib/require-auth"
+import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { readJsonBody, rejectLargeRequest, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 
 export const dynamic = "force-dynamic"
@@ -22,13 +22,9 @@ export async function POST(request: Request) {
   // Using that session here also means reporting does not fail just because a
   // service-role environment variable or an unrelated moderation lookup is
   // unavailable.
-  const auth = await getAuthenticatedUser()
-  if (!auth) {
-    return Response.json(
-      { code: "AUTH_REQUIRED", error: "Please sign in again before reporting this reply." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
-    )
-  }
+  const active = await getActiveAuthenticatedUser()
+  if (!active.ok) return active.response
+  const auth = active.user
 
   const oversized = rejectLargeRequest(request, 24_000)
   if (oversized) return oversized

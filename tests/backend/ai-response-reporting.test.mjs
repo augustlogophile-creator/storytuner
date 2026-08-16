@@ -12,7 +12,7 @@ test("AI response reports are stored through the authenticated Supabase session"
   const route = read("app/api/ai/report/route.ts")
   assert.match(route, /from\("ai_response_reports"\)/)
   assert.match(route, /reporter_id:\s*auth\.id/)
-  assert.match(route, /getAuthenticatedUser\(\)/)
+  assert.match(route, /getActiveAuthenticatedUser\(\)/)
   assert.match(route, /auth\.supabase\.from\("ai_response_reports"\)/)
   assert.match(route, /SUPABASE_SERVICE_ROLE_KEY/)
   assert.match(route, /ai_response_report_admin_fallback_failed/)

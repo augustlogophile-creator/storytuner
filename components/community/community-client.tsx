@@ -1404,7 +1404,7 @@ function CharacterCount({ value, maximum, warningAt }: { value: number; maximum:
 function publicAuthorLabel(author: CommunityAuthor) {
   const username = author.username?.trim()
   if (username && username !== "member") return `@${username}`
-  return author.displayName?.trim() || "StoryTuner member"
+  return "StoryTuner member"
 }
 
 function rankPosts(posts: CommunityFeedPost[]) {

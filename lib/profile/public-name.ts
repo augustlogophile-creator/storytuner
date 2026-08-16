@@ -1,22 +1,58 @@
 const blockedFragments = [
+  // Sexual / explicit
   "assman", "assguy", "assboy", "assgirl", "assface", "asshead", "assmaster",
   "dickguy", "dickboy", "dickgirl", "dickhead", "dickface", "dickmaster",
-  "cockboy", "cockgirl", "cockhead", "cockface", "poop", "penis", "vagina",
-  "pussy", "dildo", "porn", "porno", "nude", "nudes", "semen", "sperm",
-  "ejaculate", "orgasm", "masturbat", "blowjob", "handjob", "fuck", "fuk",
-  "phuck", "shit", "bitch", "asshole", "motherfucker", "cocksucker", "nazi",
-  "kkk", "heilhitler", "hitler", "suicidebait", "killurself", "killyourself",
-  "onlyfans", "sexworker", "rapeme", "molest", "pedophile", "bestial",
-  "incest", "cumslut", "cumdump", "boobies", "titties", "horny", "thot",
+  "cockboy", "cockgirl", "cockhead", "cockface", "penis", "vagina", "pussy",
+  "dildo", "porn", "porno", "nude", "nudes", "semen", "sperm", "ejaculate",
+  "orgasm", "masturbat", "blowjob", "handjob", "onlyfans", "sexworker", "rapeme",
+  "molest", "pedophile", "paedophile", "bestial", "incest", "cumslut", "cumdump",
+  "boobies", "titties", "horny", "thot", "sexslave", "rapeplay",
+
+  // General profanity / harassment
+  "fuck", "fuk", "fuq", "phuck", "shit", "bitch", "asshole", "motherfucker",
+  "cocksucker", "dumbass", "dipshit", "bullshit", "fuckface", "shithead",
+
+  // Hate / extremist / targeted abuse. Severe terms are fragments on purpose so
+  // separators, leetspeak and suffixes do not make them usable as public handles.
+  "nigger", "nigga", "faggot", "kike", "chink", "spic", "wetback", "gook",
+  "raghead", "tranny", "retard", "heilhitler", "whitepower", "whitepride88",
+  "naziparty", "kkk", "1488",
+
+  // Threats / self-harm bait
+  "killyourself", "killurself", "suicidebait", "godie", "dieyou",
 ]
 
 const blockedExact = new Set([
-  "ass", "cock", "dick", "cum", "tits", "tit", "boobs", "boob", "anus",
-  "whore", "slut", "bastard", "sex", "rape", "rapist", "stfu", "nigger",
-  "nigga", "faggot", "retard", "cunt", "twat", "wanker", "pedo", "nonce",
+  "ass", "cock", "dick", "dih", "cum", "tits", "tit", "boobs", "boob", "anus",
+  "whore", "slut", "bastard", "sex", "rape", "rapist", "stfu", "cunt", "twat",
+  "wanker", "pedo", "nonce", "porn", "nazi", "hitler", "kkk",
+  "nigger", "nigga", "faggot", "kike", "chink", "spic", "gook", "tranny", "retard",
 ])
 
-const suspiciousCombination = /(?:ass|dick|cock|penis|cum|sex|boob|tit|pussy|fuck|shit|bitch|slut|whore)(?:man|guy|boy|girl|kid|king|queen|lord|master|lover|face|head|69|420)$/
+const suspiciousCombination = /(?:ass|dick|dih|cock|penis|cum|sex|boob|tit|pussy|fuck|shit|bitch|slut|whore|rape)(?:man|guy|boy|girl|kid|king|queen|lord|master|lover|face|head|69|420)$/
+
+const reservedUsernameExact = new Set([
+  "admin",
+  "administrator",
+  "moderator",
+  "mod",
+  "storytuner",
+  "story_tuner",
+  "storytunerapp",
+  "storytuner_admin",
+  "support",
+  "storytuner_support",
+  "staff",
+  "official",
+  "storytuner_official",
+  "security",
+  "system",
+  "help",
+  "helpdesk",
+  "parch",
+])
+
+const reservedUsernamePattern = /^(?:storytuner|admin|administrator|moderator|support|staff|official|security|system|helpdesk|parch)/
 
 const suggestionSuffixes = [
   "tells",
@@ -35,38 +71,56 @@ function leetNormalize(value: string) {
     .toLowerCase()
     .replace(/0/g, "o")
     .replace(/[1!|]/g, "i")
+    .replace(/2/g, "z")
     .replace(/3/g, "e")
     .replace(/4/g, "a")
     .replace(/5|\$/g, "s")
+    .replace(/6/g, "g")
     .replace(/[7+]/g, "t")
     .replace(/8/g, "b")
+    .replace(/9/g, "g")
     .replace(/@/g, "a")
 }
 
-function publicNameParts(value: string) {
-  return leetNormalize(value)
+function moderationForms(value: string) {
+  const rawCollapsed = value.toLowerCase().replace(/[^a-z0-9]/g, "")
+  const normalized = leetNormalize(value)
+  const parts = normalized
     .replace(/[^a-z0-9_\s-]/g, " ")
     .split(/[\s_-]+/)
     .filter(Boolean)
+  const collapsed = parts.join("")
+  const squeezed = collapsed.replace(/(.)\1+/g, "$1")
+  const lettersOnly = collapsed.replace(/[0-9]/g, "")
+  const squeezedLettersOnly = lettersOnly.replace(/(.)\1+/g, "$1")
+  return { parts, rawCollapsed, collapsed, squeezed, lettersOnly, squeezedLettersOnly }
 }
 
 export function isPublicNameAppropriate(value: string) {
-  const parts = publicNameParts(value)
-  const collapsed = parts.join("")
-  const squeezed = collapsed.replace(/(.)\1+/g, "$1")
+  const forms = moderationForms(value)
+  const candidates = [forms.rawCollapsed, forms.collapsed, forms.squeezed, forms.lettersOnly, forms.squeezedLettersOnly]
 
-  if (parts.some((part) => blockedExact.has(part))) return false
-  if (blockedFragments.some((fragment) => collapsed.includes(fragment) || squeezed.includes(fragment))) return false
-  return !suspiciousCombination.test(collapsed)
+  if (forms.parts.some((part) => blockedExact.has(part))) return false
+  if (candidates.some((candidate) => blockedExact.has(candidate))) return false
+  if (blockedFragments.some((fragment) => candidates.some((candidate) => candidate.includes(fragment)))) return false
+  return !candidates.some((candidate) => suspiciousCombination.test(candidate))
+}
+
+export function isReservedUsername(value: string) {
+  const clean = value.trim().toLowerCase()
+  return reservedUsernameExact.has(clean) || reservedUsernamePattern.test(clean)
 }
 
 export function validateUsername(value: string) {
   const clean = value.trim().toLowerCase()
-  if (!/^[a-z0-9][a-z0-9_]{2,23}$/.test(clean)) {
-    return "Use 3 to 24 lowercase letters, numbers, or underscores. Start with a letter or number."
+  if (clean.length < 3 || clean.length > 20) {
+    return "Use 3 to 20 lowercase letters, numbers, or underscores."
   }
-  if (!isPublicNameAppropriate(clean)) {
-    return "Choose a different username. Vulgar, sexual, hateful, or harassing terms are not allowed."
+  if (!/^[a-z0-9][a-z0-9_]*[a-z0-9]$/.test(clean) || clean.includes("__")) {
+    return "Use only lowercase letters, numbers, or underscores. Do not start or end with an underscore."
+  }
+  if (isReservedUsername(clean) || !isPublicNameAppropriate(clean)) {
+    return "That username isn't available. Try another one."
   }
   return ""
 }
@@ -101,13 +155,13 @@ function cleanEmailStem(email: string) {
     .map((piece) => piece.replace(/[^a-z0-9]/g, ""))
     .filter((piece) => piece.length >= 2 && !["mail", "email", "account", "user", "hello"].includes(piece))
 
-  let stem = pieces.join("").slice(0, 13)
-  if (stem.length < 2 || !isPublicNameAppropriate(stem)) stem = "story"
+  let stem = pieces.join("").slice(0, 11)
+  if (stem.length < 2 || !isPublicNameAppropriate(stem) || isReservedUsername(stem)) stem = "story"
   return stem
 }
 
 function fitSuggestion(stem: string, suffix: string) {
-  const room = 24 - suffix.length - 1
+  const room = 20 - suffix.length - 1
   const fittedStem = stem.slice(0, Math.max(2, room))
   return `${fittedStem}_${suffix}`
 }
@@ -123,6 +177,6 @@ export function usernameSuggestionsFromEmail(email: string) {
   ]
 
   const suggestions = picks.map((suffix) => fitSuggestion(stem, suffix))
-  const numbered = `${stem.slice(0, 18)}_${String((hash % 89) + 10)}`.slice(0, 24)
+  const numbered = `${stem.slice(0, 15)}_${String((hash % 89) + 10)}`.slice(0, 20)
   return Array.from(new Set([...suggestions, numbered])).filter((value) => !validateUsername(value)).slice(0, 3)
 }

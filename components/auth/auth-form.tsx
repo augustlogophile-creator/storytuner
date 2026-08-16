@@ -31,7 +31,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   }, [isSignUp, router])
 
   const next = useMemo(
-    () => safeInternalPath(searchParams.get("next"), isSignUp ? "/onboarding" : "/home"),
+    () => safeInternalPath(searchParams.get("next"), "/home"),
     [isSignUp, searchParams],
   )
 
