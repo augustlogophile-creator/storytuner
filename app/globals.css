@@ -4077,8 +4077,10 @@ body {
 }
 
 @supports selector(.stf__item:has(.story-book-cover-inner)) {
-  .story-book-wrap[data-page]:not([data-page="0"]):not(.is-flipping) .stf__item:has(.story-book-cover-inner),
-  .story-book-wrap[data-page]:not([data-page="0"]):not(.is-flipping) .stf__block:has(.story-book-cover-inner) {
+  /* Hide only the finished hardcover page. `.stf__block` is react-pageflip's
+     shared page stage; hiding that container also hides the newly revealed
+     paper page and leaves the intro looking completely blank. */
+  .story-book-wrap[data-page]:not([data-page="0"]):not(.is-flipping) .stf__item:has(.story-book-cover-inner) {
     visibility: hidden !important;
     opacity: 0 !important;
     pointer-events: none !important;
