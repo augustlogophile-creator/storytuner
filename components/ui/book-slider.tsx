@@ -65,6 +65,10 @@ const BookSlider = forwardRef<BookSliderHandle, {
   const requestedTargetRef = useRef<number | null>(null)
   const pendingTargetRef = useRef<number | null>(null)
   const flipFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const settleRafRef = useRef<number | null>(null)
+  const settleRaf2Ref = useRef<number | null>(null)
+  const pendingBookSizeRef = useRef<{ width: number; height: number } | null>(null)
+  const pendingCommittedPageRef = useRef<number | null>(null)
   const ignoreForwardFlipUntilRef = useRef(0)
   const dragGestureRef = useRef<{
     pointerId: number
@@ -77,6 +81,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
   } | null>(null)
   const canGoNextRef = useRef(canGoNext)
   const [isFlipping, setIsFlippingState] = useState(false)
+  const [isOpeningCover, setIsOpeningCoverState] = useState(false)
+  const openingCoverRef = useRef(false)
   const [bookSize, setBookSize] = useState({ width: 448, height: 800 })
   const lastPage = pages.length - 1
 
@@ -88,7 +94,20 @@ const BookSlider = forwardRef<BookSliderHandle, {
       const rect = shell.getBoundingClientRect()
       const width = Math.max(1, Math.round(rect.width))
       const height = Math.max(1, Math.round(rect.height))
-      setBookSize((current) => current.width === width && current.height === height ? current : { width, height })
+      const measured = { width, height }
+
+      // Never remount react-pageflip while a sheet is moving. Mobile browser
+      // chrome and sub-pixel layout can briefly change the measured viewport;
+      // remounting mid-turn is what creates the one-frame size jump/glitch.
+      if (isFlippingRef.current) {
+        pendingBookSizeRef.current = measured
+        return
+      }
+
+      setBookSize((current) => {
+        if (Math.abs(current.width - width) <= 1 && Math.abs(current.height - height) <= 1) return current
+        return measured
+      })
     }
 
     measure()
@@ -112,11 +131,69 @@ const BookSlider = forwardRef<BookSliderHandle, {
 
   useEffect(() => () => {
     if (flipFallbackRef.current) clearTimeout(flipFallbackRef.current)
+    if (settleRafRef.current !== null) cancelAnimationFrame(settleRafRef.current)
+    if (settleRaf2Ref.current !== null) cancelAnimationFrame(settleRaf2Ref.current)
   }, [])
 
   function setFlipping(value: boolean) {
     isFlippingRef.current = value
     setIsFlippingState(value)
+  }
+
+  function setOpeningCover(value: boolean) {
+    openingCoverRef.current = value
+    setIsOpeningCoverState(value)
+  }
+
+  function commitPendingPage() {
+    const committed = pendingCommittedPageRef.current
+    if (committed === null) return
+    pendingCommittedPageRef.current = null
+    onPageChange(committed)
+  }
+
+  function applyDeferredBookSize() {
+    const measured = pendingBookSizeRef.current
+    pendingBookSizeRef.current = null
+    if (!measured) return
+    setBookSize((current) => {
+      if (Math.abs(current.width - measured.width) <= 1 && Math.abs(current.height - measured.height) <= 1) return current
+      return measured
+    })
+  }
+
+  function finishVisualSettle() {
+    setFlipping(false)
+    if (openingCoverRef.current) setOpeningCover(false)
+    commitPendingPage()
+    applyDeferredBookSize()
+
+    if (flipFallbackRef.current) {
+      clearTimeout(flipFallbackRef.current)
+      flipFallbackRef.current = null
+    }
+
+    if (pendingTargetRef.current !== null && pendingTargetRef.current !== currentPageRef.current) {
+      const target = pendingTargetRef.current
+      pendingTargetRef.current = null
+      window.setTimeout(() => requestPage(target), 0)
+    }
+  }
+
+  function queueVisualSettle() {
+    if (settleRafRef.current !== null) cancelAnimationFrame(settleRafRef.current)
+    if (settleRaf2Ref.current !== null) cancelAnimationFrame(settleRaf2Ref.current)
+
+    // Give react-pageflip two paint frames to remove its moving fold/cast-shadow
+    // layers before StoryTuner declares the turn complete. This prevents the
+    // tiny dark sliver/outline that could otherwise flash after the cover lands.
+    settleRafRef.current = requestAnimationFrame(() => {
+      settleRafRef.current = null
+      settleRaf2Ref.current = requestAnimationFrame(() => {
+        settleRaf2Ref.current = null
+        finishVisualSettle()
+      })
+    })
   }
 
   function api() {
@@ -241,6 +318,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       }
 
       onPreparePage?.(gesture.side === "right" ? currentPageRef.current + 1 : currentPageRef.current - 1)
+      if (currentPageRef.current === 0 && gesture.side === "right") setOpeningCover(true)
       flip.startUserTouch(pointForGestureStart(gesture))
       gesture.dragging = true
       setFlipping(true)
@@ -261,6 +339,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       const flip = api()
       if (cancelled) {
         flip?.turnToPage?.(currentPageRef.current)
+        if (openingCoverRef.current) setOpeningCover(false)
         setFlipping(false)
       } else {
         flip?.userStop?.(pointForClient(event.clientX, event.clientY), false)
@@ -290,7 +369,10 @@ const BookSlider = forwardRef<BookSliderHandle, {
       requestedTargetRef.current = null
       ignoreForwardFlipUntilRef.current = Date.now() + 220
       programmaticRef.current = false
+      pendingCommittedPageRef.current = null
+      if (openingCoverRef.current) setOpeningCover(false)
       setFlipping(false)
+      applyDeferredBookSize()
       flipFallbackRef.current = null
       onPageChange(synced)
 
@@ -330,8 +412,9 @@ const BookSlider = forwardRef<BookSliderHandle, {
     programmaticRef.current = true
     setFlipping(true)
 
-    const isOpeningCover = current === 0 && nextPage === 1
-    const flipDuration = isOpeningCover ? 760 : 300
+    const isOpeningCoverTurn = current === 0 && nextPage === 1
+    const flipDuration = isOpeningCoverTurn ? 900 : 300
+    if (isOpeningCoverTurn) setOpeningCover(true)
 
     try {
       if (nextPage === current + 1) flip.flipNext("bottom")
@@ -356,9 +439,10 @@ const BookSlider = forwardRef<BookSliderHandle, {
       className={cn(
         "story-book-wrap book-pageflip-shell",
         isFlipping && "is-flipping",
-        page === 0 && isFlipping && "is-opening-cover",
+        isOpeningCover && "is-opening-cover",
         className,
       )}
+      data-page={page}
       onPointerDownCapture={handleDragPointerDown}
       onPointerMoveCapture={handleDragPointerMove}
       onPointerUpCapture={(event) => finishDragGesture(event)}
@@ -378,11 +462,11 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={page === 0 ? 760 : 300}
+        flippingTime={page === 0 ? 900 : 300}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.38}
+        maxShadowOpacity={page === 0 ? 0.20 : 0.38}
         showCover
         mobileScrollSupport
         clickEventForward
@@ -393,12 +477,15 @@ const BookSlider = forwardRef<BookSliderHandle, {
         onChangeState={(event: any) => {
           const state = event?.data
           const flipping = state === "flipping" || state === "user_fold" || state === "fold_corner"
-          setFlipping(flipping)
-          if (!flipping && pendingTargetRef.current !== null) {
-            const target = pendingTargetRef.current
-            pendingTargetRef.current = null
-            window.setTimeout(() => requestPage(target), 0)
+          if (flipping) {
+            setFlipping(true)
+            return
           }
+
+          // "read" is the library's fully-settled state. Keep our motion class
+          // for two extra paint frames so its temporary fold layers disappear
+          // before the cover is considered finished.
+          if (state === "read") queueVisualSettle()
         }}
         onFlip={(event: any) => {
           const nextPage = Number(event?.data ?? 0)
@@ -413,7 +500,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
             api()?.turnToPage(previousPage)
             requestedTargetRef.current = null
             pendingTargetRef.current = null
-            setFlipping(false)
+            if (openingCoverRef.current) setOpeningCover(false)
+            queueVisualSettle()
             return
           }
 
@@ -424,16 +512,13 @@ const BookSlider = forwardRef<BookSliderHandle, {
             flip?.turnToPage(previousPage)
             requestedTargetRef.current = null
             pendingTargetRef.current = null
-            setFlipping(false)
+            if (openingCoverRef.current) setOpeningCover(false)
+            queueVisualSettle()
             return
           }
 
           currentPageRef.current = nextPage
-          setFlipping(false)
-          if (flipFallbackRef.current) {
-            clearTimeout(flipFallbackRef.current)
-            flipFallbackRef.current = null
-          }
+          pendingCommittedPageRef.current = nextPage
 
           if (!programmaticRef.current && nextPage !== previousPage) {
             onTurn?.(nextPage > previousPage ? "next" : "previous")
@@ -442,7 +527,11 @@ const BookSlider = forwardRef<BookSliderHandle, {
           }
           programmaticRef.current = false
           requestedTargetRef.current = null
-          onPageChange(nextPage)
+
+          // Some browsers report the settled state just before onFlip. If that
+          // happens, finish on the next clean paint rather than waiting for a
+          // state event that already fired.
+          if (!isFlippingRef.current) queueVisualSettle()
         }}
       >
         {pages}

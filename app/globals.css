@@ -4036,3 +4036,51 @@ body {
   max-width: 28rem !important;
   margin-inline: auto;
 }
+
+/* August 16: seamless hardcover opening. Keep react-pageflip's temporary layers
+   clipped/GPU-backed while moving, then remove the finished cover completely so
+   no dark outline, sliver, or stale fold survives the settled frame. */
+.book-intro-canvas {
+  contain: paint;
+}
+
+.story-book-wrap {
+  isolation: isolate;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.story-book-wrap.is-flipping .stf__item,
+.story-book-wrap.is-flipping .stf__block {
+  will-change: transform;
+}
+
+/* The page-flip engine already draws the moving cast shadow. Avoid stacking a
+   second CSS shadow on the hardcover, which previously read as a black outline. */
+.story-book-wrap.is-opening-cover .stf__item,
+.story-book-wrap.is-opening-cover .stf__block {
+  filter: none !important;
+}
+
+.story-book-wrap.is-opening-cover .story-book-cover-inner {
+  outline: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Once the cover is fully turned, it must contribute zero visible pixels. It
+   becomes visible again the instant a real backwards drag begins. */
+.story-book-wrap[data-page]:not([data-page="0"]):not(.is-flipping) .story-book-cover-inner {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+@supports selector(.stf__item:has(.story-book-cover-inner)) {
+  .story-book-wrap[data-page]:not([data-page="0"]):not(.is-flipping) .stf__item:has(.story-book-cover-inner),
+  .story-book-wrap[data-page]:not([data-page="0"]):not(.is-flipping) .stf__block:has(.story-book-cover-inner) {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
