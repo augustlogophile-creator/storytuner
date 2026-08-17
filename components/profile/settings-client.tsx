@@ -84,23 +84,18 @@ export function SettingsClient({ username }: { username: string }) {
     }
     setBusy(true)
     setNotice("")
-    const supabase = createClient()
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) {
+    const response = await fetch("/api/account/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ displayName: cleanDisplayName }),
+    })
+    const payload = await response.json().catch(() => ({})) as { saved?: boolean; displayName?: string; error?: string }
+    if (!response.ok || !payload.saved) {
       setBusy(false)
       setDialog(null)
-      return setNotice("Your session expired. Log in again before changing your name.")
+      return setNotice(payload.error || "StoryTuner could not update your account profile. Try again.")
     }
-    const { error } = await supabase.from("profiles").update({ display_name: cleanDisplayName }).eq("id", data.user.id)
-    if (error) {
-      setBusy(false)
-      setDialog(null)
-      if (error.code === "23514" || error.message.toLowerCase().includes("public name")) {
-        return setNotice("Choose a different display name. Vulgar, sexual, hateful, or harassing terms are not allowed.")
-      }
-      return setNotice("StoryTuner could not update your account profile. Try again.")
-    }
-    updateProfileName(cleanDisplayName)
+    updateProfileName(payload.displayName || cleanDisplayName)
     setBusy(false)
     setDialog(null)
     setNotice("Display name updated.")

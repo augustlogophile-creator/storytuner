@@ -6,7 +6,7 @@ import { readJsonBody, rejectLargeRequest, requireSameOrigin, rateLimitResponse,
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const schema = z.object({ userId: z.string().uuid() })
+const schema = z.object({ userId: z.string().uuid() }).strict()
 
 export async function POST(request: Request) {
   const crossSite = requireSameOrigin(request)

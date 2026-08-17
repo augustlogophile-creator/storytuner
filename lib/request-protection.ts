@@ -135,6 +135,23 @@ export function requireSameOrigin(request: Request) {
   return null
 }
 
+
+export function rejectUnexpectedJsonFields(value: unknown, allowedFields: readonly string[]) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return Response.json(
+      { code: "INVALID_REQUEST", error: "The request body must be a JSON object." },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    )
+  }
+  const allowed = new Set(allowedFields)
+  const unexpected = Object.keys(value as Record<string, unknown>).filter((key) => !allowed.has(key))
+  if (!unexpected.length) return null
+  return Response.json(
+    { code: "UNEXPECTED_FIELDS", error: "The request included unsupported fields." },
+    { status: 400, headers: { "Cache-Control": "no-store" } },
+  )
+}
+
 export function runIdempotent<T>(key: string, task: () => Promise<T>, ttlMs = 90_000): Promise<T> {
   const now = Date.now()
   const existing = idempotent.get(key) as IdempotentEntry<T> | undefined

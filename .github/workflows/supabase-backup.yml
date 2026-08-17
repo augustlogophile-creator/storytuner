@@ -1,0 +1,77 @@
+name: StoryTuner database backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "31 6 * * *"
+
+permissions:
+  contents: read
+
+env:
+  BACKUP_DIR: story-tuner-backup
+  ENCRYPTED_BACKUP: storytuner-db-backup.tar.gz.enc
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check backup prerequisites
+        id: gate
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_KEY: ${{ secrets.SUPABASE_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          if [ "$REPOSITORY_PRIVATE" = "true" ] && [ -n "$SUPABASE_DB_URL" ] && [ -n "$BACKUP_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Backup skipped. StoryTuner only creates encrypted backups from a private repository and requires both SUPABASE_DB_URL and SUPABASE_BACKUP_ENCRYPTION_KEY Actions secrets."
+          fi
+
+      - name: Install Supabase CLI
+        if: ${{ steps.gate.outputs.ready == 'true' }}
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Export database
+        if: ${{ steps.gate.outputs.ready == 'true' }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$BACKUP_DIR"
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f "$BACKUP_DIR/roles.sql" --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f "$BACKUP_DIR/schema.sql"
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f "$BACKUP_DIR/data.sql" --use-copy --data-only
+          printf '%s\n' "$(date -u +%FT%TZ)" > "$BACKUP_DIR/created-at.txt"
+
+      - name: Encrypt backup before artifact upload
+        if: ${{ steps.gate.outputs.ready == 'true' }}
+        env:
+          BACKUP_KEY: ${{ secrets.SUPABASE_BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          if [ "${#BACKUP_KEY}" -lt 32 ]; then
+            echo "SUPABASE_BACKUP_ENCRYPTION_KEY must be at least 32 characters."
+            exit 1
+          fi
+          tar -czf storytuner-db-backup.tar.gz "$BACKUP_DIR"
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 200000 \
+            -in storytuner-db-backup.tar.gz \
+            -out "$ENCRYPTED_BACKUP" \
+            -pass env:BACKUP_KEY
+          rm -rf "$BACKUP_DIR" storytuner-db-backup.tar.gz
+
+      - name: Upload encrypted private backup artifact
+        if: ${{ steps.gate.outputs.ready == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: storytuner-db-${{ github.run_id }}
+          path: ${{ env.ENCRYPTED_BACKUP }}
+          retention-days: 7
+          if-no-files-found: error

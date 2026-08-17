@@ -1,15 +1,48 @@
+import "server-only"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 
 export type ModeratorRole = "admin"
 
-export const STORYTUNER_OWNER_EMAIL = "storytunerapp@gmail.com"
+type AuthenticatedIdentity = { id: string; claims: unknown }
 
-export function moderatorRoleFromClaims(claims: unknown): ModeratorRole | null {
-  if (!claims || typeof claims !== "object") return null
-  const email = (claims as { email?: unknown }).email
-  if (typeof email !== "string") return null
-  return email.trim().toLowerCase() === STORYTUNER_OWNER_EMAIL ? "admin" : null
+function ownerBinding() {
+  const userId = process.env.STORYTUNER_OWNER_USER_ID?.trim() ?? ""
+  const email = process.env.STORYTUNER_OWNER_EMAIL?.trim().toLowerCase() ?? ""
+  if (!userId || !email) return null
+  return { userId, email }
+}
+
+export function matchesConfiguredOwner(identity: AuthenticatedIdentity) {
+  const owner = ownerBinding()
+  if (!owner || identity.id !== owner.userId) return false
+  if (!identity.claims || typeof identity.claims !== "object") return false
+  const email = (identity.claims as { email?: unknown }).email
+  return typeof email === "string" && email.trim().toLowerCase() === owner.email
+}
+
+/**
+ * Admin access deliberately requires two independent server-side bindings:
+ * the immutable Supabase user UUID/email configured in server environment
+ * variables AND an admin row in the service-role-only moderators table.
+ */
+export async function verifiedModeratorRole(identity: AuthenticatedIdentity): Promise<ModeratorRole | null> {
+  if (!matchesConfiguredOwner(identity)) return null
+
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from("community_moderators")
+      .select("role")
+      .eq("user_id", identity.id)
+      .maybeSingle<{ role: string }>()
+
+    if (error || data?.role !== "admin") return null
+    return "admin"
+  } catch {
+    // Admin authorization must fail closed if Supabase or configuration is down.
+    return null
+  }
 }
 
 export async function getModeratorContext() {
@@ -17,15 +50,15 @@ export async function getModeratorContext() {
   if (!authenticated) {
     return {
       ok: false as const,
-      response: Response.json({ error: "Authentication required." }, { status: 401 }),
+      response: Response.json({ error: "Authentication required." }, { status: 401, headers: { "Cache-Control": "no-store" } }),
     }
   }
 
-  const role = moderatorRoleFromClaims(authenticated.claims)
+  const role = await verifiedModeratorRole(authenticated)
   if (!role) {
     return {
       ok: false as const,
-      response: Response.json({ error: "Admin access required." }, { status: 403 }),
+      response: Response.json({ error: "Admin access required." }, { status: 403, headers: { "Cache-Control": "no-store" } }),
     }
   }
 

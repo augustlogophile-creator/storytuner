@@ -15,9 +15,10 @@ export const revalidate = 0
 export default async function AccountRestrictedPage() {
   const authenticated = await getAuthenticatedUser()
   const restriction = authenticated ? await getAccountRestriction(authenticated.id) : null
-  const banned = restriction?.accountStatus === "banned"
-  const until = restriction?.accountSuspendedUntil
-  const decision = authenticated && restriction
+  const unavailable = Boolean(restriction?.lookupFailed)
+  const banned = !unavailable && restriction?.accountStatus === "banned"
+  const until = unavailable ? null : restriction?.accountSuspendedUntil
+  const decision = authenticated && restriction && !unavailable
     ? await getAccountRestrictionDecisionContext(authenticated.id, restriction.accountStatus)
     : null
   const moderatorNote = decision?.note || restriction?.publicMessage || null
@@ -32,10 +33,14 @@ export default async function AccountRestrictedPage() {
           </span>
           <Eyebrow className="mt-5">Account access</Eyebrow>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">
-            {banned ? "This account has been disabled." : "This account is temporarily suspended."}
+            {unavailable ? "We couldn't verify your account status." : banned ? "This account has been disabled." : "This account is temporarily suspended."}
           </h1>
 
-          {decision?.content ? (
+          {unavailable ? (
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              For security, StoryTuner pauses access when it cannot verify account restrictions. Try again in a moment.
+            </p>
+          ) : decision?.content ? (
             <div className="mt-5 text-left">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Content involved</p>
               <blockquote className="mt-2 rounded-2xl bg-secondary px-4 py-3 text-sm leading-6 text-foreground">

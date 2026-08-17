@@ -8,10 +8,10 @@ import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, reje
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const paramsSchema = z.object({ replyId: z.string().uuid() })
+const paramsSchema = z.object({ replyId: z.string().uuid() }).strict()
 const editSchema = z.object({
   body: z.string().trim().min(1, "A reply cannot be empty.").max(2000, "Replies can be at most 2,000 characters."),
-})
+}).strict()
 
 type RouteContext = { params: Promise<{ replyId: string }> }
 type ReplyRow = {

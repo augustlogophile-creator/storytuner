@@ -24,7 +24,7 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
   const [heldMessage, setHeldMessage] = useState("")
   const hasTranscript = Boolean(recording?.transcript?.trim())
   const hasCloudAudio = Boolean(recording?.cloudRecordingId && recording?.cloudStoragePath)
-  const audioWithinDuration = Boolean(recording && recording.duration > 0 && recording.duration <= 300)
+  const audioWithinDuration = Boolean(recording && recording.duration > 0 && recording.duration <= 1800)
   const audioEligible = hasCloudAudio && audioWithinDuration && hasTranscript
 
   useEffect(() => {
@@ -52,7 +52,16 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
       const response = await fetch("/api/community/share-recording", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ mode, recordingId: activeRecording.cloudRecordingId ?? null, title: activeRecording.title, transcript: activeRecording.transcript, message: message.trim() }),
+        body: JSON.stringify({
+          mode,
+          recordingId: activeRecording.cloudRecordingId ?? null,
+          title: activeRecording.title,
+          // Cloud recordings use the authoritative server-saved transcript. This
+          // keeps long recordings out of the request body and avoids client-side
+          // transcript length limits when sharing audio.
+          transcript: activeRecording.cloudRecordingId ? "" : activeRecording.transcript,
+          message: message.trim(),
+        }),
       })
       const payload = (await response.json()) as ApiPayload
       if (response.ok && payload.heldForReview) { setHeldMessage(payload.message || "This share is being held for moderator review."); return }
@@ -84,7 +93,7 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
           })}
         </div>
 
-        {!audioEligible && <p className="mt-2 text-[0.68rem] leading-5 text-muted-foreground">{!hasCloudAudio ? "Audio is unavailable for older device-only recordings. You can still share the transcript." : !audioWithinDuration ? "Community audio is limited to 5 minutes. You can still share the transcript." : "Audio sharing requires a completed transcript for safety review."}</p>}
+        {!audioEligible && <p className="mt-2 text-[0.68rem] leading-5 text-muted-foreground">{!hasCloudAudio ? "Audio is unavailable for older device-only recordings. You can still share the transcript." : !audioWithinDuration ? "Community audio can be shared up to 30 minutes. You can still share the transcript." : "Audio sharing requires a completed transcript for safety review."}</p>}
 
         <label className="mt-5 block">
           <span className="text-xs font-semibold">Add a message <span className="font-normal text-muted-foreground">optional</span></span>

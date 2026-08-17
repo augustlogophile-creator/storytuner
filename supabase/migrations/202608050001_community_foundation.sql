@@ -29,7 +29,7 @@ create table if not exists public.community_posts (
   constraint community_posts_body_length
     check (char_length(body) <= 5000),
   constraint community_posts_transcript_length
-    check (shared_transcript is null or char_length(shared_transcript) between 1 and 12000),
+    check (shared_transcript is null or char_length(shared_transcript) between 1 and 30000),
   constraint community_posts_type_content
     check (
       (post_type = 'text' and char_length(btrim(body)) between 1 and 5000 and shared_transcript is null)
@@ -83,9 +83,9 @@ create table if not exists public.community_audio (
   storage_path text not null unique,
   content_type text not null,
   size_bytes bigint not null
-    check (size_bytes between 1 and 12582912),
+    check (size_bytes between 1 and 25165824),
   duration_seconds integer not null
-    check (duration_seconds between 1 and 300),
+    check (duration_seconds between 1 and 1800),
   status text not null default 'ready'
     check (status in ('ready', 'deleting', 'failed')),
   created_at timestamptz not null default now(),
@@ -380,7 +380,7 @@ values (
   'storytuner-community-audio',
   'storytuner-community-audio',
   false,
-  12582912,
+  26214400,
   array[
     'audio/webm',
     'audio/ogg',

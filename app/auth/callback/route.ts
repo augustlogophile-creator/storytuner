@@ -1,6 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-import { safeInternalPath } from "@/lib/auth/redirects"
+import { safeInternalPath, siteUrl } from "@/lib/auth/redirects"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 
@@ -17,6 +17,7 @@ type ProfileState = {
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
+  const redirectOrigin = siteUrl()
   const code = url.searchParams.get("code")
   const tokenHash = url.searchParams.get("token_hash")
   const rawType = url.searchParams.get("type")
@@ -32,18 +33,18 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: rawType as EmailOtpType })
     authError = error
   } else {
-    return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent("The authentication link is invalid or expired.")}`, url.origin))
+    return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent("The authentication link is invalid or expired.")}`, redirectOrigin))
   }
 
   if (authError) {
-    return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent("We could not finish signing you in. Try again.")}`, url.origin))
+    return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent("We could not finish signing you in. Try again.")}`, redirectOrigin))
   }
 
   const { data: userData } = await supabase.auth.getUser()
-  if (!userData.user) return NextResponse.redirect(new URL("/sign-up?mode=sign-in", url.origin))
+  if (!userData.user) return NextResponse.redirect(new URL("/sign-up?mode=sign-in", redirectOrigin))
 
   if (requestedNext === "/reset-password") {
-    return NextResponse.redirect(new URL("/reset-password", url.origin))
+    return NextResponse.redirect(new URL("/reset-password", redirectOrigin))
   }
 
   const [{ data: profile }, { data: existingState }] = await Promise.all([
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
   const hasUsername = Boolean(profile?.username?.trim())
 
   if (profile?.onboarding_completed && hasUsername) {
-    return NextResponse.redirect(new URL(requestedNext, url.origin))
+    return NextResponse.redirect(new URL(requestedNext, redirectOrigin))
   }
 
   if (intent === "sign-in") {
@@ -77,11 +78,11 @@ export async function GET(request: Request) {
             .from("profiles")
             .update({ onboarding_completed: true })
             .eq("id", userData.user.id)
-          if (!error) return NextResponse.redirect(new URL(requestedNext, url.origin))
+          if (!error) return NextResponse.redirect(new URL(requestedNext, redirectOrigin))
         } catch {}
       }
 
-      const recovery = new URL("/onboarding", url.origin)
+      const recovery = new URL("/onboarding", redirectOrigin)
       recovery.searchParams.set("mode", "login-recovery")
       recovery.searchParams.set("next", requestedNext)
       return NextResponse.redirect(recovery)
@@ -89,7 +90,7 @@ export async function GET(request: Request) {
 
     // A known legacy StoryTuner account without a username must choose one once.
     if (profile || existingState) {
-      const setup = new URL("/choose-username", url.origin)
+      const setup = new URL("/choose-username", redirectOrigin)
       setup.searchParams.set("next", requestedNext)
       return NextResponse.redirect(setup)
     }
@@ -98,12 +99,12 @@ export async function GET(request: Request) {
     // Keep Log in and Sign up separate: an entirely new Google identity must use Sign up.
     await supabase.auth.signOut()
     const error = "No existing StoryTuner account was found for that Google account. Choose Sign up if you want to create one."
-    return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent(error)}`, url.origin))
+    return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent(error)}`, redirectOrigin))
   }
 
   // Sign up: existing users with usernames pass through; every genuinely new
   // account must claim a username before any signed-in StoryTuner route opens.
-  const setup = new URL("/choose-username", url.origin)
+  const setup = new URL("/choose-username", redirectOrigin)
   setup.searchParams.set("next", requestedNext)
   return NextResponse.redirect(setup)
 }

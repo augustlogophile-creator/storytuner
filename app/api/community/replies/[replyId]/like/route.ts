@@ -6,7 +6,7 @@ import { backendError } from "@/lib/backend-log"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const paramsSchema = z.object({ replyId: z.string().uuid() })
+const paramsSchema = z.object({ replyId: z.string().uuid() }).strict()
 type RouteContext = { params: Promise<{ replyId: string }> }
 
 async function handleLike(routeContext: RouteContext, liked: boolean) {

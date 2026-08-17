@@ -11,7 +11,8 @@ export async function GET(request: Request) {
 
   // Vercel sends CRON_SECRET as a Bearer token for scheduled cron requests.
   // Refuse to run destructive maintenance if the deployment has no secret.
-  if (!secret || authorization !== `Bearer ${secret}`) {
+  const supplied = authorization.startsWith("Bearer ") ? authorization.slice(7) : ""
+  if (!secret || !timingSafeEqual(secret, supplied)) {
     backendLog("warn", "maintenance_rejected", {
       hasConfiguredSecret: Boolean(secret),
       hasAuthorization: Boolean(authorization),
@@ -21,4 +22,16 @@ export async function GET(request: Request) {
 
   const result = await runStoryTunerMaintenance()
   return Response.json({ ok: true, ...result }, { headers: { "Cache-Control": "no-store" } })
+}
+
+function timingSafeEqual(a: string, b: string) {
+  const encoder = new TextEncoder()
+  const left = encoder.encode(a)
+  const right = encoder.encode(b)
+  const max = Math.max(left.length, right.length)
+  let diff = left.length ^ right.length
+  for (let index = 0; index < max; index += 1) {
+    diff |= (left[index] ?? 0) ^ (right[index] ?? 0)
+  }
+  return diff === 0
 }

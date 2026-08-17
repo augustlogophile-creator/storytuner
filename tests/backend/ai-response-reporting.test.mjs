@@ -8,14 +8,15 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, "../..")
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8")
 
-test("AI response reports are stored through the authenticated Supabase session", () => {
+test("AI response reports are validated and written only by the server", () => {
   const route = read("app/api/ai/report/route.ts")
   assert.match(route, /from\("ai_response_reports"\)/)
   assert.match(route, /reporter_id:\s*auth\.id/)
   assert.match(route, /getActiveAuthenticatedUser\(\)/)
-  assert.match(route, /auth\.supabase\.from\("ai_response_reports"\)/)
-  assert.match(route, /SUPABASE_SERVICE_ROLE_KEY/)
-  assert.match(route, /ai_response_report_admin_fallback_failed/)
+  assert.match(route, /createAdminClient\(\)/)
+  assert.match(route, /admin\.from\("ai_response_reports"\)\.insert\(row\)/)
+  assert.match(route, /\.strict\(\)/)
+  assert.doesNotMatch(route, /auth\.supabase\.from\("ai_response_reports"\)/)
   assert.doesNotMatch(route, /body\.reporter(?:Id|_id)/)
 })
 
@@ -46,7 +47,7 @@ test("owner tools are hidden and server-blocked for non-owner accounts", () => {
     "app/admin/system/page.tsx",
   ]) {
     const page = read(file)
-    assert.match(page, /moderatorRoleFromClaims\(user\.claims\)/)
+    assert.match(page, /verifiedModeratorRole\(user\)/)
     assert.match(page, /notFound\(\)/)
   }
 

@@ -9,11 +9,11 @@ import { countActiveRenderableReplies } from "@/lib/community/visible-replies"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const paramsSchema = z.object({ postId: z.string().uuid() })
+const paramsSchema = z.object({ postId: z.string().uuid() }).strict()
 const editSchema = z.object({
   title: z.string().trim().max(120, "Titles can be at most 120 characters.").optional(),
   body: z.string().trim().max(5000, "Posts can be at most 5,000 characters."),
-})
+}).strict()
 
 type RouteContext = { params: Promise<{ postId: string }> }
 type OwnedPostRow = {

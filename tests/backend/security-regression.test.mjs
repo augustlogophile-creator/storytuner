@@ -47,7 +47,7 @@ test("privileged Supabase client is server-only and never imported by components
 test("maintenance cron requires CRON_SECRET bearer authentication", () => {
   const source = read("app/api/cron/maintenance/route.ts")
   assert.match(source, /process\.env\.CRON_SECRET/)
-  assert.match(source, /authorization !== `Bearer \$\{secret\}`/)
+  assert.match(source, /timingSafeEqual\(secret, supplied\)/)
   assert.doesNotMatch(source, /user-agent.*vercel-cron/i)
 })
 
@@ -59,7 +59,7 @@ test("configured Stripe price gates membership", () => {
 
 test("security headers are configured globally", () => {
   const source = read("next.config.mjs")
-  for (const header of ["X-Content-Type-Options", "Referrer-Policy", "X-Frame-Options", "Permissions-Policy"]) {
+  for (const header of ["Content-Security-Policy", "Strict-Transport-Security", "X-Content-Type-Options", "Referrer-Policy", "X-Frame-Options", "Permissions-Policy"]) {
     assert.match(source, new RegExp(header))
   }
 })
