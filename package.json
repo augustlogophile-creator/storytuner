@@ -11,7 +11,7 @@
     "check:backend": "npm run test:backend"
   },
   "dependencies": {
-    "@base-ui/react": "^1.5.0",
+    "@base-ui/react": "^1.7.0",
     "@supabase/ssr": "0.12.3",
     "@supabase/supabase-js": "2.110.5",
     "@vercel/analytics": "1.6.1",
