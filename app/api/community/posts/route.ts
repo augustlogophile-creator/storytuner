@@ -10,7 +10,7 @@ export const runtime = "nodejs"
 
 const createPostSchema = z.object({
   body: z.string().trim().min(1, "Write something before publishing.").max(5000, "Posts can be at most 5,000 characters."),
-})
+}).strict()
 
 type InsertedPost = {
   id: string

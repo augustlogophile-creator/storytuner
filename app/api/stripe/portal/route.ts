@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/require-auth"
 import { stripePost } from "@/lib/stripe-rest"
 import { backendError } from "@/lib/backend-log"
 import { requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { siteUrl } from "@/lib/auth/redirects"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -24,19 +25,11 @@ export async function POST(request: Request) {
     }
     const session = await stripePost<PortalSession>("/billing_portal/sessions", {
       customer: subscription.stripe_customer_id,
-      return_url: `${canonicalOrigin(request)}/membership`,
+      return_url: `${siteUrl()}/membership`,
     })
     return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     backendError("stripe_portal_failed", error, { userId: user.id })
     return Response.json({ error: "Could not open billing settings right now." }, { status: 502, headers: { "Cache-Control": "no-store" } })
   }
-}
-
-function canonicalOrigin(request: Request) {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
-  if (configured) {
-    try { return new URL(configured).origin } catch {}
-  }
-  return new URL(request.url).origin
 }

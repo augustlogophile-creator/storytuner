@@ -9,7 +9,7 @@ import { readJsonBody, requireSameOrigin } from "@/lib/request-protection"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const paramsSchema = z.object({ reportId: z.string().uuid() })
+const paramsSchema = z.object({ reportId: z.string().uuid() }).strict()
 const bodySchema = z.object({
   action: z.enum([
     "dismiss",
@@ -28,7 +28,7 @@ const bodySchema = z.object({
   hideContent: z.boolean().default(false),
   restrictionAction: z.enum(["keep", "clear", "suspend_community", "suspend_account", "ban_account"]).optional(),
   contentAction: z.enum(["keep", "remove", "restore"]).optional(),
-})
+}).strict()
 
 type RouteContext = { params: Promise<{ reportId: string }> }
 type ReportRow = { id: string; post_id: string | null; reply_id: string | null; status: string; source: "user" | "ai" }

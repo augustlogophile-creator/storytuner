@@ -38,3 +38,12 @@ StoryTuner now sends the separate low-bitrate audio track directly from the brow
 5. In Supabase, verify one object exists in the private bucket under the signed-in user ID.
 6. Verify the matching `recording_uploads` row has status `ready`.
 7. Delete the recording inside StoryTuner and confirm both the object and row are removed.
+
+
+## Community sharing
+
+- A finished private recording can be shared as Community audio up to 30 minutes.
+- Community audio is copied from the private audio-only recording, never from the full video.
+- The copied audio may be at most 24 MB; the Community bucket allows up to 25 MB.
+- Transcript-only sharing supports up to 30,000 characters.
+- Older device-only recordings without a cloud audio copy can still share their transcript.

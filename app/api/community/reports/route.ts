@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityReportReason } from "@/lib/community/types"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
@@ -16,12 +17,12 @@ const reasons = new Set<CommunityReportReason>([
   "other",
 ])
 
-type ReportRequest = {
-  postId?: string | null
-  replyId?: string | null
-  reason?: CommunityReportReason
-  details?: string
-}
+const reportSchema = z.object({
+  postId: z.string().uuid().nullable().optional(),
+  replyId: z.string().uuid().nullable().optional(),
+  reason: z.enum(["harassment", "hate", "sexual_content", "violence", "self_harm", "personal_information", "spam", "other"]),
+  details: z.string().trim().max(1000).optional().default(""),
+}).strict().refine((value) => Boolean(value.postId) !== Boolean(value.replyId), { message: "Choose one post or reply to report." })
 
 export async function POST(request: Request) {
   const crossSite = requireSameOrigin(request)
@@ -37,19 +38,14 @@ export async function POST(request: Request) {
 
   const json = await readJsonBody(request, 8_000)
   if (!json.ok) return json.response
-  const payload = json.value as ReportRequest
+  const parsed = reportSchema.safeParse(json.value)
+  if (!parsed.success) return noStoreJson({ error: parsed.error.issues[0]?.message ?? "That report is invalid." }, { status: 400 })
+  const payload = parsed.data
 
-  const postId = typeof payload.postId === "string" ? payload.postId : null
-  const replyId = typeof payload.replyId === "string" ? payload.replyId : null
-  const reason = payload.reason
-  const details = typeof payload.details === "string" ? payload.details.trim().slice(0, 1000) : ""
-
-  if ((!postId && !replyId) || (postId && replyId)) {
-    return noStoreJson({ error: "Choose one post or reply to report." }, { status: 400 })
-  }
-  if (!reason || !reasons.has(reason)) {
-    return noStoreJson({ error: "Choose a reason for the report." }, { status: 400 })
-  }
+  const postId = payload.postId ?? null
+  const replyId = payload.replyId ?? null
+  const reason = payload.reason as CommunityReportReason
+  const details = payload.details
 
   const recentSince = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const { count: recentCount } = await context.admin

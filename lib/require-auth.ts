@@ -114,8 +114,8 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
     }>()
 
   if (error) {
-    // The moderation migration may not have been run yet. Do not lock users out
-    // because a new optional table is temporarily unavailable.
+    // If restriction state cannot be read, callers treat lookupFailed as a
+    // fail-closed condition so a suspended account cannot slip through.
     backendError("account_restriction_lookup_failed", error, { userId })
     return {
       restricted: false,
@@ -212,6 +212,7 @@ export async function requireStoryTunerUser(
 
   const restriction = await restrictionPromise
 
+  if (restriction?.lookupFailed) redirect("/account-restricted?status=unavailable")
   if (restriction?.restricted) redirect("/account-restricted")
 
   if (needsProfile && !profile?.username?.trim()) {
@@ -229,6 +230,7 @@ export async function signedInDestination() {
   const authenticated = await getAuthenticatedUser()
   if (!authenticated) return null
   const restriction = await getAccountRestriction(authenticated.id)
+  if (restriction.lookupFailed) return "/account-restricted?status=unavailable"
   if (restriction.restricted) return "/account-restricted"
   const { data } = await authenticated.supabase
     .from("profiles")

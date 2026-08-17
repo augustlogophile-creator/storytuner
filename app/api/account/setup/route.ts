@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { backendError } from "@/lib/backend-log"
 import { checkUsernameSafety } from "@/lib/profile/username-moderation"
 import { validateDisplayName } from "@/lib/profile/public-name"
@@ -6,6 +7,11 @@ import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser } fro
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
+
+const setupSchema = z.object({
+  username: z.string().trim().max(20).optional(),
+  confirmedAge13Plus: z.literal(true),
+}).strict()
 
 type ExistingProfile = {
   username: string
@@ -37,13 +43,14 @@ export async function POST(request: Request) {
 
   const json = await readJsonBody(request, 4_000)
   if (!json.ok) return json.response
-  const body = json.value as Record<string, unknown>
-  if (body.confirmedAge13Plus !== true) {
+  const parsed = setupSchema.safeParse(json.value)
+  if (!parsed.success) {
     return Response.json(
-      { code: "AGE_CONFIRMATION_REQUIRED", error: "Confirm that you are at least 13 to continue." },
+      { code: "INVALID_SETUP", error: "That account setup request is invalid." },
       { status: 400, headers: { "Cache-Control": "no-store" } },
     )
   }
+  const body = parsed.data
 
   const admin = createAdminClient()
   const { data: existingProfile, error: profileError } = await admin

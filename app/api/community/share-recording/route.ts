@@ -10,16 +10,16 @@ export const runtime = "nodejs"
 
 const SOURCE_BUCKET = "storytuner-recordings"
 const COMMUNITY_BUCKET = "storytuner-community-audio"
-const MAX_COMMUNITY_AUDIO_BYTES = 12 * 1024 * 1024
-const MAX_COMMUNITY_AUDIO_SECONDS = 300
+const MAX_COMMUNITY_AUDIO_BYTES = 24 * 1024 * 1024
+const MAX_COMMUNITY_AUDIO_SECONDS = 1800
 
 const schema = z.object({
   mode: z.enum(["transcript", "audio"]),
   recordingId: z.string().uuid().nullable().optional(),
   title: z.string().trim().max(120).optional().default(""),
-  transcript: z.string().trim().max(12000).optional().default(""),
+  transcript: z.string().trim().max(30000).optional().default(""),
   message: z.string().trim().max(1000).optional().default(""),
-})
+}).strict()
 
 type RecordingRow = {
   id: string
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   if (crossSite) return crossSite
   const context = await getCommunityApiContext()
   if (!context.ok) return context.response
-  const oversized = rejectLargeRequest(request, 30_000)
+  const oversized = rejectLargeRequest(request, 40_000)
   if (oversized) return oversized
   const blocked = rateLimitResponse(rateLimitUser(context.userId, "community_recording_share", [
     { limit: 6, windowMs: 10 * 60 * 1000, label: "6/10min" },
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   let createdPostId: string | null = null
 
   try {
-    const json = await readJsonBody(request, 30_000)
+    const json = await readJsonBody(request, 40_000)
     if (!json.ok) return json.response
     const parsed = schema.safeParse(json.value)
     if (!parsed.success) {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     if (needsAudio && source) {
       if (source.duration_seconds > MAX_COMMUNITY_AUDIO_SECONDS) {
-        return noStoreJson({ error: "Community audio can be at most 5 minutes. You can still share the transcript." }, { status: 400 })
+        return noStoreJson({ error: "Community audio can be at most 30 minutes. You can still share the transcript." }, { status: 400 })
       }
       if (source.size_bytes > MAX_COMMUNITY_AUDIO_BYTES) {
         return noStoreJson({ error: "This audio file is too large for Community. You can still share the transcript." }, { status: 400 })

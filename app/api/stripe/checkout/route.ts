@@ -1,15 +1,19 @@
+import { z } from "zod"
 import { getSubscriptionByUserId, isMembershipActive } from "@/lib/membership-server"
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { stripePost } from "@/lib/stripe-rest"
 import { backendError, backendLog } from "@/lib/backend-log"
 import { readJsonBody, rejectLargeRequest, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { siteUrl } from "@/lib/auth/redirects"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 type CheckoutSession = { id: string; url: string | null; customer: string | null }
 type StripeCustomer = { id: string }
+
+const checkoutSchema = z.object({ renewalConsent: z.literal(true) }).strict()
 
 export async function POST(request: Request) {
   const crossSite = requireSameOrigin(request)
@@ -22,8 +26,8 @@ export async function POST(request: Request) {
   if (oversized) return oversized
   const body = await readJsonBody(request, 5_000)
   if (!body.ok) return body.response
-  const renewalConsent = typeof body.value === "object" && body.value !== null && (body.value as { renewalConsent?: unknown }).renewalConsent === true
-  if (!renewalConsent) {
+  const parsed = checkoutSchema.safeParse(body.value)
+  if (!parsed.success) {
     return Response.json({ error: "Confirm the automatic-renewal terms before starting checkout." }, { status: 400 })
   }
 
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
     const priceId = process.env.STRIPE_PRICE_ID?.trim()
     if (!priceId) throw new Error("STRIPE_PRICE_ID is missing.")
 
-    const origin = canonicalOrigin(request)
+    const origin = siteUrl()
     const email = typeof user.claims.email === "string" ? user.claims.email : undefined
     let customerId = existing?.stripe_customer_id ?? null
 
@@ -105,12 +109,4 @@ export async function POST(request: Request) {
     backendError("stripe_checkout_failed", error, { userId: user.id })
     return Response.json({ error: "StoryTuner could not start checkout right now. Try again in a moment." }, { status: 502, headers: { "Cache-Control": "no-store" } })
   }
-}
-
-function canonicalOrigin(request: Request) {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim()
-  if (configured) {
-    try { return new URL(configured).origin } catch {}
-  }
-  return new URL(request.url).origin
 }

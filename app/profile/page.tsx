@@ -1,8 +1,9 @@
 import { MobileShell } from "@/components/mobile-shell"
 import { ProfileClient } from "@/components/profile/profile-client"
-import { moderatorRoleFromClaims } from "@/lib/community/moderation"
+import { verifiedModeratorRole } from "@/lib/community/moderation"
 import { validateDisplayName } from "@/lib/profile/public-name"
 import { requireStoryTunerUser } from "@/lib/require-auth"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -10,7 +11,7 @@ const GENERIC_PROFILE_NAMES = new Set(["storytuner member", "storyteller"])
 
 export default async function ProfilePage() {
   const user = await requireStoryTunerUser("/profile")
-  const moderatorRole = moderatorRoleFromClaims(user.claims)
+  const moderatorRole = await verifiedModeratorRole(user)
   let displayName = user.profile?.display_name?.trim().slice(0, 15) || "Storyteller"
 
   // Older moderation/test migrations could replace an unsafe public name with
@@ -26,7 +27,8 @@ export default async function ProfilePage() {
         : ""
 
     if (candidate && !GENERIC_PROFILE_NAMES.has(candidate.toLowerCase()) && !validateDisplayName(candidate)) {
-      const { error } = await user.supabase.from("profiles").update({ display_name: candidate }).eq("id", user.id)
+      const admin = createAdminClient()
+      const { error } = await admin.from("profiles").update({ display_name: candidate }).eq("id", user.id)
       if (!error) displayName = candidate
     }
   }

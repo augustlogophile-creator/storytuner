@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 const COMMUNITY_BUCKET = "storytuner-community-audio"
-const paramsSchema = z.object({ postId: z.string().uuid() })
+const paramsSchema = z.object({ postId: z.string().uuid() }).strict()
 type RouteContext = { params: Promise<{ postId: string }> }
 
 type AudioRow = {

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 export const maxDuration = 60
 
-const schema = z.object({ scope: z.enum(["recordings", "app_data"]) })
+const schema = z.object({ scope: z.enum(["recordings", "app_data"]) }).strict()
 const RECORDINGS_BUCKET = "storytuner-recordings"
 const COMMUNITY_AUDIO_BUCKET = "storytuner-community-audio"
 const DELETED_POST_PLACEHOLDER = "Deleted by account reset."

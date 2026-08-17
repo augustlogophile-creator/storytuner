@@ -1,15 +1,39 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const DEFAULT_ALLOWED_ORIGINS = new Set([
+  "https://storytuner.vercel.app",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+]);
 
-function jsonResponse(body: unknown, status = 200) {
+function allowedOrigins() {
+  const configured = (Deno.env.get("STORYTUNER_ALLOWED_ORIGINS") || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...configured]);
+}
+
+function corsHeadersFor(request: Request) {
+  const origin = request.headers.get("Origin");
+  const headers: Record<string, string> = {
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+  if (origin && allowedOrigins().has(origin)) headers["Access-Control-Allow-Origin"] = origin;
+  return headers;
+}
+
+function browserOriginAllowed(request: Request) {
+  const origin = request.headers.get("Origin");
+  return !origin || allowedOrigins().has(origin);
+}
+
+function jsonResponse(request: Request, body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeadersFor(request), "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
 }
 
@@ -38,10 +62,14 @@ function getPublishableKey() {
 }
 
 Deno.serve(async (request: Request) => {
-  if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (request.method !== "POST") return jsonResponse({ error: "Method not allowed." }, 405);
+  if (request.method === "OPTIONS") {
+    if (!browserOriginAllowed(request)) return new Response("Forbidden", { status: 403, headers: { "Vary": "Origin" } });
+    return new Response("ok", { headers: corsHeadersFor(request) });
+  }
+  if (!browserOriginAllowed(request)) return jsonResponse(request, { error: "Cross-origin request blocked." }, 403);
+  if (request.method !== "POST") return jsonResponse(request, { error: "Method not allowed." }, 405);
   const contentLength = Number(request.headers.get("content-length") || 0);
-  if (Number.isFinite(contentLength) && contentLength > 10_000) return jsonResponse({ error: "Request is too large." }, 413);
+  if (Number.isFinite(contentLength) && contentLength > 10_000) return jsonResponse(request, { error: "Request is too large." }, 413);
 
   let recordingId: string | null = null;
   let userClient: ReturnType<typeof createClient> | null = null;
@@ -51,7 +79,7 @@ Deno.serve(async (request: Request) => {
 
   try {
     const authorization = request.headers.get("Authorization");
-    if (!authorization?.startsWith("Bearer ")) return jsonResponse({ error: "You must be logged in." }, 401);
+    if (!authorization?.startsWith("Bearer ")) return jsonResponse(request, { error: "You must be logged in." }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const openAIKey = Deno.env.get("OPENAI_API_KEY");
@@ -64,7 +92,7 @@ Deno.serve(async (request: Request) => {
     });
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
-    if (userError || !user) return jsonResponse({ error: "Your login session is invalid." }, 401);
+    if (userError || !user) return jsonResponse(request, { error: "Your login session is invalid." }, 401);
     userId = user.id;
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -88,14 +116,19 @@ Deno.serve(async (request: Request) => {
         const activelySuspended = moderation.account_status === "suspended"
           && (suspendedUntil === null || suspendedUntil > Date.now());
         if (moderation.account_status === "banned" || activelySuspended) {
-          return jsonResponse({ error: moderation.public_message || "This account is currently restricted." }, 403);
+          return jsonResponse(request, { error: moderation.public_message || "This account is currently restricted." }, 403);
         }
       }
     }
 
     const requestBody = await request.json();
-    recordingId = typeof requestBody?.recordingId === "string" ? requestBody.recordingId : null;
-    if (!recordingId) return jsonResponse({ error: "A recordingId is required." }, 400);
+    if (!requestBody || typeof requestBody !== "object" || Array.isArray(requestBody) || Object.keys(requestBody).some((key) => key !== "recordingId")) {
+      return jsonResponse(request, { error: "Invalid request body." }, 400);
+    }
+    recordingId = typeof requestBody.recordingId === "string" ? requestBody.recordingId.trim() : null;
+    if (!recordingId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(recordingId)) {
+      return jsonResponse(request, { error: "A valid recordingId is required." }, 400);
+    }
 
     const { data: recording, error: recordingError } = await userClient
       .from("recording_uploads")
@@ -103,11 +136,15 @@ Deno.serve(async (request: Request) => {
       .eq("id", recordingId)
       .single();
 
-    if (recordingError || !recording) return jsonResponse({ error: "Recording not found." }, 404);
-    if (recording.user_id !== user.id) return jsonResponse({ error: "You cannot access this recording." }, 403);
+    if (recordingError || !recording) return jsonResponse(request, { error: "Recording not found." }, 404);
+    if (recording.user_id !== user.id) return jsonResponse(request, { error: "You cannot access this recording." }, 403);
+    if (typeof recording.storage_path !== "string" || !recording.storage_path.startsWith(`${user.id}/`) || recording.storage_path.includes("..")) {
+      edgeLog("warn", "transcription_invalid_storage_path", { userId: user.id, recordingId });
+      return jsonResponse(request, { error: "Recording metadata is invalid." }, 400);
+    }
 
     if (recording.status === "ready" && recording.transcript) {
-      return jsonResponse({ recordingId, transcript: recording.transcript, status: "ready" });
+      return jsonResponse(request, { recordingId, transcript: recording.transcript, status: "ready" });
     }
 
     const { data: subscription, error: subscriptionError } = await adminClient
@@ -124,7 +161,7 @@ Deno.serve(async (request: Request) => {
     );
 
     if (!membershipActive && Number(recording.duration_seconds || 0) > 300) {
-      return jsonResponse({
+      return jsonResponse(request, {
         code: "ARENA_DURATION_MEMBERSHIP_REQUIRED",
         error: "Recording targets longer than five minutes require StoryTuner Membership.",
       }, 403);
@@ -140,7 +177,7 @@ Deno.serve(async (request: Request) => {
       if (reservationError) throw new Error(`Could not verify free usage: ${reservationError.message}`);
       usage = reservation as Record<string, unknown>;
       if (!usage?.allowed) {
-        return jsonResponse({
+        return jsonResponse(request, {
           code: "ARENA_LIMIT_REACHED",
           error: "You have used both free spoken story reviews. Membership unlocks unlimited practice.",
           usage,
@@ -168,7 +205,7 @@ Deno.serve(async (request: Request) => {
         await adminClient.from("user_usage_events").delete().eq("user_id", user.id).eq("feature", "arena_review").eq("request_key", recordingId);
         usageReservedNow = false;
       }
-      return jsonResponse({ code: "RATE_LIMITED", error: "Studio has received unusually many transcription requests from this account. Wait and try again later." }, 429);
+      return jsonResponse(request, { code: "RATE_LIMITED", error: "Studio has received unusually many transcription requests from this account. Wait and try again later." }, 429);
     }
 
     const { error: statusError } = await userClient
@@ -184,7 +221,9 @@ Deno.serve(async (request: Request) => {
     if (audioBlob.size > 24 * 1024 * 1024) throw new Error("This audio file is too large to transcribe. The maximum is 24 MB.");
 
     const fileName = recording.storage_path.split("/").pop() || "recording.webm";
-    const contentType = recording.content_type || audioBlob.type || "audio/webm";
+    const contentType = String(recording.content_type || audioBlob.type || "audio/webm").toLowerCase().split(";", 1)[0].trim();
+    const allowedTypes = new Set(["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"]);
+    if (!allowedTypes.has(contentType)) return jsonResponse(request, { error: "That recording format is not supported." }, 415);
     const audioFile = new File([audioBlob], fileName, { type: contentType });
     const transcriptionForm = new FormData();
     transcriptionForm.append("file", audioFile);
@@ -214,7 +253,7 @@ Deno.serve(async (request: Request) => {
       .eq("id", recordingId);
     if (saveError) throw new Error(`Could not save transcript: ${saveError.message}`);
 
-    return jsonResponse({ recordingId, transcript, title, wordCount, status: "ready", usage });
+    return jsonResponse(request, { recordingId, transcript, title, wordCount, status: "ready", usage });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown transcription error.";
     if (userClient && recordingId) {
@@ -229,7 +268,7 @@ Deno.serve(async (request: Request) => {
         .eq("request_key", recordingId);
     }
     edgeLog("error", "transcription_failed", { userId, recordingId, message: message.slice(0, 800) });
-    return jsonResponse({ error: "Transcription failed." }, 500);
+    return jsonResponse(request, { error: "Transcription failed." }, 500);
   }
 });
 

@@ -6,11 +6,11 @@ import { readJsonBody, requireSameOrigin } from "@/lib/request-protection"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const paramsSchema = z.object({ reportId: z.string().uuid() })
+const paramsSchema = z.object({ reportId: z.string().uuid() }).strict()
 const bodySchema = z.object({
   status: z.enum(["open", "reviewed", "dismissed", "actioned"]),
   adminNote: z.string().trim().max(2000).default(""),
-})
+}).strict()
 
 type RouteContext = { params: Promise<{ reportId: string }> }
 

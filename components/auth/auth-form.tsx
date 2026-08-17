@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Loader2, ShieldCheck } from "lucide-react"
-import { safeInternalPath } from "@/lib/auth/redirects"
+import { safeInternalPath, siteUrl } from "@/lib/auth/redirects"
 import { createClient } from "@/lib/supabase/client"
 
 type Mode = "sign-in" | "sign-up"
@@ -51,7 +51,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
     setError("")
     setLoading(true)
     const supabase = createClient()
-    const callback = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}&intent=${isSignUp ? "sign-up" : "sign-in"}`
+    const callback = `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}&intent=${isSignUp ? "sign-up" : "sign-in"}`
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callback },

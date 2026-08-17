@@ -9,11 +9,11 @@ import { backendError } from "@/lib/backend-log"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const paramsSchema = z.object({ postId: z.string().uuid() })
+const paramsSchema = z.object({ postId: z.string().uuid() }).strict()
 const createReplySchema = z.object({
   body: z.string().trim().min(1, "Write a reply before posting.").max(2000, "Replies can be at most 2,000 characters."),
   parentReplyId: z.string().uuid().nullable().optional(),
-})
+}).strict()
 
 type RouteContext = { params: Promise<{ postId: string }> }
 type ReplyRow = {

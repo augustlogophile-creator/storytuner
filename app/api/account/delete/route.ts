@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { backendError, backendLog } from "@/lib/backend-log"
-import { STORYTUNER_OWNER_EMAIL } from "@/lib/community/moderation"
+import { matchesConfiguredOwner } from "@/lib/community/moderation"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 import { stripeDelete } from "@/lib/stripe-rest"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 export const maxDuration = 60
 
-const schema = z.object({ confirmation: z.literal("DELETE") })
+const schema = z.object({ confirmation: z.literal("DELETE") }).strict()
 const RECORDINGS_BUCKET = "storytuner-recordings"
 const COMMUNITY_AUDIO_BUCKET = "storytuner-community-audio"
 
@@ -34,8 +34,7 @@ export async function POST(request: Request) {
   const parsed = schema.safeParse(json.value)
   if (!parsed.success) return Response.json({ error: "Type DELETE to confirm permanent account deletion." }, { status: 400 })
 
-  const email = typeof authenticated.claims.email === "string" ? authenticated.claims.email.trim().toLowerCase() : ""
-  if (email === STORYTUNER_OWNER_EMAIL) {
+  if (matchesConfiguredOwner(authenticated)) {
     return Response.json({ error: "The StoryTuner owner account cannot be deleted from inside the app." }, { status: 403 })
   }
 
