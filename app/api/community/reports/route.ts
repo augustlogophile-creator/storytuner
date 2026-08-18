@@ -3,6 +3,7 @@ import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityReportReason } from "@/lib/community/types"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
   const postId = payload.postId ?? null
   const replyId = payload.replyId ?? null
   const reason = payload.reason as CommunityReportReason
-  const details = payload.details
+  const details = sanitizePlainText(payload.details, { maxLength: 1000 })
 
   const recentSince = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const { count: recentCount } = await context.admin

@@ -3,6 +3,7 @@ import { backendError } from "@/lib/backend-log"
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 
@@ -43,8 +44,8 @@ export async function POST(request: Request) {
   const row = {
     reporter_id: auth.id,
     surface: body.surface,
-    response_text: body.responseText,
-    reason: body.reason,
+    response_text: sanitizePlainText(body.responseText, { maxLength: 20_000 }),
+    reason: sanitizePlainText(body.reason, { maxLength: 1_000 }),
     response_id: cleanOptionalId(body.responseId),
     lesson_id: cleanOptionalId(body.lessonId),
     recording_id: cleanOptionalId(body.recordingId),

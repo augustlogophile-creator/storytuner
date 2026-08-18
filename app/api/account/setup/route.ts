@@ -5,6 +5,7 @@ import { validateDisplayName } from "@/lib/profile/public-name"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 
@@ -133,7 +134,9 @@ export async function POST(request: Request) {
   const metadata = userData.user.user_metadata ?? {}
   const metadataName = [metadata.given_name, metadata.name, metadata.full_name]
     .find((value) => typeof value === "string" && value.trim())
-  const firstName = typeof metadataName === "string" ? metadataName.trim().split(/\s+/)[0]?.slice(0, 15) ?? "" : ""
+  const firstName = typeof metadataName === "string"
+    ? sanitizePlainText(metadataName.trim().split(/\s+/)[0] ?? "", { maxLength: 15, singleLine: true })
+    : ""
   const displayName = firstName && !validateDisplayName(firstName) ? firstName : "Storyteller"
 
   const { error: saveError } = await admin.from("profiles").upsert({

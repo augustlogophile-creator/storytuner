@@ -5,6 +5,7 @@ import { validateDisplayName } from "@/lib/profile/public-name"
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -36,7 +37,7 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Choose a display name from 3 to 15 letters/characters." }, { status: 400, headers: { "Cache-Control": "no-store" } })
   }
 
-  const displayName = parsed.data.displayName
+  const displayName = sanitizePlainText(parsed.data.displayName, { maxLength: 15, singleLine: true })
   const deterministicError = validateDisplayName(displayName)
   if (deterministicError) {
     return Response.json({ error: deterministicError }, { status: 400, headers: { "Cache-Control": "no-store" } })

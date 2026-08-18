@@ -1,6 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
+import { blobHasValidAudioSignature, extensionForAudioMime, normalizeSupportedAudioMime } from "@/lib/security/audio-file"
 
 const RECORDINGS_BUCKET = "storytuner-recordings"
 const MAX_AUDIO_BYTES = 24 * 1024 * 1024
@@ -58,6 +59,14 @@ export async function uploadAndTranscribeRecording({
     throw new Error("This recording is larger than the 24 MB transcription limit. Try recording with the camera off or choose a shorter target.")
   }
 
+  const contentType = normalizeSupportedAudioMime(blob.type)
+  if (!contentType || contentType === "video/webm") {
+    throw new Error("This recording is not in a supported audio format.")
+  }
+  if (!(await blobHasValidAudioSignature(blob, contentType))) {
+    throw new Error("The recording contents do not match a supported audio format.")
+  }
+
   const supabase = createClient()
   onStage?.("preparing")
 
@@ -69,8 +78,7 @@ export async function uploadAndTranscribeRecording({
   if (userError || !user) throw new Error("Please log in again before transcribing this recording.")
 
   const id = crypto.randomUUID()
-  const contentType = normalizeAudioContentType(blob.type)
-  const storagePath = `${user.id}/${id}.${extensionFor(contentType)}`
+  const storagePath = `${user.id}/${id}.${extensionForAudioMime(contentType)}`
   const cloudRef = { id, storagePath }
 
   const { error: rowError } = await supabase.from("recording_uploads").insert({
@@ -261,22 +269,6 @@ export async function deleteCloudRecordings(recordings: CloudRecordingRef[]) {
     const { error } = await supabase.from("recording_uploads").delete().in("id", ids)
     if (error) throw new Error(`Recording history entries could not be deleted. ${error.message}`)
   }
-}
-
-function normalizeAudioContentType(type: string) {
-  const base = type.split(";")[0].trim().toLowerCase()
-  if (["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"].includes(base)) {
-    return base
-  }
-  return "audio/webm"
-}
-
-function extensionFor(contentType: string) {
-  if (contentType === "audio/ogg") return "ogg"
-  if (contentType === "audio/mpeg") return "mp3"
-  if (contentType === "audio/mp4") return "m4a"
-  if (contentType === "audio/wav" || contentType === "audio/x-wav") return "wav"
-  return "webm"
 }
 
 async function edgeFunctionErrorMessage(error: unknown) {

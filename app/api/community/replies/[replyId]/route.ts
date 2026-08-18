@@ -4,6 +4,7 @@ import type { CommunityReply, CommunityContentStatus } from "@/lib/community/typ
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { backendError } from "@/lib/backend-log"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -45,6 +46,9 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return noStoreJson({ error: parsedBody.error.issues[0]?.message ?? "The update is not valid." }, { status: 400 })
   }
 
+  const body = sanitizePlainText(parsedBody.data.body, { maxLength: 2000 })
+  if (!body) return noStoreJson({ error: "A reply cannot be empty." }, { status: 400 })
+
   const { data: existing, error: existingError } = await context.admin
     .from("community_replies")
     .select("id, post_id, parent_reply_id, author_id, body, status, created_at, edited_at")
@@ -60,7 +64,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
 
   let moderation
   try {
-    moderation = await moderateCommunityText(parsedBody.data.body)
+    moderation = await moderateCommunityText(body)
   } catch (moderationError) {
     backendError("community_reply_edit_moderation_unavailable", moderationError, { userId: context.userId, replyId })
     return noStoreJson(
@@ -72,7 +76,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   const editedAt = new Date().toISOString()
   const { data: updated, error: updateError } = await context.admin
     .from("community_replies")
-    .update({ body: parsedBody.data.body, edited_at: editedAt, status: moderation.flagged ? "removed" : "active" })
+    .update({ body, edited_at: editedAt, status: moderation.flagged ? "removed" : "active" })
     .eq("id", existing.id)
     .eq("author_id", context.userId)
     .eq("status", "active")

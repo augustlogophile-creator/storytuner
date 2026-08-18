@@ -7,6 +7,7 @@ import type { StoryPlanOutput, StoryPlanRecord } from "@/lib/planner/types"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedReference } from "@/lib/ai/untrusted"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -141,7 +142,13 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient()
-  const input = parsed.data
+  const input = {
+    audienceContext: sanitizePlainText(parsed.data.audienceContext, { maxLength: 1000 }),
+    goal: sanitizePlainText(parsed.data.goal, { maxLength: 1500 }),
+    roughPlan: sanitizePlainText(parsed.data.roughPlan, { maxLength: 5000 }),
+    mustInclude: sanitizePlainText(parsed.data.mustInclude, { maxLength: 3000 }),
+    nervousAbout: sanitizePlainText(parsed.data.nervousAbout, { maxLength: 2000 }),
+  }
 
   // Prevent double-clicks and network retries from creating two plans or two AI
   // charges. An identical request made within two minutes reuses the saved plan.

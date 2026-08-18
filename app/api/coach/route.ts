@@ -7,6 +7,7 @@ import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, reje
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedReference } from "@/lib/ai/untrusted"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -50,11 +51,11 @@ export async function POST(req: Request) {
       .select("ai_personalization_enabled")
       .eq("id", user.id)
       .maybeSingle<{ ai_personalization_enabled: boolean }>()
-    const personalizedHistory = profile?.ai_personalization_enabled ? body.personalizationContext?.trim().slice(0, 8000) : ""
-    const attachedStory = typeof body.storyContext === "string" ? body.storyContext.slice(0, 7000) : ""
-    const attachedScore = typeof body.scoreContext === "string" ? body.scoreContext.slice(0, 2500) : ""
+    const personalizedHistory = profile?.ai_personalization_enabled ? sanitizePlainText(body.personalizationContext ?? "", { maxLength: 8000 }) : ""
+    const attachedStory = sanitizePlainText(body.storyContext ?? "", { maxLength: 7000 })
+    const attachedScore = sanitizePlainText(body.scoreContext ?? "", { maxLength: 2500 })
 
-    const messages = body.messages.slice(-12)
+    const messages = body.messages.slice(-12).map((item) => ({ ...item, content: sanitizePlainText(item.content, { maxLength: 5000 }) }))
     const latest = messages.at(-1)?.content?.trim() || ""
     if (!latest) return Response.json({ error: "Ask Parch a question first." }, { status: 400 })
     if (latest.length > 5000) return Response.json({ error: "Keep each Parch message under 5,000 characters." }, { status: 400 })

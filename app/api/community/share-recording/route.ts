@@ -4,6 +4,8 @@ import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
+import { audioSignatureMatches, extensionForAudioMime, normalizeSupportedAudioMime } from "@/lib/security/audio-file"
+import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -59,10 +61,14 @@ export async function POST(request: Request) {
     }
 
     const { mode } = parsed.data
+    const cleanTitle = sanitizePlainText(parsed.data.title, { maxLength: 120, singleLine: true })
+    const cleanTranscriptInput = sanitizePlainText(parsed.data.transcript, { maxLength: 30_000 })
+    const publicMessage = sanitizePlainText(parsed.data.message, { maxLength: 1_000 })
     const needsAudio = mode === "audio"
     const includesTranscript = mode === "transcript"
 
     let source: RecordingRow | null = null
+    let sourceMime: ReturnType<typeof normalizeSupportedAudioMime> = null
     if (parsed.data.recordingId) {
       const { data, error } = await context.admin
         .from("recording_uploads")
@@ -83,6 +89,10 @@ export async function POST(request: Request) {
     }
 
     if (needsAudio && source) {
+      sourceMime = normalizeSupportedAudioMime(source.content_type)
+      if (!sourceMime || sourceMime === "video/webm") {
+        return noStoreJson({ error: "This recording has an unsupported audio format." }, { status: 415 })
+      }
       if (source.duration_seconds > MAX_COMMUNITY_AUDIO_SECONDS) {
         return noStoreJson({ error: "Community audio can be at most 30 minutes. You can still share the transcript." }, { status: 400 })
       }
@@ -95,14 +105,13 @@ export async function POST(request: Request) {
     if (needsAudio && !trustedSourceTranscript) {
       return noStoreJson({ error: "Audio sharing requires the server-saved transcript so StoryTuner can run its safety check." }, { status: 400 })
     }
-    const transcript = (trustedSourceTranscript || parsed.data.transcript).trim()
+    const transcript = sanitizePlainText(trustedSourceTranscript || cleanTranscriptInput, { maxLength: 30_000 })
     if (!transcript) {
       return noStoreJson({ error: "This recording needs a transcript before it can be shared." }, { status: 400 })
     }
 
     // Every share is screened using the story transcript plus the optional
     // public message. Audio-only shares still keep the transcript private.
-    const publicMessage = parsed.data.message.trim()
     const moderationInput = publicMessage ? `${transcript}\n\nMember message: ${publicMessage}` : transcript
     let moderation
     try {
@@ -124,7 +133,7 @@ export async function POST(request: Request) {
     }
 
     const postType = mode as CommunityPostType
-    const title = (source?.title || parsed.data.title).trim().slice(0, 120) || null
+    const title = sanitizePlainText(source?.title || cleanTitle, { maxLength: 120, singleLine: true }) || null
     const { data: post, error: postError } = await context.admin
       .from("community_posts")
       .insert({
@@ -140,8 +149,8 @@ export async function POST(request: Request) {
     if (postError) throw postError
     createdPostId = post.id
 
-    if (needsAudio && source) {
-      const extension = extensionFor(source.content_type)
+    if (needsAudio && source && sourceMime) {
+      const extension = extensionForAudioMime(sourceMime)
       const communityPath = `${context.userId}/${post.id}.${extension}`
       const { data: sourceBlob, error: downloadError } = await context.admin.storage
         .from(SOURCE_BUCKET)
@@ -152,11 +161,14 @@ export async function POST(request: Request) {
       if (bytes.byteLength <= 0 || bytes.byteLength > MAX_COMMUNITY_AUDIO_BYTES) {
         throw new Error("The audio file is not eligible for Community sharing.")
       }
+      if (!audioSignatureMatches(new Uint8Array(bytes.slice(0, 4096)), sourceMime)) {
+        throw new Error("The recording contents do not match a supported audio format.")
+      }
 
       const { error: uploadError } = await context.admin.storage
         .from(COMMUNITY_BUCKET)
         .upload(communityPath, bytes, {
-          contentType: normalizeAudioContentType(source.content_type),
+          contentType: sourceMime,
           cacheControl: "3600",
           upsert: false,
         })
@@ -168,7 +180,7 @@ export async function POST(request: Request) {
         owner_id: context.userId,
         source_recording_id: source.id,
         storage_path: communityPath,
-        content_type: normalizeAudioContentType(source.content_type),
+        content_type: sourceMime,
         size_bytes: bytes.byteLength,
         duration_seconds: source.duration_seconds,
         status: "ready",
@@ -222,20 +234,4 @@ export async function POST(request: Request) {
     }
     return noStoreJson({ error: "This recording could not be shared to Community." }, { status: 500 })
   }
-}
-
-
-function normalizeAudioContentType(value: string) {
-  const base = value.split(";")[0]?.trim().toLowerCase()
-  if (["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"].includes(base)) return base
-  return "audio/webm"
-}
-
-function extensionFor(value: string) {
-  const type = normalizeAudioContentType(value)
-  if (type === "audio/ogg") return "ogg"
-  if (type === "audio/mpeg") return "mp3"
-  if (type === "audio/mp4") return "m4a"
-  if (type === "audio/wav" || type === "audio/x-wav") return "wav"
-  return "webm"
 }
