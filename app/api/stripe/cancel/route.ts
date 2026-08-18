@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   try {
     const existing = await getSubscriptionByUserId(user.id)
     if (!existing?.stripe_subscription_id || !["active", "trialing"].includes(existing.status)) {
-      return Response.json({ error: "No active StoryTuner renewal was found." }, { status: 404 })
+      return Response.json({ error: "No active Tellwise renewal was found." }, { status: 404 })
     }
 
     if (existing.cancel_at_period_end) {
@@ -62,6 +62,6 @@ export async function POST(request: Request) {
     return Response.json({ canceled: true, currentPeriodEnd }, { headers: { "Cache-Control": "private, no-store" } })
   } catch (error) {
     backendError("stripe_cancel_renewal_failed", error, { userId: user.id })
-    return Response.json({ error: "StoryTuner could not cancel renewal right now. Try again, or use Manage billing." }, { status: 502, headers: { "Cache-Control": "no-store" } })
+    return Response.json({ error: "Tellwise could not cancel renewal right now. Try again, or use Manage billing." }, { status: 502, headers: { "Cache-Control": "no-store" } })
   }
 }

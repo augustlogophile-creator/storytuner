@@ -24,7 +24,7 @@ export function legalBackTarget(params: LegalSearchRecord) {
     return { href: "/legal", label: "Back" }
   }
 
-  return { href: "/", label: "StoryTuner" }
+  return { href: "/", label: "Tellwise" }
 }
 
 export function legalChildHref(path: string, params: LegalSearchRecord) {

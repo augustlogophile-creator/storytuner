@@ -74,7 +74,7 @@ export function buildStoryPlanPdf(plan: StoryPlanRecord): Uint8Array {
     addLine({ text: `${prefix}${text}`, size: 10.2, indent: 12, gapAfter: 4 })
   }
 
-  addLine({ text: "STORYTUNER STORY PLAN", size: 9, bold: true, color: [0.18, 0.43, 0.75], gapAfter: 8 })
+  addLine({ text: "TELLWISE STORY PLAN", size: 9, bold: true, color: [0.18, 0.43, 0.75], gapAfter: 8 })
   addLine({ text: plan.output.title, size: 23, bold: true, color: [0.12, 0.11, 0.10], gapAfter: 6 })
   addLine({ text: secondPersonDirection(plan.output.throughline), size: 11.5, color: [0.35, 0.34, 0.32], gapAfter: 8 })
   addRule(4, 12)
@@ -115,7 +115,7 @@ export function buildStoryPlanPdf(plan: StoryPlanRecord): Uint8Array {
   }
 
   pages.forEach((item, index) => {
-    item.commands.push(textCommand(`StoryTuner  -  ${index + 1} / ${pages.length}`, MARGIN_X, 28, 8, false, [0.48, 0.47, 0.44]))
+    item.commands.push(textCommand(`Tellwise  -  ${index + 1} / ${pages.length}`, MARGIN_X, 28, 8, false, [0.48, 0.47, 0.44]))
   })
 
   return encodePdf(pages)
@@ -178,7 +178,7 @@ function encodePdf(pages: PageState[]): Uint8Array {
     objects[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`
   })
 
-  let pdf = "%PDF-1.4\n%StoryTuner\n"
+  let pdf = "%PDF-1.4\n%Tellwise\n"
   const offsets: number[] = [0]
   for (let id = 1; id < objects.length; id += 1) {
     offsets[id] = byteLength(pdf)

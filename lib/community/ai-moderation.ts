@@ -146,7 +146,7 @@ export async function createAiModerationReport({
   const topScoreText = moderation.topScore == null
     ? ""
     : ` Highest score: ${moderation.topCategory ?? "unknown"} (${Math.round(moderation.topScore * 100)}%).`
-  const details = `Automatically held by StoryTuner AI moderation.${topScoreText}`.slice(0, 1000)
+  const details = `Automatically held by Tellwise AI moderation.${topScoreText}`.slice(0, 1000)
 
   const { error } = await admin.from("community_reports").insert({
     reporter_id: null,
@@ -173,4 +173,4 @@ export async function createAiModerationReport({
 }
 
 export const COMMUNITY_AI_HOLD_MESSAGE =
-  "StoryTuner's safety check held this for moderator review. It is not visible to other members right now."
+  "Tellwise's safety check held this for moderator review. It is not visible to other members right now."

@@ -5,7 +5,6 @@ import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
-import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -108,7 +107,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
         editedAt: reply.edited_at,
         author: {
           id: deleted ? "" : reply.author_id,
-          displayName: deleted ? "StoryTuner member" : author?.display_name ?? "StoryTuner member",
+          displayName: deleted ? "Tellwise member" : author?.display_name ?? "Tellwise member",
           username: deleted ? "member" : author?.username ?? "member",
         },
         likeCount: deleted ? 0 : likeCounts.get(reply.id) ?? 0,
@@ -149,8 +148,6 @@ export async function POST(request: Request, routeContext: RouteContext) {
   }
 
   const { postId } = parsedParams.data
-  const body = sanitizePlainText(parsedBody.data.body, { maxLength: 2000 })
-  if (!body) return noStoreJson({ error: "Write a reply before posting." }, { status: 400 })
   const parentReplyId = parsedBody.data.parentReplyId ?? null
 
   try {
@@ -185,7 +182,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
 
     let moderation
     try {
-      moderation = await moderateCommunityText(body)
+      moderation = await moderateCommunityText(parsedBody.data.body)
     } catch (moderationError) {
       backendError("community_reply_moderation_unavailable", moderationError, { userId: context.userId, postId })
       return noStoreJson(
@@ -200,7 +197,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
         post_id: postId,
         author_id: context.userId,
         parent_reply_id: parentReplyId,
-        body,
+        body: parsedBody.data.body,
         status: moderation.flagged ? "removed" : "active",
       })
       .select("id, post_id, parent_reply_id, author_id, body, status, created_at, edited_at")

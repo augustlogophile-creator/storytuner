@@ -107,6 +107,6 @@ export async function POST(request: Request) {
     return Response.json({ url: session.url }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     backendError("stripe_checkout_failed", error, { userId: user.id })
-    return Response.json({ error: "StoryTuner could not start checkout right now. Try again in a moment." }, { status: 502, headers: { "Cache-Control": "no-store" } })
+    return Response.json({ error: "Tellwise could not start checkout right now. Try again in a moment." }, { status: 502, headers: { "Cache-Control": "no-store" } })
   }
 }

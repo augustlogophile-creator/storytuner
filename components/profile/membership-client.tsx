@@ -83,19 +83,19 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
 
   function downloadSubscriptionConfirmation() {
     const text = [
-      "StoryTuner Membership subscription acknowledgment",
+      "Tellwise Membership subscription acknowledgment",
       "",
       `Price: ${FOUNDING_PRICE} per year, billed annually.`,
       "Renewal: Automatically renews for another annual term until canceled.",
       "Cancellation: Profile > Membership > Cancel renewal, or use Manage billing.",
-      "Support: storytunerapp@gmail.com",
+      "Support: tellwiseapp@gmail.com",
       `Saved: ${new Date().toISOString()}`,
     ].join("\n")
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement("a")
     anchor.href = url
-    anchor.download = "StoryTuner-subscription-acknowledgment.txt"
+    anchor.download = "Tellwise-subscription-acknowledgment.txt"
     document.body.appendChild(anchor)
     anchor.click()
     anchor.remove()
@@ -141,13 +141,13 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
       <header>
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Founding membership</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">A lower price for the people who join first.</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">The first StoryTuner members can unlock the full app for {FOUNDING_PRICE} a year and keep that founding price.</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">The first Tellwise members can unlock the full app for {FOUNDING_PRICE} a year and keep that founding price.</p>
       </header>
 
       {checkoutSuccess && (
         <section role="status" className="rounded-3xl border border-brand/35 bg-brand-soft/45 p-5">
           <p className="text-sm font-semibold">Membership purchase confirmed</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Your StoryTuner Membership is {FOUNDING_PRICE} per year, billed annually, and automatically renews each year until canceled. Cancel future renewal from Profile → Membership → Cancel renewal.</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Your Tellwise Membership is {FOUNDING_PRICE} per year, billed annually, and automatically renews each year until canceled. Cancel future renewal from Profile → Membership → Cancel renewal.</p>
           <button type="button" onClick={downloadSubscriptionConfirmation} className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-background px-4 py-2.5 text-xs font-semibold">
             Save subscription acknowledgment
           </button>
@@ -181,7 +181,7 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
       </section>
 
       <section className="rounded-3xl bg-primary p-5 text-primary-foreground">
-        <h2 className="text-lg font-semibold !text-[#fffdf8]">StoryTuner Membership</h2>
+        <h2 className="text-lg font-semibold !text-[#fffdf8]">Tellwise Membership</h2>
         <div className="mt-4 space-y-2.5">
           {["The complete 15-lesson course", "Unlimited spoken story reviews", "Unlimited Parch craft coaching", "Full Community access", "AI Story Planner"].map((item) => <p key={item} className="flex items-center gap-2 text-sm text-primary-foreground/80"><Check className="h-4 w-4 shrink-0 text-brand" />{item}</p>)}
         </div>
@@ -194,7 +194,7 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
             {showAnnualRenewalReminder && (
               <div role="status" className="mt-3 rounded-2xl border border-white/25 bg-white/10 p-4 text-sm leading-6">
                 <p className="font-semibold">Annual renewal reminder</p>
-                <p className="mt-1 text-primary-foreground/85">Your StoryTuner Membership is scheduled to renew for {FOUNDING_PRICE} for another year on {renewalDate}. Cancel renewal below if you do not want the next annual charge.</p>
+                <p className="mt-1 text-primary-foreground/85">Your Tellwise Membership is scheduled to renew for {FOUNDING_PRICE} for another year on {renewalDate}. Cancel renewal below if you do not want the next annual charge.</p>
               </div>
             )}
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -213,7 +213,7 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
             <div className="mt-5 overflow-hidden rounded-2xl border border-white/20 bg-white/5 text-primary-foreground/90">
               <div className="p-4 text-sm leading-6">
                 <p>{FOUNDING_PRICE} billed annually. Renews automatically.</p>
-                <p className="mt-1.5">Cancel anytime to stop future charges by going to Profile → Membership. Email storytunerapp@gmail.com for help.</p>
+                <p className="mt-1.5">Cancel anytime to stop future charges by going to Profile → Membership. Email tellwiseapp@gmail.com for help.</p>
               </div>
               <label className="group flex min-h-12 cursor-pointer items-center gap-3 border-t border-white/15 px-4 py-3 text-sm leading-5 text-primary-foreground/90">
                 <input
@@ -248,7 +248,7 @@ export function MembershipClient({ initialStatus, checkoutSuccess = false }: { i
         onCancel={() => { if (busy !== "cancel") setCancelOpen(false) }}
         onConfirm={() => void cancelRenewal()}
       >
-        Your membership will stay active through the current paid period, but StoryTuner will not charge you for another annual term.
+        Your membership will stay active through the current paid period, but Tellwise will not charge you for another annual term.
       </ConfirmDialog>
     </div>
   )

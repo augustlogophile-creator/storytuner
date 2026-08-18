@@ -65,7 +65,7 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   return (
     <div className="w-full">
       <div className="text-center">
-        <p className="auth-eyebrow">StoryTuner account</p>
+        <p className="auth-eyebrow">Tellwise account</p>
         <h1 className="auth-title">
           {isSignUp ? "Save your stories." : "Welcome back."}
         </h1>

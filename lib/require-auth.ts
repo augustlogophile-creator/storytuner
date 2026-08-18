@@ -53,7 +53,7 @@ export async function getActiveAuthenticatedUser() {
     return {
       ok: false as const,
       response: Response.json(
-        { code: "PROFILE_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your profile right now. Try again in a moment." },
+        { code: "PROFILE_STATUS_UNAVAILABLE", error: "Tellwise could not verify your profile right now. Try again in a moment." },
         { status: 503, headers: { "Cache-Control": "no-store" } },
       ),
     }
@@ -63,7 +63,7 @@ export async function getActiveAuthenticatedUser() {
     return {
       ok: false as const,
       response: Response.json(
-        { code: "USERNAME_SETUP_REQUIRED", error: "Choose your StoryTuner username before continuing." },
+        { code: "USERNAME_SETUP_REQUIRED", error: "Choose your Tellwise username before continuing." },
         { status: 403, headers: { "Cache-Control": "no-store" } },
       ),
     }
@@ -73,7 +73,7 @@ export async function getActiveAuthenticatedUser() {
     return {
       ok: false as const,
       response: Response.json(
-        { code: "ACCOUNT_SETUP_REQUIRED", error: "Finish your StoryTuner account setup before continuing." },
+        { code: "ACCOUNT_SETUP_REQUIRED", error: "Finish your Tellwise account setup before continuing." },
         { status: 403, headers: { "Cache-Control": "no-store" } },
       ),
     }
@@ -83,7 +83,7 @@ export async function getActiveAuthenticatedUser() {
     return {
       ok: false as const,
       response: Response.json(
-        { code: "ACCOUNT_STATUS_UNAVAILABLE", error: "StoryTuner could not verify your account status right now. Try again in a moment." },
+        { code: "ACCOUNT_STATUS_UNAVAILABLE", error: "Tellwise could not verify your account status right now. Try again in a moment." },
         { status: 503, headers: { "Cache-Control": "no-store" } },
       ),
     }
@@ -148,7 +148,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
 
   if (accountExpired || communityExpired) {
     const nextMessage = accountExpired
-      ? "Your StoryTuner access has been restored automatically because the suspension ended."
+      ? "Your Tellwise access has been restored automatically because the suspension ended."
       : "Your Community access has been restored automatically because the suspension ended."
     try {
       const normalized = await writeVerifiedModerationStatus(admin, userId, {
@@ -181,7 +181,7 @@ export async function getAccountRestriction(userId: string): Promise<AccountRest
     accountStatus: accountExpired ? "active" : data.account_status,
     accountSuspendedUntil: accountExpired ? null : data.account_suspended_until,
     communitySuspendedUntil: communityExpired ? null : data.community_suspended_until,
-    publicMessage: (accountExpired || communityExpired) ? (accountExpired ? "Your StoryTuner access has been restored automatically because the suspension ended." : "Your Community access has been restored automatically because the suspension ended.") : data.public_message,
+    publicMessage: (accountExpired || communityExpired) ? (accountExpired ? "Your Tellwise access has been restored automatically because the suspension ended." : "Your Community access has been restored automatically because the suspension ended.") : data.public_message,
     updatedAt: data.updated_at,
     lookupFailed: false,
   }

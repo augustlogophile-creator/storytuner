@@ -19,7 +19,7 @@ export default async function OwnerToolsPage() {
         <header>
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Private owner area</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">Owner tools</h1>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">Three simple places to review reports and make sure StoryTuner is running normally.</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">Three simple places to review reports and make sure Tellwise is running normally.</p>
         </header>
 
         <section className="story-card overflow-hidden rounded-[1.5rem] px-4">
@@ -46,7 +46,7 @@ export default async function OwnerToolsPage() {
         </section>
 
         <div className="rounded-[1.35rem] bg-secondary/45 px-4 py-3 text-xs leading-5 text-muted-foreground">
-          These tools are only available to the StoryTuner owner account.
+          These tools are only available to the Tellwise owner account.
         </div>
       </div>
     </MobileShell>

@@ -35,7 +35,7 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
         body: JSON.stringify({ username, confirmedAge13Plus: true }),
       })
       const payload = await response.json() as { completed?: boolean; displayName?: string; error?: string }
-      if (!response.ok || !payload.completed) throw new Error(payload.error || "StoryTuner couldn't save that username.")
+      if (!response.ok || !payload.completed) throw new Error(payload.error || "Tellwise couldn't save that username.")
 
       // Keep the local onboarding state aligned with the server. Public identity
       // comes from profiles.username; the local name remains private/personal.
@@ -43,7 +43,7 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
       router.replace(destination)
       router.refresh()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "StoryTuner couldn't save that username.")
+      setError(caught instanceof Error ? caught.message : "Tellwise couldn't save that username.")
       setLoading(false)
     }
   }
@@ -61,10 +61,10 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
     <main className="entry-shell">
       <section className="auth-canvas">
         <div className="mx-auto w-full max-w-md">
-          <p className="auth-eyebrow text-center">Your StoryTuner identity</p>
+          <p className="auth-eyebrow text-center">Your Tellwise identity</p>
           <h1 className="auth-title text-center">Choose your username.</h1>
           <p className="auth-subtitle mx-auto max-w-sm text-center">
-            This is how other people will see you on StoryTuner.
+            This is how other people will see you on Tellwise.
           </p>
 
           <form onSubmit={submit} className="mt-8 space-y-5">

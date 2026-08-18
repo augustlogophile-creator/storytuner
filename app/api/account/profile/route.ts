@@ -5,7 +5,6 @@ import { validateDisplayName } from "@/lib/profile/public-name"
 import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -37,7 +36,7 @@ export async function PATCH(request: Request) {
     return Response.json({ error: "Choose a display name from 3 to 15 letters/characters." }, { status: 400, headers: { "Cache-Control": "no-store" } })
   }
 
-  const displayName = sanitizePlainText(parsed.data.displayName, { maxLength: 15, singleLine: true })
+  const displayName = parsed.data.displayName
   const deterministicError = validateDisplayName(displayName)
   if (deterministicError) {
     return Response.json({ error: deterministicError }, { status: 400, headers: { "Cache-Control": "no-store" } })
@@ -63,7 +62,7 @@ export async function PATCH(request: Request) {
   } catch (error) {
     backendError("profile_display_name_update_failed", error, { userId: auth.user.id })
     return Response.json(
-      { error: "StoryTuner could not safely update your display name right now. Try again." },
+      { error: "Tellwise could not safely update your display name right now. Try again." },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     )
   }

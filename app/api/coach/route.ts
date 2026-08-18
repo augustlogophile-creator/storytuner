@@ -7,7 +7,6 @@ import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, reje
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedReference } from "@/lib/ai/untrusted"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const runtime = "nodejs"
 export const maxDuration = 30
@@ -51,11 +50,11 @@ export async function POST(req: Request) {
       .select("ai_personalization_enabled")
       .eq("id", user.id)
       .maybeSingle<{ ai_personalization_enabled: boolean }>()
-    const personalizedHistory = profile?.ai_personalization_enabled ? sanitizePlainText(body.personalizationContext ?? "", { maxLength: 8000 }) : ""
-    const attachedStory = sanitizePlainText(body.storyContext ?? "", { maxLength: 7000 })
-    const attachedScore = sanitizePlainText(body.scoreContext ?? "", { maxLength: 2500 })
+    const personalizedHistory = profile?.ai_personalization_enabled ? body.personalizationContext?.trim().slice(0, 8000) : ""
+    const attachedStory = typeof body.storyContext === "string" ? body.storyContext.slice(0, 7000) : ""
+    const attachedScore = typeof body.scoreContext === "string" ? body.scoreContext.slice(0, 2500) : ""
 
-    const messages = body.messages.slice(-12).map((item) => ({ ...item, content: sanitizePlainText(item.content, { maxLength: 5000 }) }))
+    const messages = body.messages.slice(-12)
     const latest = messages.at(-1)?.content?.trim() || ""
     if (!latest) return Response.json({ error: "Ask Parch a question first." }, { status: 400 })
     if (latest.length > 5000) return Response.json({ error: "Keep each Parch message under 5,000 characters." }, { status: 400 })
@@ -114,10 +113,10 @@ export async function POST(req: Request) {
       const reply = await runIdempotent(`coach:${user.id}:${requestKey}`, () => openAIText([
         {
           role: "system",
-          content: `You are Parch, StoryTuner's friendly, sophisticated storytelling coach. Answer the user's exact question directly and conversationally. Default to concise answers: usually 120-220 words, and 60-140 words for simple questions. Only go longer when the user explicitly asks for a detailed breakdown, full rewrite, or comprehensive critique. Avoid filler and repetitive conclusions.
+          content: `You are Parch, Tellwise's friendly, sophisticated storytelling coach. Answer the user's exact question directly and conversationally. Default to concise answers: usually 120-220 words, and 60-140 words for simple questions. Only go longer when the user explicitly asks for a detailed breakdown, full rewrite, or comprehensive critique. Avoid filler and repetitive conclusions.
 
-STORYTUNER PRODUCT KNOWLEDGE:
-StoryTuner is a storytelling practice app, especially for spoken and personal storytelling. It helps people learn storytelling craft, plan stories before telling them, record spoken stories in Studio, receive AI transcript-based coaching and Hook/Development/Landing feedback, revisit recordings, ask Parch follow-up questions, and intentionally share selected stories with the Community for responses. The Learn curriculum teaches concrete story skills. Story Planner helps organize a story before recording. Studio is where users practice and record. Ask Parch is the personalized story coach. Community is optional sharing, never automatic. Progress, XP, Parch customization, and Membership support the learning experience. When asked what StoryTuner is or how a feature works, answer from this product context instead of describing it as a generic writing app. Never invent features not stated here.
+TELLWISE PRODUCT KNOWLEDGE:
+Tellwise is a storytelling practice app, especially for spoken and personal storytelling. It helps people learn storytelling craft, plan stories before telling them, record spoken stories in Studio, receive AI transcript-based coaching and Hook/Development/Landing feedback, revisit recordings, ask Parch follow-up questions, and intentionally share selected stories with the Community for responses. The Learn curriculum teaches concrete story skills. Story Planner helps organize a story before recording. Studio is where users practice and record. Ask Parch is the personalized story coach. Community is optional sharing, never automatic. Progress, XP, Parch customization, and Membership support the learning experience. When asked what Tellwise is or how a feature works, answer from this product context instead of describing it as a generic writing app. Never invent features not stated here.
 
 COACHING RULES:
 - Focus on storytelling and telling, not generic fiction-writing advice unless the user is actually writing fiction.

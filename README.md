@@ -1,6 +1,6 @@
-# StoryTuner
+# Tellwise
 
-StoryTuner is a Next.js 16 App Router application for learning and practicing true storytelling. It includes a complete curriculum, AI-guided practice, private video and audio recording, Weaver coaching, progress tracking, Community, Membership gating, and a collectible Weaver shop.
+Tellwise is a Next.js 16 App Router application for learning and practicing true storytelling. It includes a complete curriculum, AI-guided practice, private video and audio recording, Weaver coaching, progress tracking, Community, Membership gating, and a collectible Weaver shop.
 
 ## Technology
 
@@ -26,7 +26,7 @@ Supabase handles:
 
 The public introduction ends with Sign up and Log in. Authenticated users complete a minimal profile with a public username, display name, and 13-plus confirmation.
 
-Private StoryTuner pages are protected with server-side Supabase JWT validation. The OpenAI route handlers also require an authenticated Supabase user.
+Private Tellwise pages are protected with server-side Supabase JWT validation. The OpenAI route handlers also require an authenticated Supabase user.
 
 ## Environment variables
 
@@ -60,7 +60,7 @@ pnpm dev
 
 ## Data model scope
 
-StoryTuner uses dedicated Supabase tables for profiles, synced app progress, private recording uploads, and Stripe-backed subscriptions. Lesson progress, XP, streaks, Weaver ownership, settings, coaching history, and recording metadata sync through `user_app_state`. Private compressed audio and transcripts live in `recording_uploads` and the `storytuner-recordings` bucket.
+Tellwise uses dedicated Supabase tables for profiles, synced app progress, private recording uploads, and Stripe-backed subscriptions. Lesson progress, XP, streaks, Weaver ownership, settings, coaching history, and recording metadata sync through `user_app_state`. Private compressed audio and transcripts live in `recording_uploads` and the `storytuner-recordings` bucket.
 
 Full video remains in IndexedDB on the device where it was recorded. Community content is still browser-based and should move to its own shared backend before public launch.
 

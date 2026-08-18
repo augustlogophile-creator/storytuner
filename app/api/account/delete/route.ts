@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return Response.json({ error: "Type DELETE to confirm permanent account deletion." }, { status: 400 })
 
   if (matchesConfiguredOwner(authenticated)) {
-    return Response.json({ error: "The StoryTuner owner account cannot be deleted from inside the app." }, { status: 403 })
+    return Response.json({ error: "The Tellwise owner account cannot be deleted from inside the app." }, { status: 403 })
   }
 
   const admin = createAdminClient()
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const stripeCustomerId = subscriptionResult.data?.stripe_customer_id?.trim() || ""
     if (stripeCustomerId) {
       if (!process.env.STRIPE_SECRET_KEY) {
-        return Response.json({ error: "StoryTuner could not safely cancel billing before deleting this account. Contact support." }, { status: 503 })
+        return Response.json({ error: "Tellwise could not safely cancel billing before deleting this account. Contact support." }, { status: 503 })
       }
       try {
         await stripeDelete<{ id: string; deleted?: boolean }>(`/customers/${encodeURIComponent(stripeCustomerId)}`)
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         const message = error instanceof Error ? error.message.toLowerCase() : ""
         if (!message.includes("no such customer") && !message.includes("resource_missing")) {
           backendError("account_delete_stripe_failed", error, { userId: authenticated.id })
-          return Response.json({ error: "StoryTuner could not cancel the linked billing account. Nothing else was deleted. Try again or contact support." }, { status: 502, headers: { "Cache-Control": "no-store" } })
+          return Response.json({ error: "Tellwise could not cancel the linked billing account. Nothing else was deleted. Try again or contact support." }, { status: 502, headers: { "Cache-Control": "no-store" } })
         }
         backendLog("info", "account_delete_stripe_already_removed", { userId: authenticated.id })
       }
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     return Response.json({ deleted: true }, { headers: { "Cache-Control": "no-store" } })
   } catch (error) {
     backendError("account_delete_failed", error, { userId: authenticated.id })
-    return Response.json({ error: "StoryTuner could not completely finish account deletion. Billing may already have been canceled if that step succeeded. Retry once, then contact support if the problem continues." }, { status: 500 })
+    return Response.json({ error: "Tellwise could not completely finish account deletion. Billing may already have been canceled if that step succeeded. Retry once, then contact support if the problem continues." }, { status: 500 })
   }
 }
 

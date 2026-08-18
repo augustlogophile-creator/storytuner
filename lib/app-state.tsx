@@ -553,7 +553,7 @@ export function AppProvider({
     }, { onConflict: "user_id" })
     if (epoch !== accountEpoch.current || syncUserId.current !== userId) return
     if (error) {
-      console.error("StoryTuner progress sync failed:", error.message)
+      console.error("Tellwise progress sync failed:", error.message)
       setSyncStatus("error")
       return
     }
@@ -590,7 +590,7 @@ export function AppProvider({
 
     if (epoch !== accountEpoch.current || syncUserId.current !== userId) return
     if (stateResult.error) {
-      console.error("StoryTuner progress download failed:", stateResult.error.message)
+      console.error("Tellwise progress download failed:", stateResult.error.message)
       setSyncStatus("error")
       return
     }
@@ -609,7 +609,7 @@ export function AppProvider({
     const remoteBelongsToAccount = remoteOwner ? remoteOwner === userId : legacyProfileMatches
 
     if (remoteRaw && !remoteBelongsToAccount) {
-      console.warn("StoryTuner ignored app state that appeared to belong to a different account.")
+      console.warn("Tellwise ignored app state that appeared to belong to a different account.")
     }
 
     let merged = remoteRaw && remoteBelongsToAccount
@@ -630,7 +630,7 @@ export function AppProvider({
       merged = mergeCloudRecordingHistory(merged, cloudRecordings)
     } catch (recordingError) {
       console.error(
-        "StoryTuner recording history sync failed:",
+        "Tellwise recording history sync failed:",
         recordingError instanceof Error ? recordingError.message : recordingError,
       )
     }

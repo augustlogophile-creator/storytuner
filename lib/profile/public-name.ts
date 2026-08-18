@@ -36,6 +36,12 @@ const reservedUsernameExact = new Set([
   "administrator",
   "moderator",
   "mod",
+  "tellwise",
+  "tell_wise",
+  "tellwiseapp",
+  "tellwise_admin",
+  "tellwise_support",
+  "tellwise_official",
   "storytuner",
   "story_tuner",
   "storytunerapp",
@@ -52,7 +58,7 @@ const reservedUsernameExact = new Set([
   "parch",
 ])
 
-const reservedUsernamePattern = /^(?:storytuner|admin|administrator|moderator|support|staff|official|security|system|helpdesk|parch)/
+const reservedUsernamePattern = /^(?:tellwise|storytuner|admin|administrator|moderator|support|staff|official|security|system|helpdesk|parch)/
 
 const suggestionSuffixes = [
   "tells",

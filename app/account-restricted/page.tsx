@@ -38,7 +38,7 @@ export default async function AccountRestrictedPage() {
 
           {unavailable ? (
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              For security, StoryTuner pauses access when it cannot verify account restrictions. Try again in a moment.
+              For security, Tellwise pauses access when it cannot verify account restrictions. Try again in a moment.
             </p>
           ) : decision?.content ? (
             <div className="mt-5 text-left">
@@ -48,12 +48,12 @@ export default async function AccountRestrictedPage() {
               </blockquote>
               <p className="mt-4 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Moderator note</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {moderatorNote || "StoryTuner restricted this account after a moderation review."}
+                {moderatorNote || "Tellwise restricted this account after a moderation review."}
               </p>
             </div>
           ) : (
             <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              {moderatorNote || "StoryTuner restricted this account after a moderation review."}
+              {moderatorNote || "Tellwise restricted this account after a moderation review."}
             </p>
           )}
 

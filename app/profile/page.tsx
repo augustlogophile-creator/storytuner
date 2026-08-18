@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
 
-const GENERIC_PROFILE_NAMES = new Set(["storytuner member", "storyteller"])
+const GENERIC_PROFILE_NAMES = new Set(["tellwise member", "storytuner member", "storyteller"])
 
 export default async function ProfilePage() {
   const user = await requireStoryTunerUser("/profile")
@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   let displayName = user.profile?.display_name?.trim().slice(0, 15) || "Storyteller"
 
   // Older moderation/test migrations could replace an unsafe public name with
-  // the generic placeholder "StoryTuner member". If Google already provides a
+  // the generic placeholder "Tellwise member". If Google already provides a
   // safe real name, heal the profile once so the same name appears everywhere.
   if (GENERIC_PROFILE_NAMES.has(displayName.toLowerCase())) {
     const { data } = await user.supabase.auth.getUser()

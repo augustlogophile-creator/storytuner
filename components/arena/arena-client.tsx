@@ -629,7 +629,7 @@ export function ArenaClient() {
           setTranscriptionOutcome("error")
           throw cloudError
         }
-        if (cloudMessage.includes("longer than five minutes require StoryTuner Membership")) {
+        if (cloudMessage.includes("longer than five minutes require Tellwise Membership")) {
           setTranscriptionOutcome("error")
           throw cloudError
         }
@@ -1062,7 +1062,7 @@ export function ArenaClient() {
 
 function transcriptionStageLabel(stage: CloudTranscriptionStage | "idle") {
   if (stage === "preparing") return "Preparing a secure private upload…"
-  if (stage === "uploading") return "Uploading the audio directly to your private StoryTuner storage…"
+  if (stage === "uploading") return "Uploading the audio directly to your private Tellwise storage…"
   if (stage === "transcribing") return "Parch is transcribing the private audio…"
   if (stage === "saving") return "Saving the transcript securely…"
   return "Parch is preparing your transcript…"

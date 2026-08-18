@@ -25,7 +25,7 @@ export function RestrictedAccountActions() {
         body: JSON.stringify({ confirmation: "DELETE" }),
       })
       const payload = await response.json() as { deleted?: boolean; error?: string }
-      if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete this account.")
+      if (!response.ok || !payload.deleted) throw new Error(payload.error || "Tellwise could not delete this account.")
       await clearMedia().catch(() => undefined)
       try {
         for (const key of Object.keys(localStorage)) if (key.startsWith("storytuner")) localStorage.removeItem(key)
@@ -35,7 +35,7 @@ export function RestrictedAccountActions() {
       router.replace("/?accountDeleted=1")
       router.refresh()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "StoryTuner could not delete this account.")
+      setError(caught instanceof Error ? caught.message : "Tellwise could not delete this account.")
       setConfirmDelete(false)
     } finally {
       setBusy(false)
@@ -45,7 +45,7 @@ export function RestrictedAccountActions() {
   return (
     <div className="mt-5 space-y-3">
       <a
-        href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Account%20Review"
+        href="mailto:tellwiseapp@gmail.com?subject=Tellwise%20Account%20Review"
         className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
       >
         <Mail className="h-4 w-4" /> Request a review
@@ -68,7 +68,7 @@ export function RestrictedAccountActions() {
         onCancel={() => { if (!busy) setConfirmDelete(false) }}
         onConfirm={() => void deleteAccount()}
       >
-        Your login, profile, recordings, progress, Community activity, Planner history, and billing connection will be deleted. Any active StoryTuner subscription will be canceled. This cannot be undone.
+        Your login, profile, recordings, progress, Community activity, Planner history, and billing connection will be deleted. Any active Tellwise subscription will be canceled. This cannot be undone.
       </ConfirmDialog>
     </div>
   )

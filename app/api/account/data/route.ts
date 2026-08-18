@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const json = await readJsonBody(request, 5_000)
   if (!json.ok) return json.response
   const parsed = schema.safeParse(json.value)
-  if (!parsed.success) return Response.json({ error: "Choose which StoryTuner data to delete." }, { status: 400 })
+  if (!parsed.success) return Response.json({ error: "Choose which Tellwise data to delete." }, { status: 400 })
 
   const admin = createAdminClient()
   const userId = authenticated.id
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       {
         code: "ACCOUNT_DATA_DELETE_FAILED",
         failedStep,
-        error: `StoryTuner could not finish deleting that data during ${humanizeDeleteStep(failedStep)}. Try again.`,
+        error: `Tellwise could not finish deleting that data during ${humanizeDeleteStep(failedStep)}. Try again.`,
       },
       { status: 500, headers: { "Cache-Control": "no-store" } },
     )

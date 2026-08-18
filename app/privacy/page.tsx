@@ -4,8 +4,8 @@ import { LegalPage, LegalSection } from "@/components/legal/legal-page"
 import { legalBackTarget, legalChildHref } from "@/lib/legal-navigation"
 
 export const metadata: Metadata = {
-  title: "Privacy Policy · StoryTuner",
-  description: "StoryTuner Privacy Policy.",
+  title: "Privacy Policy · Tellwise",
+  description: "Tellwise Privacy Policy.",
 }
 
 type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>
@@ -20,30 +20,30 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       backLabel={back.label}
       eyebrow="Privacy"
       title="Privacy Policy"
-      summary="This policy explains what StoryTuner collects, why it is used, the services that process it, and how you can access or delete your information."
+      summary="This policy explains what Tellwise collects, why it is used, the services that process it, and how you can access or delete your information."
     >
-      <LegalSection title="Information StoryTuner collects">
-        <p><strong className="text-foreground">Account information.</strong> If you create an account, StoryTuner receives your email address and authentication identifiers from the sign-in provider, plus your required public username and any display name used for personal greetings.</p>
-        <p><strong className="text-foreground">Learning and app activity.</strong> StoryTuner stores lesson progress, answers, XP, streak activity, preferences, membership status, and similar information needed to sync your experience.</p>
-        <p><strong className="text-foreground">Stories and recordings.</strong> When you choose to record a story, StoryTuner may process audio, transcripts, scores, revisions, titles, and related metadata. Full video is designed to remain on the device where it was recorded unless a feature clearly tells you otherwise.</p>
-        <p><strong className="text-foreground">Community content.</strong> If you deliberately share to Community, StoryTuner processes the post, transcript or audio you choose to share, replies, likes, reports, and moderation information.</p>
-        <p><strong className="text-foreground">Billing information.</strong> Payments are processed by Stripe. StoryTuner stores billing identifiers and subscription status needed to recognize your membership, but does not store your full payment-card number.</p>
-        <p><strong className="text-foreground">Safety and AI reports.</strong> If you report an AI-generated response, StoryTuner stores the reported response and report metadata so it can investigate safety and quality concerns.</p>
+      <LegalSection title="Information Tellwise collects">
+        <p><strong className="text-foreground">Account information.</strong> If you create an account, Tellwise receives your email address and authentication identifiers from the sign-in provider, plus your required public username and any display name used for personal greetings.</p>
+        <p><strong className="text-foreground">Learning and app activity.</strong> Tellwise stores lesson progress, answers, XP, streak activity, preferences, membership status, and similar information needed to sync your experience.</p>
+        <p><strong className="text-foreground">Stories and recordings.</strong> When you choose to record a story, Tellwise may process audio, transcripts, scores, revisions, titles, and related metadata. Full video is designed to remain on the device where it was recorded unless a feature clearly tells you otherwise.</p>
+        <p><strong className="text-foreground">Community content.</strong> If you deliberately share to Community, Tellwise processes the post, transcript or audio you choose to share, replies, likes, reports, and moderation information.</p>
+        <p><strong className="text-foreground">Billing information.</strong> Payments are processed by Stripe. Tellwise stores billing identifiers and subscription status needed to recognize your membership, but does not store your full payment-card number.</p>
+        <p><strong className="text-foreground">Safety and AI reports.</strong> If you report an AI-generated response, Tellwise stores the reported response and report metadata so it can investigate safety and quality concerns.</p>
         <p><strong className="text-foreground">Technical and security information.</strong> Hosting, authentication, and security systems may process ordinary connection, device, request, error, and fraud-prevention information needed to operate and protect the service.</p>
       </LegalSection>
 
       <LegalSection title="How information is used">
-        <p>StoryTuner uses information to provide and sync the service, transcribe and evaluate stories, personalize coaching when you enable that feature, operate Community, process subscriptions, prevent abuse, troubleshoot problems, and respond to support or privacy requests.</p>
-        <p>StoryTuner does not sell your personal information and does not use your information for targeted advertising.</p>
+        <p>Tellwise uses information to provide and sync the service, transcribe and evaluate stories, personalize coaching when you enable that feature, operate Community, process subscriptions, prevent abuse, troubleshoot problems, and respond to support or privacy requests.</p>
+        <p>Tellwise does not sell your personal information and does not use your information for targeted advertising.</p>
       </LegalSection>
 
       <LegalSection title="AI features">
-        <p>When you use AI-powered features, relevant text, transcripts, instructions, and other necessary context may be sent to OpenAI to generate transcription, feedback, moderation, planning, or coaching results. StoryTuner limits the information sent to what is reasonably needed for the feature you chose.</p>
-        <p>If personalization from past recordings is enabled for your account, StoryTuner may use patterns from prior transcripts, scores, strengths, and revisions as coaching context. Raw video is not used as long-term personalization context.</p>
+        <p>When you use AI-powered features, relevant text, transcripts, instructions, and other necessary context may be sent to OpenAI to generate transcription, feedback, moderation, planning, or coaching results. Tellwise limits the information sent to what is reasonably needed for the feature you chose.</p>
+        <p>If personalization from past recordings is enabled for your account, Tellwise may use patterns from prior transcripts, scores, strengths, and revisions as coaching context. Raw video is not used as long-term personalization context.</p>
       </LegalSection>
 
       <LegalSection title="Service providers">
-        <p>StoryTuner relies on service providers including Supabase for authentication, database, and storage; OpenAI for AI features; Stripe for billing; and Vercel for hosting and delivery. These providers process information for StoryTuner subject to their applicable service terms and safeguards.</p>
+        <p>Tellwise relies on service providers including Supabase for authentication, database, and storage; OpenAI for AI features; Stripe for billing; and Vercel for hosting and delivery. These providers process information for Tellwise subject to their applicable service terms and safeguards.</p>
       </LegalSection>
 
       <LegalSection title="Community and public information">
@@ -52,22 +52,22 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       </LegalSection>
 
       <LegalSection title="Retention and deletion">
-        <p>You can delete individual StoryTuner data, recordings, or your entire account from Settings. Account deletion is designed to remove your account and associated StoryTuner content, including user-generated content, subject to limited information that may need to be retained for security, fraud prevention, billing, tax, dispute, or other legal obligations.</p>
-        <p>Payment processors and infrastructure providers may retain records under their own legal obligations and retention rules even after StoryTuner deletes its active copy.</p>
+        <p>You can delete individual Tellwise data, recordings, or your entire account from Settings. Account deletion is designed to remove your account and associated Tellwise content, including user-generated content, subject to limited information that may need to be retained for security, fraud prevention, billing, tax, dispute, or other legal obligations.</p>
+        <p>Payment processors and infrastructure providers may retain records under their own legal obligations and retention rules even after Tellwise deletes its active copy.</p>
       </LegalSection>
 
       <LegalSection title="Your choices and requests">
-        <p>You can update your display name, delete recordings, erase app data, or permanently delete your account from Settings. If you cannot access the app, use the public <Link prefetch href={legalChildHref("/delete-account", params)}>account deletion page</Link> or email storytunerapp@gmail.com to request deletion.</p>
-        <p>If you withdraw permission for a browser or device feature such as microphone or camera access, you can continue using portions of StoryTuner that do not require that permission.</p>
+        <p>You can update your display name, delete recordings, erase app data, or permanently delete your account from Settings. If you cannot access the app, use the public <Link prefetch href={legalChildHref("/delete-account", params)}>account deletion page</Link> or email tellwiseapp@gmail.com to request deletion.</p>
+        <p>If you withdraw permission for a browser or device feature such as microphone or camera access, you can continue using portions of Tellwise that do not require that permission.</p>
       </LegalSection>
 
       <LegalSection title="Age">
-        <p>StoryTuner is intended for people age 13 and older. If StoryTuner learns that it has collected personal information from a child in circumstances where parental consent is legally required, it will take appropriate steps to delete or otherwise handle that information as required by law.</p>
+        <p>Tellwise is intended for people age 13 and older. If Tellwise learns that it has collected personal information from a child in circumstances where parental consent is legally required, it will take appropriate steps to delete or otherwise handle that information as required by law.</p>
       </LegalSection>
 
       <LegalSection title="Security and changes">
-        <p>StoryTuner uses access controls, authenticated requests, private storage rules, and other safeguards intended to reduce unauthorized access. No online system can promise absolute security.</p>
-        <p>This policy may change as StoryTuner changes. Material changes will be communicated in a reasonable way before they take effect when required.</p>
+        <p>Tellwise uses access controls, authenticated requests, private storage rules, and other safeguards intended to reduce unauthorized access. No online system can promise absolute security.</p>
+        <p>This policy may change as Tellwise changes. Material changes will be communicated in a reasonable way before they take effect when required.</p>
       </LegalSection>
     </LegalPage>
   )

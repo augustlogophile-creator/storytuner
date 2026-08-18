@@ -74,7 +74,7 @@ export function SystemOperationsClient() {
       <BackLink href="/admin" label="Owner tools" />
 
       <header>
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">StoryTuner</p>
+        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Tellwise</p>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight">App status</h1>
@@ -101,14 +101,14 @@ export function SystemOperationsClient() {
                 {status ? <Check className="h-5 w-5" strokeWidth={2.2} /> : <CircleAlert className="h-5 w-5" strokeWidth={2} />}
               </span>
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold">{status ? "Everything StoryTuner needs is connected" : "A required connection needs attention"}</h2>
+                <h2 className="text-sm font-semibold">{status ? "Everything Tellwise needs is connected" : "A required connection needs attention"}</h2>
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Last checked {new Date(data.generatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</p>
               </div>
             </div>
           </section>
 
           <section className="rounded-[1.5rem] border border-border bg-card p-4">
-            <SectionHeading title="Connections" detail="The parts of StoryTuner that need to be connected." />
+            <SectionHeading title="Connections" detail="The parts of Tellwise that need to be connected." />
             <div className="mt-3 divide-y divide-border">
               <ServiceRow label="AI features" detail="Parch, grading, and feedback" ok={data.configuration.openAI} />
               <ServiceRow label="Saved data & accounts" detail="Accounts, progress, reports, and saved information" ok={data.configuration.supabaseAdmin} />
@@ -129,7 +129,7 @@ export function SystemOperationsClient() {
           </section>
 
           <section className="rounded-[1.5rem] border border-border bg-card p-4">
-            <SectionHeading title="Today" detail="A quick snapshot of activity in StoryTuner." />
+            <SectionHeading title="Today" detail="A quick snapshot of activity in Tellwise." />
             <div className="mt-3 grid grid-cols-2 gap-2">
               <SimpleMetric value={metric(data, "coachMessages24h")} label="Parch chats" />
               <SimpleMetric value={metric(data, "arenaReviews24h")} label="Studio reviews" />
@@ -176,7 +176,7 @@ export function SystemOperationsClient() {
         onCancel={() => { if (!running) setConfirmMaintenance(false) }}
         onConfirm={() => void runMaintenance()}
       >
-        StoryTuner will remove expired or abandoned data that is already safe to clean up. It will not delete active member content.
+        Tellwise will remove expired or abandoned data that is already safe to clean up. It will not delete active member content.
       </ConfirmDialog>
     </div>
   )
@@ -221,7 +221,7 @@ function friendlyFailure(message: string) {
   if (!normalized) return "The recording failed without a saved explanation."
   if (/timeout/i.test(normalized)) return "The recording took too long to process."
   if (/size|too large|payload/i.test(normalized)) return "The recording file was too large to process normally."
-  if (/transcrib/i.test(normalized)) return "StoryTuner could not finish turning the recording into text."
+  if (/transcrib/i.test(normalized)) return "Tellwise could not finish turning the recording into text."
   if (/upload/i.test(normalized)) return "The recording did not finish uploading correctly."
   return normalized.length > 180 ? `${normalized.slice(0, 177)}…` : normalized
 }

@@ -114,8 +114,8 @@ function CoverPage({ onNext }: { onNext: () => void }) {
     <div className="book-cover-content">
       <div className="book-cover-rule" aria-hidden="true" />
       <div>
-        <p className="book-cover-kicker">STORYTUNER</p>
-        <h1>Welcome to StoryTuner.</h1>
+        <p className="book-cover-kicker">TELLWISE</p>
+        <h1>Welcome to Tellwise.</h1>
         <p className="book-cover-subtitle">Learn to tell stories people actually want to hear.</p>
       </div>
       <BookOpen className="book-cover-icon" strokeWidth={1.5} aria-hidden="true" />
@@ -229,7 +229,7 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
     <PaperLayout pageNumber={4} onBack={onBack}>
       <div className="book-paper-heading">
         <p className="book-paper-eyebrow">Your next chapter</p>
-        <h1>StoryTuner is ready.</h1>
+        <h1>Tellwise is ready.</h1>
         <p>You’ll learn one idea at a time, then implement those ideas in stories of your own.</p>
       </div>
 
@@ -291,7 +291,7 @@ function PaperLayout({
         >
           ←
         </button>
-        <span>StoryTuner</span>
+        <span>Tellwise</span>
       </div>
       <div className="book-paper-body">{children}</div>
       <span className="book-page-number">{pageNumber}</span>

@@ -48,7 +48,7 @@ export function SettingsClient({ username }: { username: string }) {
       tone: "brand" as const,
     }
     if (dialog === "logout") return {
-      title: "Log out of StoryTuner?",
+      title: "Log out of Tellwise?",
       body: <>You will need to sign in again to access your account on this device.</>,
       confirm: "Log out",
       tone: "danger" as const,
@@ -60,14 +60,14 @@ export function SettingsClient({ username }: { username: string }) {
       tone: "danger" as const,
     }
     if (dialog === "delete-all") return {
-      title: "Delete all StoryTuner data?",
-      body: <>This erases your StoryTuner content, progress, XP, Parch purchases, settings, recordings, Planner history, and Community activity across devices. Your login, billing connection, free-usage limits, and safety records remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
+      title: "Delete all Tellwise data?",
+      body: <>This erases your Tellwise content, progress, XP, Parch purchases, settings, recordings, Planner history, and Community activity across devices. Your login, billing connection, free-usage limits, and safety records remain. <strong className="font-semibold text-foreground">This cannot be reversed.</strong></>,
       confirm: "Delete all data",
       tone: "danger" as const,
     }
     if (dialog === "delete-account") return {
       title: "Permanently delete your account?",
-      body: <>This permanently deletes your StoryTuner login, profile, progress, recordings, Community activity, Planner history, usage history, and linked billing customer. Any active StoryTuner subscription is canceled immediately. <strong className="font-semibold text-foreground">This cannot be undone.</strong></>,
+      body: <>This permanently deletes your Tellwise login, profile, progress, recordings, Community activity, Planner history, usage history, and linked billing customer. Any active Tellwise subscription is canceled immediately. <strong className="font-semibold text-foreground">This cannot be undone.</strong></>,
       confirm: "Delete account permanently",
       tone: "danger" as const,
     }
@@ -93,7 +93,7 @@ export function SettingsClient({ username }: { username: string }) {
     if (!response.ok || !payload.saved) {
       setBusy(false)
       setDialog(null)
-      return setNotice(payload.error || "StoryTuner could not update your account profile. Try again.")
+      return setNotice(payload.error || "Tellwise could not update your account profile. Try again.")
     }
     updateProfileName(payload.displayName || cleanDisplayName)
     setBusy(false)
@@ -122,7 +122,7 @@ export function SettingsClient({ username }: { username: string }) {
           body: JSON.stringify({ scope: "recordings" }),
         })
         const payload = await response.json() as { deleted?: boolean; error?: string }
-        if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete the recordings.")
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || "Tellwise could not delete the recordings.")
         await deleteAllRecordings({ skipCloud: true })
         setNotice("All recordings and recording-derived Community posts were deleted across devices.")
       }
@@ -133,9 +133,9 @@ export function SettingsClient({ username }: { username: string }) {
           body: JSON.stringify({ scope: "app_data" }),
         })
         const payload = await response.json() as { deleted?: boolean; error?: string; failedStep?: string }
-        if (!response.ok || !payload.deleted) throw new Error(payload.error || (payload.failedStep ? `StoryTuner could not delete your app data during ${payload.failedStep}.` : "StoryTuner could not delete your app data."))
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || (payload.failedStep ? `Tellwise could not delete your app data during ${payload.failedStep}.` : "Tellwise could not delete your app data."))
         await resetAll({ skipCloud: true, skipRemoteState: true })
-        setNotice("Your StoryTuner content and progress were deleted across devices. Your login, billing, usage limits, and safety records remain.")
+        setNotice("Your Tellwise content and progress were deleted across devices. Your login, billing, usage limits, and safety records remain.")
       }
       if (dialog === "delete-account") {
         const response = await fetch("/api/account/delete", {
@@ -144,7 +144,7 @@ export function SettingsClient({ username }: { username: string }) {
           body: JSON.stringify({ confirmation: "DELETE" }),
         })
         const payload = await response.json() as { deleted?: boolean; error?: string }
-        if (!response.ok || !payload.deleted) throw new Error(payload.error || "StoryTuner could not delete the account.")
+        if (!response.ok || !payload.deleted) throw new Error(payload.error || "Tellwise could not delete the account.")
 
         await clearMedia().catch(() => undefined)
         try {
@@ -162,7 +162,7 @@ export function SettingsClient({ username }: { username: string }) {
       }
       setDialog(null)
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "StoryTuner could not finish deleting your data. Try again.")
+      setNotice(error instanceof Error ? error.message : "Tellwise could not finish deleting your data. Try again.")
     } finally {
       setBusy(false)
     }
@@ -184,10 +184,10 @@ export function SettingsClient({ username }: { username: string }) {
       {notice && <p role="status" className={displayNameError ? "rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm leading-relaxed text-destructive" : "rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground"}>{notice}</p>}
 
       <Section title="Profile">
-        <Row title="Username" detail="Your public StoryTuner identity. This is what other members see.">
+        <Row title="Username" detail="Your public Tellwise identity. This is what other members see.">
           <span className="rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-foreground">@{username}</span>
         </Row>
-        <Row title="Display name" detail="Used for personal greetings inside StoryTuner. Your @username is your public identity.">
+        <Row title="Display name" detail="Used for personal greetings inside Tellwise. Your @username is your public identity.">
           <div className="flex items-center gap-2">
             <input
               value={displayName}
@@ -240,12 +240,12 @@ export function SettingsClient({ username }: { username: string }) {
             <Trash2 className="h-3.5 w-3.5" /> Delete
           </button>
         </Row>
-        <Row title="Delete all app data" detail="Erase your StoryTuner content and progress across devices while keeping your login and billing account.">
+        <Row title="Delete all app data" detail="Erase your Tellwise content and progress across devices while keeping your login and billing account.">
           <button type="button" onClick={() => setDialog("delete-all")} className="inline-flex items-center gap-1.5 rounded-full border border-destructive/55 bg-destructive/5 px-3.5 py-2.5 text-xs font-semibold text-destructive transition hover:border-destructive/75 hover:bg-destructive/10 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete all
           </button>
         </Row>
-        <Row title="Delete account permanently" detail="Delete your login and all StoryTuner data. Any active StoryTuner subscription is canceled first.">
+        <Row title="Delete account permanently" detail="Delete your login and all Tellwise data. Any active Tellwise subscription is canceled first.">
           <button type="button" onClick={() => setDialog("delete-account")} className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-destructive/90 active:scale-[0.98]">
             <Trash2 className="h-3.5 w-3.5" /> Delete account
           </button>
@@ -256,7 +256,7 @@ export function SettingsClient({ username }: { username: string }) {
 
       <Link href="/membership" className="flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{state.premium ? "StoryTuner Membership is active" : "Free plan"}</p>
+          <p className="text-sm font-semibold">{state.premium ? "Tellwise Membership is active" : "Free plan"}</p>
           <p className="mt-1 text-xs text-muted-foreground">Review the $11.99/year founding offer and demo status.</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />

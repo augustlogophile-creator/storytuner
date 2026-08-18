@@ -169,7 +169,7 @@ export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
       if (!accountExpired && !communityExpired) continue
 
       const publicMessage = accountExpired
-        ? "Your StoryTuner access has been restored automatically because the suspension ended."
+        ? "Your Tellwise access has been restored automatically because the suspension ended."
         : "Your Community access has been restored automatically because the suspension ended."
       await writeVerifiedModerationStatus(admin, row.user_id, {
         accountStatus: accountExpired ? "active" : row.account_status,

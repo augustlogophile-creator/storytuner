@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 export default async function HomePage() {
   const user = await requireStoryTunerUser("/home")
   const restriction = user.restriction
-  const restorationNotice = restriction?.accountStatus === "active" && restriction?.publicMessage?.startsWith("Your StoryTuner access has been restored")
+  const restorationNotice = restriction?.accountStatus === "active" && restriction?.publicMessage?.startsWith("Your Tellwise access has been restored")
     ? restriction?.publicMessage ?? null
     : null
   return <MobileShell fitViewport scrollable waitForInitialSync><HomeDashboard accountNotice={restorationNotice} accountNoticeUpdatedAt={restriction?.updatedAt ?? null} /></MobileShell>

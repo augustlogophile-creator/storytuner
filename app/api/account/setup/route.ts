@@ -5,7 +5,6 @@ import { validateDisplayName } from "@/lib/profile/public-name"
 import { getAuthenticatedUser } from "@/lib/require-auth"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser } from "@/lib/request-protection"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { sanitizePlainText } from "@/lib/security/plain-text"
 
 export const dynamic = "force-dynamic"
 
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
   if (profileError) {
     backendError("account_setup_profile_lookup_failed", profileError, { userId: auth.id })
     return Response.json(
-      { code: "PROFILE_LOOKUP_FAILED", error: "StoryTuner couldn't verify your profile right now." },
+      { code: "PROFILE_LOOKUP_FAILED", error: "Tellwise couldn't verify your profile right now." },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     )
   }
@@ -79,7 +78,7 @@ export async function POST(request: Request) {
     if (error) {
       backendError("account_setup_recovery_failed", error, { userId: auth.id })
       return Response.json(
-        { code: "PROFILE_SAVE_FAILED", error: "StoryTuner couldn't finish your account setup." },
+        { code: "PROFILE_SAVE_FAILED", error: "Tellwise couldn't finish your account setup." },
         { status: 500, headers: { "Cache-Control": "no-store" } },
       )
     }
@@ -104,7 +103,7 @@ export async function POST(request: Request) {
   if (takenError) {
     backendError("username_availability_lookup_failed", takenError, { userId: auth.id })
     return Response.json(
-      { code: "USERNAME_CHECK_FAILED", error: "StoryTuner couldn't check that username right now." },
+      { code: "USERNAME_CHECK_FAILED", error: "Tellwise couldn't check that username right now." },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     )
   }
@@ -134,9 +133,7 @@ export async function POST(request: Request) {
   const metadata = userData.user.user_metadata ?? {}
   const metadataName = [metadata.given_name, metadata.name, metadata.full_name]
     .find((value) => typeof value === "string" && value.trim())
-  const firstName = typeof metadataName === "string"
-    ? sanitizePlainText(metadataName.trim().split(/\s+/)[0] ?? "", { maxLength: 15, singleLine: true })
-    : ""
+  const firstName = typeof metadataName === "string" ? metadataName.trim().split(/\s+/)[0]?.slice(0, 15) ?? "" : ""
   const displayName = firstName && !validateDisplayName(firstName) ? firstName : "Storyteller"
 
   const { error: saveError } = await admin.from("profiles").upsert({
@@ -165,7 +162,7 @@ export async function POST(request: Request) {
       )
     }
     return Response.json(
-      { code: "PROFILE_SAVE_FAILED", error: "StoryTuner couldn't save that username right now." },
+      { code: "PROFILE_SAVE_FAILED", error: "Tellwise couldn't save that username right now." },
       { status: 500, headers: { "Cache-Control": "no-store" } },
     )
   }

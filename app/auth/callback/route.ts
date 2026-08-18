@@ -88,7 +88,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(recovery)
     }
 
-    // A known legacy StoryTuner account without a username must choose one once.
+    // A known legacy Tellwise account without a username must choose one once.
     if (profile || existingState) {
       const setup = new URL("/choose-username", redirectOrigin)
       setup.searchParams.set("next", requestedNext)
@@ -98,12 +98,12 @@ export async function GET(request: Request) {
     // Google OAuth can create an auth user even when someone clicked Log in.
     // Keep Log in and Sign up separate: an entirely new Google identity must use Sign up.
     await supabase.auth.signOut()
-    const error = "No existing StoryTuner account was found for that Google account. Choose Sign up if you want to create one."
+    const error = "No existing Tellwise account was found for that Google account. Choose Sign up if you want to create one."
     return NextResponse.redirect(new URL(`/sign-up?mode=sign-in&error=${encodeURIComponent(error)}`, redirectOrigin))
   }
 
   // Sign up: existing users with usernames pass through; every genuinely new
-  // account must claim a username before any signed-in StoryTuner route opens.
+  // account must claim a username before any signed-in Tellwise route opens.
   const setup = new URL("/choose-username", redirectOrigin)
   setup.searchParams.set("next", requestedNext)
   return NextResponse.redirect(setup)

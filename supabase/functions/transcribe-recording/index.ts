@@ -1,37 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-
-const MAX_RECORDING_BYTES = 24 * 1024 * 1024;
-const ALLOWED_RECORDING_MIME_TYPES = new Set(["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"]);
-
-function normalizedAudioMime(value: unknown) {
-  const base = typeof value === "string" ? value.toLowerCase().split(";", 1)[0].trim() : "";
-  return ALLOWED_RECORDING_MIME_TYPES.has(base) ? base : null;
-}
-
-function audioSignatureMatches(bytes: Uint8Array, mime: string) {
-  const ascii = (start: number, length: number) => {
-    if (bytes.length < start + length) return "";
-    let result = "";
-    for (let index = start; index < start + length; index += 1) result += String.fromCharCode(bytes[index]);
-    return result;
-  };
-  if (mime === "audio/webm") return bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
-  if (mime === "audio/ogg") return ascii(0, 4) === "OggS";
-  if (mime === "audio/wav" || mime === "audio/x-wav") return bytes.length >= 12 && ascii(0, 4) === "RIFF" && ascii(8, 4) === "WAVE";
-  if (mime === "audio/mp4") return bytes.length >= 8 && ascii(4, 4) === "ftyp";
-  if (mime === "audio/mpeg") return ascii(0, 3) === "ID3" || (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0);
-  return false;
-}
-
-function safeExtensionForMime(mime: string) {
-  if (mime === "audio/ogg") return "ogg";
-  if (mime === "audio/mpeg") return "mp3";
-  if (mime === "audio/mp4") return "m4a";
-  if (mime === "audio/wav" || mime === "audio/x-wav") return "wav";
-  return "webm";
-}
-
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://storytuner.vercel.app",
   "http://localhost:3000",
@@ -164,7 +132,7 @@ Deno.serve(async (request: Request) => {
 
     const { data: recording, error: recordingError } = await userClient
       .from("recording_uploads")
-      .select("id, user_id, storage_path, content_type, size_bytes, duration_seconds, status, transcript")
+      .select("id, user_id, storage_path, content_type, duration_seconds, status, transcript")
       .eq("id", recordingId)
       .single();
 
@@ -195,7 +163,7 @@ Deno.serve(async (request: Request) => {
     if (!membershipActive && Number(recording.duration_seconds || 0) > 300) {
       return jsonResponse(request, {
         code: "ARENA_DURATION_MEMBERSHIP_REQUIRED",
-        error: "Recording targets longer than five minutes require StoryTuner Membership.",
+        error: "Recording targets longer than five minutes require Tellwise Membership.",
       }, 403);
     }
 
@@ -240,30 +208,22 @@ Deno.serve(async (request: Request) => {
       return jsonResponse(request, { code: "RATE_LIMITED", error: "Studio has received unusually many transcription requests from this account. Wait and try again later." }, 429);
     }
 
-    const { data: audioBlob, error: downloadError } = await userClient.storage
-      .from("storytuner-recordings")
-      .download(recording.storage_path);
-    if (downloadError || !audioBlob) throw new Error(`Could not download recording: ${downloadError?.message ?? "File unavailable"}`);
-    if (audioBlob.size <= 0 || audioBlob.size > MAX_RECORDING_BYTES) throw new Error("This audio file is not eligible for transcription.");
-    if (Number(recording.size_bytes) !== audioBlob.size) {
-      edgeLog("warn", "transcription_size_mismatch", { userId: user.id, recordingId, expectedBytes: recording.size_bytes, actualBytes: audioBlob.size });
-      throw new Error("Recording metadata does not match the stored audio.");
-    }
-
-    const contentType = normalizedAudioMime(recording.content_type || audioBlob.type);
-    if (!contentType) return jsonResponse(request, { error: "That recording format is not supported." }, 415);
-    const headerBytes = new Uint8Array(await audioBlob.slice(0, 4096).arrayBuffer());
-    if (!audioSignatureMatches(headerBytes, contentType)) {
-      edgeLog("warn", "transcription_signature_mismatch", { userId: user.id, recordingId, contentType });
-      return jsonResponse(request, { error: "The recording contents do not match a supported audio format." }, 415);
-    }
     const { error: statusError } = await userClient
       .from("recording_uploads")
       .update({ status: "transcribing", error_message: null })
       .eq("id", recordingId);
     if (statusError) throw new Error(`Could not update recording status: ${statusError.message}`);
 
-    const fileName = `recording-${recordingId}.${safeExtensionForMime(contentType)}`;
+    const { data: audioBlob, error: downloadError } = await userClient.storage
+      .from("storytuner-recordings")
+      .download(recording.storage_path);
+    if (downloadError || !audioBlob) throw new Error(`Could not download recording: ${downloadError?.message ?? "File unavailable"}`);
+    if (audioBlob.size > 24 * 1024 * 1024) throw new Error("This audio file is too large to transcribe. The maximum is 24 MB.");
+
+    const fileName = recording.storage_path.split("/").pop() || "recording.webm";
+    const contentType = String(recording.content_type || audioBlob.type || "audio/webm").toLowerCase().split(";", 1)[0].trim();
+    const allowedTypes = new Set(["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"]);
+    if (!allowedTypes.has(contentType)) return jsonResponse(request, { error: "That recording format is not supported." }, 415);
     const audioFile = new File([audioBlob], fileName, { type: contentType });
     const transcriptionForm = new FormData();
     transcriptionForm.append("file", audioFile);

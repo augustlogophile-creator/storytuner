@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       id: row.id,
       reporterId: row.reporter_id,
       reporterUsername: profile?.username ?? `member_${row.reporter_id.slice(0, 6)}`,
-      reporterDisplayName: profile?.display_name ?? "StoryTuner member",
+      reporterDisplayName: profile?.display_name ?? "Tellwise member",
       surface: row.surface,
       responseText: row.response_text,
       reason: row.reason,

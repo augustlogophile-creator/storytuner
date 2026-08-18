@@ -10,9 +10,9 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 const bookHand = Handlee({ subsets: ["latin"], weight: "400", variable: "--font-book-hand" })
 
 export const metadata: Metadata = {
-  title: "StoryTuner · Learn the craft. Tell it well.",
+  title: "Tellwise · Learn the craft. Tell it well.",
   description: "A complete storytelling course, a private recording studio, and thoughtful coaching for true stories.",
-  applicationName: "StoryTuner",
+  applicationName: "Tellwise",
   manifest: "/manifest.webmanifest",
 }
 

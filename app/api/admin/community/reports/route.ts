@@ -198,7 +198,7 @@ export async function GET(request: Request) {
       targetUser: {
         id: targetId,
         username: targetProfile?.username ?? `member_${targetId.slice(0, 6)}`,
-        displayName: targetProfile?.display_name ?? "StoryTuner member",
+        displayName: targetProfile?.display_name ?? "Tellwise member",
         accountStatus: moderationStatus?.account_status ?? "active",
         accountSuspendedUntil: moderationStatus?.account_suspended_until ?? null,
         communitySuspendedUntil: moderationStatus?.community_suspended_until ?? null,

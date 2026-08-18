@@ -25,7 +25,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
     <div className="profile-page flex min-h-full flex-col gap-3 pb-4">
       <header className="px-1">
         <h1 className="text-[1.58rem] font-semibold tracking-[-0.035em]">Profile</h1>
-        <p className="mt-0.5 max-w-sm text-[0.74rem] leading-[1.2rem] text-muted-foreground">Your progress, account, and StoryTuner settings in one place.</p>
+        <p className="mt-0.5 max-w-sm text-[0.74rem] leading-[1.2rem] text-muted-foreground">Your progress, account, and Tellwise settings in one place.</p>
       </header>
 
       <section className="story-card overflow-hidden rounded-[1.45rem]">
@@ -58,7 +58,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       </section>
 
       <section>
-        <SectionLabel>StoryTuner</SectionLabel>
+        <SectionLabel>Tellwise</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
           <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
           <Divider />
@@ -89,15 +89,15 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
             <Mail className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[0.94rem] font-semibold tracking-[-0.02em]">Reach out to StoryTuner</h2>
+            <h2 className="text-[0.94rem] font-semibold tracking-[-0.02em]">Reach out to Tellwise</h2>
             <p className="mt-0.5 text-[0.69rem] leading-[1.4] text-muted-foreground">Questions, feedback, or something that feels off? Send us a note.</p>
           </div>
         </div>
         <a
-          href="mailto:storytunerapp@gmail.com?subject=StoryTuner%20Support"
+          href="mailto:tellwiseapp@gmail.com?subject=Tellwise%20Support"
           className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[0.79rem] font-semibold text-primary-foreground"
         >
-          Contact StoryTuner
+          Contact Tellwise
           <ChevronRight className="h-3.5 w-3.5" strokeWidth={2} />
         </a>
       </section>

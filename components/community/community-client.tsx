@@ -82,7 +82,7 @@ function MembershipLock() {
       <header>
         <Eyebrow>Paid feature</Eyebrow>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">
-          Community requires a paid StoryTuner Membership.
+          Community requires a paid Tellwise Membership.
         </h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
           Free accounts cannot read posts, publish stories, reply, or like content in Community.
@@ -574,7 +574,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
             ...reply,
             body: "",
             status: "deleted" as const,
-            author: { id: "", displayName: "StoryTuner member", username: "member" },
+            author: { id: "", displayName: "Tellwise member", username: "member" },
             mine: false,
             likeCount: 0,
             likedByViewer: false,
@@ -1404,7 +1404,7 @@ function CharacterCount({ value, maximum, warningAt }: { value: number; maximum:
 function publicAuthorLabel(author: CommunityAuthor) {
   const username = author.username?.trim()
   if (username && username !== "member") return `@${username}`
-  return "StoryTuner member"
+  return "Tellwise member"
 }
 
 function rankPosts(posts: CommunityFeedPost[]) {

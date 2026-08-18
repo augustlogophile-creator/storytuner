@@ -143,7 +143,7 @@ export async function GET(request: Request) {
         editedAt: post.edited_at,
         author: {
           id: post.author_id,
-          displayName: author?.display_name ?? "StoryTuner member",
+          displayName: author?.display_name ?? "Tellwise member",
           username: author?.username ?? `member_${post.author_id.slice(0, 6)}`,
         },
         likeCount: Number(post.like_count) || 0,

@@ -13,7 +13,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
               <ArrowLeft className="h-4 w-4" strokeWidth={1.7} />
               <span>Introduction</span>
             </Link>
-            <span className="auth-wordmark">StoryTuner</span>
+            <span className="auth-wordmark">Tellwise</span>
           </header>
 
           <div className="auth-content auth-content-polished">

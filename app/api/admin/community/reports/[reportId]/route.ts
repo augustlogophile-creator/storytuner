@@ -78,7 +78,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   const selfRestrictionActions = new Set<ModerationAction>(["suspend_community", "suspend_account", "ban_account"])
   const reviseWouldRestrictOwner = action === "revise" && ["suspend_community", "suspend_account", "ban_account"].includes(restrictionAction)
   if (target.author_id === context.userId && (selfRestrictionActions.has(action) || reviseWouldRestrictOwner)) {
-    return Response.json({ error: "The StoryTuner owner account cannot be suspended or banned." }, { status: 400 })
+    return Response.json({ error: "The Tellwise owner account cannot be suspended or banned." }, { status: 400 })
   }
 
   const { data: targetModerator } = await context.admin
@@ -426,15 +426,15 @@ function actionLabel(action: ModerationAction) {
 
 function restorationPublicMessage(note: string) {
   const clean = note.trim()
-  return `Your StoryTuner access has been restored after review.${clean ? ` ${clean}` : ""}`.slice(0, 500)
+  return `Your Tellwise access has been restored after review.${clean ? ` ${clean}` : ""}`.slice(0, 500)
 }
 
 function defaultPublicMessage(action: ModerationAction, days: number | null) {
   if (action === "suspend_community") return `Community access was suspended for ${days ?? 7} days after a moderation review.`
-  if (action === "suspend_account") return `StoryTuner access was suspended for ${days ?? 7} days after a moderation review.`
+  if (action === "suspend_account") return `Tellwise access was suspended for ${days ?? 7} days after a moderation review.`
   if (action === "ban_account") return "This account was disabled after a moderation review."
   if (action === "revise") return "A previous moderation decision was updated."
-  return "StoryTuner reviewed activity connected to this account."
+  return "Tellwise reviewed activity connected to this account."
 }
 
 async function reverseReportEffects(

@@ -2,7 +2,7 @@ export default function Loading() {
   return (
     <main
       aria-busy="true"
-      aria-label="Loading StoryTuner"
+      aria-label="Loading Tellwise"
       className="app-shell route-loading-shell book-app mx-auto min-h-dvh w-full bg-background px-5 pb-24 pt-6"
     >
       <div className="route-stability-shell" aria-hidden="true">

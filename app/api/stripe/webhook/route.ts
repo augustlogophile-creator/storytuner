@@ -67,7 +67,7 @@ async function syncSubscription(subscription: StripeSubscription) {
       .maybeSingle<{ user_id: string }>()
     userId = data?.user_id ?? null
   }
-  if (!userId) throw new Error("Could not match Stripe subscription to a StoryTuner user.")
+  if (!userId) throw new Error("Could not match Stripe subscription to a Tellwise user.")
 
   const { data: authUserResult, error: authUserError } = await admin.auth.admin.getUserById(userId)
   if (authUserError || !authUserResult.user) {

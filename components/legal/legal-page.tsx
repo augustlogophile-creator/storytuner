@@ -7,7 +7,7 @@ export function LegalPage({
   summary,
   children,
   backHref = "/",
-  backLabel = "StoryTuner",
+  backLabel = "Tellwise",
 }: {
   eyebrow: string
   title: string
@@ -36,7 +36,7 @@ export function LegalPage({
         </div>
 
         <footer className="mt-4 border-t border-border pt-6 text-[0.86rem] text-muted-foreground">
-          <p>Questions or requests: <a className="underline underline-offset-4" href="mailto:storytunerapp@gmail.com">storytunerapp@gmail.com</a></p>
+          <p>Questions or requests: <a className="underline underline-offset-4" href="mailto:tellwiseapp@gmail.com">tellwiseapp@gmail.com</a></p>
         </footer>
       </article>
     </main>

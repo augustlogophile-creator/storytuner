@@ -32,14 +32,14 @@ export function AccountSetup() {
         body: JSON.stringify({ confirmedAge13Plus: true }),
       })
       const payload = await response.json() as { completed?: boolean; displayName?: string; error?: string }
-      if (!response.ok || !payload.completed) throw new Error(payload.error || "StoryTuner couldn't finish your account setup.")
+      if (!response.ok || !payload.completed) throw new Error(payload.error || "Tellwise couldn't finish your account setup.")
 
       completeOnboarding(payload.displayName)
       const destination = safeInternalPath(searchParams.get("next"), "/home")
       router.replace(destination === "/onboarding" ? "/home" : destination)
       router.refresh()
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "StoryTuner couldn't finish your account setup.")
+      setError(caught instanceof Error ? caught.message : "Tellwise couldn't finish your account setup.")
       setLoading(false)
     }
   }

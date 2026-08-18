@@ -30,7 +30,7 @@ export async function checkUsernameSafety(username: string): Promise<UsernameSaf
     return {
       ok: false,
       code: "UNAVAILABLE",
-      message: "StoryTuner couldn't verify that username right now. Try again in a moment.",
+      message: "Tellwise couldn't verify that username right now. Try again in a moment.",
     }
   }
 

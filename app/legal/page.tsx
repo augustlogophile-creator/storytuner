@@ -3,11 +3,11 @@ import { MobileShell } from "@/components/mobile-shell"
 import { BackLink } from "@/components/page-header"
 
 const items = [
-  { href: "/privacy", title: "Privacy Policy", detail: "What StoryTuner collects, how it is used, and how to request deletion." },
+  { href: "/privacy", title: "Privacy Policy", detail: "What Tellwise collects, how it is used, and how to request deletion." },
   { href: "/terms", title: "Terms of Service", detail: "Accounts, subscriptions, Community, AI features, and acceptable use." },
   { href: "/accessibility", title: "Accessibility", detail: "Accessibility approach and a direct way to report a barrier." },
   { href: "/community-guidelines", title: "Community Guidelines", detail: "Safety, reporting, blocking, moderation, and member conduct." },
-  { href: "/delete-account", title: "Account deletion help", detail: "Public instructions for deleting your StoryTuner account, even without app access." },
+  { href: "/delete-account", title: "Account deletion help", detail: "Public instructions for deleting your Tellwise account, even without app access." },
 ]
 
 type LegalSearchParams = Promise<Record<string, string | string[] | undefined>>

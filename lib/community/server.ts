@@ -78,7 +78,7 @@ export async function getCommunityApiContext() {
     return {
       ok: false as const,
       response: Response.json(
-        { error: "A paid StoryTuner Membership is required to use Community." },
+        { error: "A paid Tellwise Membership is required to use Community." },
         { status: 403 },
       ),
     }
@@ -105,7 +105,7 @@ export async function getCommunityApiContext() {
     return {
       ok: false as const,
       response: Response.json(
-        { code: "USERNAME_SETUP_REQUIRED", error: "Choose your StoryTuner username before using Community." },
+        { code: "USERNAME_SETUP_REQUIRED", error: "Choose your Tellwise username before using Community." },
         { status: 403, headers: { "Cache-Control": "no-store" } },
       ),
     }
@@ -115,7 +115,7 @@ export async function getCommunityApiContext() {
     return {
       ok: false as const,
       response: Response.json(
-        { code: "ACCOUNT_SETUP_REQUIRED", error: "Finish StoryTuner account setup before using Community." },
+        { code: "ACCOUNT_SETUP_REQUIRED", error: "Finish Tellwise account setup before using Community." },
         { status: 403, headers: { "Cache-Control": "no-store" } },
       ),
     }

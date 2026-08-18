@@ -127,7 +127,7 @@ export function ShopClient() {
           <div>
             <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Parch collection</p>
             <h1 className="mt-1.5 text-[1.65rem] font-semibold leading-tight tracking-[-0.035em]">Choose your Parch.</h1>
-            <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-muted-foreground">Browse the archive, unlock a form with XP, then equip it everywhere in StoryTuner.</p>
+            <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-muted-foreground">Browse the archive, unlock a form with XP, then equip it everywhere in Tellwise.</p>
           </div>
           <div className="shrink-0 rounded-full border border-border bg-card px-3.5 py-2 text-right shadow-sm">
             <p className="text-sm font-semibold"><CountUp value={state.xpBalance} /> XP</p>
