@@ -7,6 +7,7 @@ import type { StoryPlanOutput, StoryPlanRecord } from "@/lib/planner/types"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedReference } from "@/lib/ai/untrusted"
+import { aiSpendRateResponse, reserveAiSpend } from "@/lib/ai/spend-guard"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -179,6 +180,16 @@ export async function POST(request: Request) {
   if ((count ?? 0) >= 10) {
     return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Parch can keep the feature reliable for everyone." }, { status: 429 })
   }
+
+  let plannerSpend
+  try {
+    plannerSpend = await reserveAiSpend(auth.user.id, "story_planner", { minute: 3, hour: 10, day: 20 })
+  } catch (error) {
+    backendError("planner_spend_guard_failed", error, { userId: auth.user.id })
+    return Response.json({ code: "AI_USAGE_GUARD_UNAVAILABLE", error: "Story Planner could not safely verify AI usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+  }
+  const plannerSpendBlocked = aiSpendRateResponse(plannerSpend, "Story Planner has received too many generation requests from this account. Wait and try again later.")
+  if (plannerSpendBlocked) return plannerSpendBlocked
 
   try {
     const plannerFingerprint = requestFingerprint(auth.user.id, input.audienceContext, input.goal, input.roughPlan, input.mustInclude, input.nervousAbout)

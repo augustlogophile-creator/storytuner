@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { backendError, backendLog } from "@/lib/backend-log"
 import { matchesConfiguredOwner } from "@/lib/community/moderation"
-import { getAuthenticatedUser } from "@/lib/require-auth"
+import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
 import { stripeDelete } from "@/lib/stripe-rest"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
@@ -22,6 +22,20 @@ export async function POST(request: Request) {
   if (crossSite) return crossSite
   const authenticated = await getAuthenticatedUser()
   if (!authenticated) return Response.json({ error: "Authentication required." }, { status: 401 })
+
+  const restriction = await getAccountRestriction(authenticated.id)
+  if (restriction.lookupFailed) {
+    return Response.json(
+      { code: "ACCOUNT_STATUS_UNAVAILABLE", error: "Tellwise could not verify your account status right now. Try again in a moment." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    )
+  }
+  if (restriction.restricted) {
+    return Response.json(
+      { code: "RESTRICTED_ACCOUNT_DELETE_BLOCKED", error: "A restricted account cannot be self-deleted while its safety record is active. Contact Tellwise support for account-deletion help." },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    )
+  }
 
   const oversized = rejectLargeRequest(request, 10_000)
   if (oversized) return oversized

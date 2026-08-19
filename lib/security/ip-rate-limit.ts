@@ -92,31 +92,22 @@ function rateFamily(pathname: string) {
 function clientKey(request: Request) {
   const headers = request.headers
   const vercelForwarded = firstIp(headers.get("x-vercel-forwarded-for"))
+  if (vercelForwarded) return vercelForwarded.slice(0, 96)
+
+  // Production is deployed behind Vercel, whose dedicated forwarded-IP header
+  // is not replaced by an ordinary client x-forwarded-for header. Never mint
+  // a new bucket from attacker-controlled User-Agent or Accept-Language values.
+  if (process.env.NODE_ENV === "production") return "missing-vercel-client-ip"
+
   const forwarded = firstIp(headers.get("x-forwarded-for"))
   const real = firstIp(headers.get("x-real-ip"))
-  const ip = vercelForwarded || forwarded || real
-  if (ip) return ip.slice(0, 96)
-
-  // This fallback is intentionally coarse. Vercel supplies forwarded IP headers
-  // in production; the fallback merely avoids putting every header-less local
-  // request into one bucket.
-  const ua = (headers.get("user-agent") ?? "unknown").slice(0, 160)
-  const language = (headers.get("accept-language") ?? "").slice(0, 80)
-  return `fallback-${smallHash(`${ua}\u001f${language}`)}`
+  return (forwarded || real || "local-development").slice(0, 96)
 }
 
 function firstIp(value: string | null) {
   if (!value) return ""
   const first = value.split(",", 1)[0]?.trim() ?? ""
   return /^[0-9a-fA-F:.]+$/.test(first) ? first : ""
-}
-
-function smallHash(value: string) {
-  let hash = 2166136261
-  for (let index = 0; index < value.length; index += 1) {
-    hash = Math.imul(hash ^ value.charCodeAt(index), 16777619)
-  }
-  return (hash >>> 0).toString(36)
 }
 
 function prune(now: number) {

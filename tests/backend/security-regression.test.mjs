@@ -58,9 +58,11 @@ test("configured Stripe price gates membership", () => {
 })
 
 test("security headers are configured globally", () => {
-  const source = read("next.config.mjs")
-  for (const header of ["Content-Security-Policy", "Strict-Transport-Security", "X-Content-Type-Options", "Referrer-Policy", "X-Frame-Options", "Permissions-Policy"]) {
-    assert.match(source, new RegExp(header))
+  const config = read("next.config.mjs")
+  const proxy = read("proxy.ts")
+  assert.match(proxy, /Content-Security-Policy/)
+  for (const header of ["Strict-Transport-Security", "X-Content-Type-Options", "Referrer-Policy", "X-Frame-Options", "Permissions-Policy"]) {
+    assert.match(config, new RegExp(header))
   }
 })
 

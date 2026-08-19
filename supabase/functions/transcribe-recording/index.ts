@@ -5,16 +5,18 @@ const AUDIO_SNIFF_BYTES = 64;
 
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://storytuner.vercel.app",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
 ]);
+const LOCAL_DEVELOPMENT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
 
 function allowedOrigins() {
   const configured = (Deno.env.get("STORYTUNER_ALLOWED_ORIGINS") || "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...configured]);
+  const local = Deno.env.get("STORYTUNER_ALLOW_LOCALHOST_ORIGIN") === "true"
+    ? LOCAL_DEVELOPMENT_ORIGINS
+    : [];
+  return new Set([...DEFAULT_ALLOWED_ORIGINS, ...configured, ...local]);
 }
 
 function corsHeadersFor(request: Request) {
@@ -30,7 +32,7 @@ function corsHeadersFor(request: Request) {
 
 function browserOriginAllowed(request: Request) {
   const origin = request.headers.get("Origin");
-  return !origin || allowedOrigins().has(origin);
+  return Boolean(origin && allowedOrigins().has(origin));
 }
 
 function jsonResponse(request: Request, body: unknown, status = 200) {
@@ -112,6 +114,7 @@ Deno.serve(async (request: Request) => {
 
       if (moderationError) {
         edgeLog("error", "transcription_restriction_lookup_failed", { userId: user.id, message: moderationError.message.slice(0, 500) });
+        return jsonResponse(request, { code: "ACCOUNT_STATUS_UNAVAILABLE", error: "Tellwise could not verify your account status right now. Try again in a moment." }, 503);
       } else if (moderation) {
         const suspendedUntil = moderation.account_suspended_until
           ? new Date(moderation.account_suspended_until).getTime()

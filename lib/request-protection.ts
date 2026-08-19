@@ -112,7 +112,7 @@ export async function readJsonBody(request: Request, maxBytes: number) {
 
 /**
  * Defense-in-depth CSRF protection for browser mutations. Supabase session
- * cookies are already same-site, but StoryTuner also rejects explicit cross-site
+ * cookies are already same-site, but Tellwise also rejects cross-origin and ambiguous
  * POST/PATCH/DELETE requests before any privileged server work begins.
  */
 export function requireSameOrigin(request: Request) {
@@ -120,18 +120,21 @@ export function requireSameOrigin(request: Request) {
   const origin = request.headers.get("origin")
   const fetchSite = request.headers.get("sec-fetch-site")?.toLowerCase() ?? ""
 
+  // Exact Origin wins when present. This deliberately rejects a sibling
+  // subdomain even though the browser may classify it as "same-site".
   if (origin) {
     try {
       if (new URL(origin).origin !== requestOrigin) return crossSiteResponse()
     } catch {
       return crossSiteResponse()
     }
+    if (fetchSite && !["same-origin", "none"].includes(fetchSite)) return crossSiteResponse()
+    return null
   }
 
-  if (fetchSite && !["same-origin", "same-site", "none"].includes(fetchSite)) {
-    return crossSiteResponse()
-  }
-
+  // Browser mutation routes fail closed when Origin is missing. The only
+  // tolerated fallback is an explicit browser assertion of same-origin.
+  if (fetchSite !== "same-origin") return crossSiteResponse()
   return null
 }
 

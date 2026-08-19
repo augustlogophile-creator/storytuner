@@ -1,30 +1,8 @@
 /** @type {import('next').NextConfig} */
 const isProduction = process.env.NODE_ENV === "production"
 
-// Compatibility-first CSP. StoryTuner currently relies on Next/React inline
-// runtime styles/scripts, so a nonce-based strict CSP would require a wider
-// rendering refactor. This still blocks third-party scripts, plugins, frames,
-// objects, hostile form targets, and unexpected network destinations.
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  isProduction ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  "script-src-attr 'none'",
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self' data:",
-  "img-src 'self' data: blob: https://*.supabase.co",
-  "media-src 'self' blob: https://*.supabase.co",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-  "worker-src 'self' blob:",
-  "manifest-src 'self'",
-  isProduction ? "upgrade-insecure-requests" : "",
-].filter(Boolean).join("; ")
-
+// CSP is generated per request in proxy.ts so production scripts can use a nonce.
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: contentSecurityPolicy },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "DENY" },

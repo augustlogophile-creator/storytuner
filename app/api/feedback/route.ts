@@ -5,6 +5,7 @@ import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserv
 import { readJsonBody, rejectUnexpectedJsonFields, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, requestFingerprint, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedList, untrustedReference } from "@/lib/ai/untrusted"
+import { aiSpendRateResponse, reserveAiSpend } from "@/lib/ai/spend-guard"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -161,6 +162,15 @@ export async function POST(req: Request) {
       const unitTitle = safeText(body.unitTitle, 160) || "Storytelling"
       const technique = safeText(body.technique, 500) || "story craft"
       const exercisePrompt = safeText(body.prompt, 4000)
+      let lessonSpend
+      try {
+        lessonSpend = await reserveAiSpend(user.id, "lesson_feedback", { minute: 6, hour: 30, day: 100 })
+      } catch (error) {
+        backendError("lesson_spend_guard_failed", error, { userId: user.id })
+        return Response.json({ code: "AI_USAGE_GUARD_UNAVAILABLE", error: "Tellwise could not safely verify AI usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+      }
+      const lessonSpendBlocked = aiSpendRateResponse(lessonSpend, "Too many lesson feedback requests are arriving from this account. Wait and try again later.")
+      if (lessonSpendBlocked) return lessonSpendBlocked
       const lessonFingerprint = requestFingerprint(user.id, "lesson", unitIndex, answer, technique, exercisePrompt)
       const object = await runIdempotent(`lesson-feedback:${lessonFingerprint}`, () => openAIJson<{ pass: boolean; working: string; fix: string }>({
         name: "lesson_feedback",
@@ -211,6 +221,15 @@ export async function POST(req: Request) {
       const checkpointTitle = safeText(body.checkpointTitle, 160) || "Course checkpoint"
       const writingKind = safeText(body.writingKind, 80) || "analysis"
       const checkpointPrompt = safeText(body.prompt, 5000)
+      let checkpointSpend
+      try {
+        checkpointSpend = await reserveAiSpend(user.id, "checkpoint_feedback", { minute: 4, hour: 20, day: 60 })
+      } catch (error) {
+        backendError("checkpoint_spend_guard_failed", error, { userId: user.id })
+        return Response.json({ code: "AI_USAGE_GUARD_UNAVAILABLE", error: "Tellwise could not safely verify AI usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+      }
+      const checkpointSpendBlocked = aiSpendRateResponse(checkpointSpend, "Too many checkpoint grading requests are arriving from this account. Wait and try again later.")
+      if (checkpointSpendBlocked) return checkpointSpendBlocked
       const fingerprint = requestFingerprint(user.id, "checkpoint", checkpointId, answer, criteria.join("|"))
       const object = await runIdempotent(`checkpoint-feedback:${fingerprint}`, () => openAIJson<{
         pass: boolean
@@ -373,6 +392,15 @@ Then write a revised version of the ENTIRE story from beginning to end. It must 
     const story = typeof body.story === "string" ? body.story.trim() : ""
     if (story.length < 20) return Response.json({ error: "Please share a little more of the story." }, { status: 400 })
     if (story.length > 30_000) return Response.json({ error: "Keep written stories under 30,000 characters." }, { status: 400 })
+    let storySpend
+    try {
+      storySpend = await reserveAiSpend(user.id, "written_story_feedback", { minute: 3, hour: 10, day: 25 })
+    } catch (error) {
+      backendError("written_story_spend_guard_failed", error, { userId: user.id })
+      return Response.json({ code: "AI_USAGE_GUARD_UNAVAILABLE", error: "Tellwise could not safely verify AI usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+    }
+    const storySpendBlocked = aiSpendRateResponse(storySpend, "Too many written-story reviews are arriving from this account. Wait and try again later.")
+    if (storySpendBlocked) return storySpendBlocked
     const storyTitle = safeText(body.title, 160) || "Untitled"
     const writtenFingerprint = requestFingerprint(user.id, "written-story", story, storyTitle)
     const object = await runIdempotent(`written-feedback:${writtenFingerprint}`, () => openAIJson({
