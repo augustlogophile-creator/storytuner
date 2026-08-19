@@ -5,7 +5,7 @@ import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityT
 import { backendError } from "@/lib/backend-log"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { countActiveRenderableReplies } from "@/lib/community/visible-replies"
-import { sanitizePlainText } from "@/lib/security/plain-text"
+import { isVerifiedTellwiseUser } from "@/lib/community/verified"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -50,9 +50,6 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
     return noStoreJson({ error: parsedBody.error.issues[0]?.message ?? "The update is not valid." }, { status: 400 })
   }
 
-  const cleanBody = sanitizePlainText(parsedBody.data.body, { maxLength: 5000 })
-  const cleanTitle = parsedBody.data.title === undefined ? undefined : sanitizePlainText(parsedBody.data.title, { maxLength: 120, singleLine: true })
-
   const { data: existing, error: existingError } = await context.admin
     .from("community_posts")
     .select("id, author_id, post_type, title, body, shared_transcript, status, created_at, edited_at")
@@ -65,13 +62,13 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   }
   if (!existing || existing.status !== "active") return noStoreJson({ error: "That post is no longer available." }, { status: 404 })
   if (existing.author_id !== context.userId) return noStoreJson({ error: "You can edit only your own posts." }, { status: 403 })
-  if (existing.post_type === "text" && !cleanBody) {
+  if (existing.post_type === "text" && !parsedBody.data.body) {
     return noStoreJson({ error: "A text post cannot be empty." }, { status: 400 })
   }
 
-  const nextTitle = cleanTitle === undefined ? existing.title : (cleanTitle || null)
+  const nextTitle = parsedBody.data.title === undefined ? existing.title : (parsedBody.data.title || null)
   let moderation: Awaited<ReturnType<typeof moderateCommunityText>> | null = null
-  const textForModeration = [nextTitle, cleanBody].filter(Boolean).join("\n\n")
+  const textForModeration = [nextTitle, parsedBody.data.body].filter(Boolean).join("\n\n")
   if (textForModeration) {
     try {
       moderation = await moderateCommunityText(textForModeration)
@@ -87,7 +84,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
   const editedAt = new Date().toISOString()
   const { data: updated, error: updateError } = await context.admin
     .from("community_posts")
-    .update({ title: nextTitle, body: cleanBody, edited_at: editedAt, status: moderation?.flagged ? "removed" : "active" })
+    .update({ title: nextTitle, body: parsedBody.data.body, edited_at: editedAt, status: moderation?.flagged ? "removed" : "active" })
     .eq("id", existing.id)
     .eq("author_id", context.userId)
     .eq("status", "active")
@@ -150,6 +147,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       id: context.userId,
       displayName: context.profile.display_name,
       username: context.profile.username,
+      verified: isVerifiedTellwiseUser(context.userId),
     },
     likeCount: likeCount ?? 0,
     replyCount,

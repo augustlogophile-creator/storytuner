@@ -62,8 +62,8 @@ export async function GET(request: Request) {
     .from("community_reports")
     .select("id, reporter_id, source, post_id, reply_id, reason, details, status, created_at, reviewed_at, resolution_note, ai_model, ai_top_category, ai_top_score, ai_recommended_action")
     .eq("status", status)
-    .order("created_at", { ascending: true })
-    .limit(100)
+    .order("created_at", { ascending: false })
+    .limit(300)
     .returns<ReportRow[]>()
 
   if (reportsResult.error) {
@@ -72,8 +72,20 @@ export async function GET(request: Request) {
   }
 
   const rows: ReportRow[] = reportsResult.data ?? []
-  const postIds = rows.flatMap((row: ReportRow) => (row.post_id ? [row.post_id] : []))
-  const replyIds = rows.flatMap((row: ReportRow) => (row.reply_id ? [row.reply_id] : []))
+
+  // Stack reports that point at the exact same post/reply. The first row is the
+  // newest report because the query above sorts newest-first.
+  const groupedRows = new Map<string, ReportRow[]>()
+  for (const row of rows) {
+    const key = row.post_id ? `post:${row.post_id}` : `reply:${row.reply_id}`
+    const bucket = groupedRows.get(key) ?? []
+    bucket.push(row)
+    groupedRows.set(key, bucket)
+  }
+  const representativeRows = Array.from(groupedRows.values()).map((group) => group[0])
+
+  const postIds = representativeRows.flatMap((row: ReportRow) => (row.post_id ? [row.post_id] : []))
+  const replyIds = representativeRows.flatMap((row: ReportRow) => (row.reply_id ? [row.reply_id] : []))
 
   const [postsResult, repliesResult, countPairs] = await Promise.all([
     postIds.length
@@ -108,7 +120,7 @@ export async function GET(request: Request) {
   const posts = new Map<string, PostRow>(postRows.map((row: PostRow) => [row.id, row]))
   const replies = new Map<string, ReplyRow>(replyRows.map((row: ReplyRow) => [row.id, row]))
 
-  const targetUserIds = Array.from(new Set(rows.flatMap((row: ReportRow) => {
+  const targetUserIds = Array.from(new Set(representativeRows.flatMap((row: ReportRow) => {
     const post = row.post_id ? posts.get(row.post_id) : null
     const reply = row.reply_id ? replies.get(row.reply_id) : null
     const authorId = post?.author_id ?? reply?.author_id
@@ -116,7 +128,7 @@ export async function GET(request: Request) {
   })))
   const profileIds = Array.from(new Set([
     ...targetUserIds,
-    ...rows.flatMap((row: ReportRow) => row.reporter_id ? [row.reporter_id] : []),
+    ...representativeRows.flatMap((row: ReportRow) => row.reporter_id ? [row.reporter_id] : []),
   ]))
 
   const [profilesResult, statusesResult, actionsResult] = await Promise.all([
@@ -166,7 +178,7 @@ export async function GET(request: Request) {
   }
 
   const safeReports: ModerationReportItem[] = []
-  for (const report of rows) {
+  for (const report of representativeRows) {
     const post = report.post_id ? posts.get(report.post_id) : null
     const reply = report.reply_id ? replies.get(report.reply_id) : null
     const targetId = post?.author_id ?? reply?.author_id
@@ -182,6 +194,7 @@ export async function GET(request: Request) {
       details: report.details,
       status: report.status,
       createdAt: report.created_at,
+      reportCount: groupedRows.get(report.post_id ? `post:${report.post_id}` : `reply:${report.reply_id}`)?.length ?? 1,
       reviewedAt: report.reviewed_at,
       resolutionNote: report.resolution_note,
       source: report.source,
@@ -230,6 +243,12 @@ export async function GET(request: Request) {
         })),
     })
   }
+
+  // Moderation priority: number of independent reports first, then recency.
+  safeReports.sort((a, b) => {
+    if (b.reportCount !== a.reportCount) return b.reportCount - a.reportCount
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
 
   const counts = Object.fromEntries(countPairs) as ModerationReportsResponse["counts"]
   return Response.json(

@@ -12,13 +12,16 @@ export const runtime = "nodejs"
 export const maxDuration = 30
 
 const coachRequestSchema = z.object({
+  // Accept a somewhat larger client history/context envelope, then clamp it
+  // below before sending anything to the model. This keeps the API resilient
+  // to normal long conversations without weakening server-side limits.
   messages: z.array(z.object({
     role: z.enum(["user", "assistant"]),
-    content: z.string().max(5000),
-  }).strict()).max(12),
-  storyContext: z.string().max(7000).optional(),
-  scoreContext: z.string().max(2500).optional(),
-  personalizationContext: z.string().max(8000).optional(),
+    content: z.string().max(12000),
+  }).strict()).max(40),
+  storyContext: z.string().max(20000).optional(),
+  scoreContext: z.string().max(10000).optional(),
+  personalizationContext: z.string().max(20000).optional(),
   requestKey: z.string().uuid(),
 }).strict()
 
@@ -28,7 +31,7 @@ export async function POST(req: Request) {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
-  const oversized = rejectLargeRequest(req, 80_000)
+  const oversized = rejectLargeRequest(req, 180_000)
   if (oversized) return oversized
   const rate = rateLimitUser(user.id, "coach", [
     { limit: 12, windowMs: 60_000, label: "12/min" },
@@ -38,7 +41,7 @@ export async function POST(req: Request) {
   if (blocked) return blocked
 
   try {
-    const json = await readJsonBody(req, 80_000)
+    const json = await readJsonBody(req, 180_000)
     if (!json.ok) return json.response
     const parsed = coachRequestSchema.safeParse(json.value)
     if (!parsed.success) {
@@ -54,8 +57,10 @@ export async function POST(req: Request) {
     const attachedStory = typeof body.storyContext === "string" ? body.storyContext.slice(0, 7000) : ""
     const attachedScore = typeof body.scoreContext === "string" ? body.scoreContext.slice(0, 2500) : ""
 
-    const messages = body.messages.slice(-12)
-    const latest = messages.at(-1)?.content?.trim() || ""
+    const messages = body.messages
+      .slice(-12)
+      .map((item) => ({ ...item, content: item.content.slice(0, 5000) }))
+    const latest = body.messages.at(-1)?.content?.trim() || ""
     if (!latest) return Response.json({ error: "Ask Parch a question first." }, { status: 400 })
     if (latest.length > 5000) return Response.json({ error: "Keep each Parch message under 5,000 characters." }, { status: 400 })
 

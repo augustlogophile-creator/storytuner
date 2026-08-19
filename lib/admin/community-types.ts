@@ -17,6 +17,7 @@ export type ModerationReportItem = {
   details: string | null
   status: ModerationReportStatus
   createdAt: string
+  reportCount: number
   reviewedAt: string | null
   resolutionNote: string | null
   source: ModerationReportSource

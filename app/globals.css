@@ -3907,6 +3907,16 @@ body {
   z-index: 160 !important;
 }
 
+/* The bottom navigation has its own translucent backdrop, so blur it directly
+   whenever any app dialog is open. This keeps the footer visually inside the
+   modal backdrop instead of looking sharp beneath a blurred page. */
+body:has(.app-dialog-overlay) .book-bottom-nav {
+  filter: blur(3px);
+  opacity: 0.72;
+  pointer-events: none;
+  transition: filter 140ms ease, opacity 140ms ease;
+}
+
 
 /* August 15 lesson motion and route-stability polish. */
 @keyframes storytuner-lesson-stage-in {

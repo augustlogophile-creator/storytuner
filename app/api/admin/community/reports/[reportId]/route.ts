@@ -301,6 +301,16 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       resolutionNote: note || actionLabel(action),
     })
 
+    // A moderation card represents every currently-open report for the same
+    // post/reply. Resolve that stack together so the same content does not
+    // immediately reappear as another duplicate card after a decision.
+    await closeSiblingOpenReports(context.admin, report, {
+      status: resolutionStatus,
+      reviewedAt: now,
+      reviewedBy: context.userId,
+      resolutionNote: note || actionLabel(action),
+    })
+
     await logAction(
       context.admin,
       target.author_id,
@@ -352,6 +362,32 @@ type ReportStatusWrite = {
   reviewedAt: string | null
   reviewedBy: string | null
   resolutionNote: string | null
+}
+
+async function closeSiblingOpenReports(
+  admin: SupabaseClient,
+  report: ReportRow,
+  next: ReportStatusWrite,
+) {
+  const payload = {
+    status: next.status,
+    reviewed_at: next.reviewedAt,
+    reviewed_by: next.reviewedBy,
+    resolution_note: next.resolutionNote,
+  }
+
+  let query = admin
+    .from("community_reports")
+    .update(payload)
+    .in("status", ["open", "reviewing"])
+    .neq("id", report.id)
+
+  query = report.post_id
+    ? query.eq("post_id", report.post_id)
+    : query.eq("reply_id", report.reply_id)
+
+  const { error } = await query
+  if (error) throw error
 }
 
 async function writeReportStatusVerified(admin: SupabaseClient, reportId: string, next: ReportStatusWrite) {

@@ -5,6 +5,7 @@ export type CommunityAuthor = {
   id: string
   displayName: string
   username: string
+  verified?: boolean
 }
 
 export type CommunityFeedPost = {

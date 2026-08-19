@@ -574,7 +574,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
             ...reply,
             body: "",
             status: "deleted" as const,
-            author: { id: "", displayName: "Tellwise member", username: "member" },
+            author: { id: "", displayName: "Tellwise member", username: "member", verified: false },
             mine: false,
             likeCount: 0,
             likedByViewer: false,
@@ -638,7 +638,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
     <article id={post.id} className="app-surface scroll-mt-24 rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{publicAuthorLabel(post.author)}</p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="truncate text-sm font-semibold">{publicAuthorLabel(post.author)}</p>
+            {post.author.verified && <VerifiedBadge />}
+          </div>
           <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
             {relativeDate(post.createdAt)}{post.editedAt ? " · edited" : ""}
           </p>
@@ -1224,7 +1227,10 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
     <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3 transition-colors", nested && "bg-secondary/30")}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold">{publicAuthorLabel(reply.author)}</p>
+          <div className="flex min-w-0 items-center gap-1">
+            <p className="text-xs font-semibold">{publicAuthorLabel(reply.author)}</p>
+            {reply.author.verified && <VerifiedBadge size="sm" />}
+          </div>
           <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
             {parentAuthor ? `Replying to ${parentAuthor} · ` : ""}{relativeDate(reply.createdAt)}{reply.editedAt ? " · edited" : ""}
           </p>
@@ -1399,6 +1405,25 @@ function ReportDialog({
 
 function CharacterCount({ value, maximum, warningAt }: { value: number; maximum: number; warningAt: number }) {
   return <span className={cn("font-mono text-[0.65rem]", value > warningAt ? "text-destructive" : "text-muted-foreground")}>{value}/{maximum}</span>
+}
+
+function VerifiedBadge({ size = "md" }: { size?: "sm" | "md" }) {
+  const pixels = size === "sm" ? 14 : 16
+  return (
+    <span
+      className="inline-flex shrink-0 items-center justify-center text-[#2f9ed8]"
+      title="Verified Tellwise account"
+      aria-label="Verified Tellwise account"
+    >
+      <svg width={pixels} height={pixels} viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M12 1.8l2.05 1.42 2.47-.27 1.22 2.17 2.31.91.13 2.48 1.64 1.86-1 2.28.53 2.43-1.94 1.55-.66 2.4-2.48.4-1.72 1.79L12 20.15l-2.05 1.42-2.47-.27-1.22-2.17-2.31-.91-.13-2.48-1.64-1.86 1-2.28-.53-2.43 1.94-1.55.66-2.4 2.48-.4L9.45 3.2 12 1.8z"
+        />
+        <path fill="white" d="M10.45 15.7 6.9 12.15l1.35-1.35 2.2 2.2 5.3-5.3 1.35 1.35-6.65 6.65z" />
+      </svg>
+    </span>
+  )
 }
 
 function publicAuthorLabel(author: CommunityAuthor) {

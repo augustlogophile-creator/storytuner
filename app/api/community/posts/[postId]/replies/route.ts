@@ -5,6 +5,7 @@ import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
+import { isVerifiedTellwiseUser } from "@/lib/community/verified"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -109,6 +110,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
           id: deleted ? "" : reply.author_id,
           displayName: deleted ? "Tellwise member" : author?.display_name ?? "Tellwise member",
           username: deleted ? "member" : author?.username ?? "member",
+          verified: !deleted && isVerifiedTellwiseUser(reply.author_id),
         },
         likeCount: deleted ? 0 : likeCounts.get(reply.id) ?? 0,
         likedByViewer: !deleted && likedByViewer.has(reply.id),
@@ -236,6 +238,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
         id: context.userId,
         displayName: context.profile.display_name,
         username: context.profile.username,
+        verified: isVerifiedTellwiseUser(context.userId),
       },
       likeCount: 0,
       likedByViewer: false,

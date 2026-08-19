@@ -144,15 +144,17 @@ export function CoachClient() {
     requestKeyRef.current = requestKey
 
     try {
-      const history = safeMessages.slice(-10).map((message) => ({ role: message.role, content: message.content }))
+      const history = safeMessages
+        .slice(-10)
+        .map((message) => ({ role: message.role, content: message.content.slice(0, 5000) }))
       const response = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...history, { role: "user", content: clean }],
-          storyContext: recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.",
-          scoreContext: recording ? scoreContext(recording) : "No prior score selected.",
-          personalizationContext: state.settings.aiOptIn ? `${onboardingContext(state.onboardingPreferences)}\n\n${personalizationContext(state.recordings)}` : "",
+          storyContext: (recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.").slice(0, 7000),
+          scoreContext: (recording ? scoreContext(recording) : "No prior score selected.").slice(0, 2500),
+          personalizationContext: (state.settings.aiOptIn ? `${onboardingContext(state.onboardingPreferences)}\n\n${personalizationContext(state.recordings)}` : "").slice(0, 8000),
           requestKey,
         }),
       })

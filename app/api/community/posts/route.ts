@@ -4,7 +4,7 @@ import type { CommunityFeedPost } from "@/lib/community/types"
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
-import { sanitizePlainText } from "@/lib/security/plain-text"
+import { isVerifiedTellwiseUser } from "@/lib/community/verified"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -41,9 +41,6 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = sanitizePlainText(parsed.data.body, { maxLength: 5000 })
-    if (!body) return noStoreJson({ error: "Write something before publishing." }, { status: 400 })
-
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
     const { count, error: countError } = await context.admin
       .from("community_posts")
@@ -61,7 +58,7 @@ export async function POST(request: Request) {
 
     let moderation
     try {
-      moderation = await moderateCommunityText(body)
+      moderation = await moderateCommunityText(parsed.data.body)
     } catch (moderationError) {
       backendError("community_post_moderation_unavailable", moderationError, { userId: context.userId })
       return noStoreJson(
@@ -75,7 +72,7 @@ export async function POST(request: Request) {
       .insert({
         author_id: context.userId,
         post_type: "text",
-        body,
+        body: parsed.data.body,
         status: moderation.flagged ? "removed" : "active",
       })
       .select("id, created_at")
@@ -106,7 +103,7 @@ export async function POST(request: Request) {
       id: data.id,
       postType: "text",
       title: null,
-      body,
+      body: parsed.data.body,
       sharedTranscript: null,
       hasAudio: false,
       audioDurationSeconds: null,
@@ -116,6 +113,7 @@ export async function POST(request: Request) {
         id: context.userId,
         displayName: context.profile.display_name,
         username: context.profile.username,
+        verified: isVerifiedTellwiseUser(context.userId),
       },
       likeCount: 0,
       replyCount: 0,

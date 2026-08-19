@@ -5,6 +5,7 @@ import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityT
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { validateAudioSignature } from "@/lib/audio-upload-security"
+import { isVerifiedTellwiseUser } from "@/lib/community/verified"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -210,6 +211,7 @@ export async function POST(request: Request) {
         id: context.userId,
         displayName: context.profile.display_name,
         username: context.profile.username,
+        verified: isVerifiedTellwiseUser(context.userId),
       },
       likeCount: 0,
       replyCount: 0,

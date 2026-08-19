@@ -57,12 +57,12 @@ export function CommunityModerationClient({ role: _role }: { role: "admin" }) {
 
   useEffect(() => { void load() }, [load])
 
-  function moveReport(reportId: string, nextStatus: ModerationReportStatus) {
+  function moveReport(reportId: string, nextStatus: ModerationReportStatus, reportCount = 1) {
     setReports((current) => current.filter((report) => report.id !== reportId))
     setCounts((current) => ({
       ...current,
-      [status]: Math.max(0, current[status] - 1),
-      [nextStatus]: current[nextStatus] + 1,
+      [status]: Math.max(0, current[status] - reportCount),
+      [nextStatus]: current[nextStatus] + reportCount,
     }))
   }
 
@@ -138,6 +138,7 @@ function ReportSummary({ report }: { report: ModerationReportItem }) {
           <p className="mt-1 text-xs text-muted-foreground">@{report.targetUser.username} · {new Date(report.createdAt).toLocaleDateString()}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          <span className="text-sm font-bold tabular-nums text-foreground">×{report.reportCount}</span>
           {report.source === "ai" && (
             <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-brand">AI</span>
           )}
@@ -173,7 +174,7 @@ function OpenReportCard({
   onMoved,
 }: {
   report: ModerationReportItem
-  onMoved: (id: string, status: ModerationReportStatus) => void
+  onMoved: (id: string, status: ModerationReportStatus, reportCount?: number) => void
 }) {
   const aiSuggestsSuspension = report.source === "ai" && Boolean(report.ai?.recommendedAction?.includes("7-day Community suspension"))
   const [action, setAction] = useState<ModerationAction>(aiSuggestsSuspension ? "suspend_community" : "hide")
@@ -207,7 +208,7 @@ function OpenReportCard({
       if (!response.ok || !payload.completed || !payload.status) throw new Error(payload.error || "The action could not be completed.")
       setConfirmOpen(false)
       setNotice("The decision was saved.")
-      window.setTimeout(() => onMoved(report.id, payload.status!), 500)
+      window.setTimeout(() => onMoved(report.id, payload.status!, report.reportCount), 500)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The action could not be completed.")
       setConfirmOpen(false)
@@ -302,7 +303,7 @@ function PastDecisionCard({
   onChanged,
 }: {
   report: ModerationReportItem
-  onMoved: (id: string, status: ModerationReportStatus) => void
+  onMoved: (id: string, status: ModerationReportStatus, reportCount?: number) => void
   onChanged: () => Promise<void>
 }) {
   const [busy, setBusy] = useState(false)
@@ -329,7 +330,7 @@ function PastDecisionCard({
       const payload = await response.json() as { completed?: boolean; status?: ModerationReportStatus; error?: string }
       if (!response.ok || !payload.completed || payload.status !== "open") throw new Error(payload.error || "The decision could not be reopened.")
       setConfirmOpen(false)
-      onMoved(report.id, "open")
+      onMoved(report.id, "open", 1)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The decision could not be reopened.")
       setConfirmOpen(false)

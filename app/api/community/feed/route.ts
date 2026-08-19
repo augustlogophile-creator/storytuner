@@ -2,6 +2,7 @@ import { getCommunityApiContext, noStoreJson } from "@/lib/community/server"
 import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types"
 import { renderableCommunityReplies } from "@/lib/community/visible-replies"
 import { backendError } from "@/lib/backend-log"
+import { isVerifiedTellwiseUser } from "@/lib/community/verified"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -145,6 +146,7 @@ export async function GET(request: Request) {
           id: post.author_id,
           displayName: author?.display_name ?? "Tellwise member",
           username: author?.username ?? `member_${post.author_id.slice(0, 6)}`,
+          verified: isVerifiedTellwiseUser(post.author_id),
         },
         likeCount: Number(post.like_count) || 0,
         // Every active comment in the conversation counts as one response,
