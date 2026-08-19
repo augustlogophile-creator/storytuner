@@ -4,6 +4,7 @@ import type { CommunityFeedPost, CommunityPostType } from "@/lib/community/types
 import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityText } from "@/lib/community/ai-moderation"
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
+import { validateAudioSignature } from "@/lib/audio-upload-security"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -148,15 +149,20 @@ export async function POST(request: Request) {
         .download(source.storage_path)
       if (downloadError || !sourceBlob) throw new Error(downloadError?.message || "The private audio could not be read.")
 
-      const bytes = await sourceBlob.arrayBuffer()
-      if (bytes.byteLength <= 0 || bytes.byteLength > MAX_COMMUNITY_AUDIO_BYTES) {
+      // Check the Blob's actual size before materializing any buffer, then inspect
+      // only a tiny prefix for the real file signature. The Community copy never
+      // trusts a filename, MIME header, or database row by itself.
+      if (sourceBlob.size <= 0 || sourceBlob.size > MAX_COMMUNITY_AUDIO_BYTES || sourceBlob.size !== source.size_bytes) {
         throw new Error("The audio file is not eligible for Community sharing.")
       }
+      const sniff = new Uint8Array(await sourceBlob.slice(0, 64).arrayBuffer())
+      const signature = validateAudioSignature(sniff, source.content_type)
+      if (!signature.ok) throw new Error("The audio file signature is invalid.")
 
       const { error: uploadError } = await context.admin.storage
         .from(COMMUNITY_BUCKET)
-        .upload(communityPath, bytes, {
-          contentType: normalizeAudioContentType(source.content_type),
+        .upload(communityPath, sourceBlob, {
+          contentType: signature.contentType,
           cacheControl: "3600",
           upsert: false,
         })
@@ -168,8 +174,8 @@ export async function POST(request: Request) {
         owner_id: context.userId,
         source_recording_id: source.id,
         storage_path: communityPath,
-        content_type: normalizeAudioContentType(source.content_type),
-        size_bytes: bytes.byteLength,
+        content_type: signature.contentType,
+        size_bytes: sourceBlob.size,
         duration_seconds: source.duration_seconds,
         status: "ready",
       })

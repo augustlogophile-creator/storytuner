@@ -135,3 +135,71 @@ test("database backups are encrypted before GitHub artifact upload", () => {
   assert.match(workflow, /path: \$\{\{ env\.ENCRYPTED_BACKUP \}\}/)
   assert.doesNotMatch(workflow, /path: \$\{\{ env\.BACKUP_DIR \}\}/)
 })
+
+test("direct transcription uploads use a bounded raw stream instead of multipart buffering", () => {
+  const route = read("app/api/transcribe/route.ts")
+  const helper = read("lib/audio-upload-security.ts")
+  const proxy = read("proxy.ts")
+  assert.match(proxy, /pathname === "\/api\/transcribe"/)
+  assert.match(proxy, /contentLength > 4 \* 1024 \* 1024/)
+  assert.match(route, /readRequestBodyWithLimit\(req, MAX_DIRECT_TRANSCRIBE_BYTES\)/)
+  assert.doesNotMatch(route, /req\.formData\(\)/)
+  assert.match(helper, /request\.body\.getReader\(\)/)
+  assert.match(helper, /total > maxBytes/)
+  assert.match(helper, /reader\.cancel\("upload limit exceeded"\)/)
+})
+
+test("direct transcription uploads reject spoofed MIME types using magic-byte inspection", () => {
+  const route = read("app/api/transcribe/route.ts")
+  const helper = read("lib/audio-upload-security.ts")
+  assert.match(route, /validateAudioSignature\(boundedBody\.bytes\.subarray\(0, 64\), declaredType\)/)
+  assert.match(helper, /0x1a && bytes\[1\] === 0x45 && bytes\[2\] === 0xdf && bytes\[3\] === 0xa3/)
+  assert.match(helper, /ascii\(bytes, 0, 4\) === "OggS"/)
+  assert.match(helper, /ascii\(bytes, 0, 4\) === "RIFF"/)
+  assert.match(helper, /ascii\(bytes, 4, 8\) === "ftyp"/)
+})
+
+test("browser recording uploads have a fast size and signature preflight before Supabase", () => {
+  const cloud = read("lib/recording-cloud.ts")
+  assert.match(cloud, /blob\.size > MAX_AUDIO_BYTES/)
+  assert.match(cloud, /blob\.slice\(0, 64\)\.arrayBuffer\(\)/)
+  assert.match(cloud, /validateAudioSignature\(sniff, blob\.type \|\| undefined\)/)
+  assert.match(cloud, /\.upload\(storagePath, blob/)
+})
+
+test("Supabase transcription revalidates actual size and magic bytes before OpenAI", () => {
+  const edge = read("supabase/functions/transcribe-recording/index.ts")
+  assert.match(edge, /audioBlob\.size > MAX_AUDIO_BYTES/)
+  assert.match(edge, /audioBlob\.size !== declaredBytes/)
+  assert.match(edge, /audioBlob\.slice\(0, AUDIO_SNIFF_BYTES\)\.arrayBuffer\(\)/)
+  assert.match(edge, /validateAudioSignature\(sniff, contentType\)/)
+  const signatureIndex = edge.indexOf("validateAudioSignature(sniff, contentType)")
+  const openAiIndex = edge.indexOf('fetch("https://api.openai.com/v1/audio/transcriptions"')
+  assert.ok(signatureIndex >= 0 && openAiIndex > signatureIndex)
+})
+
+test("invalid private audio is deleted instead of being retained for repeated processing", () => {
+  const edge = read("supabase/functions/transcribe-recording/index.ts")
+  assert.match(edge, /transcription_signature_rejected/)
+  assert.match(edge, /storage\.from\("storytuner-recordings"\)\.remove\(\[recording\.storage_path\]\)/)
+  assert.match(edge, /Rejected invalid audio signature/)
+})
+
+test("storage and database enforce a hard 24 MiB object ceiling and immutable upload metadata", () => {
+  const migration = read("supabase/migrations/202608180002_upload_hardening.sql")
+  assert.match(migration, /file_size_limit = 25165824/g)
+  assert.match(migration, /size_bytes between 1 and 25165824/)
+  assert.match(migration, /revoke update on table public\.recording_uploads from authenticated/)
+  assert.match(migration, /grant update \(status, error_message, title, transcript, word_count\) on table public\.recording_uploads to authenticated/)
+  assert.match(migration, /then 12\s+else 6/)
+})
+
+test("Community audio copies are size-checked before buffering and signature-checked before upload", () => {
+  const route = read("app/api/community/share-recording/route.ts")
+  const sizeCheckIndex = route.indexOf("sourceBlob.size > MAX_COMMUNITY_AUDIO_BYTES")
+  const sniffIndex = route.indexOf("sourceBlob.slice(0, 64).arrayBuffer()")
+  const uploadIndex = route.indexOf(".upload(communityPath, sourceBlob")
+  assert.ok(sizeCheckIndex >= 0 && sniffIndex > sizeCheckIndex && uploadIndex > sniffIndex)
+  assert.match(route, /validateAudioSignature\(sniff, source\.content_type\)/)
+  assert.doesNotMatch(route, /const bytes = await sourceBlob\.arrayBuffer\(\)/)
+})

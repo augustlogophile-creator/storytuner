@@ -2,9 +2,10 @@ import { getActiveAuthenticatedUser } from "@/lib/require-auth"
 import { openAIJson, transcribeWithOpenAI } from "@/lib/openai-server"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { enforceDurableUsageRate, isUuid, recordUsageEvent, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
-import { requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest, runIdempotent } from "@/lib/request-protection"
+import { requireSameOrigin, rateLimitResponse, rateLimitUser, runIdempotent } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedReference } from "@/lib/ai/untrusted"
+import { MAX_DIRECT_TRANSCRIBE_BYTES, declaredTypeIsSupported, readRequestBodyWithLimit, validateAudioSignature } from "@/lib/audio-upload-security"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -27,8 +28,6 @@ export async function POST(req: Request) {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth.response
   const user = auth.user
-  const oversized = rejectLargeRequest(req, 5 * 1024 * 1024)
-  if (oversized) return oversized
   const rate = rateLimitUser(user.id, "transcribe", [
     { limit: 6, windowMs: 10 * 60 * 1000, label: "6/10min" },
     { limit: 20, windowMs: 60 * 60 * 1000, label: "20/hour" },
@@ -36,22 +35,27 @@ export async function POST(req: Request) {
   const blocked = rateLimitResponse(rate, "Too many transcription requests are arriving from this account. Wait before trying another recording.")
   if (blocked) return blocked
   try {
-    const form = await req.formData()
-    const unexpectedFields = [...new Set([...form.keys()].filter((key) => !["file", "requestKey", "durationSeconds"].includes(key)))]
-    if (unexpectedFields.length) return Response.json({ error: "The transcription request included unsupported fields." }, { status: 400, headers: { "Cache-Control": "no-store" } })
-    const file = form.get("file")
-    const requestKey = form.get("requestKey")
-    const durationSeconds = Number(form.get("durationSeconds") ?? 0)
-    if (!(file instanceof File)) return Response.json({ error: "No recording was provided." }, { status: 400 })
-    if (file.size > 4 * 1024 * 1024) return Response.json({ error: "This recording is too large to transcribe." }, { status: 413 })
-    const baseType = file.type.toLowerCase().split(";", 1)[0]?.trim() ?? ""
-    if (baseType && !["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav", "video/webm"].includes(baseType)) {
-      return Response.json({ error: "That recording format is not supported." }, { status: 415, headers: { "Cache-Control": "no-store" } })
-    }
-    if (!Number.isFinite(durationSeconds) || durationSeconds < 0 || durationSeconds > 1800) {
+    const requestKey = req.headers.get("x-tellwise-request-key")?.trim() ?? ""
+    const durationSeconds = Number(req.headers.get("x-tellwise-duration-seconds") ?? 0)
+    const declaredType = req.headers.get("content-type")
+    if (!isUuid(requestKey)) return Response.json({ error: "This transcription request is missing a valid request key." }, { status: 400, headers: { "Cache-Control": "no-store" } })
+    if (!Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > 1800) {
       return Response.json({ error: "That recording duration is invalid." }, { status: 400, headers: { "Cache-Control": "no-store" } })
     }
-    if (!isUuid(requestKey)) return Response.json({ error: "This transcription request is missing a valid request key." }, { status: 400 })
+    if (!declaredTypeIsSupported(declaredType)) {
+      return Response.json({ error: "That recording format is not supported." }, { status: 415, headers: { "Cache-Control": "no-store" } })
+    }
+
+    // Read the raw audio stream ourselves instead of calling request.formData().
+    // The reader stops and cancels as soon as the byte ceiling is crossed, so a
+    // chunked request cannot force the server to buffer an unbounded upload.
+    const boundedBody = await readRequestBodyWithLimit(req, MAX_DIRECT_TRANSCRIBE_BYTES)
+    if (!boundedBody.ok) return boundedBody.response
+    const signature = validateAudioSignature(boundedBody.bytes.subarray(0, 64), declaredType)
+    if (!signature.ok) {
+      return Response.json({ code: "INVALID_AUDIO_FILE", error: signature.error }, { status: 415, headers: { "Cache-Control": "no-store" } })
+    }
+    const file = new File([boundedBody.bytes], `tellwise-${requestKey}.${signature.extension}`, { type: signature.contentType })
 
     let membership
     try {

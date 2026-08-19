@@ -1,5 +1,8 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+const MAX_AUDIO_BYTES = 24 * 1024 * 1024;
+const AUDIO_SNIFF_BYTES = 64;
+
 const DEFAULT_ALLOWED_ORIGINS = new Set([
   "https://storytuner.vercel.app",
   "http://localhost:3000",
@@ -132,7 +135,7 @@ Deno.serve(async (request: Request) => {
 
     const { data: recording, error: recordingError } = await userClient
       .from("recording_uploads")
-      .select("id, user_id, storage_path, content_type, duration_seconds, status, transcript")
+      .select("id, user_id, storage_path, content_type, size_bytes, duration_seconds, status, transcript")
       .eq("id", recordingId)
       .single();
 
@@ -141,6 +144,11 @@ Deno.serve(async (request: Request) => {
     if (typeof recording.storage_path !== "string" || !recording.storage_path.startsWith(`${user.id}/`) || recording.storage_path.includes("..")) {
       edgeLog("warn", "transcription_invalid_storage_path", { userId: user.id, recordingId });
       return jsonResponse(request, { error: "Recording metadata is invalid." }, 400);
+    }
+    const declaredBytes = Number(recording.size_bytes);
+    if (!Number.isSafeInteger(declaredBytes) || declaredBytes <= 0 || declaredBytes > MAX_AUDIO_BYTES) {
+      edgeLog("warn", "transcription_invalid_declared_size", { userId: user.id, recordingId, declaredBytes });
+      return jsonResponse(request, { error: "The recording size is invalid." }, 413);
     }
 
     if (recording.status === "ready" && recording.transcript) {
@@ -218,13 +226,36 @@ Deno.serve(async (request: Request) => {
       .from("storytuner-recordings")
       .download(recording.storage_path);
     if (downloadError || !audioBlob) throw new Error(`Could not download recording: ${downloadError?.message ?? "File unavailable"}`);
-    if (audioBlob.size > 24 * 1024 * 1024) throw new Error("This audio file is too large to transcribe. The maximum is 24 MB.");
+
+    // The storage bucket also enforces this limit, but re-check the actual Blob
+    // before any ArrayBuffer/File conversion or OpenAI request. This prevents
+    // oversized or metadata-tampered objects from creating avoidable memory use.
+    if (audioBlob.size <= 0 || audioBlob.size > MAX_AUDIO_BYTES || audioBlob.size !== declaredBytes) {
+      await userClient.storage.from("storytuner-recordings").remove([recording.storage_path]).catch(() => undefined);
+      await adminClient.from("recording_uploads").update({ status: "failed", error_message: "Rejected invalid recording size." }).eq("id", recordingId);
+      if (usageReservedNow) {
+        await adminClient.from("user_usage_events").delete().eq("user_id", user.id).eq("feature", "arena_review").eq("request_key", recordingId);
+        usageReservedNow = false;
+      }
+      edgeLog("warn", "transcription_actual_size_rejected", { userId: user.id, recordingId, actualBytes: audioBlob.size, declaredBytes });
+      return jsonResponse(request, { error: "The uploaded recording is invalid." }, 413);
+    }
 
     const fileName = recording.storage_path.split("/").pop() || "recording.webm";
     const contentType = String(recording.content_type || audioBlob.type || "audio/webm").toLowerCase().split(";", 1)[0].trim();
-    const allowedTypes = new Set(["audio/webm", "audio/ogg", "audio/mpeg", "audio/mp4", "audio/wav", "audio/x-wav"]);
-    if (!allowedTypes.has(contentType)) return jsonResponse(request, { error: "That recording format is not supported." }, 415);
-    const audioFile = new File([audioBlob], fileName, { type: contentType });
+    const sniff = new Uint8Array(await audioBlob.slice(0, AUDIO_SNIFF_BYTES).arrayBuffer());
+    const signature = validateAudioSignature(sniff, contentType);
+    if (!signature.ok) {
+      await userClient.storage.from("storytuner-recordings").remove([recording.storage_path]).catch(() => undefined);
+      await adminClient.from("recording_uploads").update({ status: "failed", error_message: "Rejected invalid audio signature." }).eq("id", recordingId);
+      if (usageReservedNow) {
+        await adminClient.from("user_usage_events").delete().eq("user_id", user.id).eq("feature", "arena_review").eq("request_key", recordingId);
+        usageReservedNow = false;
+      }
+      edgeLog("warn", "transcription_signature_rejected", { userId: user.id, recordingId, contentType });
+      return jsonResponse(request, { error: "That upload is not a valid supported audio recording." }, 415);
+    }
+    const audioFile = new File([audioBlob], `tellwise-${recordingId}.${signature.extension}`, { type: signature.contentType });
     const transcriptionForm = new FormData();
     transcriptionForm.append("file", audioFile);
     transcriptionForm.append("model", "gpt-4o-mini-transcribe");
@@ -247,7 +278,7 @@ Deno.serve(async (request: Request) => {
 
     const wordCount = transcript.split(/\s+/).filter(Boolean).length;
     const title = titleFrom(transcript);
-    const { error: saveError } = await userClient
+    const { error: saveError } = await adminClient
       .from("recording_uploads")
       .update({ status: "ready", transcript, title, word_count: wordCount, error_message: null })
       .eq("id", recordingId);
@@ -271,6 +302,42 @@ Deno.serve(async (request: Request) => {
     return jsonResponse(request, { error: "Transcription failed." }, 500);
   }
 });
+
+function validateAudioSignature(bytes: Uint8Array, declaredType: string) {
+  const kind = detectAudioKind(bytes);
+  const allowed: Record<string, string[]> = {
+    webm: ["audio/webm", "video/webm"],
+    ogg: ["audio/ogg", "application/ogg"],
+    mp3: ["audio/mpeg", "audio/mp3"],
+    mp4: ["audio/mp4", "video/mp4", "audio/x-m4a"],
+    wav: ["audio/wav", "audio/x-wav", "audio/wave"],
+  };
+  const canonical: Record<string, { contentType: string; extension: string }> = {
+    webm: { contentType: "audio/webm", extension: "webm" },
+    ogg: { contentType: "audio/ogg", extension: "ogg" },
+    mp3: { contentType: "audio/mpeg", extension: "mp3" },
+    mp4: { contentType: "audio/mp4", extension: "m4a" },
+    wav: { contentType: "audio/wav", extension: "wav" },
+  };
+  if (!kind || !allowed[kind]?.includes(declaredType)) return { ok: false as const };
+  return { ok: true as const, ...canonical[kind] };
+}
+
+function detectAudioKind(bytes: Uint8Array): "webm" | "ogg" | "mp3" | "mp4" | "wav" | null {
+  if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) return "webm";
+  if (bytes.length >= 4 && ascii(bytes, 0, 4) === "OggS") return "ogg";
+  if (bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WAVE") return "wav";
+  if (bytes.length >= 3 && ascii(bytes, 0, 3) === "ID3") return "mp3";
+  if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) return "mp3";
+  if (bytes.length >= 12 && ascii(bytes, 4, 8) === "ftyp") return "mp4";
+  return null;
+}
+
+function ascii(bytes: Uint8Array, start: number, end: number) {
+  let value = "";
+  for (let index = start; index < end && index < bytes.length; index += 1) value += String.fromCharCode(bytes[index]);
+  return value;
+}
 
 function titleFrom(text: string) {
   const sentence = text.split(/[.!?]/)[0]?.trim() || text.trim();

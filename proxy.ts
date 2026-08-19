@@ -3,6 +3,22 @@ import { checkIpRateLimit } from "@/lib/security/ip-rate-limit"
 import { updateSession } from "@/lib/supabase/proxy"
 
 export async function proxy(request: NextRequest) {
+  // Reject obviously oversized fallback transcription requests at the earliest
+  // application boundary. Chunked/missing-length bodies are still bounded by the
+  // streaming reader inside /api/transcribe.
+  if (request.nextUrl.pathname === "/api/transcribe") {
+    const rawLength = request.headers.get("content-length")
+    if (rawLength) {
+      const contentLength = Number(rawLength)
+      if (!Number.isFinite(contentLength) || contentLength < 0 || contentLength > 4 * 1024 * 1024) {
+        return NextResponse.json(
+          { code: "REQUEST_TOO_LARGE", error: "That recording is too large. The maximum fallback upload size is 4 MB." },
+          { status: 413, headers: { "Cache-Control": "no-store" } },
+        )
+      }
+    }
+  }
+
   const rate = checkIpRateLimit(request)
   if (!rate.allowed) {
     const headers = {

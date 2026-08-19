@@ -42,6 +42,7 @@ import {
   type CloudTranscriptionStage,
 } from "@/lib/recording-cloud"
 import { cn } from "@/lib/utils"
+import { validateAudioSignature } from "@/lib/audio-upload-security"
 import { secondPersonDirection } from "@/lib/planner/voice"
 
 type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
@@ -668,11 +669,18 @@ export function ArenaClient() {
   }
 
   async function transcribeThroughVercel(source: Blob, requestKey: string) {
-    const form = new FormData()
-    form.set("file", new File([source], "storytuner-recording.webm", { type: source.type || "audio/webm" }))
-    form.set("requestKey", requestKey)
-    form.set("durationSeconds", String(Math.max(1, seconds)))
-    const response = await fetch("/api/transcribe", { method: "POST", body: form })
+    const sniff = new Uint8Array(await source.slice(0, 64).arrayBuffer())
+    const signature = validateAudioSignature(sniff, source.type || undefined)
+    if (!signature.ok) throw new Error(signature.error)
+    const response = await fetch("/api/transcribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": signature.contentType,
+        "X-Tellwise-Request-Key": requestKey,
+        "X-Tellwise-Duration-Seconds": String(Math.max(1, seconds)),
+      },
+      body: source,
+    })
     const data = (await response.json()) as { text?: string; title?: string; code?: string; error?: string }
     if (!response.ok || !data.text) {
       throw new Error(data.error || "Parch could not transcribe this recording.")
