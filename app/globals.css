@@ -2609,7 +2609,11 @@ body {
 
 .book-app-content {
   position: relative;
-  z-index: 1;
+  /* Do not create a child stacking context here. Dialog overlays live inside
+     the page content, while the fixed bottom nav is its sibling. A z-index on
+     this wrapper trapped dialogs beneath the nav even when the dialog itself
+     had a larger z-index, so the nav escaped the backdrop blur. */
+  z-index: auto;
   background: transparent;
 }
 
