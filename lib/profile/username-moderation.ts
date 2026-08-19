@@ -12,8 +12,11 @@ export type UsernameSafetyResult =
  * profanity/evasion patterns first, then the existing AI moderation service
  * adds a second screen for hateful, sexual, threatening and other unsafe terms.
  */
-export async function checkUsernameSafety(username: string): Promise<UsernameSafetyResult> {
-  const deterministicError = validateUsername(username)
+export async function checkUsernameSafety(
+  username: string,
+  options: { allowReserved?: boolean } = {},
+): Promise<UsernameSafetyResult> {
+  const deterministicError = validateUsername(username, options)
   if (deterministicError) {
     return { ok: false, code: "INVALID", message: deterministicError }
   }

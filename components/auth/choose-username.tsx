@@ -15,14 +15,19 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
   const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const isOfficialTellwiseAccount = email.trim().toLowerCase() === "tellwiseapp@gmail.com"
+  const allowOfficialHandle = isOfficialTellwiseAccount && username.trim().toLowerCase() === "tellwise"
 
-  const localError = username ? validateUsername(username) : ""
+  const localError = username ? validateUsername(username, { allowReserved: allowOfficialHandle }) : ""
   const canContinue = Boolean(username && !localError && ageConfirmed && !loading)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError("")
-    const validation = validateUsername(username)
+    const normalizedUsername = username.trim().toLowerCase()
+    const validation = validateUsername(username, {
+      allowReserved: isOfficialTellwiseAccount && normalizedUsername === "tellwise",
+    })
     if (validation) return setError(validation)
     if (!ageConfirmed) return setError("Confirm that you are at least 13 to continue.")
 

@@ -93,6 +93,17 @@ export async function POST(request: Request) {
     ? body.username.trim().toLowerCase()
     : ""
 
+  const { data: userData, error: userError } = await auth.supabase.auth.getUser()
+  if (userError || !userData.user) {
+    return Response.json(
+      { code: "AUTH_REQUIRED", error: "Your session expired. Log in again." },
+      { status: 401, headers: { "Cache-Control": "no-store" } },
+    )
+  }
+
+  const verifiedEmail = userData.user.email?.trim().toLowerCase() ?? ""
+  const allowOfficialTellwiseHandle = verifiedEmail === "tellwiseapp@gmail.com" && username === "tellwise"
+
   const { data: taken, error: takenError } = await admin
     .from("profiles")
     .select("id")
@@ -114,19 +125,11 @@ export async function POST(request: Request) {
     )
   }
 
-  const safety = await checkUsernameSafety(username)
+  const safety = await checkUsernameSafety(username, { allowReserved: allowOfficialTellwiseHandle })
   if (!safety.ok) {
     return Response.json(
       { code: safety.code === "UNAVAILABLE" ? "USERNAME_CHECK_UNAVAILABLE" : "USERNAME_NOT_AVAILABLE", error: safety.message },
       { status: safety.code === "UNAVAILABLE" ? 503 : 400, headers: { "Cache-Control": "no-store" } },
-    )
-  }
-
-  const { data: userData, error: userError } = await auth.supabase.auth.getUser()
-  if (userError || !userData.user) {
-    return Response.json(
-      { code: "AUTH_REQUIRED", error: "Your session expired. Log in again." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
     )
   }
 

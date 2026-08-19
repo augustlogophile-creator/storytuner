@@ -117,7 +117,7 @@ export function isReservedUsername(value: string) {
   return reservedUsernameExact.has(clean) || reservedUsernamePattern.test(clean)
 }
 
-export function validateUsername(value: string) {
+export function validateUsername(value: string, options: { allowReserved?: boolean } = {}) {
   const clean = value.trim().toLowerCase()
   if (clean.length < 3 || clean.length > 20) {
     return "Use 3 to 20 lowercase letters, numbers, or underscores."
@@ -125,7 +125,7 @@ export function validateUsername(value: string) {
   if (!/^[a-z0-9][a-z0-9_]*[a-z0-9]$/.test(clean) || clean.includes("__")) {
     return "Use only lowercase letters, numbers, or underscores. Do not start or end with an underscore."
   }
-  if (isReservedUsername(clean) || !isPublicNameAppropriate(clean)) {
+  if ((!options.allowReserved && isReservedUsername(clean)) || !isPublicNameAppropriate(clean)) {
     return "That username isn't available. Try another one."
   }
   return ""

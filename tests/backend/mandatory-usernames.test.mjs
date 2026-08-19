@@ -46,7 +46,7 @@ test("username claims are server-side, same-origin protected, moderated and user
   const route = read("app/api/account/setup/route.ts")
   assert.match(route, /requireSameOrigin\(request\)/)
   assert.match(route, /getAuthenticatedUser\(\)/)
-  assert.match(route, /checkUsernameSafety\(username\)/)
+  assert.match(route, /checkUsernameSafety\(username/)
   assert.match(route, /id:\s*auth\.id/)
   assert.doesNotMatch(route, /body\.(?:userId|user_id)/)
   assert.match(route, /createAdminClient\(\)/)
@@ -65,4 +65,24 @@ test("public Community identity prefers usernames and never falls back to displa
   const label = community.slice(community.indexOf("function publicAuthorLabel"), community.indexOf("function rankPosts"))
   assert.match(label, /return `@\$\{username\}`/)
   assert.doesNotMatch(label, /author\.displayName/)
+})
+
+test("only the verified Tellwise account can claim the reserved @tellwise handle", () => {
+  const route = read("app/api/account/setup/route.ts")
+  const client = read("components/auth/choose-username.tsx")
+  const migration = read("supabase/migrations/202608180003_official_tellwise_username.sql")
+
+  assert.match(route, /verifiedEmail === "tellwiseapp@gmail\.com" && username === "tellwise"/)
+  assert.match(route, /allowReserved: allowOfficialTellwiseHandle/)
+  assert.match(client, /email\.trim\(\)\.toLowerCase\(\) === "tellwiseapp@gmail\.com"/)
+  assert.match(migration, /lower\(coalesce\(u\.email, ''\)\) = 'tellwiseapp@gmail\.com'/)
+  assert.match(migration, /u\.email_confirmed_at is not null/)
+  assert.match(migration, /before insert or update of username on public\.profiles/i)
+})
+
+test("OAuth callback tolerates a duplicate one-time-code callback only when a verified session already exists", () => {
+  const callback = read("app/auth/callback/route.ts")
+  assert.match(callback, /if \(authError && !userData\.user\)/)
+  assert.match(callback, /supabase\.auth\.getUser\(\)/)
+  assert.match(callback, /auth_callback_exchange_failed/)
 })
