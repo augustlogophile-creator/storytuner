@@ -1,16 +1,15 @@
 "use client"
 
-import { useMemo, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { Check, Loader2, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useApp } from "@/lib/app-state"
-import { usernameSuggestionsFromEmail, validateUsername } from "@/lib/profile/public-name"
+import { validateUsername } from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
 
 export function ChooseUsername({ email, destination }: { email: string; destination: string }) {
   const router = useRouter()
   const { completeOnboarding } = useApp()
-  const suggestions = useMemo(() => usernameSuggestionsFromEmail(email), [email])
   const [username, setUsername] = useState("")
   const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -42,8 +41,6 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
       const payload = await response.json() as { completed?: boolean; displayName?: string; error?: string }
       if (!response.ok || !payload.completed) throw new Error(payload.error || "Tellwise couldn't save that username.")
 
-      // Keep the local onboarding state aligned with the server. Public identity
-      // comes from profiles.username; the local name remains private/personal.
       completeOnboarding(payload.displayName)
       router.replace(destination)
       router.refresh()
@@ -65,18 +62,20 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
   return (
     <main className="entry-shell">
       <section className="auth-canvas">
-        <div className="mx-auto w-full max-w-md">
-          <p className="auth-eyebrow text-center">Your Tellwise identity</p>
-          <h1 className="auth-title text-center">Choose your username.</h1>
-          <p className="auth-subtitle mx-auto max-w-sm text-center">
-            This is how other people will see you on Tellwise.
-          </p>
+        <div className="mx-auto w-full max-w-md px-1 py-2">
+          <div className="pt-3 text-center">
+            <p className="auth-eyebrow">Your Tellwise identity</p>
+            <h1 className="auth-title mt-3">Choose your username.</h1>
+            <p className="auth-subtitle mx-auto mt-3 max-w-sm">
+              This is how other people will see you on Tellwise.
+            </p>
+          </div>
 
-          <form onSubmit={submit} className="mt-8 space-y-5">
+          <form onSubmit={submit} className="mt-14 space-y-9">
             <label className="block">
               <span className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-muted-foreground">Username</span>
-              <div className="auth-input mt-2 flex items-center gap-1.5 px-4">
-                <span className="select-none text-sm text-muted-foreground">@</span>
+              <div className="mt-5 flex items-center gap-2 border-b border-border/80 px-1 pb-3 transition-colors focus-within:border-foreground/45">
+                <span className="select-none text-base text-muted-foreground">@</span>
                 <input
                   value={username}
                   onChange={(event) => {
@@ -90,35 +89,17 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
                   inputMode="text"
                   maxLength={20}
                   aria-describedby="username-rules"
-                  className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground outline-none ring-0 focus:outline-none focus:ring-0"
+                  className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[1.02rem] text-foreground outline-none ring-0 focus:outline-none focus:ring-0"
                   placeholder="your_username"
                 />
                 {username && !localError && <Check className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
               </div>
-              <span id="username-rules" className="mt-1.5 block text-[0.68rem] leading-5 text-muted-foreground">
+              <span id="username-rules" className="mt-3 block text-[0.72rem] leading-5 text-muted-foreground">
                 3–20 characters. Lowercase letters, numbers, and underscores only.
               </span>
             </label>
 
-            {suggestions.length > 0 && (
-              <div className="flex flex-wrap gap-2" aria-label="Username suggestions">
-                {suggestions.map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    type="button"
-                    onClick={() => {
-                      setUsername(suggestion)
-                      setError("")
-                    }}
-                    className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-foreground/20 hover:text-foreground active:scale-[0.98]"
-                  >
-                    @{suggestion}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 transition hover:border-foreground/15">
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4.5 transition hover:border-foreground/15">
               <input
                 type="checkbox"
                 checked={ageConfirmed}
@@ -147,7 +128,7 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
             type="button"
             onClick={() => void signOut()}
             disabled={loading}
-            className="mx-auto mt-5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+            className="mx-auto mt-8 flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-50"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign out
           </button>
