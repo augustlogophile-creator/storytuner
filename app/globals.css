@@ -3907,16 +3907,6 @@ body {
   z-index: 160 !important;
 }
 
-/* The bottom navigation has its own translucent backdrop, so blur it directly
-   whenever any app dialog is open. This keeps the footer visually inside the
-   modal backdrop instead of looking sharp beneath a blurred page. */
-body:has(.app-dialog-overlay) .book-bottom-nav {
-  filter: blur(3px);
-  opacity: 0.72;
-  pointer-events: none;
-  transition: filter 140ms ease, opacity 140ms ease;
-}
-
 
 /* August 15 lesson motion and route-stability polish. */
 @keyframes storytuner-lesson-stage-in {
@@ -4095,4 +4085,197 @@ body:has(.app-dialog-overlay) .book-bottom-nav {
     opacity: 0 !important;
     pointer-events: none !important;
   }
+}
+
+/* August 18: final book-shell balance, auth entry, and intro motion polish. */
+
+/* The fixed footer should read as frosted paper, not a white slab. */
+.book-bottom-nav {
+  background-color: rgba(244, 239, 229, .72) !important;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(92, 74, 50, .026) 0 .5px, transparent .7px),
+    linear-gradient(180deg, rgba(255,255,255,.16), rgba(235,228,216,.18)) !important;
+  border-top-color: rgba(126, 106, 79, .16) !important;
+  box-shadow: 0 -7px 20px rgba(55, 44, 32, .018) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(.9) !important;
+  backdrop-filter: blur(18px) saturate(.9) !important;
+}
+
+/* Home closing line gets a predictable rhythm instead of being pushed around
+   by flexbox/viewport height. The shell's bottom padding still protects it from
+   the fixed footer, so this remains stable on short and tall phones. */
+.book-home-closing-line {
+  min-height: 3.45rem;
+  margin-top: clamp(1.1rem, 3svh, 1.85rem);
+  padding-block: .45rem .35rem;
+}
+
+@media (max-height: 720px) {
+  .book-home-closing-line {
+    min-height: 2.85rem;
+    margin-top: .85rem;
+  }
+}
+
+/* Authentication is part of the same book, not a floating settings card. */
+.auth-canvas.auth-canvas-polished {
+  background-color: #fffefa !important;
+  background-image:
+    linear-gradient(90deg, rgba(73, 61, 47, .022), transparent 7%),
+    radial-gradient(circle at 18% 20%, rgba(92, 77, 59, .035) 0 .6px, transparent .9px) !important;
+  background-size: 100% 100%, 24px 24px !important;
+}
+
+.auth-content-polished {
+  gap: clamp(1.2rem, 3.4svh, 2rem) !important;
+  padding-block: clamp(1.4rem, 4svh, 2.7rem) 1.25rem !important;
+}
+
+.auth-stage {
+  min-height: clamp(6.1rem, 14svh, 8rem) !important;
+}
+
+.auth-stage-paper {
+  width: min(74%, 16rem) !important;
+  height: 5.2rem !important;
+  border: 0 !important;
+  background: radial-gradient(ellipse, rgba(112, 91, 65, .055), transparent 68%) !important;
+}
+
+.auth-parch {
+  width: clamp(5.35rem, 17vw, 6.6rem) !important;
+  max-height: 6.6rem !important;
+  filter: drop-shadow(0 6px 12px rgba(52, 43, 34, .07));
+}
+
+.auth-panel {
+  width: min(100%, 22rem) !important;
+  margin-inline: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 0 .15rem !important;
+  box-shadow: none !important;
+}
+
+.auth-simple-flow {
+  padding-bottom: .2rem;
+}
+
+.auth-title {
+  margin-top: .6rem !important;
+  font-size: clamp(1.85rem, 7.4vw, 2.25rem) !important;
+  line-height: 1.02 !important;
+}
+
+.auth-subtitle {
+  margin-top: .7rem !important;
+  font-size: .83rem !important;
+  line-height: 1.48rem !important;
+}
+
+.auth-choice-buttons {
+  display: grid;
+  gap: .85rem;
+  margin-top: clamp(1.55rem, 4svh, 2.25rem);
+}
+
+.auth-google-mark {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  box-shadow: inset 0 0 0 1px rgba(70, 61, 51, .10);
+}
+
+.auth-error-message {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(191, 75, 67, .24);
+  border-bottom: 1px solid rgba(191, 75, 67, .24);
+  padding: .72rem .1rem;
+  color: #a64039;
+  font-family: var(--font-book-serif);
+  font-size: .76rem;
+  line-height: 1.35rem;
+  text-align: center;
+}
+
+.auth-security-note {
+  justify-content: center !important;
+  margin-top: 1.05rem !important;
+}
+
+.auth-legal-note {
+  max-width: 20rem;
+  margin: .95rem auto 0 !important;
+}
+
+@media (max-height: 720px) {
+  .auth-content-polished { gap: .75rem !important; padding-block: .65rem !important; }
+  .auth-stage { min-height: 4.8rem !important; }
+  .auth-parch { width: 4.8rem !important; }
+  .auth-choice-buttons { margin-top: 1rem; gap: .65rem; }
+  .auth-title { font-size: 1.72rem !important; }
+  .auth-subtitle { margin-top: .45rem !important; line-height: 1.25rem !important; }
+}
+
+/* Crisper intro movement. Keep the page itself GPU-backed, remove every
+   temporary browser edge, and make the moving shadow subtle enough that it
+   reads as paper depth instead of a black brim. */
+.book-pageflip-shell .stf__parent,
+.book-pageflip-shell .stf__wrapper,
+.book-pageflip-shell .stf__block,
+.book-pageflip-shell .stf__item,
+.story-pageflip,
+.story-book-page-inner {
+  outline: 0 !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.story-book-wrap.is-flipping .stf__item {
+  filter: drop-shadow(-2px 4px 6px rgba(47, 43, 38, .065)) !important;
+}
+
+.story-book-wrap.is-opening-cover .stf__item,
+.story-book-wrap.is-opening-cover .stf__block,
+.story-book-wrap.is-opening-cover .story-book-cover-inner {
+  outline: 0 !important;
+  border: 0 !important;
+}
+
+.story-book-wrap.has-opened-cover .story-book-cover-inner {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+@supports selector(.stf__item:has(.story-book-cover-inner)) {
+  .story-book-wrap.has-opened-cover .stf__item:has(.story-book-cover-inner) {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+/* Small tactile upgrades that keep the book look restrained. */
+.book-choice {
+  transition: color 150ms ease, border-color 150ms ease, transform 150ms cubic-bezier(.2,.8,.2,1), background-color 150ms ease !important;
+}
+
+.book-choice:active {
+  transform: translateY(1px) scale(.994) !important;
+}
+
+.book-turn-action,
+.book-cover-open,
+.book-start-link {
+  transition: transform 150ms cubic-bezier(.2,.8,.2,1), color 150ms ease, opacity 150ms ease !important;
+}
+
+.book-turn-action:active:not(:disabled),
+.book-cover-open:active,
+.book-start-link:active {
+  transform: translateY(1px) scale(.985) !important;
 }

@@ -106,7 +106,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         </Link>
       </section>
 
-      <section className="mt-4 flex min-h-0 flex-1 flex-col">
+      <section className="mt-4 flex min-h-0 flex-col">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h2 className="book-practice-heading text-[1rem] font-semibold tracking-[-0.015em]">Practice</h2>
           <Link prefetch href="/studio/recordings" className="book-past-recordings text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
@@ -146,7 +146,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
         </div>
 
-        <div className="mt-auto flex h-[3rem] shrink-0 items-end justify-center overflow-hidden px-3 pb-3 pt-3 text-center">
+        <div className="book-home-closing-line flex shrink-0 items-center justify-center overflow-hidden px-3 text-center">
           <TypewriterText active={homeReady} typingMs={90} deletingMs={42} pauseMs={1900} className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />
         </div>
       </section>

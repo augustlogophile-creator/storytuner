@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Loader2, ShieldCheck } from "lucide-react"
+import { PopButton } from "@/components/ui/pop-button"
 import { safeInternalPath, siteUrl } from "@/lib/auth/redirects"
 import { createClient } from "@/lib/supabase/client"
 
@@ -12,101 +13,84 @@ type Mode = "sign-in" | "sign-up"
 export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const queryMode: Mode = searchParams.get("mode") === "sign-in" ? "sign-in" : initialMode
-  const [mode, setMode] = useState<Mode>(queryMode)
-  const [loading, setLoading] = useState(false)
+  const [loadingMode, setLoadingMode] = useState<Mode | null>(null)
   const [error, setError] = useState("")
-  const isSignUp = mode === "sign-up"
 
   useEffect(() => {
-    setMode(searchParams.get("mode") === "sign-in" ? "sign-in" : initialMode)
+    router.prefetch("/terms?from=auth")
+    router.prefetch("/terms?from=auth&mode=sign-in")
+    router.prefetch("/privacy?from=auth")
+    router.prefetch("/privacy?from=auth&mode=sign-in")
+
     const queryError = searchParams.get("error")
     if (queryError) setError(queryError)
-  }, [initialMode, searchParams])
-
-  useEffect(() => {
-    const modeQuery = isSignUp ? "" : "&mode=sign-in"
-    router.prefetch(`/terms?from=auth${modeQuery}`)
-    router.prefetch(`/privacy?from=auth${modeQuery}`)
-  }, [isSignUp, router])
+  }, [router, searchParams])
 
   const next = useMemo(
     () => safeInternalPath(searchParams.get("next"), "/home"),
-    [isSignUp, searchParams],
+    [searchParams],
   )
 
-  function chooseMode(nextMode: Mode) {
-    if (loading) return
-    setMode(nextMode)
+  async function continueWithGoogle(mode: Mode) {
+    if (loadingMode) return
     setError("")
-    const params = new URLSearchParams(searchParams.toString())
-    if (nextMode === "sign-in") params.set("mode", "sign-in")
-    else params.delete("mode")
-    params.delete("error")
-    const query = params.toString()
-    router.replace(`/sign-up${query ? `?${query}` : ""}`, { scroll: false })
-  }
+    setLoadingMode(mode)
 
-  async function continueWithGoogle() {
-    setError("")
-    setLoading(true)
     const supabase = createClient()
-    const callback = `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}&intent=${isSignUp ? "sign-up" : "sign-in"}`
+    const callback = `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}&intent=${mode}`
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: callback },
     })
+
     if (authError) {
-      setError(authError.message || "Google authentication could not start. Check the Supabase Google provider settings.")
-      setLoading(false)
+      setError(authError.message || "Google authentication could not start. Please try again.")
+      setLoadingMode(null)
     }
   }
 
+  const preferredMode: Mode = searchParams.get("mode") === "sign-in" ? "sign-in" : initialMode
+
   return (
-    <div className="w-full">
+    <div className="auth-simple-flow w-full">
       <div className="text-center">
-        <p className="auth-eyebrow">Tellwise account</p>
-        <h1 className="auth-title">
-          {isSignUp ? "Save your stories." : "Welcome back."}
-        </h1>
-        <p className="auth-subtitle">
-          {isSignUp
-            ? "Keep your progress, XP, recordings, and Parch with you across devices."
-            : "Pick up exactly where you left off."}
+        <p className="auth-eyebrow">Your Tellwise account</p>
+        <h1 className="auth-title">Keep your stories with you.</h1>
+        <p className="auth-subtitle mx-auto max-w-[19rem]">
+          Save your progress, recordings, streaks, and Parch across devices.
         </p>
       </div>
 
-      <div className="mt-5 flex justify-center">
-        <div className="account-mode-switch" role="tablist" aria-label="Choose whether to sign up or log in">
-          <button type="button" role="tab" aria-selected={isSignUp} onClick={() => chooseMode("sign-up")} className={isSignUp ? "is-active" : ""}>
-            Sign up
-          </button>
-          <button type="button" role="tab" aria-selected={!isSignUp} onClick={() => chooseMode("sign-in")} className={!isSignUp ? "is-active" : ""}>
-            Log in
-          </button>
-        </div>
-      </div>
+      <div className="auth-choice-buttons" aria-label="Choose how to continue">
+        <PopButton
+          type="button"
+          tone="blue"
+          size="lg"
+          disabled={Boolean(loadingMode)}
+          onClick={() => continueWithGoogle("sign-up")}
+          autoFocus={preferredMode === "sign-up"}
+          className="w-full"
+        >
+          {loadingMode === "sign-up" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleMark />}
+          Sign up
+        </PopButton>
 
-      <div className="auth-sync-message" aria-label="What your account saves">
-        Your progress, recordings, and streaks, all saved and synced.
+        <PopButton
+          type="button"
+          tone="paper"
+          size="lg"
+          disabled={Boolean(loadingMode)}
+          onClick={() => continueWithGoogle("sign-in")}
+          autoFocus={preferredMode === "sign-in"}
+          className="w-full"
+        >
+          {loadingMode === "sign-in" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleMark />}
+          Log in
+        </PopButton>
       </div>
-
-      <button
-        type="button"
-        onClick={continueWithGoogle}
-        disabled={loading}
-        className="auth-google-button"
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <GoogleMark />
-        )}
-        {isSignUp ? "Continue with Google" : "Log in with Google"}
-      </button>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-2xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm leading-relaxed text-destructive">
+        <p role="alert" className="auth-error-message">
           {error}
         </p>
       )}
@@ -117,15 +101,12 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
       </div>
 
       <p className="auth-legal-note">
-        By continuing, you agree to the{" "}
-        <Link prefetch href={isSignUp ? "/terms?from=auth" : "/terms?from=auth&mode=sign-in"}>Terms of Service</Link>
-        {" "}and acknowledge the{" "}
-        <Link prefetch href={isSignUp ? "/privacy?from=auth" : "/privacy?from=auth&mode=sign-in"}>Privacy Policy</Link>.
+        By continuing, you agree to the <Link prefetch href="/terms?from=auth">Terms of Service</Link>{" "}
+        and acknowledge the <Link prefetch href="/privacy?from=auth">Privacy Policy</Link>.
       </p>
     </div>
   )
 }
-
 
 function GoogleMark() {
   return (

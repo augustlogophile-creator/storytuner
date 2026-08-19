@@ -83,6 +83,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
   const [isFlipping, setIsFlippingState] = useState(false)
   const [isOpeningCover, setIsOpeningCoverState] = useState(false)
   const openingCoverRef = useRef(false)
+  const [coverOpened, setCoverOpened] = useState(page > 0)
   const [bookSize, setBookSize] = useState({ width: 448, height: 800 })
   const lastPage = pages.length - 1
 
@@ -167,6 +168,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
     if (openingCoverRef.current) setOpeningCover(false)
     commitPendingPage()
     applyDeferredBookSize()
+    programmaticRef.current = false
+    requestedTargetRef.current = null
 
     if (flipFallbackRef.current) {
       clearTimeout(flipFallbackRef.current)
@@ -367,7 +370,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       const synced = Number(flip?.getCurrentPageIndex?.() ?? target)
       currentPageRef.current = synced
       requestedTargetRef.current = null
-      ignoreForwardFlipUntilRef.current = Date.now() + 220
+      ignoreForwardFlipUntilRef.current = Date.now() + 520
       programmaticRef.current = false
       pendingCommittedPageRef.current = null
       if (openingCoverRef.current) setOpeningCover(false)
@@ -413,8 +416,12 @@ const BookSlider = forwardRef<BookSliderHandle, {
     setFlipping(true)
 
     const isOpeningCoverTurn = current === 0 && nextPage === 1
-    const flipDuration = isOpeningCoverTurn ? 900 : 300
-    if (isOpeningCoverTurn) setOpeningCover(true)
+    const flipDuration = isOpeningCoverTurn ? 650 : 360
+    if (isOpeningCoverTurn) {
+      setCoverOpened(false)
+      setOpeningCover(true)
+    }
+    if (nextPage === 0) setCoverOpened(false)
 
     try {
       if (nextPage === current + 1) flip.flipNext("bottom")
@@ -440,6 +447,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         "story-book-wrap book-pageflip-shell",
         isFlipping && "is-flipping",
         isOpeningCover && "is-opening-cover",
+        coverOpened && "has-opened-cover",
         className,
       )}
       data-page={page}
@@ -462,7 +470,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={page === 0 ? 900 : 300}
+        flippingTime={page === 0 ? 650 : 360}
         usePortrait
         startZIndex={10}
         autoSize={false}
@@ -491,28 +499,41 @@ const BookSlider = forwardRef<BookSliderHandle, {
           const nextPage = Number(event?.data ?? 0)
           const previousPage = currentPageRef.current
           const now = Date.now()
+          const requested = requestedTargetRef.current
+
+          // A programmatic Continue/back action is allowed to land on exactly
+          // one destination. react-pageflip can occasionally emit a second flip
+          // event from the same pointer sequence; reject that event instead of
+          // letting it skip a page. Keep this guard alive until visual settle.
+          if (programmaticRef.current && requested !== null && nextPage !== requested) {
+            api()?.turnToPage(requested)
+            pendingTargetRef.current = null
+            queueVisualSettle()
+            return
+          }
+
+          // A physical page gesture may only move one sheet at a time. This is
+          // a second independent anti-skip guard for noisy mobile pointer events.
+          if (!programmaticRef.current && Math.abs(nextPage - previousPage) > 1) {
+            api()?.turnToPage(previousPage)
+            pendingTargetRef.current = null
+            queueVisualSettle()
+            return
+          }
 
           // After a Continue/back command settles, ignore any stray second
-          // forward flip emitted by the same pointer sequence. This prevents a
-          // newly-landed page, especially the magnifying-glass page, from being
-          // skipped before the user interacts with it.
+          // forward flip emitted by the same pointer sequence.
           if (!programmaticRef.current && nextPage > previousPage && now < ignoreForwardFlipUntilRef.current) {
             api()?.turnToPage(previousPage)
-            requestedTargetRef.current = null
             pendingTargetRef.current = null
-            if (openingCoverRef.current) setOpeningCover(false)
             queueVisualSettle()
             return
           }
 
           // Required onboarding questions cannot be bypassed with a drag.
-          // Ordinary taps never enter the page-flip engine at all.
           if (!programmaticRef.current && nextPage > previousPage && !canGoNextRef.current) {
-            const flip = api()
-            flip?.turnToPage(previousPage)
-            requestedTargetRef.current = null
+            api()?.turnToPage(previousPage)
             pendingTargetRef.current = null
-            if (openingCoverRef.current) setOpeningCover(false)
             queueVisualSettle()
             return
           }
@@ -520,17 +541,18 @@ const BookSlider = forwardRef<BookSliderHandle, {
           currentPageRef.current = nextPage
           pendingCommittedPageRef.current = nextPage
 
+          if (previousPage === 0 && nextPage > 0) setCoverOpened(true)
+          if (nextPage === 0) setCoverOpened(false)
+
           if (!programmaticRef.current && nextPage !== previousPage) {
             onTurn?.(nextPage > previousPage ? "next" : "previous")
           } else if (programmaticRef.current && nextPage !== previousPage) {
-            ignoreForwardFlipUntilRef.current = Date.now() + 220
+            ignoreForwardFlipUntilRef.current = Date.now() + 520
           }
-          programmaticRef.current = false
-          requestedTargetRef.current = null
 
-          // Some browsers report the settled state just before onFlip. If that
-          // happens, finish on the next clean paint rather than waiting for a
-          // state event that already fired.
+          // Do not clear programmaticRef/requestedTarget here. Keeping them until
+          // the page has visually settled is what prevents duplicate onFlip
+          // callbacks from turning a second sheet.
           if (!isFlippingRef.current) queueVisualSettle()
         }}
       >
