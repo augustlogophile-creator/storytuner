@@ -247,7 +247,14 @@ const BookSlider = forwardRef<BookSliderHandle, {
   return (
     <div
       ref={shellRef}
-      className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
+      data-page={page}
+      className={cn(
+        "story-book-wrap book-pageflip-shell",
+        isFlipping && "is-flipping",
+        isFlipping && page === 0 && requestedTargetRef.current === 1 && "is-opening-cover",
+        page > 0 && "has-opened-cover",
+        className,
+      )}
     >
       <HTMLFlipBook
         key={`${bookSize.width}-${bookSize.height}`}
@@ -263,11 +270,11 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={page === 0 ? 760 : 300}
+        flippingTime={page === 0 ? 620 : 320}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.28}
+        maxShadowOpacity={0.18}
         showCover
         mobileScrollSupport
         clickEventForward
