@@ -1589,9 +1589,7 @@ label:has(input[type="radio"]):active {
 }
 
 .book-intro-canvas.is-cover {
-  /* The hardcover itself supplies the dark surface. Keeping the stage paper-colored
-     prevents a one-frame black perimeter from showing after the cover lands. */
-  background: #fffefa;
+  background: #080808;
 }
 
 .story-book-wrap {

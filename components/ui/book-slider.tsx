@@ -416,7 +416,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
     setFlipping(true)
 
     const isOpeningCoverTurn = current === 0 && nextPage === 1
-    const flipDuration = isOpeningCoverTurn ? 780 : 420
+    const flipDuration = isOpeningCoverTurn ? 650 : 360
     if (isOpeningCoverTurn) {
       setCoverOpened(false)
       setOpeningCover(true)
@@ -469,12 +469,12 @@ const BookSlider = forwardRef<BookSliderHandle, {
         maxWidth={bookSize.width}
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
-        drawShadow={page !== 0}
-        flippingTime={page === 0 ? 780 : 420}
+        drawShadow
+        flippingTime={page === 0 ? 650 : 360}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={page === 0 ? 0 : 0.24}
+        maxShadowOpacity={page === 0 ? 0.20 : 0.38}
         showCover
         mobileScrollSupport
         clickEventForward
