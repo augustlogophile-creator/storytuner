@@ -1589,7 +1589,9 @@ label:has(input[type="radio"]):active {
 }
 
 .book-intro-canvas.is-cover {
-  background: #080808;
+  /* The hardcover itself supplies the dark surface. Keeping the stage paper-colored
+     prevents a one-frame black perimeter from showing after the cover lands. */
+  background: #fffefa;
 }
 
 .story-book-wrap {
@@ -4282,4 +4284,38 @@ body {
 .book-cover-open:active,
 .book-start-link:active {
   transform: translateY(1px) scale(.985) !important;
+}
+
+
+/* August 19: final hardcover motion pass. The library shadow is disabled for the
+   hard cover; a diffuse moving shadow follows the transformed cover instead, which
+   avoids the blocky shade bands and the split-second black perimeter after landing. */
+.story-book-wrap.is-opening-cover .stf__item {
+  filter:
+    drop-shadow(-5px 8px 12px rgba(38, 33, 28, .11))
+    drop-shadow(-12px 18px 28px rgba(38, 33, 28, .055)) !important;
+}
+
+.story-book-wrap.is-opening-cover .story-book-cover-inner {
+  box-shadow:
+    inset 16px 0 28px rgba(255,255,255,.018),
+    inset -10px 0 18px rgba(0,0,0,.22) !important;
+}
+
+.book-pageflip-shell .stf__parent,
+.book-pageflip-shell .stf__wrapper,
+.book-pageflip-shell .stf__block,
+.book-pageflip-shell .stf__item,
+.story-pageflip {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none;
+}
+
+/* Keep the revealed paper stable while the cover is still completing its final
+   paint frames. No dark stage, focus edge, or library outline may peek around it. */
+.story-book-wrap.has-opened-cover:not(.is-flipping),
+.story-book-wrap.has-opened-cover:not(.is-flipping) .stf__parent,
+.story-book-wrap.has-opened-cover:not(.is-flipping) .stf__wrapper {
+  background: #fffefa !important;
 }

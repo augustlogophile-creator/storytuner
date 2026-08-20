@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react"
-import { Check, ChevronDown, ChevronRight, Cloud, CloudOff, LoaderCircle, LogOut, LockKeyhole, Trash2 } from "lucide-react"
+import { Bell, Check, ChevronDown, ChevronRight, Cloud, CloudOff, LoaderCircle, LogOut, LockKeyhole, Trash2 } from "lucide-react"
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useApp } from "@/lib/app-state"
+import { useNotificationUnread } from "@/components/notifications/use-notification-unread"
 import { validateDisplayName } from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
 import { clearMedia } from "@/lib/media-store"
@@ -16,6 +17,7 @@ type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | 
 export function SettingsClient({ username }: { username: string }) {
   const router = useRouter()
   const { state, syncStatus, updateSettings, updateProfileName, deleteAllRecordings, resetAll } = useApp()
+  const notificationsUnread = useNotificationUnread({ userId: state.accountOwnerId, streak: state.streak, activityDates: state.activityDates })
   const [displayName, setDisplayName] = useState(state.profile.name.slice(0, 15))
   const [accountEmail, setAccountEmail] = useState("")
   const [dialog, setDialog] = useState<DialogKind>(null)
@@ -212,6 +214,19 @@ export function SettingsClient({ username }: { username: string }) {
       </Section>
 
       <Section title="Notifications">
+        <Link href="/notifications" prefetch className="group flex items-center justify-between gap-4 py-4 first:pt-1">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
+              <Bell className="h-4 w-4" />
+              {notificationsUnread && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-brand" aria-label="New notifications" />}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Notification center</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">See replies, likes, and streak updates in one place.</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </Link>
         <Row title="Tone" detail="Choose how future practice reminders are phrased.">
           <SelectControl
             value={state.settings.tone}

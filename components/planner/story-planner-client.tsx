@@ -11,6 +11,7 @@ import {
   Download,
   FileText,
   Lightbulb,
+  MapPin,
   ListChecks,
   Map,
   Mic2,
@@ -133,16 +134,11 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
-      <div className="flex items-center justify-between gap-3">
-        {fromStudio ? (
-          <Link href="/studio" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-            <ArrowLeft className="h-4 w-4" /> Studio
-          </Link>
-        ) : <span />}
-        <Link href="/planner/saved" prefetch className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-foreground">
-          <FileText className="h-3.5 w-3.5" /> Saved plans
+      {fromStudio ? (
+        <Link href="/studio" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" /> Studio
         </Link>
-      </div>
+      ) : <span />}
       <header className="rounded-[2rem] bg-primary p-6 text-primary-foreground">
         <div className="flex items-start gap-4">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
@@ -158,6 +154,21 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         </div>
       </header>
 
+      <Link
+        href="/planner/saved"
+        prefetch
+        className="group flex items-center gap-3 rounded-[1.45rem] border border-brand/30 bg-brand-soft/65 px-4 py-3.5 text-left shadow-[0_8px_24px_rgba(57,104,158,0.08)] transition active:scale-[0.995]"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
+          <FileText className="h-4.5 w-4.5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-foreground">Saved plans</span>
+          <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Review past plans or bring one back into Studio.</span>
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 text-brand transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
       {!building && !plan && (
         <section>
           <div className="mb-4 flex items-end justify-between gap-4">
@@ -171,7 +182,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
           <div className="flex flex-col gap-4">
             <PlannerField
               number={1}
-              icon={Target}
+              icon={MapPin}
               title="Where will you tell this story?"
               help="Name the audience and situation, such as an interview, class, difficult conversation, speech, or casual conversation."
               value={form.audienceContext}

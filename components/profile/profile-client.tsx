@@ -4,6 +4,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import {
   BarChart3,
+  Bell,
   ChevronRight,
   Mail,
   ScrollText,
@@ -15,9 +16,11 @@ import {
 import { CountUp } from "@/components/ui/count-up"
 import { goalLabels, type StoryGoal } from "@/lib/onboarding-preferences"
 import { useApp } from "@/lib/app-state"
+import { useNotificationUnread } from "@/components/notifications/use-notification-unread"
 
 export function ProfileClient({ moderatorRole, displayName, username }: { moderatorRole: "moderator" | "admin" | null; displayName: string; username: string }) {
   const { state } = useApp()
+  const notificationsUnread = useNotificationUnread({ userId: state.accountOwnerId, streak: state.streak, activityDates: state.activityDates })
   const name = displayName.trim() || state.profile.name || "Storyteller"
   const goal = state.onboardingPreferences.goal
 
@@ -60,6 +63,8 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       <section>
         <SectionLabel>Tellwise</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
+          <ProfileRow href="/notifications" icon={Bell} title="Notifications" detail="Replies, likes, and streak updates" unread={notificationsUnread} />
+          <Divider />
           <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
           <Divider />
           <ProfileRow href="/shop" icon={ShoppingBag} title="Shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
@@ -133,12 +138,14 @@ function ProfileRow({
   title,
   detail,
   value,
+  unread = false,
 }: {
   href: string
   icon: typeof Settings
   title: string
   detail: string
   value?: string
+  unread?: boolean
 }) {
   return (
     <Link prefetch href={href} className="group flex items-center gap-3 py-[0.61rem]">
@@ -150,6 +157,7 @@ function ProfileRow({
         <span className="mt-0.5 block truncate text-[0.66rem] text-muted-foreground">{detail}</span>
       </span>
       {value && <span className="shrink-0 text-[0.69rem] font-semibold text-foreground">{value}</span>}
+      {unread && <span className="h-2 w-2 shrink-0 rounded-full bg-brand shadow-[0_0_0_3px_rgba(75,125,181,0.10)]" aria-label="New notifications" />}
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" strokeWidth={1.8} />
     </Link>
   )
