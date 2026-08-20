@@ -3,48 +3,46 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowLeft,
+  Camera,
+  ChevronRight,
   Mic2,
   PenLine,
   Search,
-  SquarePen,
   Square,
+  SquarePen,
   Trash2,
+  Video,
   X,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
-  deleteCloudRecording,
-  uploadAndTranscribeRecording,
-  type CloudRecordingRef,
-  type CloudTranscriptionStage,
-} from "@/lib/recording-cloud"
+  createJournalMediaEntry,
+  createSignedJournalMediaUrl,
+  deleteJournalMedia,
+  type JournalMediaEntry,
+  type JournalMediaKind,
+} from "@/lib/journal-media"
 
-type TextEntry = {
-  id: string
-  user_id: string
-  title: string
-  body: string
-  created_at: string
-  updated_at: string
-}
+type JournalEntry = JournalMediaEntry
 
 type DraftSeed = {
   title?: string
   body?: string
 }
 
-const JOURNAL_VOICE_MAX_SECONDS = 5 * 60
+const AUDIO_MAX_SECONDS = 5 * 60
+const VIDEO_MAX_SECONDS = 3 * 60
 
 export function JournalClient() {
-  const [entries, setEntries] = useState<TextEntry[]>([])
+  const [entries, setEntries] = useState<JournalEntry[]>([])
   const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [composerOpen, setComposerOpen] = useState(false)
-  const [voiceOpen, setVoiceOpen] = useState(false)
-  const [editing, setEditing] = useState<TextEntry | null>(null)
+  const [editing, setEditing] = useState<JournalEntry | null>(null)
   const [draftSeed, setDraftSeed] = useState<DraftSeed | null>(null)
-  const [detail, setDetail] = useState<TextEntry | null>(null)
+  const [detail, setDetail] = useState<JournalEntry | null>(null)
+  const [captureKind, setCaptureKind] = useState<JournalMediaKind | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -53,16 +51,16 @@ export function JournalClient() {
       const supabase = createClient()
       const { data, error: loadError } = await supabase
         .from("journal_entries")
-        .select("id,user_id,title,body,created_at,updated_at")
+        .select("id,user_id,title,body,entry_type,media_storage_path,media_content_type,media_size_bytes,media_duration_seconds,created_at,updated_at")
         .order("updated_at", { ascending: false })
-        .limit(300)
+        .limit(400)
 
       if (loadError) throw new Error(loadError.message)
-      setEntries((data ?? []) as TextEntry[])
+      setEntries((data ?? []) as JournalEntry[])
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Your Journal could not be loaded."
-      if (message.toLowerCase().includes("journal_entries")) {
-        setError("Journal needs its Supabase migration before notes can be saved.")
+      if (message.toLowerCase().includes("journal_entries") || message.toLowerCase().includes("entry_type")) {
+        setError("Journal needs its latest Supabase migration before notes and media can be saved.")
       } else {
         setError(message)
       }
@@ -78,8 +76,10 @@ export function JournalClient() {
   const visibleEntries = useMemo(() => {
     const normalized = query.trim().toLowerCase()
     if (!normalized) return entries
-    return entries.filter((entry) => `${entry.title} ${entry.body}`.toLowerCase().includes(normalized))
+    return entries.filter((entry) => `${entry.title} ${entry.body} ${entry.entry_type}`.toLowerCase().includes(normalized))
   }, [entries, query])
+
+  const groups = useMemo(() => groupEntries(visibleEntries, Boolean(query.trim())), [visibleEntries, query])
 
   function startNewText(seed?: DraftSeed) {
     setEditing(null)
@@ -87,7 +87,7 @@ export function JournalClient() {
     setComposerOpen(true)
   }
 
-  function editEntry(entry: TextEntry) {
+  function editEntry(entry: JournalEntry) {
     setDetail(null)
     setEditing(entry)
     setDraftSeed(null)
@@ -95,85 +95,87 @@ export function JournalClient() {
   }
 
   return (
-    <div className="journal-page min-h-full pb-4">
-      <header className="journal-header">
-        <p className="journal-running-head">Tellwise</p>
-        <h1>Journal</h1>
-        <p className="journal-deck">A quiet place for fragments, observations, and ideas you do not want to lose.</p>
+    <div className="journal-page min-h-full">
+      <header className="journal-header journal-header-notes">
+        <div>
+          <p className="journal-running-head">Tellwise</p>
+          <h1>Journal</h1>
+        </div>
+        <span className="journal-count">{entries.length}</span>
       </header>
-
-      <label className="journal-search" data-book-no-turn="true">
-        <Search aria-hidden="true" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search notes"
-          aria-label="Search Journal notes"
-          autoComplete="off"
-          spellCheck="false"
-        />
-      </label>
-
-      <div className="journal-section-heading">
-        <span>{query ? "Search results" : "Notes"}</span>
-        <span>{visibleEntries.length}</span>
-      </div>
+      <p className="journal-deck journal-deck-notes">Ideas, fragments, voice notes, and video moments. Private by default.</p>
 
       {error && <p className="journal-error">{error}</p>}
 
-      <section className="journal-list" aria-busy={loading}>
+      <section className="journal-groups" aria-busy={loading}>
         {loading ? (
           <>
             <JournalSkeleton />
             <JournalSkeleton />
             <JournalSkeleton />
           </>
-        ) : visibleEntries.length ? (
-          visibleEntries.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              className="journal-row"
-              onClick={() => setDetail(entry)}
-            >
-              <span className="journal-row-copy">
-                <span className="journal-row-heading">
-                  <strong>{entry.title}</strong>
-                  <time>{journalDate(entry.updated_at)}</time>
-                </span>
-                <span className="journal-row-preview">{compactPreview(entry.body)}</span>
-              </span>
-            </button>
+        ) : groups.length ? (
+          groups.map((group) => (
+            <section key={group.label} className="journal-month-section">
+              <div className="journal-month-heading">
+                <h2>{group.label}</h2>
+                <span>{group.entries.length}</span>
+              </div>
+              <div className="journal-notes-group">
+                {group.entries.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    className="journal-row"
+                    onClick={() => setDetail(entry)}
+                  >
+                    <span className="journal-row-main">
+                      <strong>{entry.title}</strong>
+                      <span className="journal-row-meta">
+                        <time>{journalDate(entry.updated_at)}</time>
+                        <span>{entryPreview(entry)}</span>
+                      </span>
+                    </span>
+                    {entry.entry_type !== "text" && (
+                      <span className={`journal-row-kind is-${entry.entry_type}`}>
+                        {entry.entry_type === "audio" ? <Mic2 /> : <Video />}
+                        {entry.entry_type}
+                      </span>
+                    )}
+                    <ChevronRight className="journal-row-chevron" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            </section>
           ))
         ) : (
-          <div className="journal-empty">
+          <div className="journal-empty journal-empty-notes">
             <PenLine className="h-5 w-5" strokeWidth={1.5} />
-            <h2>{query ? "Nothing found" : "Start with one detail"}</h2>
-            <p>
-              {query
-                ? "Try a different word or phrase."
-                : "Write the line, image, memory, or thought now. You can decide what it becomes later."}
-            </p>
+            <h2>{query ? "Nothing found" : "Your first note starts here"}</h2>
+            <p>{query ? "Try a different search." : "Write a thought, record your voice, or capture a short video before the idea disappears."}</p>
           </div>
         )}
       </section>
 
-      <div className="journal-compose-bar" aria-label="Journal creation tools">
-        <span className="journal-compose-caption">Private by default</span>
-        <button
-          type="button"
-          className="journal-compose-action is-voice"
-          onClick={() => setVoiceOpen(true)}
-          aria-label="Start a voice note"
-        >
+      <div className="journal-bottom-dock" aria-label="Journal tools">
+        <label className="journal-search journal-search-bottom" data-book-no-turn="true">
+          <Search aria-hidden="true" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search"
+            aria-label="Search Journal notes"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </label>
+        <button type="button" className="journal-dock-button" onClick={() => setCaptureKind("audio")} aria-label="Record an audio note">
           <Mic2 />
         </button>
-        <button
-          type="button"
-          className="journal-compose-action is-write"
-          onClick={() => startNewText()}
-          aria-label="Write a new note"
-        >
+        <button type="button" className="journal-dock-button" onClick={() => setCaptureKind("video")} aria-label="Record a video note">
+          <Camera />
+        </button>
+        <button type="button" className="journal-dock-button is-compose" onClick={() => startNewText()} aria-label="Write a new note">
           <SquarePen />
         </button>
       </div>
@@ -192,12 +194,14 @@ export function JournalClient() {
         />
       )}
 
-      {voiceOpen && (
-        <VoiceCapture
-          onClose={() => setVoiceOpen(false)}
-          onTranscript={(transcript) => {
-            setVoiceOpen(false)
-            startNewText({ body: transcript, title: titleFromBody(transcript) })
+      {captureKind && (
+        <MediaCapture
+          kind={captureKind}
+          onClose={() => setCaptureKind(null)}
+          onSaved={async (entry) => {
+            setCaptureKind(null)
+            await load()
+            setDetail(entry)
           }}
         />
       )}
@@ -223,7 +227,7 @@ function TextComposer({
   initialBody,
   onClose,
 }: {
-  entry: TextEntry | null
+  entry: JournalEntry | null
   initialTitle: string
   initialBody: string
   onClose: () => void | Promise<void>
@@ -232,7 +236,6 @@ function TextComposer({
   const [body, setBody] = useState(entry?.body ?? initialBody)
   const [status, setStatus] = useState<"saved" | "saving" | "unsaved" | "error">(entry ? "saved" : "unsaved")
   const [error, setError] = useState("")
-  const [voiceOpen, setVoiceOpen] = useState(false)
   const idRef = useRef(entry?.id ?? "")
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savingRef = useRef(false)
@@ -273,9 +276,7 @@ function TextComposer({
 
     setStatus("unsaved")
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = setTimeout(() => {
-      void saveNow(title, body)
-    }, 900)
+    saveTimerRef.current = setTimeout(() => void saveNow(title, body), 850)
 
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -319,7 +320,7 @@ function TextComposer({
       } else {
         const { data, error: insertError } = await supabase
           .from("journal_entries")
-          .insert({ user_id: authData.user.id, title: cleanTitle, body: cleanBody })
+          .insert({ user_id: authData.user.id, title: cleanTitle, body: cleanBody, entry_type: "text" })
           .select("id")
           .single<{ id: string }>()
         if (insertError || !data?.id) throw new Error(insertError?.message || "This note could not be created.")
@@ -351,19 +352,17 @@ function TextComposer({
 
   async function closeEditor() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 40))
+    while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 30))
     if (latestBodyRef.current.trim()) await saveNow(latestTitleRef.current, latestBodyRef.current)
-    while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 40))
+    while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 30))
     await onClose()
   }
 
   return (
-    <div className="journal-overlay" role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
-      <article className="journal-editor">
-        <div className="journal-editor-top">
-          <button type="button" onClick={() => void closeEditor()} aria-label="Close note">
-            <X />
-          </button>
+    <div className="journal-note-sheet-overlay" role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
+      <article className="journal-editor journal-editor-notes">
+        <div className="journal-editor-top journal-editor-top-notes">
+          <button type="button" onClick={() => void closeEditor()} aria-label="Back"><ArrowLeft /></button>
           <span className={`journal-save-status is-${status}`}>
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
           </span>
@@ -382,54 +381,40 @@ function TextComposer({
           className="journal-body-input"
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          placeholder="Write what you noticed…"
+          placeholder="Start writing…"
           maxLength={20000}
           autoFocus={Boolean(initialBody)}
         />
-
         <div className="journal-editor-foot">
           <span>{body.length.toLocaleString()} characters</span>
-          <button type="button" onClick={() => setVoiceOpen(true)}>
-            <Mic2 /> Add by voice
-          </button>
+          <span>Autosaves</span>
         </div>
         {error && <p className="journal-error mt-3">{error}</p>}
       </article>
-
-      {voiceOpen && (
-        <VoiceCapture
-          nested
-          onClose={() => setVoiceOpen(false)}
-          onTranscript={(transcript) => {
-            setVoiceOpen(false)
-            setBody((current) => `${current}${current.trim() ? "\n\n" : ""}${transcript}`)
-          }}
-        />
-      )}
     </div>
   )
 }
 
-function VoiceCapture({
+function MediaCapture({
+  kind,
   onClose,
-  onTranscript,
-  nested = false,
+  onSaved,
 }: {
+  kind: JournalMediaKind
   onClose: () => void
-  onTranscript: (transcript: string) => void
-  nested?: boolean
+  onSaved: (entry: JournalEntry) => void
 }) {
   const [recording, setRecording] = useState(false)
-  const [processing, setProcessing] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState("")
-  const [stage, setStage] = useState<CloudTranscriptionStage | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const previewRef = useRef<HTMLVideoElement | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAtRef = useRef(0)
-  const pendingCloudRef = useRef<CloudRecordingRef | null>(null)
+  const maxSeconds = kind === "video" ? VIDEO_MAX_SECONDS : AUDIO_MAX_SECONDS
 
   useEffect(() => () => stopTracks(), [])
 
@@ -438,19 +423,29 @@ function VoiceCapture({
     timerRef.current = null
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
+    if (previewRef.current) previewRef.current.srcObject = null
   }
 
   async function startRecording() {
-    if (processing || recording) return
+    if (recording || saving) return
     setError("")
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-        throw new Error("Voice notes are not available in this browser.")
+        throw new Error("Recording is not available in this browser.")
       }
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: kind === "video" ? { facingMode: "user" } : false,
+      })
       streamRef.current = stream
+      if (kind === "video" && previewRef.current) {
+        previewRef.current.srcObject = stream
+        await previewRef.current.play().catch(() => {})
+      }
+
       chunksRef.current = []
-      const recorder = new MediaRecorder(stream)
+      const preferred = preferredMime(kind)
+      const recorder = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream)
       recorderRef.current = recorder
       startedAtRef.current = Date.now()
       setElapsed(0)
@@ -458,21 +453,21 @@ function VoiceCapture({
         if (event.data.size > 0) chunksRef.current.push(event.data)
       }
       recorder.onstop = () => {
-        stopTracks()
         const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" })
-        void transcribe(blob, seconds)
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || (kind === "video" ? "video/webm" : "audio/webm") })
+        stopTracks()
+        void saveRecording(blob, seconds)
       }
       recorder.start(500)
       setRecording(true)
       timerRef.current = setInterval(() => {
         const next = Math.floor((Date.now() - startedAtRef.current) / 1000)
         setElapsed(next)
-        if (next >= JOURNAL_VOICE_MAX_SECONDS) stopRecording()
+        if (next >= maxSeconds) stopRecording()
       }, 250)
     } catch (caught) {
       stopTracks()
-      setError(caught instanceof Error ? caught.message : "Microphone access is needed for a voice note.")
+      setError(caught instanceof Error ? caught.message : `${kind === "video" ? "Camera" : "Microphone"} access is needed.`)
     }
   }
 
@@ -483,77 +478,46 @@ function VoiceCapture({
     recorder.stop()
   }
 
-  async function transcribe(blob: Blob, seconds: number) {
-    if (!blob.size) {
-      setError("No audio was captured. Try again.")
-      return
-    }
-    setProcessing(true)
-    setStage("preparing")
-    pendingCloudRef.current = null
+  async function saveRecording(blob: Blob, seconds: number) {
+    setSaving(true)
+    setError("")
     try {
-      const result = await uploadAndTranscribeRecording({
-        blob,
-        durationSeconds: seconds,
-        onCreated: (cloudRef) => {
-          pendingCloudRef.current = cloudRef
-        },
-        onStage: setStage,
-      })
-      const transcript = result.transcript.trim()
-      if (!transcript) throw new Error("Tellwise could not hear enough to make a note.")
-      if (pendingCloudRef.current) {
-        await deleteCloudRecording(pendingCloudRef.current)
-        pendingCloudRef.current = null
-      }
-      onTranscript(transcript)
+      const created = await createJournalMediaEntry({ kind, blob, durationSeconds: seconds })
+      onSaved(created)
     } catch (caught) {
-      if (pendingCloudRef.current) {
-        try {
-          await deleteCloudRecording(pendingCloudRef.current)
-        } catch {}
-        pendingCloudRef.current = null
-      }
-      setError(caught instanceof Error ? caught.message : "That voice note could not be transcribed.")
+      setError(caught instanceof Error ? caught.message : `That ${kind} note could not be saved.`)
     } finally {
-      setProcessing(false)
-      setStage(null)
+      setSaving(false)
     }
   }
 
   return (
-    <div className={nested ? "journal-voice-nested" : "journal-overlay"} role="dialog" aria-modal="true" aria-label="Voice note">
-      <section className="journal-voice-panel">
-        <div className="journal-editor-top">
-          <button type="button" onClick={onClose} disabled={processing || recording} aria-label="Close voice note"><X /></button>
-          <span>Voice note</span>
+    <div className="journal-overlay journal-overlay-blue" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
+      <section className="journal-capture-panel">
+        <div className="journal-editor-top journal-editor-top-notes">
+          <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Close"><X /></button>
+          <span>{kind === "video" ? "Video note" : "Audio note"}</span>
           <span />
         </div>
 
-        <div className={recording ? "journal-voice-orb is-recording" : "journal-voice-orb"}>
-          <Mic2 />
-        </div>
-        <h2>{processing ? "Turning your words into a note…" : recording ? "Listening" : "Say it before you lose it"}</h2>
-        <p>
-          {processing
-            ? stageLabel(stage)
-            : recording
-              ? `Recording · ${duration(elapsed)} of 5:00`
-              : "Record a quick thought. Tellwise will transcribe it into this Journal and discard the temporary audio copy."}
-        </p>
+        {kind === "video" ? (
+          <div className="journal-video-preview-wrap">
+            <video ref={previewRef} muted playsInline className="journal-video-preview" />
+            {!recording && !saving && <Camera className="journal-video-placeholder" />}
+          </div>
+        ) : (
+          <div className={recording ? "journal-record-orb is-recording" : "journal-record-orb"}><Mic2 /></div>
+        )}
+
+        <h2>{saving ? "Saving privately…" : recording ? "Recording" : kind === "video" ? "Capture a moment" : "Record a thought"}</h2>
+        <p>{saving ? "Your media stays private in your Journal." : recording ? `${duration(elapsed)} of ${duration(maxSeconds)}` : "Use this like a pocket notebook. Keep it short, private, and easy to find later."}</p>
 
         {error && <p className="journal-error">{error}</p>}
 
-        <div className="journal-voice-actions">
-          {!recording && !processing && (
-            <button type="button" className="is-primary" onClick={() => void startRecording()}><Mic2 /> Start recording</button>
-          )}
-          {recording && (
-            <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop and transcribe</button>
-          )}
-          {processing && (
-            <div className="journal-processing-line"><span />Processing privately</div>
-          )}
+        <div className="journal-capture-actions">
+          {!recording && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start</button>}
+          {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop and save</button>}
+          {saving && <div className="journal-processing-line"><span />Saving privately</div>}
         </div>
       </section>
     </div>
@@ -566,18 +530,41 @@ function EntryDetail({
   onEdit,
   onDeleted,
 }: {
-  entry: TextEntry
+  entry: JournalEntry
   onClose: () => void
   onEdit: () => void
   onDeleted: () => void | Promise<void>
 }) {
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
+  const [mediaUrl, setMediaUrl] = useState("")
+  const [mediaLoading, setMediaLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!entry.media_storage_path) {
+      setMediaUrl("")
+      return
+    }
+    setMediaLoading(true)
+    void createSignedJournalMediaUrl(entry.media_storage_path)
+      .then((url) => {
+        if (!cancelled) setMediaUrl(url)
+      })
+      .catch((caught) => {
+        if (!cancelled) setError(caught instanceof Error ? caught.message : "This private recording could not be opened.")
+      })
+      .finally(() => {
+        if (!cancelled) setMediaLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [entry.media_storage_path])
 
   async function deleteEntry() {
     setDeleting(true)
     setError("")
     try {
+      if (entry.media_storage_path) await deleteJournalMedia(entry.media_storage_path)
       const supabase = createClient()
       const { error: deleteError } = await supabase.from("journal_entries").delete().eq("id", entry.id)
       if (deleteError) throw new Error(deleteError.message)
@@ -590,21 +577,31 @@ function EntryDetail({
   }
 
   return (
-    <div className="journal-overlay" role="dialog" aria-modal="true" aria-label="Journal note">
-      <article className="journal-detail">
-        <div className="journal-detail-top">
-          <button type="button" onClick={onClose} aria-label="Close note"><ArrowLeft /></button>
+    <div className="journal-note-sheet-overlay" role="dialog" aria-modal="true" aria-label="Journal note">
+      <article className="journal-detail journal-detail-notes">
+        <div className="journal-detail-top journal-editor-top-notes">
+          <button type="button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
           <span>Journal</span>
           <button type="button" onClick={onEdit}>Edit</button>
         </div>
         <p className="journal-entry-date">{journalLongDate(entry.updated_at)}</p>
         <h2>{entry.title}</h2>
+
+        {entry.entry_type === "audio" && (
+          <div className="journal-media-player is-audio">
+            {mediaLoading ? <span>Opening private audio…</span> : mediaUrl ? <audio controls preload="metadata" src={mediaUrl} /> : <span>Audio unavailable.</span>}
+          </div>
+        )}
+        {entry.entry_type === "video" && (
+          <div className="journal-media-player is-video">
+            {mediaLoading ? <span>Opening private video…</span> : mediaUrl ? <video controls playsInline preload="metadata" src={mediaUrl} /> : <span>Video unavailable.</span>}
+          </div>
+        )}
+
         <p className="journal-detail-body whitespace-pre-wrap">{entry.body}</p>
         <div className="journal-detail-actions">
-          <button type="button" onClick={onEdit}><PenLine /> Edit note</button>
-          <button type="button" className="is-danger" disabled={deleting} onClick={() => void deleteEntry()}>
-            <Trash2 /> {deleting ? "Deleting…" : "Delete"}
-          </button>
+          <button type="button" onClick={onEdit}><PenLine /> Edit</button>
+          <button type="button" className="is-danger" disabled={deleting} onClick={() => void deleteEntry()}><Trash2 /> {deleting ? "Deleting…" : "Delete"}</button>
         </div>
         {error && <p className="journal-error mt-3">{error}</p>}
       </article>
@@ -613,11 +610,44 @@ function EntryDetail({
 }
 
 function JournalSkeleton() {
-  return <div className="journal-row journal-row-skeleton" aria-hidden="true" />
+  return <div className="journal-notes-group journal-skeleton-group" aria-hidden="true"><div className="journal-row" /><div className="journal-row" /></div>
 }
 
-function compactPreview(value: string) {
-  return value.replace(/\s+/g, " ").trim().slice(0, 150) || "Untitled note"
+function groupEntries(entries: JournalEntry[], searching: boolean) {
+  if (searching) return entries.length ? [{ label: "Search results", entries }] : []
+
+  const now = new Date()
+  const cutoff = new Date(now)
+  cutoff.setDate(now.getDate() - 30)
+  const groups: { label: string; entries: JournalEntry[] }[] = []
+  const recent: JournalEntry[] = []
+  const older = new Map<string, JournalEntry[]>()
+
+  for (const entry of entries) {
+    const date = new Date(entry.updated_at)
+    if (date >= cutoff) {
+      recent.push(entry)
+      continue
+    }
+    const label = date.getFullYear() === now.getFullYear()
+      ? date.toLocaleDateString("en-US", { month: "long" })
+      : date.toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    older.set(label, [...(older.get(label) ?? []), entry])
+  }
+
+  if (recent.length) groups.push({ label: "Previous 30 Days", entries: recent })
+  for (const [label, group] of older) groups.push({ label, entries: group })
+  return groups
+}
+
+function entryPreview(entry: JournalEntry) {
+  if (entry.entry_type === "audio") return `${duration(entry.media_duration_seconds ?? 0)}  ${cleanPreview(entry.body, "Audio note")}`
+  if (entry.entry_type === "video") return `${duration(entry.media_duration_seconds ?? 0)}  ${cleanPreview(entry.body, "Video note")}`
+  return cleanPreview(entry.body, "Untitled note")
+}
+
+function cleanPreview(value: string, fallback: string) {
+  return value.replace(/\s+/g, " ").trim().slice(0, 110) || fallback
 }
 
 function titleFromBody(value: string) {
@@ -633,27 +663,20 @@ function duration(seconds: number) {
 function journalDate(value: string) {
   const date = new Date(value)
   const now = new Date()
-  if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
-  }
+  if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase()
   const yesterday = new Date(now)
   yesterday.setDate(now.getDate() - 1)
   if (date.toDateString() === yesterday.toDateString()) return "yesterday"
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toLowerCase()
+  return date.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "2-digit" })
 }
 
 function journalLongDate(value: string) {
-  return new Date(value).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })
+  return new Date(value).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
 }
 
-function stageLabel(stage: CloudTranscriptionStage | null) {
-  if (stage === "uploading") return "Securing the temporary audio…"
-  if (stage === "transcribing") return "Transcribing your thought…"
-  if (stage === "saving") return "Finishing the note…"
-  return "Preparing your voice note…"
+function preferredMime(kind: JournalMediaKind) {
+  const candidates = kind === "video"
+    ? ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
+    : ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"]
+  return candidates.find((candidate) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(candidate)) || ""
 }
