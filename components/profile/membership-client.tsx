@@ -11,6 +11,7 @@ const rows = [
   { feature: "Storytelling lessons", detail: "Each lesson includes Learn, Check, and Practice.", free: "5 full lessons", member: "All 15 lessons" },
   { feature: "Spoken story reviews", detail: "A complete recording, transcript, grade, and revision.", free: "2 total", member: "Unlimited" },
   { feature: "Ask Parch", detail: "Coaching on ideas, structure, language, delivery, scores, and long-term growth.", free: "5 total messages", member: "Unlimited" },
+  { feature: "Private Journal", detail: "Keep private written notes and turn quick voice thoughts into text.", free: "Included", member: "Included" },
   { feature: "Community", detail: "Share stories, respond, and learn from other members.", free: "Locked", member: "Full access" },
   { feature: "AI Story Planner", detail: "Shape your purpose, facts, structure, and delivery before you tell a story.", free: "Locked", member: "10 plans daily" },
 ]

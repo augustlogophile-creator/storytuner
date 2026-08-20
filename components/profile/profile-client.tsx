@@ -62,16 +62,24 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       </section>
 
       <section>
+        <SectionLabel>Your work</SectionLabel>
+        <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
+          <ProfileRow href="/journal" icon={BookOpenText} title="Journal" detail="Private notes, fragments, and voice thoughts" />
+          <Divider />
+          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, streaks, and activity" />
+        </div>
+      </section>
+
+      <section>
+        <SectionLabel>Activity</SectionLabel>
+        <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
+          <ProfileRow href="/notifications" icon={Bell} title="Notifications" detail="Replies, likes, and streak updates" unread={notificationsUnread} />
+        </div>
+      </section>
+
+      <section>
         <SectionLabel>Tellwise</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/journal" icon={BookOpenText} title="Journal" detail="Private notes and every saved recording" />
-          <Divider />
-          <ProfileRow href="/notifications" icon={Bell} title="Notifications" detail="Replies, likes, and streak updates" unread={notificationsUnread} />
-          <Divider />
-          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />
-          <Divider />
-          <ProfileRow href="/shop" icon={ShoppingBag} title="Shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
-          <Divider />
           <ProfileRow
             href="/membership"
             icon={Star}
@@ -80,14 +88,16 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
             value={state.premium ? "Active" : undefined}
           />
           <Divider />
-          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, and activity" />
+          <ProfileRow href="/shop" icon={ShoppingBag} title="Parch shop" detail={`${state.xpBalance.toLocaleString()} XP available`} />
         </div>
       </section>
 
       <section>
-        <SectionLabel>Legal</SectionLabel>
+        <SectionLabel>Account</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/legal?from=profile" icon={ShieldCheck} title="Legal and accessibility" detail="Privacy, terms, accessibility, Community rules, and account deletion" />
+          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Profile, notifications, privacy, and data" />
+          <Divider />
+          <ProfileRow href="/legal?from=profile" icon={ShieldCheck} title="Legal and accessibility" detail="Privacy, terms, Community rules, and accessibility" />
         </div>
       </section>
 

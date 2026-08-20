@@ -1,10 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
-  ArrowRight,
   Check,
   ChevronDown,
   Clipboard,
@@ -56,6 +55,31 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
   const [copied, setCopied] = useState(false)
   const [planExpanded, setPlanExpanded] = useState(false)
   const [planOrigin, setPlanOrigin] = useState<"new" | "saved" | null>(null)
+  const [savedPlans, setSavedPlans] = useState<StoryPlanRecord[]>([])
+  const [savedLoading, setSavedLoading] = useState(true)
+  const [savedError, setSavedError] = useState("")
+  const [savedExpandedId, setSavedExpandedId] = useState<string | null>(null)
+  const [savedCopiedId, setSavedCopiedId] = useState<string | null>(null)
+  const [savedShowAll, setSavedShowAll] = useState(false)
+
+  useEffect(() => {
+    void loadSavedPlans()
+  }, [])
+
+  async function loadSavedPlans() {
+    setSavedLoading(true)
+    setSavedError("")
+    try {
+      const response = await fetch("/api/planner", { cache: "no-store", headers: { Accept: "application/json" } })
+      const payload = await response.json() as { plans?: StoryPlanRecord[]; error?: string }
+      if (!response.ok) throw new Error(payload.error || "Saved plans could not be loaded.")
+      setSavedPlans(payload.plans ?? [])
+    } catch (caught) {
+      setSavedError(caught instanceof Error ? caught.message : "Saved plans could not be loaded.")
+    } finally {
+      setSavedLoading(false)
+    }
+  }
 
   const ready = useMemo(() => (
     form.audienceContext.trim().length >= 3
@@ -86,6 +110,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         throw new Error(payload.error || "Parch could not build the plan.")
       }
       setPlan(payload.plan)
+      setSavedPlans((current) => [payload.plan!, ...current.filter((item) => item.id !== payload.plan!.id)])
       setPlanOrigin("new")
       setPlanExpanded(false)
       window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
@@ -105,21 +130,30 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
     window.setTimeout(() => setCopied(false), 1800)
   }
 
-  function prepareForStudio() {
-    if (!plan) return
+  function preparePlanForStudio(planToUse: StoryPlanRecord) {
     try {
       window.sessionStorage.setItem("storytuner:planner-plan", JSON.stringify({
-        id: plan.id,
-        title: plan.output.title,
-        throughline: secondPersonDirection(plan.output.throughline),
-        opening: secondPersonDirection(plan.output.opening),
-        ending: secondPersonDirection(plan.output.ending),
-        beats: plan.output.beats.map((beat) => ({ ...beat, purpose: secondPersonDirection(beat.purpose), suggestion: secondPersonDirection(beat.suggestion) })),
-        tips: plan.output.deliveryTips.slice(0, 2).map(secondPersonDirection),
+        id: planToUse.id,
+        title: planToUse.output.title,
+        throughline: secondPersonDirection(planToUse.output.throughline),
+        opening: secondPersonDirection(planToUse.output.opening),
+        ending: secondPersonDirection(planToUse.output.ending),
+        beats: planToUse.output.beats.map((beat) => ({ ...beat, purpose: secondPersonDirection(beat.purpose), suggestion: secondPersonDirection(beat.suggestion) })),
+        tips: planToUse.output.deliveryTips.slice(0, 2).map(secondPersonDirection),
       }))
     } catch {
       // The Studio link still works when session storage is unavailable.
     }
+  }
+
+  function prepareForStudio() {
+    if (plan) preparePlanForStudio(plan)
+  }
+
+  async function copySavedPlan(savedPlan: StoryPlanRecord) {
+    await navigator.clipboard.writeText(formatPlan(savedPlan))
+    setSavedCopiedId(savedPlan.id)
+    window.setTimeout(() => setSavedCopiedId((current) => current === savedPlan.id ? null : current), 1600)
   }
 
   function exportPdf() {
@@ -154,20 +188,19 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         </div>
       </header>
 
-      <Link
-        href="/planner/saved"
-        prefetch
-        className="group flex items-center gap-3 rounded-[1.45rem] border border-brand/30 bg-brand-soft/65 px-4 py-3.5 text-left shadow-[0_8px_24px_rgba(57,104,158,0.08)] transition active:scale-[0.995]"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
-          <FileText className="h-4.5 w-4.5" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-foreground">Saved plans</span>
-          <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Review past plans or bring one back into Studio.</span>
-        </span>
-        <ArrowRight className="h-4 w-4 shrink-0 text-brand transition-transform group-hover:translate-x-0.5" />
-      </Link>
+      <SavedPlansInline
+        plans={savedPlans}
+        loading={savedLoading}
+        error={savedError}
+        expandedId={savedExpandedId}
+        copiedId={savedCopiedId}
+        showAll={savedShowAll}
+        onShowAll={() => setSavedShowAll((current) => !current)}
+        onToggle={(id) => setSavedExpandedId((current) => current === id ? null : id)}
+        onCopy={(savedPlan) => void copySavedPlan(savedPlan)}
+        onPractice={preparePlanForStudio}
+        onRetry={() => void loadSavedPlans()}
+      />
 
       {!building && !plan && (
         <section>
@@ -339,6 +372,118 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
       )}
 
     </div>
+  )
+}
+
+
+function SavedPlansInline({
+  plans,
+  loading,
+  error,
+  expandedId,
+  copiedId,
+  showAll,
+  onShowAll,
+  onToggle,
+  onCopy,
+  onPractice,
+  onRetry,
+}: {
+  plans: StoryPlanRecord[]
+  loading: boolean
+  error: string
+  expandedId: string | null
+  copiedId: string | null
+  showAll: boolean
+  onShowAll: () => void
+  onToggle: (id: string) => void
+  onCopy: (plan: StoryPlanRecord) => void
+  onPractice: (plan: StoryPlanRecord) => void
+  onRetry: () => void
+}) {
+  return (
+    <section id="saved-plans" className="planner-saved-section scroll-mt-6">
+      <div className="planner-saved-heading">
+        <div>
+          <Eyebrow>Saved privately</Eyebrow>
+          <h2>Your story plans</h2>
+        </div>
+        {!loading && !error && <span>{plans.length}</span>}
+      </div>
+      <p className="planner-saved-deck">Open a plan here, review the shape, or take it straight back into Studio.</p>
+
+      {loading ? (
+        <div className="planner-saved-loading">Loading your plans…</div>
+      ) : error ? (
+        <div className="planner-saved-empty">
+          <p>{error}</p>
+          <button type="button" onClick={onRetry}>Try again</button>
+        </div>
+      ) : plans.length === 0 ? (
+        <div className="planner-saved-empty">
+          <p>Your first plan will stay here after Parch builds it.</p>
+        </div>
+      ) : (
+        <div className="planner-saved-list">
+          {(showAll ? plans : plans.slice(0, 3)).map((savedPlan) => {
+            const expanded = expandedId === savedPlan.id
+            return (
+              <article key={savedPlan.id} className={expanded ? "planner-saved-card is-expanded" : "planner-saved-card"}>
+                <div className="planner-saved-meta">
+                  <span>{new Date(savedPlan.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                  <span>{savedPlan.audienceContext}</span>
+                </div>
+                <h3>{savedPlan.output.title}</h3>
+                <p className="planner-saved-throughline">{secondPersonDirection(savedPlan.output.throughline)}</p>
+
+                <div className="planner-saved-actions">
+                  <button type="button" onClick={() => onCopy(savedPlan)}>
+                    {copiedId === savedPlan.id ? <Check /> : <Clipboard />} {copiedId === savedPlan.id ? "Copied" : "Copy"}
+                  </button>
+                  <button type="button" onClick={() => downloadStoryPlanPdf(savedPlan)}><Download /> PDF</button>
+                  <button type="button" className="is-expand" onClick={() => onToggle(savedPlan.id)}>
+                    {expanded ? "Less" : "View plan"}<ChevronDown className={expanded ? "rotate-180" : ""} />
+                  </button>
+                </div>
+
+                {expanded && (
+                  <div className="planner-saved-expanded">
+                    <PlanBlock eyebrow="Opening" text={secondPersonDirection(savedPlan.output.opening)} />
+                    <div className="planner-saved-beats">
+                      <Eyebrow>Story beats</Eyebrow>
+                      <ol>
+                        {savedPlan.output.beats.map((beat, index) => (
+                          <li key={`${savedPlan.id}-${beat.label}-${index}`}>
+                            <span>{index + 1}</span>
+                            <div>
+                              <strong>{beat.label}</strong>
+                              <p>{secondPersonDirection(beat.suggestion)}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                    <PlanBlock eyebrow="Landing" text={secondPersonDirection(savedPlan.output.ending)} />
+                    <Link
+                      href="/studio?mode=free&planned=1"
+                      onClick={() => onPractice(savedPlan)}
+                      className="planner-saved-practice"
+                    >
+                      <Mic2 /> Practice this plan
+                    </Link>
+                  </div>
+                )}
+              </article>
+            )
+          })}
+          {plans.length > 3 && (
+            <button type="button" className="planner-saved-show-all" onClick={onShowAll}>
+              {showAll ? "Show fewer plans" : `Show ${plans.length - 3} more`}
+            </button>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
 

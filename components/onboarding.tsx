@@ -75,7 +75,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
       setPage(1)
       setCoverOpening(false)
       coverTimerRef.current = null
-    }, 640)
+    }, 780)
   }
 
   function nextPage() {
@@ -281,7 +281,7 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
       </div>
 
       {focus && <p className="book-focus-note">{focus}</p>}
-      <p className="book-focus-note">Your private Journal keeps written fragments and saved recordings together whenever an idea is not ready to become a full story yet.</p>
+      <p className="book-focus-note">Your private Journal is a quiet notebook for fragments, observations, and voice-to-text thoughts before they become full stories.</p>
 
       <div className="book-final-actions" data-book-no-turn="true">
         <Link

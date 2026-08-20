@@ -223,8 +223,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
     programmaticRef.current = true
     setFlipping(true)
 
-    const isOpeningCover = current === 0 && nextPage === 1
-    const flipDuration = isOpeningCover ? 760 : 300
+    const flipDuration = 440
 
     try {
       if (nextPage === current + 1) flip.flipNext("bottom")
@@ -270,11 +269,11 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={320}
+        flippingTime={440}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={0.18}
+        maxShadowOpacity={0.16}
         showCover={false}
         mobileScrollSupport
         clickEventForward
