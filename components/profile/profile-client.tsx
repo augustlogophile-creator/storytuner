@@ -5,6 +5,7 @@ import type { ReactNode } from "react"
 import {
   BarChart3,
   Bell,
+  BookOpenText,
   ChevronRight,
   Mail,
   ScrollText,
@@ -63,6 +64,8 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       <section>
         <SectionLabel>Tellwise</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
+          <ProfileRow href="/journal" icon={BookOpenText} title="Journal" detail="Private notes and every saved recording" />
+          <Divider />
           <ProfileRow href="/notifications" icon={Bell} title="Notifications" detail="Replies, likes, and streak updates" unread={notificationsUnread} />
           <Divider />
           <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Privacy, data, and account controls" />

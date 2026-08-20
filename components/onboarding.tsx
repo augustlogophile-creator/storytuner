@@ -243,6 +243,7 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
       </div>
 
       {focus && <p className="book-focus-note">{focus}</p>}
+      <p className="book-focus-note">Your private Journal keeps written fragments and saved recordings together whenever an idea is not ready to become a full story yet.</p>
 
       <div className="book-final-actions" data-book-no-turn="true">
         <Link

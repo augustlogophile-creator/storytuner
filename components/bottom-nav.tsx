@@ -47,6 +47,6 @@ function isActivePath(pathname: string, href: string) {
   if (href === "/home") return pathname === "/home"
   if (href === "/activities") return pathname.startsWith("/activities") || pathname.startsWith("/lesson")
   if (href === "/studio") return pathname.startsWith("/studio") || pathname.startsWith("/arena") || pathname.startsWith("/planner")
-  if (href === "/profile") return ["/profile", "/progress", "/membership", "/shop", "/settings", "/legal"].some((path) => pathname.startsWith(path))
+  if (href === "/profile") return ["/profile", "/journal", "/notifications", "/progress", "/membership", "/shop", "/settings", "/legal"].some((path) => pathname.startsWith(path))
   return pathname.startsWith(href)
 }

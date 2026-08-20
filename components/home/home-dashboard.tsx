@@ -109,7 +109,11 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       <section className="mt-4 flex min-h-0 flex-col">
         <div className="mb-2.5 flex items-center justify-between gap-3">
           <h2 className="book-practice-heading text-[1rem] font-semibold tracking-[-0.015em]">Practice</h2>
-          <Link prefetch href="/studio/recordings" className="book-past-recordings text-[0.72rem] font-semibold text-brand hover:underline">Past recordings</Link>
+          <div className="flex items-center gap-3 text-[0.72rem] font-semibold text-brand">
+            <Link prefetch href="/journal" className="book-past-recordings hover:underline">Journal</Link>
+            <span className="text-muted-foreground/35">·</span>
+            <Link prefetch href="/studio/recordings" className="book-past-recordings hover:underline">Past recordings</Link>
+          </div>
         </div>
 
         <div className="story-card book-week-card mb-2.5 min-h-[6.85rem] rounded-[1.5rem] px-3.5 py-3.5">

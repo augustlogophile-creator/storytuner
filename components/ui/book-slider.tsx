@@ -5,7 +5,6 @@ import {
   Children,
   forwardRef,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useEffect,
   useImperativeHandle,
@@ -65,25 +64,9 @@ const BookSlider = forwardRef<BookSliderHandle, {
   const requestedTargetRef = useRef<number | null>(null)
   const pendingTargetRef = useRef<number | null>(null)
   const flipFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const settleRafRef = useRef<number | null>(null)
-  const settleRaf2Ref = useRef<number | null>(null)
-  const pendingBookSizeRef = useRef<{ width: number; height: number } | null>(null)
-  const pendingCommittedPageRef = useRef<number | null>(null)
-  const ignoreForwardFlipUntilRef = useRef(0)
-  const dragGestureRef = useRef<{
-    pointerId: number
-    pointerType: string
-    startX: number
-    startY: number
-    side: "left" | "right"
-    corner: "top" | "bottom" | "middle"
-    dragging: boolean
-  } | null>(null)
+  const lastFlipAtRef = useRef(0)
   const canGoNextRef = useRef(canGoNext)
   const [isFlipping, setIsFlippingState] = useState(false)
-  const [isOpeningCover, setIsOpeningCoverState] = useState(false)
-  const openingCoverRef = useRef(false)
-  const [coverOpened, setCoverOpened] = useState(page > 0)
   const [bookSize, setBookSize] = useState({ width: 448, height: 800 })
   const lastPage = pages.length - 1
 
@@ -95,20 +78,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
       const rect = shell.getBoundingClientRect()
       const width = Math.max(1, Math.round(rect.width))
       const height = Math.max(1, Math.round(rect.height))
-      const measured = { width, height }
-
-      // Never remount react-pageflip while a sheet is moving. Mobile browser
-      // chrome and sub-pixel layout can briefly change the measured viewport;
-      // remounting mid-turn is what creates the one-frame size jump/glitch.
-      if (isFlippingRef.current) {
-        pendingBookSizeRef.current = measured
-        return
-      }
-
-      setBookSize((current) => {
-        if (Math.abs(current.width - width) <= 1 && Math.abs(current.height - height) <= 1) return current
-        return measured
-      })
+      setBookSize((current) => current.width === width && current.height === height ? current : { width, height })
     }
 
     measure()
@@ -126,233 +96,79 @@ const BookSlider = forwardRef<BookSliderHandle, {
     currentPageRef.current = page
   }, [page])
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     canGoNextRef.current = canGoNext
   }, [canGoNext])
 
   useEffect(() => () => {
     if (flipFallbackRef.current) clearTimeout(flipFallbackRef.current)
-    if (settleRafRef.current !== null) cancelAnimationFrame(settleRafRef.current)
-    if (settleRaf2Ref.current !== null) cancelAnimationFrame(settleRaf2Ref.current)
   }, [])
+
+  function isInteractiveTarget(target: EventTarget | null) {
+    return target instanceof Element
+      && Boolean(target.closest("button, a, input, textarea, select, label, [data-book-no-turn='true']"))
+  }
 
   function setFlipping(value: boolean) {
     isFlippingRef.current = value
     setIsFlippingState(value)
   }
 
-  function setOpeningCover(value: boolean) {
-    openingCoverRef.current = value
-    setIsOpeningCoverState(value)
-  }
+  // Let react-pageflip handle the physical page-drag animation itself.
+  // We only gate where a gesture may start. Taps never turn pages: the
+  // library has disableFlipByClick enabled and we do not add any tap fallback.
+  useEffect(() => {
+    const shell = shellRef.current
+    if (!shell) return
 
-  function commitPendingPage() {
-    const committed = pendingCommittedPageRef.current
-    if (committed === null) return
-    pendingCommittedPageRef.current = null
-    onPageChange(committed)
-  }
-
-  function applyDeferredBookSize() {
-    const measured = pendingBookSizeRef.current
-    pendingBookSizeRef.current = null
-    if (!measured) return
-    setBookSize((current) => {
-      if (Math.abs(current.width - measured.width) <= 1 && Math.abs(current.height - measured.height) <= 1) return current
-      return measured
-    })
-  }
-
-  function finishVisualSettle() {
-    setFlipping(false)
-    if (openingCoverRef.current) setOpeningCover(false)
-    commitPendingPage()
-    applyDeferredBookSize()
-    programmaticRef.current = false
-    requestedTargetRef.current = null
-
-    if (flipFallbackRef.current) {
-      clearTimeout(flipFallbackRef.current)
-      flipFallbackRef.current = null
+    const stopNative = (event: Event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      event.stopImmediatePropagation()
     }
 
-    if (pendingTargetRef.current !== null && pendingTargetRef.current !== currentPageRef.current) {
-      const target = pendingTargetRef.current
-      pendingTargetRef.current = null
-      window.setTimeout(() => requestPage(target), 0)
+    const ratioFor = (clientX: number) => {
+      const rect = shell.getBoundingClientRect()
+      return (clientX - rect.left) / Math.max(1, rect.width)
     }
-  }
 
-  function queueVisualSettle() {
-    if (settleRafRef.current !== null) cancelAnimationFrame(settleRafRef.current)
-    if (settleRaf2Ref.current !== null) cancelAnimationFrame(settleRaf2Ref.current)
+    const shouldBlock = (clientX: number) => {
+      const ratio = ratioFor(clientX)
+      const current = currentPageRef.current
+      if (ratio > 0.25 && ratio < 0.75) return true
+      if (ratio >= 0.75 && !canGoNextRef.current) return true
+      if (ratio <= 0.25 && current <= 0) return true
+      if (ratio >= 0.75 && current >= lastPage) return true
+      return false
+    }
 
-    // Give react-pageflip two paint frames to remove its moving fold/cast-shadow
-    // layers before StoryTuner declares the turn complete. This prevents the
-    // tiny dark sliver/outline that could otherwise flash after the cover lands.
-    settleRafRef.current = requestAnimationFrame(() => {
-      settleRafRef.current = null
-      settleRaf2Ref.current = requestAnimationFrame(() => {
-        settleRaf2Ref.current = null
-        finishVisualSettle()
-      })
-    })
-  }
+    const onTouchStart = (event: TouchEvent) => {
+      const target = event.target
+      if (target instanceof Element && target.closest("button, a, input, textarea, select, label, [data-book-no-turn='true']")) return
+      const touch = event.changedTouches[0]
+      if (!touch) return
+      if (shouldBlock(touch.clientX)) stopNative(event)
+      else onPreparePage?.(ratioFor(touch.clientX) >= 0.75 ? currentPageRef.current + 1 : currentPageRef.current - 1)
+    }
+
+    const onMouseDown = (event: MouseEvent) => {
+      if (event.button !== 0) return
+      const target = event.target
+      if (target instanceof Element && target.closest("button, a, input, textarea, select, label, [data-book-no-turn='true']")) return
+      if (shouldBlock(event.clientX)) stopNative(event)
+      else onPreparePage?.(ratioFor(event.clientX) >= 0.75 ? currentPageRef.current + 1 : currentPageRef.current - 1)
+    }
+
+    shell.addEventListener("touchstart", onTouchStart, { capture: true, passive: false })
+    shell.addEventListener("mousedown", onMouseDown, true)
+    return () => {
+      shell.removeEventListener("touchstart", onTouchStart, true)
+      shell.removeEventListener("mousedown", onMouseDown, true)
+    }
+  }, [lastPage, onPreparePage])
 
   function api() {
     return bookRef.current?.pageFlip?.()
-  }
-
-  function isBookControl(target: EventTarget | null) {
-    return target instanceof Element && Boolean(target.closest('[data-book-no-turn="true"]'))
-  }
-
-  function gestureRegion(clientX: number, clientY: number) {
-    const shell = shellRef.current
-    if (!shell) return null
-    const rect = shell.getBoundingClientRect()
-    const x = clientX - rect.left
-    const y = clientY - rect.top
-
-    // Give readers a generous physical edge to grab, but never turn on tap.
-    // The actual fold still starts only after pointer movement is detected.
-    const side = x <= rect.width * 0.30
-      ? "left" as const
-      : x >= rect.width * 0.70
-        ? "right" as const
-        : null
-    if (!side) return null
-
-    const corner = y <= rect.height * 0.38
-      ? "top" as const
-      : y >= rect.height * 0.62
-        ? "bottom" as const
-        : "middle" as const
-
-    return { side, corner }
-  }
-
-  function flipRect() {
-    const flip = api()
-    const distElement = flip?.getUI?.()?.getDistElement?.()
-    return distElement instanceof Element
-      ? distElement.getBoundingClientRect()
-      : shellRef.current?.getBoundingClientRect()
-  }
-
-  function pointForClient(clientX: number, clientY: number) {
-    const rect = flipRect()
-    return {
-      x: clientX - (rect?.left ?? 0),
-      y: clientY - (rect?.top ?? 0),
-    }
-  }
-
-  function pointForGestureStart(gesture: NonNullable<typeof dragGestureRef.current>) {
-    const rect = flipRect()
-    if (!rect) return pointForClient(gesture.startX, gesture.startY)
-
-    const edgeInset = 1.5
-    const x = gesture.side === "right" ? rect.width - edgeInset : edgeInset
-    const rawY = gesture.startY - rect.top
-    const y = gesture.corner === "top"
-      ? edgeInset
-      : gesture.corner === "bottom"
-        ? rect.height - edgeInset
-        : Math.max(edgeInset, Math.min(rect.height - edgeInset, rawY))
-
-    return { x, y }
-  }
-
-  function handleDragPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (isBookControl(event.target)) return
-    if (event.pointerType === "mouse" && event.button !== 0) return
-
-    const region = gestureRegion(event.clientX, event.clientY)
-    if (!region) return
-
-    const current = currentPageRef.current
-    if (region.side === "right" && (!canGoNextRef.current || current >= lastPage)) return
-    if (region.side === "left" && current <= 0) return
-
-    dragGestureRef.current = {
-      pointerId: event.pointerId,
-      pointerType: event.pointerType,
-      startX: event.clientX,
-      startY: event.clientY,
-      side: region.side,
-      corner: region.corner,
-      dragging: false,
-    }
-
-    try { event.currentTarget.setPointerCapture(event.pointerId) } catch {}
-    event.preventDefault()
-  }
-
-  function handleDragPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = dragGestureRef.current
-    if (!gesture || gesture.pointerId !== event.pointerId) return
-
-    const deltaX = event.clientX - gesture.startX
-    const deltaY = event.clientY - gesture.startY
-    const movement = Math.hypot(deltaX, deltaY)
-
-    if (!gesture.dragging) {
-      // A press/tap is completely inert. The fold begins only after a small
-      // physical pull. Corner pulls may travel vertically, just like grabbing
-      // the top or bottom corner of a real sheet of paper.
-      const threshold = gesture.pointerType === "mouse" ? 3 : 4
-      if (movement < threshold) return
-
-      const movingInward = gesture.side === "right" ? deltaX < -threshold : deltaX > threshold
-      const movingFromCorner = gesture.corner === "top"
-        ? deltaY > threshold
-        : gesture.corner === "bottom"
-          ? deltaY < -threshold
-          : false
-
-      if (!movingInward && !movingFromCorner) return
-
-      const flip = api()
-      if (!flip?.startUserTouch || !flip?.userMove || !flip?.userStop) {
-        dragGestureRef.current = null
-        try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
-        return
-      }
-
-      onPreparePage?.(gesture.side === "right" ? currentPageRef.current + 1 : currentPageRef.current - 1)
-      if (currentPageRef.current === 0 && gesture.side === "right") setOpeningCover(true)
-      flip.startUserTouch(pointForGestureStart(gesture))
-      gesture.dragging = true
-      setFlipping(true)
-    }
-
-    api()?.userMove?.(pointForClient(event.clientX, event.clientY), gesture.pointerType !== "mouse")
-    event.preventDefault()
-  }
-
-  function finishDragGesture(event: ReactPointerEvent<HTMLDivElement>, cancelled = false) {
-    const gesture = dragGestureRef.current
-    if (!gesture || gesture.pointerId !== event.pointerId) return
-    dragGestureRef.current = null
-
-    try { event.currentTarget.releasePointerCapture(event.pointerId) } catch {}
-
-    if (gesture.dragging) {
-      const flip = api()
-      if (cancelled) {
-        flip?.turnToPage?.(currentPageRef.current)
-        if (openingCoverRef.current) setOpeningCover(false)
-        setFlipping(false)
-      } else {
-        flip?.userStop?.(pointForClient(event.clientX, event.clientY), false)
-      }
-    }
-
-    // Suppress the browser click generated after pointerup. Buttons/links never
-    // enter this gesture path because they are marked data-book-no-turn.
-    event.preventDefault()
-    event.stopPropagation()
   }
 
   function finishNavigationFallback(target: number, waitMs: number) {
@@ -370,12 +186,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
       const synced = Number(flip?.getCurrentPageIndex?.() ?? target)
       currentPageRef.current = synced
       requestedTargetRef.current = null
-      ignoreForwardFlipUntilRef.current = Date.now() + 520
       programmaticRef.current = false
-      pendingCommittedPageRef.current = null
-      if (openingCoverRef.current) setOpeningCover(false)
       setFlipping(false)
-      applyDeferredBookSize()
       flipFallbackRef.current = null
       onPageChange(synced)
 
@@ -401,10 +213,6 @@ const BookSlider = forwardRef<BookSliderHandle, {
       return
     }
 
-    // A button/click sequence can occasionally dispatch twice while the page
-    // is still animating. Never queue the same destination twice.
-    if (requestedTargetRef.current === nextPage || pendingTargetRef.current === nextPage) return
-
     if (isFlippingRef.current) {
       pendingTargetRef.current = nextPage
       return
@@ -415,13 +223,8 @@ const BookSlider = forwardRef<BookSliderHandle, {
     programmaticRef.current = true
     setFlipping(true)
 
-    const isOpeningCoverTurn = current === 0 && nextPage === 1
-    const flipDuration = isOpeningCoverTurn ? 650 : 360
-    if (isOpeningCoverTurn) {
-      setCoverOpened(false)
-      setOpeningCover(true)
-    }
-    if (nextPage === 0) setCoverOpened(false)
+    const isOpeningCover = current === 0 && nextPage === 1
+    const flipDuration = isOpeningCover ? 760 : 300
 
     try {
       if (nextPage === current + 1) flip.flipNext("bottom")
@@ -434,6 +237,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
     finishNavigationFallback(nextPage, flipDuration + 120)
   }
 
+
   useImperativeHandle(forwardedRef, () => ({
     next: () => requestPage(currentPageRef.current + 1),
     previous: () => requestPage(currentPageRef.current - 1),
@@ -443,18 +247,7 @@ const BookSlider = forwardRef<BookSliderHandle, {
   return (
     <div
       ref={shellRef}
-      className={cn(
-        "story-book-wrap book-pageflip-shell",
-        isFlipping && "is-flipping",
-        isOpeningCover && "is-opening-cover",
-        coverOpened && "has-opened-cover",
-        className,
-      )}
-      data-page={page}
-      onPointerDownCapture={handleDragPointerDown}
-      onPointerMoveCapture={handleDragPointerMove}
-      onPointerUpCapture={(event) => finishDragGesture(event)}
-      onPointerCancelCapture={(event) => finishDragGesture(event, true)}
+      className={cn("story-book-wrap book-pageflip-shell", isFlipping && "is-flipping", className)}
     >
       <HTMLFlipBook
         key={`${bookSize.width}-${bookSize.height}`}
@@ -470,90 +263,58 @@ const BookSlider = forwardRef<BookSliderHandle, {
         minHeight={bookSize.height}
         maxHeight={bookSize.height}
         drawShadow
-        flippingTime={page === 0 ? 650 : 360}
+        flippingTime={page === 0 ? 760 : 300}
         usePortrait
         startZIndex={10}
         autoSize={false}
-        maxShadowOpacity={page === 0 ? 0.20 : 0.38}
+        maxShadowOpacity={0.28}
         showCover
         mobileScrollSupport
         clickEventForward
-        useMouseEvents={false}
-        swipeDistance={10}
+        useMouseEvents
+        swipeDistance={18}
         showPageCorners={false}
         disableFlipByClick
         onChangeState={(event: any) => {
           const state = event?.data
           const flipping = state === "flipping" || state === "user_fold" || state === "fold_corner"
-          if (flipping) {
-            setFlipping(true)
-            return
+          setFlipping(flipping)
+          if (!flipping && pendingTargetRef.current !== null) {
+            const target = pendingTargetRef.current
+            pendingTargetRef.current = null
+            window.setTimeout(() => requestPage(target), 0)
           }
-
-          // "read" is the library's fully-settled state. Keep our motion class
-          // for two extra paint frames so its temporary fold layers disappear
-          // before the cover is considered finished.
-          if (state === "read") queueVisualSettle()
         }}
         onFlip={(event: any) => {
           const nextPage = Number(event?.data ?? 0)
           const previousPage = currentPageRef.current
-          const now = Date.now()
-          const requested = requestedTargetRef.current
 
-          // A programmatic Continue/back action is allowed to land on exactly
-          // one destination. react-pageflip can occasionally emit a second flip
-          // event from the same pointer sequence; reject that event instead of
-          // letting it skip a page. Keep this guard alive until visual settle.
-          if (programmaticRef.current && requested !== null && nextPage !== requested) {
-            api()?.turnToPage(requested)
-            pendingTargetRef.current = null
-            queueVisualSettle()
-            return
-          }
-
-          // A physical page gesture may only move one sheet at a time. This is
-          // a second independent anti-skip guard for noisy mobile pointer events.
-          if (!programmaticRef.current && Math.abs(nextPage - previousPage) > 1) {
-            api()?.turnToPage(previousPage)
-            pendingTargetRef.current = null
-            queueVisualSettle()
-            return
-          }
-
-          // After a Continue/back command settles, ignore any stray second
-          // forward flip emitted by the same pointer sequence.
-          if (!programmaticRef.current && nextPage > previousPage && now < ignoreForwardFlipUntilRef.current) {
-            api()?.turnToPage(previousPage)
-            pendingTargetRef.current = null
-            queueVisualSettle()
-            return
-          }
-
-          // Required onboarding questions cannot be bypassed with a drag.
+          // Defensive guard for gesture events. Required onboarding questions
+          // cannot be bypassed by dragging a page even if the library receives
+          // an edge gesture before our capture handler on a particular browser.
           if (!programmaticRef.current && nextPage > previousPage && !canGoNextRef.current) {
-            api()?.turnToPage(previousPage)
+            const flip = api()
+            flip?.turnToPage(previousPage)
+            requestedTargetRef.current = null
             pendingTargetRef.current = null
-            queueVisualSettle()
+            setFlipping(false)
             return
           }
 
           currentPageRef.current = nextPage
-          pendingCommittedPageRef.current = nextPage
-
-          if (previousPage === 0 && nextPage > 0) setCoverOpened(true)
-          if (nextPage === 0) setCoverOpened(false)
+          lastFlipAtRef.current = Date.now()
+          setFlipping(false)
+          if (flipFallbackRef.current) {
+            clearTimeout(flipFallbackRef.current)
+            flipFallbackRef.current = null
+          }
 
           if (!programmaticRef.current && nextPage !== previousPage) {
             onTurn?.(nextPage > previousPage ? "next" : "previous")
-          } else if (programmaticRef.current && nextPage !== previousPage) {
-            ignoreForwardFlipUntilRef.current = Date.now() + 520
           }
-
-          // Do not clear programmaticRef/requestedTarget here. Keeping them until
-          // the page has visually settled is what prevents duplicate onFlip
-          // callbacks from turning a second sheet.
-          if (!isFlippingRef.current) queueVisualSettle()
+          programmaticRef.current = false
+          requestedTargetRef.current = null
+          onPageChange(nextPage)
         }}
       >
         {pages}
