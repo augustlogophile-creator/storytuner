@@ -4408,3 +4408,104 @@ body {
   opacity: 1 !important;
   filter: none !important;
 }
+
+/* August 20: deterministic standalone hardcover.
+   The hardcover is no longer part of react-pageflip. The inside book is already
+   painted underneath it, so opening the cover cannot ever reveal a black
+   react-pageflip staging frame or recolor the first sheet. */
+.book-intro-canvas,
+.book-intro-canvas.is-cover {
+  position: relative;
+  isolation: isolate;
+  perspective: 1400px;
+  background: #fffefa !important;
+}
+
+.book-inside-pages {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #fffefa;
+}
+
+.book-standalone-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  transform: rotateY(0deg) translateZ(1px);
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.035), transparent 7%, transparent 94%, rgba(255,255,255,.018)),
+    linear-gradient(180deg, #302e2b 0%, #26231f 48%, #191714 100%);
+  color: #f7f1e7;
+  transition: transform 640ms cubic-bezier(.22,.68,.16,1);
+}
+
+.book-standalone-cover::before {
+  content: "";
+  position: absolute;
+  inset: 1.05rem .9rem 1.05rem 1.65rem;
+  z-index: 1;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: .35rem 1rem 1rem .35rem;
+  pointer-events: none;
+}
+
+.book-standalone-cover::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 1.1rem;
+  bottom: 1.1rem;
+  left: 1.2rem;
+  width: 21px;
+  border-left: 1px solid rgba(255,255,255,.055);
+  border-right: 1px solid rgba(0,0,0,.44);
+  background: linear-gradient(90deg, rgba(0,0,0,.34), rgba(255,255,255,.025) 48%, rgba(0,0,0,.14));
+  box-shadow: 5px 0 10px rgba(0,0,0,.16);
+  pointer-events: none;
+}
+
+.book-standalone-cover.is-opening {
+  transform: rotateY(-102deg) translateZ(1px);
+  pointer-events: none;
+}
+
+/* One soft moving cast shadow, attached to the actual cover rather than to the
+   revealed paper. This is the only cover shadow during the open animation. */
+.book-standalone-cover .book-cover-content::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 -1.5rem 0 auto;
+  width: 2.5rem;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(38,31,25,.18), transparent);
+  filter: blur(7px);
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+.book-standalone-cover.is-opening .book-cover-content::after {
+  opacity: .7;
+}
+
+/* The inside slider contains paper pages only now. Never let react-pageflip
+   synthesize a cover/spine treatment or dark staging surface. */
+.book-inside-pages .story-book-wrap,
+.book-inside-pages .story-pageflip,
+.book-inside-pages .stf__parent,
+.book-inside-pages .stf__wrapper,
+.book-inside-pages .stf__block,
+.book-inside-pages .stf__item,
+.book-inside-pages .story-book-page-inner {
+  background-color: #fffefa !important;
+}
+
+.book-inside-pages .story-book-wrap::before {
+  display: none !important;
+}

@@ -24,13 +24,19 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring", "details", "nervous", "confident"]
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
-  const [page, setPage] = useState(() => Math.max(0, Math.min(4, initialPage)))
-  const pageRef = useRef(page)
+  const normalizedInitialPage = Math.max(0, Math.min(4, initialPage))
+  const [page, setPage] = useState(normalizedInitialPage)
+  const [coverOpening, setCoverOpening] = useState(false)
+  const coverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pageRef = useRef(normalizedInitialPage)
   const bookRef = useRef<BookSliderHandle>(null)
   const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", goals: [], blocker: "" })
 
   useEffect(() => {
     setPreferences(readOnboardingPreferences())
+    return () => {
+      if (coverTimerRef.current) clearTimeout(coverTimerRef.current)
+    }
   }, [])
 
   const selectedGoals = preferences.goals ?? (preferences.goal && preferences.goal !== "everything" ? [preferences.goal as StoryGoalChoice] : [])
@@ -59,7 +65,24 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     save({ ...preferences, blocker })
   }
 
+  function openCover() {
+    if (coverOpening || page !== 0) return
+    triggerIntroFeedback("page")
+    setCoverOpening(true)
+    if (coverTimerRef.current) clearTimeout(coverTimerRef.current)
+    coverTimerRef.current = setTimeout(() => {
+      pageRef.current = 1
+      setPage(1)
+      setCoverOpening(false)
+      coverTimerRef.current = null
+    }, 640)
+  }
+
   function nextPage() {
+    if (page === 0) {
+      openCover()
+      return
+    }
     if (!canAdvance) return
     triggerIntroFeedback("page")
     bookRef.current?.next()
@@ -68,43 +91,58 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   function previousPage() {
     if (pageRef.current <= 0) return
     triggerIntroFeedback("back")
+
+    // On the first inside page, return to the hardcover instead of asking
+    // react-pageflip to synthesize a backwards hard-cover turn.
+    if (pageRef.current === 1) {
+      pageRef.current = 0
+      setPage(0)
+      setCoverOpening(false)
+      return
+    }
+
     bookRef.current?.previous()
   }
 
-  function handlePageChange(nextPage: number) {
-    pageRef.current = nextPage
-    setPage(nextPage)
+  function handleInsidePageChange(nextPage: number) {
+    const logicalPage = nextPage + 1
+    pageRef.current = logicalPage
+    setPage(logicalPage)
   }
 
   return (
     <main className={page === 0 ? "book-intro-canvas is-cover" : "book-intro-canvas"}>
-      <BookSlider
-        ref={bookRef}
-        page={page}
-        onPageChange={handlePageChange}
-        canGoNext={canAdvance}
-        onTurn={(direction) => triggerIntroFeedback(direction === "next" ? "page" : "back")}
-      >
-        <BookPage cover>
-          <CoverPage onNext={nextPage} />
-        </BookPage>
+      <div className="book-inside-pages" aria-hidden={page === 0 && !coverOpening ? "true" : undefined}>
+        <BookSlider
+          ref={bookRef}
+          page={Math.max(0, page - 1)}
+          onPageChange={handleInsidePageChange}
+          canGoNext={canAdvance}
+          onTurn={(direction) => triggerIntroFeedback(direction === "next" ? "page" : "back")}
+        >
+          <BookPage>
+            <GoalPage values={selectedGoals} onToggle={toggleGoal} onNext={nextPage} onBack={previousPage} />
+          </BookPage>
 
-        <BookPage>
-          <GoalPage values={selectedGoals} onToggle={toggleGoal} onNext={nextPage} onBack={previousPage} />
-        </BookPage>
+          <BookPage>
+            <BlockerPage value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
+          </BookPage>
 
-        <BookPage>
-          <BlockerPage value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
-        </BookPage>
+          <BookPage>
+            <SecretPage onNext={nextPage} onBack={previousPage} />
+          </BookPage>
 
-        <BookPage>
-          <SecretPage onNext={nextPage} onBack={previousPage} />
-        </BookPage>
+          <BookPage>
+            <ReadyPage preferences={preferences} onBack={previousPage} />
+          </BookPage>
+        </BookSlider>
+      </div>
 
-        <BookPage>
-          <ReadyPage preferences={preferences} onBack={previousPage} />
-        </BookPage>
-      </BookSlider>
+      {page === 0 && (
+        <div className={coverOpening ? "book-standalone-cover is-opening" : "book-standalone-cover"}>
+          <CoverPage onNext={openCover} />
+        </div>
+      )}
     </main>
   )
 }
