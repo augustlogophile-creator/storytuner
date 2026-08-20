@@ -936,13 +936,13 @@ label:has(input[type="radio"]):active {
   top: 50%;
   border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
   border-radius: 999px;
-  background: color-mix(in oklch, var(--card) 94%, transparent);
+  background: color-mix(in oklch, var(--card) 88%, var(--brand-soft) 12%);
+  box-shadow: 0 16px 42px rgba(37, 32, 27, .13), inset 0 0 0 1px color-mix(in oklch, var(--brand) 16%, transparent);
   padding: .92rem 1.2rem;
   color: var(--foreground);
   font-size: .96rem;
   font-weight: 800;
   letter-spacing: -.02em;
-  box-shadow: 0 16px 42px rgba(37, 32, 27, .13);
   backdrop-filter: blur(10px);
   animation: storytuner-celebration-label 5.25s ease both;
 }

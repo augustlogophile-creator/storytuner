@@ -1,20 +1,17 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   ChevronDown,
   Clipboard,
-  Clock3,
   Download,
   FileText,
-  History,
   Lightbulb,
   ListChecks,
-  Loader2,
   Map,
   Mic2,
   RefreshCw,
@@ -53,9 +50,6 @@ type FieldProps = {
 export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolean }) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [plan, setPlan] = useState<StoryPlanRecord | null>(null)
-  const [history, setHistory] = useState<StoryPlanRecord[]>([])
-  const [loadingHistory, setLoadingHistory] = useState(true)
-  const [historyError, setHistoryError] = useState("")
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState("")
   const [copied, setCopied] = useState(false)
@@ -70,24 +64,6 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
     && form.nervousAbout.trim().length >= 1
   ), [form])
 
-  useEffect(() => {
-    void loadHistory()
-  }, [])
-
-  async function loadHistory() {
-    setLoadingHistory(true)
-    setHistoryError("")
-    try {
-      const response = await fetch("/api/planner", { cache: "no-store", headers: { Accept: "application/json" } })
-      const payload = await response.json() as { plans?: StoryPlanRecord[]; error?: string }
-      if (!response.ok) throw new Error(payload.error || "Saved plans could not be loaded.")
-      setHistory(payload.plans ?? [])
-    } catch (caught) {
-      setHistoryError(caught instanceof Error ? caught.message : "Saved plans could not be loaded.")
-    } finally {
-      setLoadingHistory(false)
-    }
-  }
 
   async function buildPlan() {
     if (!ready || building) return
@@ -111,7 +87,6 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
       setPlan(payload.plan)
       setPlanOrigin("new")
       setPlanExpanded(false)
-      setHistory((current) => [payload.plan!, ...current.filter((item) => item.id !== payload.plan!.id)].slice(0, 8))
       window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Parch could not build the plan.")
@@ -120,13 +95,6 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
     }
   }
 
-  function openSaved(item: StoryPlanRecord) {
-    setPlan(item)
-    setPlanOrigin("saved")
-    setPlanExpanded(false)
-    setError("")
-    window.setTimeout(() => document.getElementById("planner-result")?.scrollIntoView({ behavior: "smooth", block: "start" }), 25)
-  }
 
   async function copyPlan() {
     if (!plan) return
@@ -165,11 +133,16 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
-      {fromStudio && (
-        <Link href="/studio" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Studio
+      <div className="flex items-center justify-between gap-3">
+        {fromStudio ? (
+          <Link href="/studio" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <ArrowLeft className="h-4 w-4" /> Studio
+          </Link>
+        ) : <span />}
+        <Link href="/planner/saved" prefetch className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-foreground">
+          <FileText className="h-3.5 w-3.5" /> Saved plans
         </Link>
-      )}
+      </div>
       <header className="rounded-[2rem] bg-primary p-6 text-primary-foreground">
         <div className="flex items-start gap-4">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
@@ -354,32 +327,6 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         </section>
       )}
 
-      <section>
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <Eyebrow>Saved privately</Eyebrow>
-            <h2 className="mt-2 text-lg font-semibold tracking-tight">Recent plans</h2>
-          </div>
-          <History className="h-5 w-5 text-muted-foreground" />
-        </div>
-        {loadingHistory ? (
-          <div className="mt-3 flex items-center rounded-3xl border border-border px-5 py-7 text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading saved plans...</div>
-        ) : historyError ? (
-          <div className="mt-3 rounded-3xl border border-destructive/25 p-5"><p className="text-sm text-destructive">{historyError}</p><button type="button" onClick={() => void loadHistory()} className="mt-3 text-sm font-semibold">Try again</button></div>
-        ) : history.length === 0 ? (
-          <div className="mt-3 rounded-3xl border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">Your finished plans will appear here.</div>
-        ) : (
-          <div className="mt-3 overflow-hidden rounded-3xl border border-border bg-card">
-            {history.map((item, index) => (
-              <button key={item.id} type="button" onClick={() => openSaved(item)} className={`flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/60 ${index === history.length - 1 ? "" : "border-b border-border"}`}>
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Clock3 className="h-4 w-4" /></span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{item.output.title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {item.audienceContext}</span></span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   )
 }

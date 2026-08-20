@@ -161,6 +161,7 @@ export function ArenaClient() {
   const remainingFreeStories = state.premium ? Number.POSITIVE_INFINITY : (serverRemainingFreeStories ?? localRemainingFreeStories)
   const canRecord = state.premium || remainingFreeStories > 0
   const [cameraOn, setCameraOn] = useState(true)
+  const [permissionIssue, setPermissionIssue] = useState<"microphone" | null>(null)
   const [targetSeconds, setTargetSeconds] = useState(90)
   const [showDurationOptions, setShowDurationOptions] = useState(false)
   const [plannerPlan, setPlannerPlan] = useState<PlannerPlan | null>(null)
@@ -317,6 +318,7 @@ export function ArenaClient() {
     if (recorder && recorder.state !== "inactive") recorder.stop()
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setPhase("setup")
+    setPermissionIssue(null)
     setSeconds(0)
     setExtraSeconds(0)
     setPaused(false)
@@ -347,6 +349,7 @@ export function ArenaClient() {
 
   function enterRecordingRoom() {
     setError("")
+    setPermissionIssue(null)
     if (!canRecord) {
       setError("You have used both free spoken story reviews. Membership unlocks unlimited practice.")
       return
@@ -378,12 +381,14 @@ export function ArenaClient() {
       streamRef.current?.getTracks().forEach((track) => track.stop())
       streamRef.current = stream
       setCameraOn(stream.getVideoTracks().length > 0)
+      setPermissionIssue(null)
       setSeconds(0)
       setExtraSeconds(0)
       setPaused(false)
       setPhase("ready")
     } catch {
-      setError("Microphone access was not available. Check your browser permissions, then try again.")
+      setPermissionIssue("microphone")
+      setError("Tellwise cannot record until microphone access is allowed. Enable the microphone for this site, then try again.")
       setPhase("setup")
     } finally {
       preparingRoomRef.current = false
@@ -810,12 +815,12 @@ export function ArenaClient() {
           <section className="rounded-3xl border border-border bg-card p-4">
             <p className="px-1 text-sm font-semibold">Choose how you want to practice</p>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-foreground/45 bg-secondary/35 shadow-[0_8px_22px_rgba(31,27,23,0.035)]" : "border-border bg-background hover:border-foreground/25")}>
+              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Mic2 className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Tell any story</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-foreground/45 bg-secondary/35 shadow-[0_8px_22px_rgba(31,27,23,0.035)]" : "border-border bg-background hover:border-foreground/25")}>
+              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
@@ -831,7 +836,7 @@ export function ArenaClient() {
                   {scenarios.map((item) => {
                     const selected = item.id === scenarioId
                     return (
-                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-foreground/45 bg-secondary/35" : "border-border bg-card hover:border-foreground/25")}>
+                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10)]" : "border-border bg-card hover:border-foreground/25")}>
                         <p className="text-sm font-semibold leading-snug">{item.name}</p>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</p>
                       </button>
@@ -900,7 +905,7 @@ export function ArenaClient() {
                   onClick={() => { setTargetSeconds(duration); setExtraSeconds(0) }}
                   className={cn(
                     "rounded-2xl border px-2 py-3 text-sm font-semibold tabular-nums transition",
-                    targetSeconds === duration ? "border-foreground/45 bg-secondary/35 text-foreground" : "border-border bg-background text-muted-foreground hover:border-foreground/25",
+                    targetSeconds === duration ? "border-brand bg-brand-soft/75 text-foreground shadow-[0_0_0_2px_rgba(57,104,158,0.10)]" : "border-border bg-background text-muted-foreground hover:border-foreground/25",
                   )}
                 >
                   {formatTime(duration)}
@@ -912,13 +917,13 @@ export function ArenaClient() {
               onClick={() => setShowDurationOptions(true)}
               className={cn(
                 "mt-3 flex w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition",
-                !durationOptions.includes(targetSeconds) ? "border-foreground/45 bg-secondary/35" : "border-border bg-background hover:border-foreground/25",
+                !durationOptions.includes(targetSeconds) ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10)]" : "border-border bg-background hover:border-foreground/25",
               )}
             >
               <span className="min-w-0">
                 <span className="block text-sm font-semibold">See other options</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">
-                  {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "10 minutes, 20 minutes, or a custom target"}
+                  {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "10, 15, or 20 minutes, or a custom target"}
                 </span>
               </span>
               <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
@@ -931,8 +936,20 @@ export function ArenaClient() {
               <button type="button" onClick={() => setCameraOn((value) => !value)} className={cn("flex h-10 w-16 items-center rounded-full p-1 transition-colors", cameraOn ? "justify-end bg-brand" : "justify-start bg-secondary")}><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">{cameraOn ? <Camera className="h-4 w-4 text-accent-foreground" /> : <CameraOff className="h-4 w-4 text-muted-foreground" />}</span></button>
             </div>
           </section>
-          {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+          {permissionIssue === "microphone" ? (
+            <section className="rounded-3xl border border-brand/25 bg-brand-soft/45 p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-card text-accent-foreground"><Mic2 className="h-4 w-4" /></span>
+                <div><p className="text-sm font-semibold">Microphone access is needed</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Allow microphone access for Tellwise in your browser settings. Camera access is optional and will automatically fall back to audio-only.</p></div>
+              </div>
+              <button type="button" onClick={enterRecordingRoom} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-brand-foreground active:scale-[0.98]"><RotateCcw className="h-4 w-4" />Try microphone again</button>
+            </section>
+          ) : (
+            <>
+              {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
+              <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+            </>
+          )}
           <Link href="/studio/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
       )}
@@ -1106,7 +1123,7 @@ function DurationOptionsDialog({
 
   useEffect(() => {
     if (!open || current <= 0) return
-    if (![600, 1200].includes(current) && !durationOptions.includes(current)) {
+    if (![600, 900, 1200].includes(current) && !durationOptions.includes(current)) {
       setMinutes(String(Math.floor(current / 60)))
       setSeconds(String(current % 60))
     }
@@ -1127,7 +1144,7 @@ function DurationOptionsDialog({
     onSelect(total)
   }
 
-  const customSelected = current !== 600 && current !== 1200 && !durationOptions.includes(current)
+  const customSelected = ![600, 900, 1200].includes(current) && !durationOptions.includes(current)
 
   return (
     <div className="app-dialog-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
@@ -1143,8 +1160,8 @@ function DurationOptionsDialog({
           </button>
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2.5">
-          {[600, 1200].map((duration) => {
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          {[600, 900, 1200].map((duration) => {
             const selected = current === duration
             return (
               <button
@@ -1153,13 +1170,12 @@ function DurationOptionsDialog({
                 disabled={!premium}
                 onClick={() => onSelect(duration)}
                 className={cn(
-                  "relative flex min-h-20 flex-col justify-center rounded-2xl border px-4 text-left transition",
+                  "relative flex min-h-16 items-center justify-center rounded-2xl border px-2 text-center transition",
                   selected ? "border-brand bg-brand-soft" : "border-border bg-background",
                   premium ? "hover:border-brand/50" : "cursor-not-allowed opacity-80",
                 )}
               >
-                <span className="text-base font-semibold tabular-nums">{duration === 600 ? "10 minutes" : "20 minutes"}</span>
-                <span className="mt-0.5 text-xs text-muted-foreground">Long-form practice</span>
+                <span className="text-sm font-semibold leading-tight tabular-nums">{duration === 600 ? "10 minutes" : duration === 900 ? "15 minutes" : "20 minutes"}</span>
                 {!premium && <LockKeyhole className="absolute right-3 top-3 h-3.5 w-3.5 text-muted-foreground" />}
               </button>
             )
@@ -1299,10 +1315,10 @@ function ReviewMediaPlayer({ src, kind, duration }: { src: string; kind: "video"
       {kind === "video" ? (
         <video ref={(node) => { mediaRef.current = node }} playsInline className="max-h-80 w-full bg-foreground object-contain" {...sharedProps} />
       ) : (
-        <div className="flex h-36 items-center justify-center bg-gradient-to-br from-slate-800 to-black"><Mic2 className="h-9 w-9 text-white/70" /></div>
+        <div className="h-24 bg-foreground" aria-hidden="true" />
       )}
       {kind === "audio" && <audio ref={(node) => { mediaRef.current = node }} className="hidden" {...sharedProps} />}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent px-4 pb-4 pt-10">
+      <div className={cn("absolute inset-x-0 bottom-0 px-4 pb-4", kind === "video" ? "bg-gradient-to-t from-black/90 via-black/55 to-transparent pt-10" : "bg-foreground pt-4")}>
         <div role="slider" aria-label="Recording progress" aria-valuemin={0} aria-valuemax={safeDuration} aria-valuenow={currentTime} tabIndex={0} onPointerDown={seek} className="h-5 cursor-pointer py-2">
           <div className="h-1 overflow-hidden rounded-full bg-white/30"><span className="block h-full rounded-full bg-white transition-[width] duration-100" style={{ width: `${progress}%` }} /></div>
         </div>
