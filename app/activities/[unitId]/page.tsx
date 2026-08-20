@@ -16,7 +16,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unitId: s
   if (!unit) notFound()
   if (unit.index > 5) {
     const membership = await getMembershipByUserId(user.id)
-    if (!membership.active) redirect("/membership")
+    if (!membership.active) redirect("/membership?from=lessons")
   }
   return <MobileShell><div className="learning-page"><UnitDetail unit={unit} /></div></MobileShell>
 }

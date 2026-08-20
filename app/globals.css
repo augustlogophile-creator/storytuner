@@ -5766,3 +5766,273 @@ body {
   padding: max(1rem, env(safe-area-inset-top)) 1.15rem max(1.35rem, env(safe-area-inset-bottom)) !important;
   box-shadow: none !important;
 }
+
+/* August 20 evening: progress accuracy, quieter typography, membership gates,
+   and final paper-spacing pass. */
+:root,
+.book-app {
+  --font-book-serif: var(--font-eb-garamond), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+.book-app {
+  font-family: var(--font-book-serif);
+  font-weight: 500;
+}
+
+.book-app :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-book-serif);
+  font-weight: 600;
+  letter-spacing: -.024em;
+}
+
+.book-app :is(p, li, label, button, input, textarea, select, blockquote),
+.book-bottom-nav {
+  font-family: var(--font-book-serif);
+}
+
+/* Keep italics intentional instead of using them as the default secondary voice. */
+.book-app .italic:not(.book-home-typewriter):not(.journal-deck) {
+  font-style: normal !important;
+}
+
+/* The footer should read like an opaque sheet of frosted paper. Dialogs still
+   put the existing blue-tinted blur above it because their z-index is higher. */
+.book-bottom-nav {
+  background-color: rgba(244, 239, 229, .965) !important;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(92, 74, 50, .018) 0 .5px, transparent .7px),
+    linear-gradient(180deg, rgba(255,255,255,.31), rgba(235,228,216,.10)) !important;
+  border-top-color: rgba(126, 106, 79, .22) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(.92) !important;
+  backdrop-filter: blur(22px) saturate(.92) !important;
+}
+
+.app-dialog-overlay,
+.journal-overlay-blue {
+  background: rgba(63, 82, 104, .24) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(.88) !important;
+  backdrop-filter: blur(10px) saturate(.88) !important;
+}
+
+/* Progress: four useful metrics only, then two compact, recalculated streak stats. */
+.progress-page > header h1 { font-size: 1.55rem !important; }
+.progress-page > header p:last-child { max-width: 22rem; font-size: .78rem !important; line-height: 1.5 !important; }
+.progress-page > section.grid > div { padding: 1.05rem 1.15rem !important; }
+.progress-page > section.grid > div > :first-child { font-size: 1.72rem !important; }
+.progress-page > section.grid > div > p { font-size: .68rem !important; }
+.progress-streak-card { padding: 1.05rem !important; }
+.progress-streak-summary { max-width: 15rem; margin-inline: auto; width: 100%; }
+.progress-streak-summary > div { padding-inline: .7rem; }
+
+/* Studio, Community, and Planner had crept too large. Bring them back to the
+   denser book scale while preserving touch targets. */
+.studio-page > header h1,
+.community-page > header h1,
+.planner-page .planner-hero-title {
+  font-size: 1.38rem !important;
+  line-height: 1.12 !important;
+}
+
+.community-page > header h1 { font-size: 1.48rem !important; }
+
+.studio-page .text-sm,
+.community-page .text-sm,
+.planner-page .text-sm {
+  font-size: .78rem !important;
+}
+
+.studio-page .text-xs,
+.community-page .text-xs,
+.planner-page .text-xs {
+  font-size: .66rem !important;
+}
+
+.studio-page .text-lg,
+.community-page .text-lg,
+.planner-page .text-lg {
+  font-size: .98rem !important;
+}
+
+.studio-page .text-xl,
+.community-page .text-xl,
+.planner-page .text-xl {
+  font-size: 1.08rem !important;
+}
+
+.planner-page {
+  gap: 1.35rem !important;
+}
+
+.planner-page > header {
+  border-radius: 1.55rem !important;
+  padding: 1.2rem !important;
+}
+
+.planner-page > header > div { gap: .85rem !important; }
+.planner-page > header > div > span { width: 2.55rem !important; height: 2.55rem !important; border-radius: .9rem !important; }
+.planner-page > header p { line-height: 1.52 !important; }
+.planner-page label.rounded-3xl { border-radius: 1.25rem !important; padding: 1rem !important; }
+.planner-page textarea { border-radius: 1.05rem !important; padding: .78rem .9rem !important; line-height: 1.48 !important; }
+.planner-page .planner-past-plans-link { border-radius: 1.05rem !important; padding: .78rem .9rem !important; }
+
+/* Guarantee the duration badge can never break "3 min" across two lines. */
+.planner-page [class*="whitespace-nowrap"] { white-space: nowrap !important; }
+
+/* Saved plans arrive server-rendered so route entry has no loading-card flash. */
+.planner-library-page { animation: planner-library-enter 150ms ease-out both; }
+@keyframes planner-library-enter { from { opacity: .78; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+/* Home: put the typewriter in a fixed editorial spacer directly after Practice,
+   instead of letting it drift toward the footer on different viewport heights. */
+.book-home-closing-line {
+  min-height: 3.15rem !important;
+  height: 3.15rem !important;
+  margin-top: .7rem !important;
+  margin-bottom: 0 !important;
+  padding: 0 .75rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.book-home-typewriter {
+  font-size: .78rem !important;
+  line-height: 1 !important;
+}
+
+/* 21st.dev-inspired pricing interaction, adapted to Tellwise's paper language. */
+.membership-upgrade-screen {
+  width: 100%;
+  max-width: 25rem;
+  margin-inline: auto;
+  padding-bottom: .8rem;
+}
+
+.membership-upgrade-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  color: #776e63;
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+.membership-upgrade-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: .8rem;
+  text-align: center;
+}
+
+.membership-upgrade-mark {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border: 1px solid #d9cdbb;
+  border-radius: 1.05rem;
+  background: #f3eee5;
+  color: #587da2;
+}
+.membership-upgrade-mark svg { width: 1.35rem; height: 1.35rem; stroke-width: 1.65; }
+.membership-upgrade-eyebrow { margin-top: 1rem; color: #887d70; font-family: var(--font-geist-mono), ui-monospace, monospace !important; font-size: .53rem; letter-spacing: .16em; text-transform: uppercase; }
+.membership-upgrade-header h1 { max-width: 20rem; margin-top: .52rem; font-size: 1.68rem !important; line-height: 1.08; text-wrap: balance; }
+.membership-upgrade-header > p:last-child { max-width: 21rem; margin-top: .65rem; color: #776e63; font-size: .76rem; line-height: 1.48; }
+
+.membership-benefits {
+  display: grid;
+  gap: .58rem;
+  margin-top: 1.45rem;
+  padding-inline: .35rem;
+}
+.membership-benefit-row { display: flex; align-items: center; gap: .72rem; color: #3d3832; font-size: .76rem; line-height: 1.3; }
+.membership-benefit-row svg { width: 1rem; height: 1rem; flex: 0 0 auto; color: #587da2; stroke-width: 1.8; }
+
+.membership-pricing-grid { display: grid; gap: .7rem; margin-top: 1.45rem; }
+.membership-plan-choice {
+  position: relative;
+  display: flex;
+  min-height: 5.25rem;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  overflow: hidden;
+  border: 1px solid #d9cdbb;
+  border-radius: 1.2rem;
+  background: rgba(255,252,245,.65);
+  padding: .9rem 1rem;
+  color: #2f2a24;
+  text-align: left;
+  box-shadow: none;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 120ms ease;
+}
+.membership-plan-choice::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 2px solid transparent;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: border-color 180ms ease;
+}
+.membership-plan-choice.is-selected { border-color: #7895b2; background: #f5f7f7; }
+.membership-plan-choice.is-selected::after { border-color: #587da2; }
+.membership-plan-choice:active { transform: scale(.994); }
+.membership-plan-copy { min-width: 0; }
+.membership-plan-name-row { display: flex; align-items: center; gap: .55rem; }
+.membership-plan-name-row strong { font-size: .9rem; font-weight: 600; }
+.membership-plan-name-row > span { border-radius: 999px; background: #e5edf4; padding: .22rem .48rem; color: #4f7398; font-family: var(--font-geist-mono), ui-monospace, monospace !important; font-size: .46rem; letter-spacing: .08em; text-transform: uppercase; }
+.membership-plan-price-row { display: flex; align-items: baseline; gap: .22rem; margin-top: .3rem; }
+.membership-plan-price-row strong { font-size: 1.18rem; font-weight: 600; }
+.membership-plan-price-row small { color: #82786d; font-size: .66rem; }
+.membership-plan-detail { display: block; margin-top: .12rem; color: #8a8074; font-size: .62rem; }
+.membership-plan-radio { display: grid; width: 1.55rem; height: 1.55rem; flex: 0 0 auto; place-items: center; border: 1.5px solid #b9afa3; border-radius: 999px; transition: border-color 180ms ease, background-color 180ms ease; }
+.membership-plan-radio > span { display: grid; width: 1.05rem; height: 1.05rem; place-items: center; border-radius: 999px; }
+.membership-plan-radio svg { width: .72rem; height: .72rem; stroke-width: 2.7; }
+.membership-plan-choice.is-selected .membership-plan-radio { border-color: #587da2; background: #587da2; color: white; }
+
+.membership-renewal-consent {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: .6rem;
+  align-items: start;
+  margin-top: 1rem;
+  cursor: pointer;
+  color: #756b60;
+  font-size: .64rem;
+  line-height: 1.42;
+}
+.membership-renewal-consent input { position: absolute; opacity: 0; pointer-events: none; }
+.membership-renewal-consent > span { display: grid; width: 1rem; height: 1rem; place-items: center; border: 1px solid #bfb4a5; border-radius: .3rem; background: #fffdf8; color: transparent; }
+.membership-renewal-consent input:checked + span { border-color: #587da2; background: #587da2; color: white; }
+.membership-renewal-consent svg { width: .72rem; height: .72rem; stroke-width: 2.8; }
+
+.membership-upgrade-cta {
+  display: flex;
+  width: 100%;
+  min-height: 3.15rem;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #2e2a26;
+  color: #fffdf8;
+  font-size: .82rem;
+  font-weight: 600;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+.membership-upgrade-cta:active:not(:disabled) { transform: scale(.985); }
+.membership-upgrade-cta:disabled { opacity: .42; }
+.membership-upgrade-cta svg { width: .95rem; height: .95rem; }
+.membership-upgrade-message { margin-top: .7rem; border: 1px solid #ddcfc0; border-radius: .85rem; padding: .65rem .75rem; color: #776c60; font-size: .64rem; text-align: center; }
+.membership-upgrade-fineprint { margin-top: .7rem; color: #93887b; font-size: .58rem; line-height: 1.4; text-align: center; }
+
+@media (max-height: 720px) {
+  .membership-upgrade-header { margin-top: .35rem; }
+  .membership-upgrade-header h1 { font-size: 1.48rem !important; }
+  .membership-benefits { margin-top: 1rem; gap: .45rem; }
+  .membership-pricing-grid { margin-top: 1rem; gap: .55rem; }
+  .membership-plan-choice { min-height: 4.75rem; padding-block: .7rem; }
+}

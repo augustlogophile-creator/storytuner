@@ -137,7 +137,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-7">
+    <div className="planner-page flex min-w-0 flex-col gap-6">
       {fromStudio ? (
         <Link href="/studio" prefetch className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Studio
@@ -174,7 +174,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               <Eyebrow>Build your plan</Eyebrow>
               <h2 className="mt-2 text-xl font-semibold tracking-tight">Start with what you already know</h2>
             </div>
-            <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-muted-foreground">~3 min</span>
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-secondary px-3 py-1.5 text-[0.7rem] font-semibold text-muted-foreground">~3 min</span>
           </div>
 
           <div className="flex flex-col gap-4">

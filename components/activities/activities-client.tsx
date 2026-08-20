@@ -77,7 +77,7 @@ export function ActivitiesClient() {
           const unitNode = !ready
             ? <div key={`unit-${unit.id}`}>{content}</div>
             : !planAccess
-              ? <Link prefetch key={`unit-${unit.id}`} href="/membership">{content}</Link>
+              ? <Link prefetch key={`unit-${unit.id}`} href="/membership?from=lessons">{content}</Link>
               : unlocked
                 ? <Link prefetch key={`unit-${unit.id}`} href={`/activities/${unit.id}`}>{content}</Link>
                 : <div key={`unit-${unit.id}`}>{content}</div>
@@ -156,7 +156,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
   )
 
   if (!ready) return <div>{card}</div>
-  if (!planAccess) return <Link prefetch href="/membership">{card}</Link>
+  if (!planAccess) return <Link prefetch href="/membership?from=lessons">{card}</Link>
   if (unlocked || complete) return <Link prefetch href={`/test/${checkpoint.id}`}>{card}</Link>
   return <div>{card}</div>
 }

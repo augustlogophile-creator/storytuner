@@ -10,7 +10,6 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
-  Clock3,
   FileText,
   Loader2,
   LockKeyhole,
@@ -31,6 +30,7 @@ import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
 import { Celebration } from "@/components/ui/celebration"
+import { UpgradeScreen } from "@/components/membership/upgrade-screen"
 import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
 import { ReportAiOutput } from "@/components/ai/report-ai-output"
 import { FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
@@ -779,28 +779,12 @@ export function ArenaClient() {
   }
 
   if (phase === "setup" && !canRecord) {
-    return (
-      <div className="flex min-w-0 flex-col gap-6">
-        <header className="min-w-0">
-          <div className="arena-heading-row flex items-center justify-between gap-3">
-            <div className="min-w-0"><Eyebrow>Studio</Eyebrow><h1 className="mt-2 break-words text-2xl font-semibold tracking-tight">Your two free story reviews are complete.</h1></div>
-            <Link href="/studio/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold">{recordingCountLabel(state.recordings.length)}</Link>
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your lessons and past recordings remain available. Membership unlocks unlimited spoken story reviews.</p>
-        </header>
-        <section className="rounded-3xl border border-border bg-card p-6 text-center">
-          <Clock3 className="mx-auto h-8 w-8 text-muted-foreground" />
-          <h2 className="mt-4 text-lg font-semibold">Two free spoken stories total</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Each free story includes recording, transcription, a full grade, and a revised version. Membership removes the limit.</p>
-          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding membership<ArrowRight className="h-4 w-4" /></Link>
-          <Link href="/studio/recordings" className="mt-2 flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium text-muted-foreground">View past recordings</Link>
-        </section>
-      </div>
-    )
+    return <UpgradeScreen reason="studio" backHref="/home" />
   }
 
+
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <div className="studio-page flex min-w-0 flex-col gap-6">
       <Celebration active={showCaptureCelebration} mobileOnly label="Story captured" onDone={() => setShowCaptureCelebration(false)} />
       <header className="min-w-0">
         <div className="arena-heading-row flex items-center justify-between gap-3">
@@ -1241,7 +1225,7 @@ function DurationOptionsDialog({
                 <p className="mt-0.5 text-[0.68rem] text-muted-foreground">Unlock long and custom timers.</p>
               </div>
             </div>
-            <Link href="/membership" className="shrink-0 rounded-full border border-brand/25 bg-card px-3 py-2 text-xs font-semibold text-accent-foreground">
+            <Link href="/membership?from=studio" className="shrink-0 rounded-full border border-brand/25 bg-card px-3 py-2 text-xs font-semibold text-accent-foreground">
               View
             </Link>
           </div>
@@ -1417,7 +1401,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
         ) : premium ? (
           <button type="button" onClick={() => setShareOpen(true)} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />Share to Community</button>
         ) : (
-          <Link href="/membership" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
+          <Link href="/membership?from=studio" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
         )}
         <Link href="/studio/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
         <p className="text-center text-[0.68rem] leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>

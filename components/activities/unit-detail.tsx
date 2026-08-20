@@ -29,7 +29,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
           <Lock className="mx-auto h-8 w-8 text-accent-foreground" />
           <h1 className="mt-4 text-xl font-semibold">This lesson is part of Membership.</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">The free plan includes the first five complete lessons. Membership unlocks all fifteen.</p>
-          <Link href="/membership" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding offer<ChevronRight className="h-4 w-4" /></Link>
+          <Link href="/membership?from=lessons" className="mt-5 flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground">See the founding offer<ChevronRight className="h-4 w-4" /></Link>
         </section>
       </div>
     )

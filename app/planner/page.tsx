@@ -12,6 +12,6 @@ export default async function StoryPlannerPage({ searchParams }: { searchParams:
   const fromStudio = from === "studio" || from === "arena"
   const user = await requireStoryTunerUser(fromStudio ? "/planner?from=studio" : "/planner")
   const membership = await getMembershipByUserId(user.id)
-  if (!membership.active) redirect("/membership")
+  if (!membership.active) redirect("/membership?from=planner")
   return <MobileShell><StoryPlannerClient fromStudio={fromStudio} /></MobileShell>
 }

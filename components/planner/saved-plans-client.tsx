@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   ArrowLeft,
   Check,
@@ -15,16 +15,12 @@ import type { StoryPlanRecord } from "@/lib/planner/types"
 import { downloadStoryPlanPdf } from "@/lib/planner/plan-pdf"
 import { secondPersonDirection } from "@/lib/planner/voice"
 
-export function SavedPlansClient() {
-  const [plans, setPlans] = useState<StoryPlanRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+export function SavedPlansClient({ initialPlans = [], initialError = "" }: { initialPlans?: StoryPlanRecord[]; initialError?: string }) {
+  const [plans, setPlans] = useState<StoryPlanRecord[]>(initialPlans)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(initialError)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-
-  useEffect(() => {
-    void loadPlans()
-  }, [])
 
   async function loadPlans() {
     setLoading(true)

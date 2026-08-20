@@ -119,7 +119,7 @@ export function RecordingsClient() {
                         className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"
                       ><Share2 className="h-3.5 w-3.5" />Share to Community</button>
                     ) : (
-                      <Link href="/membership" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
+                      <Link href="/membership?from=community" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><Share2 className="h-3.5 w-3.5" />Unlock sharing</Link>
                     )}
                     <button type="button" onClick={() => setPendingDelete(recording.id)} disabled={deletingId === recording.id} className="flex items-center justify-center gap-1.5 rounded-full border border-destructive/25 px-3 py-2.5 text-xs font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" />Delete</button>
                   </div>

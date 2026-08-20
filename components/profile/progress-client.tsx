@@ -5,7 +5,6 @@ import {
   Check,
   Ear,
   Footprints,
-  Flame,
   HeartHandshake,
   House,
   Layers3,
@@ -45,35 +44,38 @@ const unitIcons: Record<number, LucideIcon> = {
   15: Trophy,
 }
 
-export function ProgressClient({ sharedStoryCount }: { sharedStoryCount: number | null }) {
+export function ProgressClient({ sharedStoryCount: _sharedStoryCount }: { sharedStoryCount: number | null }) {
   const { state } = useApp()
   const course = courseProgress(state)
-  const completedUnits = curriculum.filter((unit) => unitProgress(state, unit.id).done === 3).length
-  const shared = sharedStoryCount ?? state.recordings.filter((item) => item.shared).length
+  const scoredStories = state.recordings.filter((recording) => Number.isFinite(recording.overall) && recording.overall > 0)
+  const averageStoryScore = scoredStories.length
+    ? Math.round(scoredStories.reduce((sum, recording) => sum + recording.overall, 0) / scoredStories.length)
+    : null
   const week = getCurrentWeek(state.activityDates)
-  const activeDays = week.filter((day) => day.active).length
-  return <div className="flex flex-col gap-6">
+  const derivedStreaks = calculateStreaks(state.activityDates)
+  const streaks = { current: derivedStreaks.current, longest: Math.max(derivedStreaks.longest, state.longestStreak) }
+
+  return <div className="progress-page flex flex-col gap-6">
     <BackLink href="/profile" label="Profile" />
-    <header><p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Progress</p><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your work, accurately counted.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground">Every figure below comes from completed lessons, recorded takes, and active days on this device.</p></header>
+    <header>
+      <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Progress</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight">Your work, accurately counted.</h1>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">A simple view of your course progress, Studio work, and practice consistency.</p>
+    </header>
+
     <section className="grid grid-cols-2 gap-3">
       <BigStat value={course.percent} label="Course complete" suffix="%" />
       <BigStat value={state.xpLifetime} label="Lifetime XP" />
-      <BigStat value={completedUnits} label="Units complete" formatter={(value) => `${value}/15`} />
-      <BigStat value={state.sessions} label="App sessions" />
       <BigStat value={state.recordings.length} label="Stories recorded" />
-      <BigStat value={shared} label="Stories shared" />
+      <BigStat value={averageStoryScore} label="Average story score" suffix={averageStoryScore === null ? "" : "%"} />
     </section>
-    <section className="rounded-3xl border border-border bg-card p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-base font-semibold">Streak</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Keep the habit moving this week.</p>
-        </div>
-        <div className="flex items-center gap-1.5 text-[#c96f4e]">
-          <Flame className="h-4 w-4" strokeWidth={2} />
-          <span className="text-sm font-semibold tabular-nums">{state.streak}d</span>
-        </div>
+
+    <section className="progress-streak-card rounded-3xl border border-border bg-card p-5">
+      <div>
+        <p className="text-base font-semibold">Streak</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">Keep the habit moving, one active day at a time.</p>
       </div>
+
       <div className="mt-5 flex items-center justify-between gap-1.5">
         {week.map((day) => (
           <div key={day.key} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
@@ -83,17 +85,55 @@ export function ProgressClient({ sharedStoryCount }: { sharedStoryCount: number 
           </div>
         ))}
       </div>
-      <div className="mt-5 grid grid-cols-3 divide-x divide-border border-t border-border pt-4 text-center">
-        <div><p className="text-lg font-semibold tabular-nums">{activeDays}/7</p><p className="mt-0.5 text-[0.68rem] text-muted-foreground">This week</p></div>
-        <div><p className="text-lg font-semibold tabular-nums">{state.streak}</p><p className="mt-0.5 text-[0.68rem] text-muted-foreground">Current streak</p></div>
-        <div><p className="text-lg font-semibold tabular-nums">{state.longestStreak}</p><p className="mt-0.5 text-[0.68rem] text-muted-foreground">Longest streak</p></div>
+
+      <div className="progress-streak-summary mt-5 grid grid-cols-2 divide-x divide-border border-t border-border pt-4 text-center">
+        <div>
+          <p className="text-[1rem] font-semibold tabular-nums leading-none">{streaks.current}</p>
+          <p className="mt-1 text-[0.62rem] text-muted-foreground">Current streak</p>
+        </div>
+        <div>
+          <p className="text-[1rem] font-semibold tabular-nums leading-none">{streaks.longest}</p>
+          <p className="mt-1 text-[0.62rem] text-muted-foreground">Longest streak</p>
+        </div>
       </div>
     </section>
-    <section><p className="mb-3 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Unit completion</p><div className="flex flex-col gap-3">{curriculum.map((unit) => { const progress=unitProgress(state,unit.id); const Icon=unitIcons[unit.index] ?? BookOpenCheck; return <div key={unit.id} className="rounded-3xl border border-border bg-card p-4"><div className="flex items-center gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${progress.done===3?"bg-brand text-brand-foreground":"bg-brand-soft text-accent-foreground"}`}>{progress.done===3?<Check className="h-4.5 w-4.5" strokeWidth={2.6} />:<Icon className="h-5 w-5" strokeWidth={1.9} />}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{unit.index}. {unit.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{progress.done} of 3 steps</p></div><span className="text-xs text-muted-foreground">{progress.percent}%</span></div><div className="mt-3"><ProgressBar value={progress.percent} /></div></div>})}</div></section>
+
+    <section>
+      <p className="mb-3 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Unit completion</p>
+      <div className="flex flex-col gap-3">
+        {curriculum.map((unit) => {
+          const progress = unitProgress(state, unit.id)
+          const Icon = unitIcons[unit.index] ?? BookOpenCheck
+          return <div key={unit.id} className="rounded-3xl border border-border bg-card p-4">
+            <div className="flex items-center gap-3">
+              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${progress.done === 3 ? "bg-brand text-brand-foreground" : "bg-brand-soft text-accent-foreground"}`}>
+                {progress.done === 3 ? <Check className="h-4.5 w-4.5" strokeWidth={2.6} /> : <Icon className="h-5 w-5" strokeWidth={1.9} />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{unit.index}. {unit.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{progress.done} of 3 steps</p>
+              </div>
+              <span className="text-xs text-muted-foreground">{progress.percent}%</span>
+            </div>
+            <div className="mt-3"><ProgressBar value={progress.percent} /></div>
+          </div>
+        })}
+      </div>
+    </section>
   </div>
 }
-function BigStat({value,label,suffix="",formatter}:{value:number;label:string;suffix?:string;formatter?:(value:number)=>string}){return <div className="rounded-3xl border border-border bg-card p-5"><CountUp value={value} suffix={suffix} formatter={formatter} className="text-2xl font-semibold" /><p className="mt-1 text-xs text-muted-foreground">{label}</p></div>}
+
+function BigStat({ value, label, suffix = "" }: { value: number | null; label: string; suffix?: string }) {
+  return <div className="rounded-3xl border border-border bg-card p-5">
+    {value === null
+      ? <span className="text-2xl font-semibold text-muted-foreground">—</span>
+      : <CountUp value={value} suffix={suffix} className="text-2xl font-semibold" />}
+    <p className="mt-1 text-xs text-muted-foreground">{label}</p>
+  </div>
+}
+
 function getCurrentWeek(activityDates: string[]) {
+  const active = new Set(activityDates)
   const now = new Date()
   const weekday = now.getDay() || 7
   const monday = new Date(now)
@@ -107,9 +147,52 @@ function getCurrentWeek(activityDates: string[]) {
     return {
       key,
       label: ["M", "T", "W", "T", "F", "S", "S"][index],
-      active: activityDates.includes(key),
+      active: active.has(key),
       today: key === localDateKey(now),
     }
   })
 }
-function localDateKey(date:Date){const year=date.getFullYear();const month=String(date.getMonth()+1).padStart(2,"0");const day=String(date.getDate()).padStart(2,"0");return `${year}-${month}-${day}`}
+
+function calculateStreaks(activityDates: string[]) {
+  const ordinals = [...new Set(activityDates.map(dayOrdinal).filter((value): value is number => value !== null))].sort((a, b) => a - b)
+  if (!ordinals.length) return { current: 0, longest: 0 }
+
+  let longest = 1
+  let run = 1
+  for (let index = 1; index < ordinals.length; index += 1) {
+    if (ordinals[index] === ordinals[index - 1] + 1) {
+      run += 1
+      longest = Math.max(longest, run)
+    } else {
+      run = 1
+    }
+  }
+
+  const today = dayOrdinal(localDateKey(new Date()))!
+  const latest = ordinals.at(-1)!
+  if (today - latest > 1) return { current: 0, longest }
+
+  let current = 1
+  for (let index = ordinals.length - 1; index > 0; index -= 1) {
+    if (ordinals[index] !== ordinals[index - 1] + 1) break
+    current += 1
+  }
+  return { current, longest }
+}
+
+function dayOrdinal(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  if (!year || month < 1 || month > 12 || day < 1 || day > 31) return null
+  return Math.floor(Date.UTC(year, month - 1, day) / 86_400_000)
+}
+
+function localDateKey(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}

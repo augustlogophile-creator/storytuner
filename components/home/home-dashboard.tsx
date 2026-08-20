@@ -54,7 +54,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
   const courseHref = next
     ? next.type === "lesson" ? `/activities/${next.unit.id}` : `/test/${next.checkpoint.id}`
-    : freeLimitReached ? "/membership" : "/activities"
+    : freeLimitReached ? "/membership?from=lessons" : "/activities"
   const courseAction = next ? (next.type === "lesson" ? "Continue learning" : "Take unit test") : freeLimitReached ? "Unlock lessons" : "Review course"
   const activeDays = week.filter((day) => day.active).length
   const displayName = state.profile.name.trim().slice(0, 15) || "Storyteller"

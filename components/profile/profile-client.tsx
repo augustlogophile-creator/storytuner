@@ -66,7 +66,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
           <ProfileRow href="/journal" icon={BookOpenText} title="Journal" detail="Private notes, audio, and video ideas" />
           <Divider />
-          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Lessons, XP, streaks, and activity" />
+          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Course, XP, story score, and streaks" />
         </div>
       </section>
 

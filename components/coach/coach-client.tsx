@@ -144,17 +144,15 @@ export function CoachClient() {
     requestKeyRef.current = requestKey
 
     try {
-      const history = safeMessages
-        .slice(-10)
-        .map((message) => ({ role: message.role, content: message.content.slice(0, 5000) }))
+      const history = safeMessages.slice(-10).map((message) => ({ role: message.role, content: message.content }))
       const response = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...history, { role: "user", content: clean }],
-          storyContext: (recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.").slice(0, 7000),
-          scoreContext: (recording ? scoreContext(recording) : "No prior score selected.").slice(0, 2500),
-          personalizationContext: (state.settings.aiOptIn ? `${onboardingContext(state.onboardingPreferences)}\n\n${personalizationContext(state.recordings)}` : "").slice(0, 8000),
+          storyContext: recording ? storyContext(recording) : "No recording selected. Answer as a general storytelling coach.",
+          scoreContext: recording ? scoreContext(recording) : "No prior score selected.",
+          personalizationContext: state.settings.aiOptIn ? `${onboardingContext(state.onboardingPreferences)}\n\n${personalizationContext(state.recordings)}` : "",
           requestKey,
         }),
       })
@@ -334,7 +332,7 @@ export function CoachClient() {
         {error && <div className="mx-4 mb-3 flex items-start justify-between gap-3 rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive"><span>{error}</span><button type="button" onClick={() => setError("")} className="shrink-0 font-semibold opacity-70 hover:opacity-100">Dismiss</button></div>}
 
         {blocked ? (
-          <div className="border-t border-border p-5 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="mt-2 text-sm font-semibold">Your five free messages are used.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Your five exchanges stay here so you can revisit Parch’s advice. Membership includes unlimited coaching.</p><Link href="/membership" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link></div>
+          <div className="border-t border-border p-5 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="mt-2 text-sm font-semibold">Your five free messages are used.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Your five exchanges stay here so you can revisit Parch’s advice. Membership includes unlimited coaching.</p><Link href="/membership?from=general" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link></div>
         ) : (
           <div className="border-t border-border bg-background/75 p-3 backdrop-blur-sm">
             <div className="flex items-end gap-2 rounded-[1.45rem] border border-border bg-card px-2.5 py-2 shadow-sm focus-within:border-brand">
