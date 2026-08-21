@@ -4,7 +4,6 @@ import Link from "next/link"
 import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react"
 import {
   ArrowRight,
-  BookOpenText,
   Camera,
   CameraOff,
   Check,
@@ -793,10 +792,11 @@ export function ArenaClient() {
         </div>
         <h1>Tell a story. See what lands.</h1>
         <p className="studio-intro">Tell any story you choose, or practice storytelling in a real-life situation. Parch grades the craft, not the topic.</p>
-        <div className="studio-meta-row">
-          <Link href="/journal" className="studio-journal-link"><BookOpenText strokeWidth={1.8} />Journal · private story notebook</Link>
-          {!state.premium && <span className="studio-free-badge">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>}
-        </div>
+        {!state.premium && (
+          <div className="studio-meta-row">
+            <span className="studio-free-badge">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>
+          </div>
+        )}
       </header>
 
       {phase === "setup" && (

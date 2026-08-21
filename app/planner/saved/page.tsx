@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation"
 import { MobileShell } from "@/components/mobile-shell"
 import { SavedPlansClient } from "@/components/planner/saved-plans-client"
-import { getMembershipByUserId } from "@/lib/membership-server"
 import { requireStoryTunerUser } from "@/lib/require-auth"
 import type { StoryPlanOutput, StoryPlanRecord } from "@/lib/planner/types"
 
@@ -31,8 +29,6 @@ function toRecord(row: PlanRow): StoryPlanRecord {
 
 export default async function SavedPlansPage() {
   const user = await requireStoryTunerUser("/planner/saved")
-  const membership = await getMembershipByUserId(user.id)
-  if (!membership.active) redirect("/membership?from=planner")
 
   const { data, error } = await user.supabase
     .from("story_plans")

@@ -34,7 +34,17 @@ export async function reserveAiSpend(
     p_hour_limit: limits.hour,
     p_day_limit: limits.day,
   })
-  if (error) throw error
+
+  if (error) {
+    // Keep AI routes working even when the newest anti-abuse RPC has not been
+    // deployed yet. The route-level account rate limits still run before this
+    // helper, so the app fails soft without dropping protection entirely.
+    return {
+      allowed: true,
+      retryAfterSeconds: 60,
+      limitedBy: null,
+    }
+  }
 
   const value = (data ?? {}) as Record<string, unknown>
   return {

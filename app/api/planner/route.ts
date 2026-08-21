@@ -76,31 +76,23 @@ function toRecord(row: PlanRow): StoryPlanRecord {
   }
 }
 
-async function activeMember() {
+const FREE_STORY_PLAN_LIMIT = 1
+
+async function plannerAccess() {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth
   const user = auth.user
-  let membership
   try {
-    membership = await getMembershipByUserId(user.id)
+    const membership = await getMembershipByUserId(user.id)
+    return { ok: true as const, user, membershipActive: membership.active }
   } catch (error) {
     backendError("planner_membership_lookup_failed", error, { userId: user.id })
     return { ok: false as const, response: Response.json({ code: "MEMBERSHIP_STATUS_UNAVAILABLE", error: "Story Planner could not verify your membership right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } }) }
   }
-  if (!membership.active) {
-    return {
-      ok: false as const,
-      response: Response.json({
-        code: "PLANNER_MEMBERSHIP_REQUIRED",
-        error: "Story Planner is included with Tellwise Membership.",
-      }, { status: 403 }),
-    }
-  }
-  return { ok: true as const, user }
 }
 
 export async function GET() {
-  const auth = await activeMember()
+  const auth = await plannerAccess()
   if (!auth.ok) return auth.response
 
   const { data, error } = await auth.user.supabase
@@ -116,13 +108,13 @@ export async function GET() {
     return Response.json({ error: "Your saved plans could not be loaded. Run the newest Supabase migration if this is the first time opening Story Planner." }, { status: 500 })
   }
 
-  return Response.json({ plans: (data ?? []).map(toRecord) }, { headers: { "Cache-Control": "private, no-store" } })
+  return Response.json({ plans: (data ?? []).map(toRecord), membershipActive: auth.membershipActive, freeStoryPlansRemaining: auth.membershipActive ? null : Math.max(0, FREE_STORY_PLAN_LIMIT - (data?.length ?? 0)) }, { headers: { "Cache-Control": "private, no-store" } })
 }
 
 export async function POST(request: Request) {
   const crossSite = requireSameOrigin(request)
   if (crossSite) return crossSite
-  const auth = await activeMember()
+  const auth = await plannerAccess()
   if (!auth.ok) return auth.response
 
   const oversized = rejectLargeRequest(request, 40_000)
@@ -165,20 +157,35 @@ export async function POST(request: Request) {
     return Response.json({ plan: toRecord(recentDuplicate), replayed: true }, { headers: { "Cache-Control": "no-store" } })
   }
 
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
-  const { count, error: countError } = await admin
-    .from("story_plans")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", auth.user.id)
-    .gte("created_at", today.toISOString())
+  if (!auth.membershipActive) {
+    const { count, error: freePlanCountError } = await admin
+      .from("story_plans")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", auth.user.id)
 
-  if (countError) {
-    backendError("planner_usage_lookup_failed", countError, { userId: auth.user.id })
-    return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
-  }
-  if ((count ?? 0) >= 10) {
-    return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Parch can keep the feature reliable for everyone." }, { status: 429 })
+    if (freePlanCountError) {
+      backendError("planner_usage_lookup_failed", freePlanCountError, { userId: auth.user.id })
+      return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
+    }
+    if ((count ?? 0) >= FREE_STORY_PLAN_LIMIT) {
+      return Response.json({ code: "PLANNER_MEMBERSHIP_REQUIRED", error: "The free plan includes 1 Story Planner. Membership unlocks unlimited story plans." }, { status: 403 })
+    }
+  } else {
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    const { count, error: countError } = await admin
+      .from("story_plans")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", auth.user.id)
+      .gte("created_at", today.toISOString())
+
+    if (countError) {
+      backendError("planner_usage_lookup_failed", countError, { userId: auth.user.id })
+      return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
+    }
+    if ((count ?? 0) >= 10) {
+      return Response.json({ error: "You have used Story Planner ten times today. Come back tomorrow so Parch can keep the feature reliable for everyone." }, { status: 429 })
+    }
   }
 
   let plannerSpend

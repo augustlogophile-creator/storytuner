@@ -90,7 +90,7 @@ export function MembershipClient({
       <header>
         <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Membership</p>
         <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight">Your Tellwise Membership</h1>
-        <p className="mt-1 text-[0.8rem] leading-relaxed text-muted-foreground">Full course, Studio, Community, Parch, and Story Planner access.</p>
+        <p className="mt-1 text-[0.8rem] leading-relaxed text-muted-foreground">Full course, Studio, Community, Parch, and unlimited Story Planner access.</p>
       </header>
 
       {checkoutSuccess && (

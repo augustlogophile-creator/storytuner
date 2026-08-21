@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { BookOpenCheck, Check, Loader2, Map, Mic2, Sparkles, UsersRound } from "lucide-react"
+import { BookOpenCheck, Check, Loader2, Lock, Map, Mic2, Sparkles, UsersRound } from "lucide-react"
 import { PricingInteraction, type MembershipPlanChoice } from "@/components/ui/pricing-interaction"
 
 export type UpgradeReason = "general" | "lessons" | "studio" | "community" | "planner"
@@ -31,7 +31,7 @@ const reasonCopy: Record<UpgradeReason, { eyebrow: string; title: string; descri
   planner: {
     eyebrow: "Story Planner",
     title: "Plan the story before you tell it.",
-    description: "Membership unlocks the AI Story Planner so you can shape a clear opening, sequence, and landing before you record.",
+    description: "Your first Story Planner is free. Membership unlocks unlimited AI story plans so you can shape a clear opening, sequence, and landing before you record.",
   },
 }
 
@@ -40,7 +40,7 @@ const benefits = [
   { icon: Mic2, text: "Unlimited graded Studio story reviews" },
   { icon: Sparkles, text: "Unlimited Parch craft coaching" },
   { icon: UsersRound, text: "Full Community access" },
-  { icon: Map, text: "AI Story Planner" },
+  { icon: Map, text: "Unlimited AI Story Planner" },
 ]
 
 export function UpgradeScreen({
@@ -95,7 +95,7 @@ export function UpgradeScreen({
       {backHref && <Link href={backHref} className="membership-upgrade-back">← Back</Link>}
 
       <header className="membership-upgrade-header">
-        <span className="membership-upgrade-mark"><Sparkles /></span>
+        <span className="membership-upgrade-mark"><Lock /></span>
         <p className="membership-upgrade-eyebrow">{copy.eyebrow}</p>
         <h1>{copy.title}</h1>
         <p>{copy.description}</p>

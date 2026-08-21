@@ -254,7 +254,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <Sparkles className="h-4 w-4" />
             Build my story plan
           </button>
-          <p className="planner-build-hint">{ready ? "Plans are private and saved to your account. Membership includes up to 10 plans per day." : "Answer all five questions before Parch can build your plan."}</p>
+          <p className="planner-build-hint">{ready ? "Plans are private and saved to your account. Your first Story Planner is free, and Membership unlocks unlimited plans." : "Answer all five questions before Parch can build your plan."}</p>
         </section>
       )}
 

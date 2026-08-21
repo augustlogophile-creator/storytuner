@@ -22,8 +22,10 @@ import {
   type JournalMediaEntry,
   type JournalMediaKind,
 } from "@/lib/journal-media"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 type JournalEntry = JournalMediaEntry
+type JournalEntryType = JournalEntry["entry_type"]
 
 type DraftSeed = {
   title?: string
@@ -39,7 +41,6 @@ export function JournalClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [composerOpen, setComposerOpen] = useState(false)
-  const [editing, setEditing] = useState<JournalEntry | null>(null)
   const [draftSeed, setDraftSeed] = useState<DraftSeed | null>(null)
   const [detail, setDetail] = useState<JournalEntry | null>(null)
   const [captureKind, setCaptureKind] = useState<JournalMediaKind | null>(null)
@@ -81,16 +82,18 @@ export function JournalClient() {
 
   const groups = useMemo(() => groupEntries(visibleEntries, Boolean(query.trim())), [visibleEntries, query])
 
-  function startNewText(seed?: DraftSeed) {
-    setEditing(null)
-    setDraftSeed(seed ?? null)
-    setComposerOpen(true)
-  }
+  const upsertEntry = useCallback((entry: JournalEntry) => {
+    setEntries((current) => {
+      const next = current.some((existing) => existing.id === entry.id)
+        ? current.map((existing) => existing.id === entry.id ? entry : existing)
+        : [entry, ...current]
+      return [...next].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    })
+    setDetail((current) => current?.id === entry.id ? entry : current)
+  }, [])
 
-  function editEntry(entry: JournalEntry) {
-    setDetail(null)
-    setEditing(entry)
-    setDraftSeed(null)
+  function startNewText(seed?: DraftSeed) {
+    setDraftSeed(seed ?? null)
     setComposerOpen(true)
   }
 
@@ -184,12 +187,11 @@ export function JournalClient() {
 
       {composerOpen && (
         <TextComposer
-          entry={editing}
+          entry={null}
           initialTitle={draftSeed?.title ?? ""}
           initialBody={draftSeed?.body ?? ""}
           onClose={async () => {
             setComposerOpen(false)
-            setEditing(null)
             setDraftSeed(null)
             await load()
           }}
@@ -202,7 +204,7 @@ export function JournalClient() {
           onClose={() => setCaptureKind(null)}
           onSaved={async (entry) => {
             setCaptureKind(null)
-            await load()
+            upsertEntry(entry)
             setDetail(entry)
           }}
         />
@@ -211,8 +213,11 @@ export function JournalClient() {
       {detail && (
         <EntryDetail
           entry={detail}
-          onClose={() => setDetail(null)}
-          onEdit={() => editEntry(detail)}
+          onClose={async () => {
+            setDetail(null)
+            await load()
+          }}
+          onUpdated={upsertEntry}
           onDeleted={async () => {
             setDetail(null)
             await load()
@@ -275,7 +280,7 @@ function TextComposer({
     } catch {}
 
     const fingerprint = `${title}\u0000${body}`
-    if (!body.trim() || fingerprint === lastSavedRef.current) return
+    if ((!title.trim() && !body.trim()) || fingerprint === lastSavedRef.current) return
 
     setStatus("unsaved")
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -288,8 +293,8 @@ function TextComposer({
 
   async function saveNow(nextTitle = title, nextBody = body) {
     const cleanBody = nextBody.trim()
-    const cleanTitle = nextTitle.trim() || titleFromBody(cleanBody)
-    if (!cleanBody) return true
+    const cleanTitle = nextTitle.trim() || titleFromBody(cleanBody) || "Untitled note"
+    if (!cleanTitle && !cleanBody) return true
     if (cleanTitle.length > 120 || cleanBody.length > 20000) {
       if (mountedRef.current) {
         setStatus("error")
@@ -356,7 +361,7 @@ function TextComposer({
   async function closeEditor() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 30))
-    if (latestBodyRef.current.trim()) await saveNow(latestTitleRef.current, latestBodyRef.current)
+    if (latestTitleRef.current.trim() || latestBodyRef.current.trim()) await saveNow(latestTitleRef.current, latestBodyRef.current)
     while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 30))
     await onClose()
   }
@@ -376,7 +381,7 @@ function TextComposer({
           className="journal-title-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Title"
+          placeholder="Add a title"
           maxLength={120}
           autoFocus={!initialBody}
         />
@@ -384,12 +389,12 @@ function TextComposer({
           className="journal-body-input"
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          placeholder="Start writing…"
+          placeholder="Add a description or start writing…"
           maxLength={20000}
           autoFocus={Boolean(initialBody)}
         />
         <div className="journal-editor-foot">
-          <span>{body.length.toLocaleString()} characters</span>
+          <span>{body.trim() ? `${body.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words` : "0 words"}</span>
           <span>Autosaves</span>
         </div>
         {error && <p className="journal-error mt-3">{error}</p>}
@@ -530,18 +535,32 @@ function MediaCapture({
 function EntryDetail({
   entry,
   onClose,
-  onEdit,
+  onUpdated,
   onDeleted,
 }: {
   entry: JournalEntry
   onClose: () => void
-  onEdit: () => void
+  onUpdated: (entry: JournalEntry) => void
   onDeleted: () => void | Promise<void>
 }) {
+  const [title, setTitle] = useState(entry.title)
+  const [body, setBody] = useState(entry.body)
+  const [editingField, setEditingField] = useState<"title" | "body" | null>(null)
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved")
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaLoading, setMediaLoading] = useState(false)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    setTitle(entry.title)
+    setBody(entry.body)
+    setEditingField(null)
+    setSaveStatus("saved")
+    setError("")
+  }, [entry.id, entry.title, entry.body])
 
   useEffect(() => {
     let cancelled = false
@@ -563,6 +582,44 @@ function EntryDetail({
     return () => { cancelled = true }
   }, [entry.media_storage_path])
 
+  useEffect(() => {
+    const nextTitle = title.trim()
+    const nextBody = body.trim()
+    const unchanged = nextTitle === entry.title.trim() && nextBody === entry.body.trim()
+    if (unchanged) return
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    setSaveStatus("saving")
+    saveTimerRef.current = setTimeout(() => {
+      void saveEdits(title, body)
+    }, 650)
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [title, body, entry])
+
+  async function saveEdits(nextTitle = title, nextBody = body) {
+    const cleanTitle = journalStoredTitle(entry.entry_type, nextTitle, nextBody)
+    const cleanBody = journalStoredBody(entry.entry_type, nextBody)
+    setError("")
+    try {
+      const supabase = createClient()
+      const { data, error: updateError } = await supabase
+        .from("journal_entries")
+        .update({ title: cleanTitle, body: cleanBody })
+        .eq("id", entry.id)
+        .select("id,user_id,title,body,entry_type,media_storage_path,media_content_type,media_size_bytes,media_duration_seconds,created_at,updated_at")
+        .single<JournalEntry>()
+      if (updateError || !data) throw new Error(updateError?.message || "This note could not be saved.")
+      onUpdated(data)
+      setSaveStatus("saved")
+    } catch (caught) {
+      setSaveStatus("error")
+      setError(caught instanceof Error ? caught.message : "This note could not be saved.")
+    }
+  }
+
   async function deleteEntry() {
     setDeleting(true)
     setError("")
@@ -571,6 +628,7 @@ function EntryDetail({
       const supabase = createClient()
       const { error: deleteError } = await supabase.from("journal_entries").delete().eq("id", entry.id)
       if (deleteError) throw new Error(deleteError.message)
+      setDeleteOpen(false)
       await onDeleted()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "This note could not be deleted.")
@@ -579,36 +637,82 @@ function EntryDetail({
     }
   }
 
+  const titlePlaceholder = entry.entry_type === "text" ? "Add a title" : "Add a title"
+  const bodyPlaceholder = entry.entry_type === "text" ? "Add a description or start writing…" : "Add a description"
+  const showingPlaceholderTitle = isJournalPlaceholderTitle(entry.entry_type, title)
+  const showingPlaceholderBody = isJournalPlaceholderBody(entry.entry_type, body)
+
   return (
-    <div className={entry.entry_type === "text" ? "journal-note-sheet-overlay" : "journal-note-sheet-overlay journal-media-detail-overlay"} role="dialog" aria-modal="true" aria-label="Journal note">
-      <article className={entry.entry_type === "text" ? "journal-detail journal-detail-notes" : "journal-detail journal-detail-notes journal-detail-media"}>
-        <div className="journal-detail-top journal-editor-top-notes">
-          <button type="button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
-          <span>Journal</span>
-          <button type="button" onClick={onEdit}>Edit</button>
-        </div>
-        <p className="journal-entry-date">{journalLongDate(entry.updated_at)}</p>
-        <h2>{entry.title}</h2>
-
-        {entry.entry_type === "audio" && (
-          <div className="journal-media-player is-audio">
-            {mediaLoading ? <span>Opening private audio…</span> : mediaUrl ? <audio controls preload="metadata" src={mediaUrl} /> : <span>Audio unavailable.</span>}
+    <>
+      <div className={entry.entry_type === "text" ? "journal-note-sheet-overlay" : "journal-note-sheet-overlay journal-media-detail-overlay"} role="dialog" aria-modal="true" aria-label="Journal note">
+        <article className={entry.entry_type === "text" ? "journal-detail journal-detail-notes journal-detail-reading" : "journal-detail journal-detail-notes journal-detail-media journal-detail-reading"}>
+          <div className="journal-detail-top journal-editor-top-notes">
+            <button type="button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
+            <span className={`journal-save-status is-${saveStatus}`}>{saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Not saved" : "Saved"}</span>
+            <button type="button" className="journal-delete-icon" onClick={() => setDeleteOpen(true)} aria-label="Delete note"><Trash2 /></button>
           </div>
-        )}
-        {entry.entry_type === "video" && (
-          <div className="journal-media-player is-video">
-            {mediaLoading ? <span>Opening private video…</span> : mediaUrl ? <video controls playsInline preload="metadata" src={mediaUrl} /> : <span>Video unavailable.</span>}
-          </div>
-        )}
+          <p className="journal-entry-date">{journalLongDate(entry.updated_at)}</p>
 
-        <p className="journal-detail-body whitespace-pre-wrap">{entry.body}</p>
-        <div className="journal-detail-actions">
-          <button type="button" onClick={onEdit}><PenLine /> Edit</button>
-          <button type="button" className="is-danger" disabled={deleting} onClick={() => void deleteEntry()}><Trash2 /> {deleting ? "Deleting…" : "Delete"}</button>
-        </div>
-        {error && <p className="journal-error mt-3">{error}</p>}
-      </article>
-    </div>
+          {editingField === "title" ? (
+            <input
+              className="journal-title-input journal-inline-input"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              onBlur={() => setEditingField(null)}
+              placeholder={titlePlaceholder}
+              maxLength={120}
+              autoFocus
+            />
+          ) : (
+            <button type="button" className={`journal-inline-title ${showingPlaceholderTitle ? "is-placeholder" : ""}`} onClick={() => setEditingField("title")}>
+              {showingPlaceholderTitle ? titlePlaceholder : title}
+            </button>
+          )}
+
+          {entry.entry_type === "audio" && (
+            <div className="journal-media-player is-audio">
+              {mediaLoading ? <span>Opening private audio…</span> : mediaUrl ? <audio controls preload="metadata" src={mediaUrl} /> : <span>Audio unavailable.</span>}
+            </div>
+          )}
+          {entry.entry_type === "video" && (
+            <div className="journal-media-player is-video">
+              {mediaLoading ? <span>Opening private video…</span> : mediaUrl ? <video controls playsInline preload="metadata" src={mediaUrl} /> : <span>Video unavailable.</span>}
+            </div>
+          )}
+
+          {editingField === "body" ? (
+            <textarea
+              className="journal-body-input journal-inline-textarea"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+              onBlur={() => setEditingField(null)}
+              placeholder={bodyPlaceholder}
+              maxLength={20000}
+              autoFocus
+            />
+          ) : (
+            <button type="button" className={`journal-inline-body ${showingPlaceholderBody ? "is-placeholder" : ""}`} onClick={() => setEditingField("body")}>
+              {showingPlaceholderBody ? bodyPlaceholder : body}
+            </button>
+          )}
+
+          <p className="journal-inline-hint">Tap the title or description to edit. Changes save automatically.</p>
+          {error && <p className="journal-error mt-3">{error}</p>}
+        </article>
+      </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Delete this Journal note?"
+        confirmLabel={deleting ? "Deleting…" : "Delete"}
+        tone="danger"
+        busy={deleting}
+        onCancel={() => { if (!deleting) setDeleteOpen(false) }}
+        onConfirm={() => void deleteEntry()}
+      >
+        This permanently removes the note{entry.entry_type !== "text" ? " and its private recording" : ""}.
+      </ConfirmDialog>
+    </>
   )
 }
 
@@ -646,11 +750,34 @@ function groupEntries(entries: JournalEntry[], searching: boolean) {
 function entryPreview(entry: JournalEntry) {
   if (entry.entry_type === "audio") return `${duration(entry.media_duration_seconds ?? 0)}  ${cleanPreview(entry.body, "Audio note")}`
   if (entry.entry_type === "video") return `${duration(entry.media_duration_seconds ?? 0)}  ${cleanPreview(entry.body, "Video note")}`
-  return cleanPreview(entry.body, "Untitled note")
+  return cleanPreview(entry.body, entry.title || "Untitled note")
 }
 
 function cleanPreview(value: string, fallback: string) {
   return value.replace(/\s+/g, " ").trim().slice(0, 110) || fallback
+}
+
+function isJournalPlaceholderTitle(kind: JournalEntryType, value: string) {
+  const normalized = value.trim().toLowerCase()
+  return !normalized || normalized === "add a title"
+}
+
+function isJournalPlaceholderBody(kind: JournalEntryType, value: string) {
+  const normalized = value.trim().toLowerCase()
+  if (kind === "text") return !normalized
+  return !normalized || normalized === "add a description" || normalized === "private audio note" || normalized === "private video note"
+}
+
+function journalStoredTitle(kind: JournalEntryType, title: string, body: string) {
+  const cleanTitle = title.trim()
+  if (kind === "text") return cleanTitle || titleFromBody(body.trim()) || "Untitled note"
+  return cleanTitle || "Add a title"
+}
+
+function journalStoredBody(kind: JournalEntryType, body: string) {
+  const cleanBody = body.trim()
+  if (kind === "text") return cleanBody
+  return cleanBody || "Add a description"
 }
 
 function titleFromBody(value: string) {

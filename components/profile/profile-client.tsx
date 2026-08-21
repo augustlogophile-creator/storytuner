@@ -7,7 +7,6 @@ import {
   Bell,
   BookOpenText,
   ChevronRight,
-  Crown,
   Mail,
   Settings,
   ShieldCheck,
@@ -18,6 +17,15 @@ import { CountUp } from "@/components/ui/count-up"
 import { goalLabels, type StoryGoal } from "@/lib/onboarding-preferences"
 import { useApp } from "@/lib/app-state"
 import { useNotificationUnread } from "@/components/notifications/use-notification-unread"
+
+function SketchCrown() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4.6 17 6.8 7.5l5.1 4.1 4.3-6 2.2 10.1" />
+      <path d="M4.6 17c2.5-.8 4.9-1.2 7.3-1.2 2.6 0 5 .4 7.5 1.2" />
+    </svg>
+  )
+}
 
 export function ProfileClient({ moderatorRole, displayName, username }: { moderatorRole: "moderator" | "admin" | null; displayName: string; username: string }) {
   const { state } = useApp()
@@ -36,7 +44,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         <div className="flex items-center gap-3 px-4 py-3">
           <span className="profile-sketch-avatar" aria-label={`${name} profile initials`}>
             <span className="profile-sketch-avatar-initials">{profileInitials(name)}</span>
-            <span className="profile-sketch-crown" aria-hidden="true"><Crown /></span>
+            <span className="profile-sketch-crown" aria-hidden="true"><SketchCrown /></span>
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[0.94rem] font-semibold tracking-[-0.015em]">@{username}</p>
