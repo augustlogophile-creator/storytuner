@@ -96,7 +96,7 @@
   --sidebar-accent-foreground: oklch(0.27 0.012 70);
   --sidebar-border: oklch(0.9 0.008 90);
   --sidebar-ring: oklch(0.59 0.075 245);
-  --font-book-serif: var(--font-eb-garamond), "Iowan Old Style", Georgia, serif;
+  --font-book-serif: var(--font-lora), "Iowan Old Style", Georgia, serif;
 }
 
 .dark {
@@ -1778,7 +1778,7 @@ label:has(input[type="radio"]):active {
 }
 
 .book-paper-content {
-  --book-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --book-serif: var(--font-lora), "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   position: relative;
   z-index: 2;
   height: 100%;
@@ -2572,7 +2572,7 @@ label:has(input[type="radio"]):active {
   --sidebar-accent-foreground: #342f29;
   --sidebar-border: #d4c9b9;
   --sidebar-ring: #496f9e;
-  --font-book-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Baskerville, Georgia, "Times New Roman", serif;
+  --font-book-serif: var(--font-lora), "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
 }
 
 body {
@@ -4514,7 +4514,7 @@ body {
 
 /* August 20 evening polish: quieter paper system, Notes-like Journal, inline plans. */
 .book-app {
-  --font-book-serif: var(--font-eb-garamond), "Iowan Old Style", Georgia, serif;
+  --font-book-serif: var(--font-lora), "Iowan Old Style", Georgia, serif;
   font-family: var(--font-book-serif);
 }
 
@@ -4542,7 +4542,7 @@ body {
 
 /* Intro page turns are deliberately a little slower, but never sluggish. */
 .book-standalone-cover {
-  transition-duration: 780ms !important;
+  transition-duration: 900ms !important;
   transition-timing-function: cubic-bezier(.20,.72,.20,1) !important;
 }
 
@@ -5771,7 +5771,7 @@ body {
    and final paper-spacing pass. */
 :root,
 .book-app {
-  --font-book-serif: var(--font-eb-garamond), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-book-serif: var(--font-lora), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
 }
 
 .book-app {
@@ -6035,4 +6035,687 @@ body {
   .membership-benefits { margin-top: 1rem; gap: .45rem; }
   .membership-pricing-grid { margin-top: 1rem; gap: .55rem; }
   .membership-plan-choice { min-height: 4.75rem; padding-block: .7rem; }
+}
+
+/* August 20 final editorial polish: stronger book typography, pencil progress,
+   Studio/Journal/Planner cleanup, and a hand-drawn profile mark. */
+:root,
+.book-app {
+  --font-book-serif: var(--font-lora), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+.book-app {
+  font-family: var(--font-book-serif);
+  font-weight: 500;
+}
+
+.book-app :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 650;
+  letter-spacing: -.026em;
+}
+
+.book-app :is(input, textarea, select) {
+  font-size: .84rem;
+}
+
+/* Learn should read like clean printed copy, not italic marginalia. */
+.learning-page,
+.learning-page * {
+  font-style: normal !important;
+}
+
+.learning-page > div > header h1 {
+  font-size: 1.68rem !important;
+  line-height: 1.08 !important;
+}
+
+.learning-page > div > header p {
+  max-width: 22rem;
+  margin-top: .45rem !important;
+  font-size: .84rem !important;
+  line-height: 1.55 !important;
+}
+
+.learning-page section:first-of-type {
+  border-radius: 1.25rem !important;
+  background: rgba(255, 252, 245, .58) !important;
+}
+
+/* Pencil-filled progress. The track keeps the same pill geometry while the
+   completed portion looks hatched in by hand instead of digitally filled. */
+.progress-bar-sketch {
+  position: relative;
+  height: .52rem !important;
+  overflow: hidden;
+  border: 1px solid rgba(72, 65, 58, .35);
+  border-radius: 999px !important;
+  background: rgba(224, 218, 207, .34) !important;
+  box-shadow: inset 0 1px 1px rgba(70, 62, 54, .05);
+}
+
+.progress-bar-sketch::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  border-top: 1px solid rgba(255,255,255,.44);
+  pointer-events: none;
+}
+
+.progress-bar-sketch-fill {
+  position: relative;
+  min-width: 0;
+  border-radius: 999px !important;
+  background-color: rgba(42, 39, 35, .13) !important;
+  background-image:
+    repeating-linear-gradient(108deg, rgba(38, 36, 33, .88) 0 1.3px, transparent 1.3px 3.8px),
+    repeating-linear-gradient(76deg, rgba(38, 36, 33, .36) 0 1px, transparent 1px 5px) !important;
+  box-shadow: inset -1px 0 0 rgba(38, 36, 33, .34);
+  transition: width 520ms cubic-bezier(.22,.72,.22,1) !important;
+}
+
+/* A slightly more tactile annotation voice, used only where handwriting adds
+   character instead of reducing readability. */
+.book-home-typewriter {
+  font-family: var(--font-book-hand), "Comic Sans MS", cursive !important;
+  font-size: .8rem !important;
+  font-style: normal !important;
+  letter-spacing: .01em;
+}
+
+/* Profile avatar: initials on a deliberately imperfect ink circle with a small
+   tilted crown, keeping the footprint identical to the old icon circle. */
+.profile-sketch-avatar {
+  position: relative;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1.4px solid #37322c;
+  border-radius: 49% 52% 47% 53% / 51% 46% 54% 49%;
+  background:
+    radial-gradient(circle at 36% 34%, rgba(255,255,255,.55), transparent 32%),
+    #f7f1e3;
+  color: #2f2b26;
+  transform: rotate(-.8deg);
+}
+
+.profile-sketch-avatar::after {
+  content: "";
+  position: absolute;
+  inset: 2px -2px -1px 1px;
+  border: 1px solid rgba(55, 50, 44, .28);
+  border-radius: 52% 47% 53% 48% / 47% 53% 46% 54%;
+  transform: rotate(2.2deg);
+  pointer-events: none;
+}
+
+.profile-sketch-avatar-initials {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: .72rem;
+  font-weight: 750;
+  letter-spacing: .035em;
+}
+
+.profile-sketch-crown {
+  position: absolute;
+  top: -.72rem;
+  left: -.2rem;
+  z-index: 3;
+  display: grid;
+  width: 1.34rem;
+  height: 1.12rem;
+  place-items: center;
+  transform: rotate(-17deg);
+  color: #a77b20;
+}
+
+.profile-sketch-crown::before {
+  content: "";
+  position: absolute;
+  inset: .18rem .08rem .08rem;
+  border-radius: 45%;
+  background: rgba(224, 187, 74, .15);
+  transform: rotate(5deg);
+}
+
+.profile-sketch-crown svg {
+  position: relative;
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 1.65;
+}
+
+/* Studio: fix cramped/overlapping hierarchy and make setup feel deliberate. */
+.studio-page {
+  gap: 1.15rem !important;
+}
+
+.studio-hero {
+  min-width: 0;
+  padding: .15rem .1rem .25rem;
+}
+
+.studio-kicker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+}
+
+.studio-recordings-pill {
+  display: inline-flex;
+  min-height: 2.35rem;
+  flex: 0 0 auto;
+  align-items: center;
+  border: 1px solid #d3c7b5;
+  border-radius: 999px;
+  background: rgba(255,252,245,.62);
+  padding: 0 .9rem;
+  color: #4c463f;
+  font-size: .72rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.studio-hero h1 {
+  max-width: 22rem;
+  margin-top: .58rem;
+  font-size: 1.82rem !important;
+  line-height: 1.04 !important;
+  letter-spacing: -.035em !important;
+}
+
+.studio-intro {
+  max-width: 23rem;
+  margin-top: .62rem;
+  color: #71685e;
+  font-size: .86rem !important;
+  line-height: 1.55 !important;
+  font-style: normal !important;
+}
+
+.studio-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .55rem .75rem;
+  margin-top: .8rem;
+}
+
+.studio-journal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: #456f9e;
+  font-size: .74rem;
+  font-weight: 650;
+}
+
+.studio-journal-link svg { width: .92rem; height: .92rem; }
+
+.studio-free-badge {
+  display: inline-flex;
+  min-height: 1.85rem;
+  align-items: center;
+  border: 1px solid #d5caba;
+  border-radius: 999px;
+  background: rgba(244,239,230,.7);
+  padding: 0 .65rem;
+  color: #796f63;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: .52rem;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.studio-setup-card,
+.studio-duration-card {
+  border: 1px solid #d6cab8;
+  border-radius: 1.3rem;
+  background: rgba(255,252,245,.62);
+  padding: 1.05rem;
+}
+
+.studio-section-title {
+  color: #312d28;
+  font-size: .93rem !important;
+  font-weight: 700;
+}
+
+.studio-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .72rem;
+  margin-top: .85rem;
+}
+
+.studio-mode-card {
+  min-width: 0;
+  min-height: 9.25rem;
+  border: 1px solid #d7ccbb;
+  border-radius: 1.12rem;
+  background: rgba(250,247,240,.72);
+  padding: .92rem;
+  color: #302c27;
+  text-align: left;
+  transition: transform 130ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.studio-mode-card:active { transform: scale(.985); }
+.studio-mode-card > span:first-child { width: 2.45rem !important; height: 2.45rem !important; border-radius: .82rem !important; }
+.studio-mode-card > p:nth-of-type(1) { margin-top: .72rem !important; font-size: .88rem !important; line-height: 1.2 !important; }
+.studio-mode-card > p:nth-of-type(2) { margin-top: .34rem !important; font-size: .73rem !important; line-height: 1.45 !important; }
+
+.studio-planner-row { display: flex; justify-content: flex-end; }
+.studio-planner-link {
+  display: inline-flex;
+  min-height: 2.45rem;
+  align-items: center;
+  gap: .45rem;
+  border: 1px solid #d3c8b8;
+  border-radius: 999px;
+  background: rgba(255,252,245,.52);
+  padding: 0 .85rem;
+  color: #696157;
+  font-size: .73rem;
+  font-weight: 650;
+}
+
+.studio-page .text-sm { font-size: .84rem !important; }
+.studio-page .text-xs { font-size: .72rem !important; }
+.studio-page .text-lg { font-size: 1.08rem !important; }
+.studio-page .text-xl { font-size: 1.2rem !important; }
+
+.studio-duration-card .grid-cols-4 button {
+  min-height: 3rem;
+  border-radius: 1rem !important;
+  font-size: .82rem !important;
+}
+
+.studio-duration-card > button {
+  min-height: 3.65rem;
+  border-radius: 1.05rem !important;
+}
+
+.studio-primary-action,
+.studio-secondary-action {
+  display: flex;
+  width: 100%;
+  min-height: 3.35rem;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border-radius: 1.05rem;
+  padding: .8rem 1rem;
+  font-size: .84rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  transition: transform 130ms ease, background-color 160ms ease;
+}
+
+.studio-primary-action {
+  border: 1px solid #466f9f;
+  background: #466f9f;
+  color: #fffdf8;
+}
+
+.studio-secondary-action {
+  border: 1px solid #d4c9b9;
+  background: rgba(255,252,245,.62);
+  color: #3b3630;
+}
+
+.studio-primary-action:active,
+.studio-secondary-action:active { transform: scale(.99); }
+
+/* Journal: search belongs with the content, actions belong above the footer. */
+.journal-deck-notes {
+  max-width: 23rem;
+  font-size: .83rem !important;
+  font-style: normal !important;
+  line-height: 1.5 !important;
+}
+
+.book-app .journal-search-top,
+.book-app .journal-search-top:focus-within {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: .65rem;
+  margin-top: 1.05rem;
+  border: 1px solid #d4c8b7 !important;
+  border-radius: 1rem !important;
+  background: rgba(248,243,234,.76) !important;
+  padding: 0 .9rem !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.52) !important;
+}
+
+.book-app .journal-search-top input,
+.book-app .journal-search-top input:focus {
+  width: 100%;
+  min-width: 0;
+  height: 2.75rem;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  font-size: .8rem;
+}
+
+.journal-search-top svg { width: 1rem; height: 1rem; color: #80766a; stroke-width: 1.7; }
+.journal-groups { margin-top: 1rem !important; gap: 1.35rem !important; }
+.journal-month-heading h2 { font-size: 1.08rem !important; }
+.journal-row-main strong { font-size: .86rem !important; }
+.journal-row-meta { font-size: .66rem !important; }
+
+.journal-action-dock {
+  bottom: calc(5.85rem + env(safe-area-inset-bottom)) !important;
+  width: min(calc(100vw - 2rem), 26rem) !important;
+  grid-template-columns: 2.7rem 2.7rem minmax(0, 1fr) !important;
+  gap: .5rem !important;
+}
+
+.journal-action-dock .journal-dock-button {
+  width: 2.7rem;
+  height: 2.7rem;
+  background: rgba(249,245,236,.97);
+  border-color: #d1c5b4;
+}
+
+.journal-action-dock .journal-write-button {
+  display: flex;
+  width: 100% !important;
+  height: 2.7rem !important;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: .48rem;
+  border-radius: 1rem;
+  background: #54789e;
+  color: #fffdf8;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.journal-write-button span { white-space: nowrap; }
+
+/* Media capture and media editing are compact sheets. Text notes still open as
+   full paper pages because long-form writing benefits from the extra room. */
+.journal-capture-overlay,
+.journal-media-detail-overlay,
+.journal-media-editor-overlay {
+  align-items: flex-end !important;
+  padding: 0 !important;
+  background: rgba(54, 66, 80, .22) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(.9) !important;
+  backdrop-filter: blur(10px) saturate(.9) !important;
+}
+
+.journal-capture-panel,
+.journal-note-sheet-overlay .journal-detail-media,
+.journal-note-sheet-overlay .journal-editor-media {
+  width: min(100%, 28rem) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 88svh !important;
+  border: 1px solid #d4c8b7 !important;
+  border-bottom: 0 !important;
+  border-radius: 1.55rem 1.55rem 0 0 !important;
+  background: #fffaf1 !important;
+  padding: 1rem 1.15rem calc(1.2rem + env(safe-area-inset-bottom)) !important;
+  box-shadow: 0 -12px 34px rgba(42, 37, 32, .10) !important;
+}
+
+.journal-capture-privacy {
+  justify-self: end;
+  color: #7c8a74;
+  font-size: .6rem;
+  font-weight: 700;
+}
+
+.journal-video-preview-wrap {
+  width: 100% !important;
+  max-width: 21rem;
+  aspect-ratio: 4 / 3 !important;
+  margin-top: .85rem !important;
+  border-radius: 1rem !important;
+}
+
+.journal-record-orb {
+  width: 5rem !important;
+  height: 5rem !important;
+  margin-top: 1.15rem !important;
+}
+
+.journal-capture-panel h2 { margin-top: .85rem !important; font-size: 1.22rem !important; }
+.journal-capture-panel > p:not(.journal-error) { font-size: .76rem !important; line-height: 1.5 !important; }
+.journal-capture-actions { margin-top: 1rem !important; }
+.journal-capture-actions button {
+  width: 100%;
+  min-height: 3rem !important;
+  border-radius: 1rem !important;
+  font-size: .78rem !important;
+}
+
+.journal-detail-media h2 { font-size: 1.35rem !important; }
+.journal-detail-media .journal-detail-body { font-size: .8rem !important; line-height: 1.55 !important; }
+.journal-editor-media .journal-body-input { min-height: 7.5rem !important; max-height: 13rem; }
+
+/* Planner: a quiet working notebook instead of a stack of oversized app cards. */
+.planner-page { gap: 1.15rem !important; }
+
+.planner-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #d5c8b5;
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(90deg, rgba(181, 94, 61, .11) 0 2px, transparent 2px) 1rem 0 / 1px 100% no-repeat,
+    rgba(255,252,245,.62);
+  padding: 1.15rem 1.05rem 1.15rem 1.35rem;
+  color: #302c27;
+}
+
+.planner-hero > div { align-items: flex-start !important; gap: .85rem !important; }
+.planner-hero-mark {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #d0c4b4;
+  border-radius: .85rem;
+  background: #f2ede4;
+  color: #56799d;
+}
+.planner-hero-mark svg { width: 1.15rem; height: 1.15rem; stroke-width: 1.75; }
+.planner-hero .planner-hero-title {
+  max-width: 21rem;
+  margin-top: .35rem !important;
+  color: #302c27 !important;
+  font-size: 1.48rem !important;
+  line-height: 1.08 !important;
+}
+.planner-hero-copy {
+  max-width: 21rem;
+  margin-top: .5rem;
+  color: #71685d !important;
+  font-size: .78rem !important;
+  line-height: 1.52 !important;
+}
+
+.planner-past-plans-link {
+  border-radius: 1.05rem !important;
+  background: rgba(249,245,237,.54) !important;
+  padding: .82rem .95rem !important;
+}
+.planner-past-plans-link strong { font-size: .9rem !important; }
+.planner-past-plans-link small { font-size: .67rem !important; }
+
+.planner-form-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: .85rem;
+  margin-bottom: .85rem;
+}
+.planner-form-heading h2 { margin-top: .35rem !important; font-size: 1.24rem !important; }
+.planner-form-heading > span {
+  font-family: var(--font-book-hand), cursive !important;
+  font-size: .72rem !important;
+  font-weight: 400 !important;
+  letter-spacing: .02em;
+}
+
+.planner-field-stack { display: grid; gap: .78rem; }
+.planner-field-card {
+  display: block;
+  border: 1px solid #d7cbb9;
+  border-radius: 1.08rem;
+  background: rgba(255,252,245,.57);
+  padding: .9rem .9rem .7rem;
+}
+.planner-field-heading {
+  display: grid;
+  grid-template-columns: 1.85rem minmax(0, 1fr) 1.2rem;
+  align-items: start;
+  gap: .65rem;
+}
+.planner-field-number {
+  display: grid;
+  width: 1.78rem;
+  height: 1.78rem;
+  place-items: center;
+  border: 1px solid #bbb09f;
+  border-radius: 48% 52% 46% 54%;
+  color: #514a42;
+  font-family: var(--font-book-hand), cursive;
+  font-size: .78rem;
+  transform: rotate(-2deg);
+}
+.planner-field-heading-copy { min-width: 0; }
+.planner-field-title { display: block; color: #302c27; font-size: .84rem; font-weight: 700; line-height: 1.25; }
+.planner-field-help { display: block; margin-top: .22rem; color: #7a7064; font-size: .68rem; line-height: 1.45; }
+.planner-field-icon { width: 1rem; height: 1rem; color: #7c7266; stroke-width: 1.55; }
+
+.book-app .planner-field-input,
+.book-app .planner-field-input:focus {
+  width: 100%;
+  margin-top: .72rem;
+  resize: vertical;
+  border: 0 !important;
+  border-top: 1px solid #dfd4c3 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: .7rem .1rem .25rem !important;
+  box-shadow: none !important;
+  color: #49423a;
+  font-size: .78rem !important;
+  line-height: 1.55 !important;
+}
+.planner-field-count {
+  display: block;
+  margin-top: .2rem;
+  color: #9b9081;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: .5rem;
+  text-align: right;
+}
+
+.planner-build-button {
+  display: flex;
+  width: 100%;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  margin-top: 1rem;
+  border-radius: 1rem;
+  background: #302c27;
+  color: #fffdf8;
+  font-size: .82rem;
+  font-weight: 700;
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+.planner-build-button:disabled { cursor: not-allowed; opacity: .38; }
+.planner-build-button:active:not(:disabled) { transform: scale(.99); }
+.planner-build-hint { margin-top: .5rem; color: #81776b; font-size: .65rem !important; line-height: 1.45; text-align: center; }
+
+.planner-result-card {
+  scroll-margin-top: 5rem;
+  overflow: hidden;
+  border: 1px solid #cfc2ae;
+  border-radius: 1.3rem;
+  background: rgba(255,252,245,.68);
+}
+
+/* Membership gate: larger, calmer typography and grouped benefits. */
+.membership-upgrade-screen {
+  max-width: 26rem !important;
+  padding-bottom: 1rem;
+}
+.membership-upgrade-back { font-size: .76rem !important; }
+.membership-upgrade-header { margin-top: .55rem !important; }
+.membership-upgrade-mark {
+  width: 3.1rem !important;
+  height: 3.1rem !important;
+  border-radius: .95rem !important;
+  background: #f2ede4 !important;
+}
+.membership-upgrade-eyebrow { margin-top: .8rem !important; font-size: .56rem !important; }
+.membership-upgrade-header h1 {
+  max-width: 21rem !important;
+  margin-top: .45rem !important;
+  font-size: 1.9rem !important;
+  line-height: 1.05 !important;
+  letter-spacing: -.035em !important;
+}
+.membership-upgrade-header > p:last-child {
+  max-width: 22rem !important;
+  margin-top: .6rem !important;
+  font-size: .84rem !important;
+  line-height: 1.52 !important;
+  font-style: normal !important;
+}
+.membership-benefits {
+  gap: 0 !important;
+  margin-top: 1.25rem !important;
+  overflow: hidden;
+  border: 1px solid #d8ccba;
+  border-radius: 1.05rem;
+  background: rgba(249,245,237,.58);
+  padding: .25rem .85rem !important;
+}
+.membership-benefit-row {
+  min-height: 2.5rem;
+  gap: .65rem !important;
+  border-bottom: 1px solid rgba(128,107,80,.14);
+  font-size: .78rem !important;
+}
+.membership-benefit-row:last-child { border-bottom: 0; }
+.membership-benefit-row svg { width: .95rem !important; height: .95rem !important; }
+.membership-pricing-grid { margin-top: 1rem !important; gap: .62rem !important; }
+.membership-plan-choice { min-height: 5.15rem !important; border-radius: 1.05rem !important; padding: .85rem .95rem !important; }
+.membership-plan-name-row strong { font-size: .94rem !important; }
+.membership-plan-price-row strong { font-size: 1.28rem !important; }
+.membership-plan-detail { margin-top: .16rem !important; font-size: .66rem !important; }
+.membership-renewal-consent { margin-top: .85rem !important; font-size: .68rem !important; }
+.membership-upgrade-cta { min-height: 3.25rem !important; border-radius: 1rem !important; font-size: .85rem !important; }
+.membership-upgrade-fineprint { font-size: .61rem !important; }
+
+@media (max-width: 360px) {
+  .studio-recordings-pill { padding-inline: .68rem; font-size: .66rem; }
+  .studio-hero h1 { font-size: 1.65rem !important; }
+  .studio-mode-grid { gap: .55rem; }
+  .studio-mode-card { min-height: 9.6rem; padding: .78rem; }
+  .journal-action-dock { width: calc(100vw - 1.4rem) !important; }
+  .membership-upgrade-header h1 { font-size: 1.72rem !important; }
 }

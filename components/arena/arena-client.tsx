@@ -786,27 +786,30 @@ export function ArenaClient() {
   return (
     <div className="studio-page flex min-w-0 flex-col gap-6">
       <Celebration active={showCaptureCelebration} mobileOnly label="Story captured" onDone={() => setShowCaptureCelebration(false)} />
-      <header className="min-w-0">
-        <div className="arena-heading-row flex items-center justify-between gap-3">
-          <div className="min-w-0"><Eyebrow>Studio</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight text-balance">Tell a story. See what lands.</h1></div>
-          <Link href="/studio/recordings" className="shrink-0 whitespace-nowrap rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground">{recordingCountLabel(state.recordings.length)}</Link>
+      <header className="studio-hero">
+        <div className="studio-kicker-row">
+          <Eyebrow>Studio</Eyebrow>
+          <Link href="/studio/recordings" className="studio-recordings-pill">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground text-pretty">Tell any story you choose, or practice storytelling in a real-life situation. Parch grades the craft, not the topic.</p>
-        <Link href="/journal" className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-brand"><BookOpenText className="h-3.5 w-3.5" strokeWidth={1.8} />Journal · your private story notebook</Link>
-        {!state.premium && <span className="mt-3 inline-flex rounded-full border border-border bg-secondary/45 px-3 py-1.5 font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>}
+        <h1>Tell a story. See what lands.</h1>
+        <p className="studio-intro">Tell any story you choose, or practice storytelling in a real-life situation. Parch grades the craft, not the topic.</p>
+        <div className="studio-meta-row">
+          <Link href="/journal" className="studio-journal-link"><BookOpenText strokeWidth={1.8} />Journal · private story notebook</Link>
+          {!state.premium && <span className="studio-free-badge">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>}
+        </div>
       </header>
 
       {phase === "setup" && (
         <>
-          <section className="rounded-3xl border border-border bg-card p-4">
-            <p className="px-1 text-sm font-semibold">Choose how you want to practice</p>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "free" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
+          <section className="studio-setup-card">
+            <p className="studio-section-title">Choose how you want to practice</p>
+            <div className="studio-mode-grid">
+              <button type="button" onClick={() => setStoryMode("free")} className={cn("studio-mode-card", storyMode === "free" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Mic2 className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Tell any story</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("rounded-2xl border p-4 text-left transition-colors", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
+              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("studio-mode-card", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
@@ -872,8 +875,8 @@ export function ArenaClient() {
               </details>
             </section>
           ) : (
-            <div className="flex justify-end">
-              <Link href="/planner?from=studio" prefetch className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-brand hover:text-foreground">
+            <div className="studio-planner-row">
+              <Link href="/planner?from=studio" prefetch className="studio-planner-link">
                 <Map className="h-3.5 w-3.5 text-accent-foreground" />
                 Need help planning?
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -881,8 +884,8 @@ export function ArenaClient() {
             </div>
           )}
 
-          <section className="rounded-3xl border border-border bg-card p-5">
-            <p className="text-sm font-semibold">Choose your target length</p>
+          <section className="studio-duration-card">
+            <p className="studio-section-title">Choose your target length</p>
             <div className="mt-3 grid grid-cols-4 gap-2">
               {durationOptions.map((duration) => (
                 <button
@@ -933,10 +936,10 @@ export function ArenaClient() {
           ) : (
             <>
               {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-              <button type="button" onClick={enterRecordingRoom} className="flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-semibold text-brand-foreground shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)] active:scale-[0.98]"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+              <button type="button" onClick={enterRecordingRoom} className="studio-primary-action"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
             </>
           )}
-          <Link href="/studio/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
+          <Link href="/studio/recordings" className="studio-secondary-action"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
         </>
       )}
 

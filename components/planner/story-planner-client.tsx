@@ -143,15 +143,15 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
           <ArrowLeft className="h-4 w-4" /> Studio
         </Link>
       ) : <span />}
-      <header className="rounded-[2rem] bg-primary p-6 text-primary-foreground">
+      <header className="planner-hero">
         <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-foreground">
+          <span className="planner-hero-mark">
             <Map className="h-5 w-5" />
           </span>
           <div>
-            <Eyebrow className="text-primary-foreground/60">AI Story Planner</Eyebrow>
+            <Eyebrow>AI Story Planner</Eyebrow>
             <h1 className="planner-hero-title mt-2 text-2xl font-semibold tracking-tight text-balance">Know where your story is going before you tell it.</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-primary-foreground/70">
+            <p className="planner-hero-copy">
               Give Parch the situation, your goal, the facts, and what feels difficult. You will get a clear structure, a stronger plan, and practical delivery guidance without losing your voice.
             </p>
           </div>
@@ -168,8 +168,8 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
       </Link>
 
       {!building && !plan && (
-        <section>
-          <div className="mb-4 flex items-end justify-between gap-4">
+        <section className="planner-form-section">
+          <div className="planner-form-heading">
             <div>
               <Eyebrow>Build your plan</Eyebrow>
               <h2 className="mt-2 text-xl font-semibold tracking-tight">Start with what you already know</h2>
@@ -177,7 +177,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <span className="shrink-0 whitespace-nowrap rounded-full bg-secondary px-3 py-1.5 text-[0.7rem] font-semibold text-muted-foreground">~3 min</span>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="planner-field-stack">
             <PlannerField
               number={1}
               icon={MapPin}
@@ -249,19 +249,19 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             type="button"
             onClick={buildPlan}
             disabled={!ready}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="planner-build-button"
           >
             <Sparkles className="h-4 w-4" />
             Build my story plan
           </button>
-          <p className="mt-2 text-center text-xs text-muted-foreground">{ready ? "Plans are private and saved to your account. Membership includes up to 10 plans per day." : "Answer all five questions before Parch can build your plan."}</p>
+          <p className="planner-build-hint">{ready ? "Plans are private and saved to your account. Membership includes up to 10 plans per day." : "Answer all five questions before Parch can build your plan."}</p>
         </section>
       )}
 
       {building && <PlanReadySkeleton />}
 
       {plan && (
-        <section id="planner-result" className="scroll-mt-20 overflow-hidden rounded-[2rem] border border-brand/35 bg-card shadow-sm">
+        <section id="planner-result" className="planner-result-card">
           <div className="p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Eyebrow>{planOrigin === "saved" ? "Saved plan" : "Plan ready"}</Eyebrow>
@@ -381,16 +381,17 @@ function PlanReadySkeleton() {
 
 function PlannerField({ number, icon: Icon, title, help, value, onChange, placeholder, maxLength, rows = 3, required = false }: FieldProps) {
   return (
-    <label className="rounded-3xl border border-border bg-card p-5">
-      <span className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-accent-foreground"><Icon className="h-4 w-4" /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold"><span className="mr-2 font-mono text-xs text-muted-foreground">{number}</span>{title}{required ? <span className="ml-1 text-brand">*</span> : null}</span>
-          <span className="mt-1 block text-xs leading-5 text-muted-foreground">{help}</span>
+    <label className="planner-field-card">
+      <span className="planner-field-heading">
+        <span className="planner-field-number">{number}</span>
+        <span className="planner-field-heading-copy">
+          <span className="planner-field-title">{title}{required ? <span className="ml-1 text-brand">*</span> : null}</span>
+          <span className="planner-field-help">{help}</span>
         </span>
+        <Icon className="planner-field-icon" aria-hidden="true" />
       </span>
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} maxLength={maxLength} rows={rows} placeholder={placeholder} className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none placeholder:text-muted-foreground focus:border-brand" />
-      <span className="mt-1 block text-right font-mono text-[0.6rem] text-muted-foreground">{value.length}/{maxLength}</span>
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} maxLength={maxLength} rows={rows} placeholder={placeholder} className="planner-field-input" />
+      <span className="planner-field-count">{value.length}/{maxLength}</span>
     </label>
   )
 }

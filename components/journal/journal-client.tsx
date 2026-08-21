@@ -105,6 +105,18 @@ export function JournalClient() {
       </header>
       <p className="journal-deck journal-deck-notes">Ideas, fragments, voice notes, and video moments. Private by default.</p>
 
+      <label className="journal-search journal-search-top" data-book-no-turn="true">
+        <Search aria-hidden="true" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search your Journal"
+          aria-label="Search Journal notes"
+          autoComplete="off"
+          spellCheck={false}
+        />
+      </label>
+
       {error && <p className="journal-error">{error}</p>}
 
       <section className="journal-groups" aria-busy={loading}>
@@ -157,26 +169,16 @@ export function JournalClient() {
         )}
       </section>
 
-      <div className="journal-bottom-dock" aria-label="Journal tools">
-        <label className="journal-search journal-search-bottom" data-book-no-turn="true">
-          <Search aria-hidden="true" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search"
-            aria-label="Search Journal notes"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </label>
+      <div className="journal-bottom-dock journal-action-dock" aria-label="Journal tools">
         <button type="button" className="journal-dock-button" onClick={() => setCaptureKind("audio")} aria-label="Record an audio note">
           <Mic2 />
         </button>
         <button type="button" className="journal-dock-button" onClick={() => setCaptureKind("video")} aria-label="Record a video note">
           <Camera />
         </button>
-        <button type="button" className="journal-dock-button is-compose" onClick={() => startNewText()} aria-label="Write a new note">
+        <button type="button" className="journal-dock-button is-compose journal-write-button" onClick={() => startNewText()} aria-label="Write a new note">
           <SquarePen />
+          <span>Write a note</span>
         </button>
       </div>
 
@@ -245,6 +247,7 @@ function TextComposer({
   const draftKeyRef = useRef(`tellwise:journal-draft:${entry?.id ?? "new"}`)
   const latestTitleRef = useRef(title)
   const latestBodyRef = useRef(body)
+  const mediaEntry = Boolean(entry && entry.entry_type !== "text")
 
   useEffect(() => {
     mountedRef.current = true
@@ -359,8 +362,8 @@ function TextComposer({
   }
 
   return (
-    <div className="journal-note-sheet-overlay" role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
-      <article className="journal-editor journal-editor-notes">
+    <div className={mediaEntry ? "journal-note-sheet-overlay journal-media-editor-overlay" : "journal-note-sheet-overlay"} role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
+      <article className={mediaEntry ? "journal-editor journal-editor-notes journal-editor-media" : "journal-editor journal-editor-notes"}>
         <div className="journal-editor-top journal-editor-top-notes">
           <button type="button" onClick={() => void closeEditor()} aria-label="Back"><ArrowLeft /></button>
           <span className={`journal-save-status is-${status}`}>
@@ -492,12 +495,12 @@ function MediaCapture({
   }
 
   return (
-    <div className="journal-overlay journal-overlay-blue" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
+    <div className="journal-overlay journal-overlay-blue journal-capture-overlay" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
       <section className="journal-capture-panel">
         <div className="journal-editor-top journal-editor-top-notes">
           <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Close"><X /></button>
           <span>{kind === "video" ? "Video note" : "Audio note"}</span>
-          <span />
+          <span className="journal-capture-privacy">Private</span>
         </div>
 
         {kind === "video" ? (
@@ -577,8 +580,8 @@ function EntryDetail({
   }
 
   return (
-    <div className="journal-note-sheet-overlay" role="dialog" aria-modal="true" aria-label="Journal note">
-      <article className="journal-detail journal-detail-notes">
+    <div className={entry.entry_type === "text" ? "journal-note-sheet-overlay" : "journal-note-sheet-overlay journal-media-detail-overlay"} role="dialog" aria-modal="true" aria-label="Journal note">
+      <article className={entry.entry_type === "text" ? "journal-detail journal-detail-notes" : "journal-detail journal-detail-notes journal-detail-media"}>
         <div className="journal-detail-top journal-editor-top-notes">
           <button type="button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
           <span>Journal</span>

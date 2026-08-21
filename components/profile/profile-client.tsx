@@ -7,8 +7,8 @@ import {
   Bell,
   BookOpenText,
   ChevronRight,
+  Crown,
   Mail,
-  ScrollText,
   Settings,
   ShieldCheck,
   ShoppingBag,
@@ -34,8 +34,9 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
 
       <section className="story-card overflow-hidden rounded-[1.45rem]">
         <div className="flex items-center gap-3 px-4 py-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-            <ScrollText className="h-[1.1rem] w-[1.1rem]" strokeWidth={1.8} />
+          <span className="profile-sketch-avatar" aria-label={`${name} profile initials`}>
+            <span className="profile-sketch-avatar-initials">{profileInitials(name)}</span>
+            <span className="profile-sketch-crown" aria-hidden="true"><Crown /></span>
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[0.94rem] font-semibold tracking-[-0.015em]">@{username}</p>
@@ -130,6 +131,13 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       )}
     </div>
   )
+}
+
+function profileInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return "TW"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase()
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {

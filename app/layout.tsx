@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { EB_Garamond, Geist, Geist_Mono, Handlee } from "next/font/google"
+import { Geist, Geist_Mono, Handlee, Lora } from "next/font/google"
 import { AppProviders } from "@/components/app-providers"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAuthenticatedUser } from "@/lib/require-auth"
@@ -8,7 +8,7 @@ import "./globals.css"
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" })
 const bookHand = Handlee({ subsets: ["latin"], weight: "400", variable: "--font-book-hand" })
-const ebGaramond = EB_Garamond({ subsets: ["latin"], variable: "--font-eb-garamond" })
+const lora = Lora({ subsets: ["latin"], variable: "--font-lora" })
 
 export const metadata: Metadata = {
   title: "Tellwise · Learn the craft. Tell it well.",
@@ -42,7 +42,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   }
 
   return (
-    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable} ${bookHand.variable} ${ebGaramond.variable}`}>
+    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable} ${bookHand.variable} ${lora.variable}`}>
       <body className="font-sans antialiased">
         <AppProviders
           initialUserId={authenticated?.id ?? null}

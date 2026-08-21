@@ -37,7 +37,7 @@ export function ActivitiesClient() {
           <span className="font-medium text-foreground">Your journey</span>
           <span className="shrink-0 text-muted-foreground">{course.done} of {course.total} lessons</span>
         </div>
-        <ProgressBar value={course.percent} />
+        <ProgressBar value={course.percent} variant="sketch" />
         {!state.premium && (
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
             The free plan includes the first {FREE_UNIT_LIMIT} complete lessons. Each one includes Learn, Check, and Practice.
@@ -69,7 +69,7 @@ export function ActivitiesClient() {
               </div>
               <div>
                 <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground"><span>{progress.done} / 3 steps</span><span>{progress.percent}%</span></div>
-                <ProgressBar value={progress.percent} />
+                <ProgressBar value={progress.percent} variant="sketch" />
               </div>
             </article>
           )
