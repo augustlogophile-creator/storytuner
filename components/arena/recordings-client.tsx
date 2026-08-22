@@ -40,9 +40,8 @@ export function RecordingsClient() {
       <div className="flex min-w-0 flex-col gap-6">
         <header>
           <Link href="/studio" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Studio</Link>
-          <div className="mt-4 flex items-start justify-between gap-4">
+          <div className="mt-4">
             <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
-            <Link href="/studio" className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">New story</Link>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private audio, transcripts, scores, and revisions follow your account across devices. Full video remains on the device where it was recorded.</p>
         </header>

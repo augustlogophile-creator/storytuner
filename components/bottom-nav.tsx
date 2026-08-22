@@ -33,7 +33,7 @@ export function BottomNav() {
                 <span className={cn("book-nav-pill flex h-8 w-11 items-center justify-center rounded-full transition-colors duration-100", active ? "bg-[#625f5a] text-white shadow-[0_4px_14px_rgba(31,27,23,0.07)]" : "bg-transparent") }>
                   <Icon className="h-[1.05rem] w-[1.05rem]" strokeWidth={active ? 2.4 : 1.9} />
                 </span>
-                <span className="book-nav-label truncate">{label}</span>
+                <span className="book-nav-label">{label}</span>
               </Link>
             </li>
           )

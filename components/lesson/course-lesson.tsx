@@ -17,9 +17,9 @@ import { ReportAiOutput } from "@/components/ai/report-ai-output"
 type LessonFeedback = { pass: boolean; working: string; fix: string }
 
 function quizScoreTone(score: number) {
-  if (score >= 80) return "border-emerald-200 bg-emerald-50 text-emerald-700"
-  if (score >= 60) return "border-orange-200 bg-orange-50 text-orange-500"
-  return "border-red-200 bg-red-50 text-red-700"
+  if (score >= 80) return "is-green"
+  if (score >= 60) return "is-orange"
+  return "is-red"
 }
 
 function quizXp(score: number) {
@@ -362,7 +362,7 @@ function QuizRetryResult({ unit, score, onRetry }: { unit: CurriculumUnit; score
     <div className="flex min-w-0 flex-col gap-5">
       <BackLink href={`/activities/${unit.id}`} label={unit.title} />
       <section className="rounded-3xl border border-red-200 bg-card px-6 py-9 text-center">
-        <span className={cn("mx-auto inline-flex rounded-full border px-4 py-2 text-lg font-semibold", quizScoreTone(score))}>{score}%</span>
+        <span className={cn("lesson-score-highlight lesson-score-highlight-large", quizScoreTone(score))}>{score}%</span>
         <h1 className="mt-4 text-xl font-semibold tracking-tight">Redo this check.</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">You need more than 40% to complete Check and unlock Practice. Review the answers, then try again.</p>
         <div className="mt-6 flex flex-col gap-2">
@@ -398,7 +398,7 @@ function Completed({ unit, stage, coursePercent, premium, earnedThisVisit, earne
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-8 w-8" strokeWidth={2.6} /></span>
       <div><h1 className="text-xl font-semibold tracking-tight">Step complete.</h1><p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">You finished {stageLabels[stage].toLowerCase()} for “{unit.title}.”</p></div>
       {stage === "quiz" && typeof quizScore === "number" && (
-        <div className={cn("rounded-full border px-4 py-2 text-sm font-semibold", quizScoreTone(quizScore))}>Score {quizScore}%</div>
+        <div className="lesson-score-complete">Score <span className={cn("lesson-score-highlight", quizScoreTone(quizScore))}>{quizScore}%</span></div>
       )}
       <div className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground"><Sparkles className="h-4 w-4" />{earnedThisVisit ? <><span>+</span><CountUp value={earnedXp} /><span>XP earned</span></> : "Progress already saved"}</div>
       <p className="text-xs text-muted-foreground">Your full course is <CountUp value={coursePercent} suffix="%" /> complete.</p>

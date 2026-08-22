@@ -58,10 +58,10 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
           const quizScore = stage === "quiz" ? state.quizScores[unit.id] : undefined
           const quizScoreTone = typeof quizScore === "number"
             ? quizScore >= 80
-              ? "text-emerald-700"
+              ? "is-green"
               : quizScore >= 60
-                ? "text-orange-500"
-                : "text-red-700"
+                ? "is-orange"
+                : "is-red"
             : ""
           const row = (
             <div className={cn("flex items-center gap-4 rounded-2xl border p-4 transition-colors", unlocked ? "border-border bg-card hover:border-brand/50" : "border-border/70 bg-card/60 opacity-75")}>
@@ -75,7 +75,7 @@ export function UnitDetail({ unit }: { unit: CurriculumUnit }) {
               </div>
               {stage === "quiz" && typeof quizScore === "number" && (
                 <div className="shrink-0 text-right">
-                  <span className={cn("block font-serif text-[1.05rem] font-semibold leading-none tracking-[-0.04em] tabular-nums", quizScoreTone)}>{quizScore}%</span>
+                  <span className={cn("lesson-score-highlight", quizScoreTone)}>{quizScore}%</span>
                   {quizScore <= 40 && !done && <span className="mt-1 block font-mono text-[0.48rem] uppercase tracking-[0.12em] text-red-600">Redo</span>}
                 </div>
               )}

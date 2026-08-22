@@ -51,11 +51,11 @@ export function UpgradeScreen({
   backHref?: string
 }) {
   const copy = reasonCopy[reason]
-  const [selectedPlan, setSelectedPlan] = useState<MembershipPlanChoice>("annual")
+  const [selectedPlan, setSelectedPlan] = useState<MembershipPlanChoice>("monthly")
   const [renewalConsent, setRenewalConsent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
-  const selectedLabel = useMemo(() => selectedPlan === "annual" ? "$75/year" : "$7.99/month", [selectedPlan])
+  const selectedLabel = useMemo(() => selectedPlan === "annual" ? "$60/year" : "$5.99/month", [selectedPlan])
 
   async function checkout() {
     if (busy) return
@@ -70,7 +70,7 @@ export function UpgradeScreen({
       // The plan choice is sent now, but the existing Stripe route intentionally
       // does not accept it yet. That makes this frontend fail closed until the
       // two new Stripe Price IDs are wired in the backend, so a user can never
-      // see $75/year or $7.99/month here and accidentally be charged the old plan.
+      // see $60/year or $5.99/month here and accidentally be charged the old plan.
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },

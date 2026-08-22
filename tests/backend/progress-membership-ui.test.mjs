@@ -25,8 +25,8 @@ test("Membership limit surfaces use the shared premium upgrade screen", () => {
   assert.match(arena, /UpgradeScreen reason="studio"/)
   assert.match(community, /UpgradeScreen reason="community"/)
   assert.match(membership, /<UpgradeScreen reason=\{reason\}/)
-  assert.match(pricing, /\$75/)
-  assert.match(pricing, /\$7\.99/)
+  assert.match(pricing, /\$60/)
+  assert.match(pricing, /\$5\.99/)
 })
 
 test("New pricing selection fails closed until Stripe price IDs are updated", () => {

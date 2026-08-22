@@ -8,14 +8,14 @@ export type MembershipPlanChoice = "annual" | "monthly"
 const planCopy = {
   annual: {
     name: "Annual",
-    price: "$75",
+    price: "$60",
     cadence: "/ year",
-    detail: "About $6.25 a month",
+    detail: "Equivalent to $5 a month",
     badge: "Best value",
   },
   monthly: {
     name: "Monthly",
-    price: "$7.99",
+    price: "$5.99",
     cadence: "/ month",
     detail: "Flexible month-to-month access",
     badge: null,
@@ -31,7 +31,7 @@ export function PricingInteraction({
 }) {
   return (
     <div className="membership-pricing-grid" role="radiogroup" aria-label="Choose a Tellwise Membership plan">
-      {(["annual", "monthly"] as const).map((plan) => {
+      {(["monthly", "annual"] as const).map((plan) => {
         const selected = value === plan
         const copy = planCopy[plan]
         return (
