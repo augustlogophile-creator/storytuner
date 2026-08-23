@@ -440,6 +440,7 @@ function JournalRichEditor({
   className?: string
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null)
+  const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false, list: false })
 
   useEffect(() => {
     const editor = editorRef.current
@@ -454,6 +455,32 @@ function JournalRichEditor({
     return () => window.clearTimeout(timer)
   }, [autoFocus])
 
+  useEffect(() => {
+    function refreshFromSelection() {
+      const editor = editorRef.current
+      const selection = window.getSelection()
+      if (!editor || !selection?.rangeCount) return
+      const anchor = selection.anchorNode
+      if (!anchor || !editor.contains(anchor)) return
+      refreshFormattingState()
+    }
+    document.addEventListener("selectionchange", refreshFromSelection)
+    return () => document.removeEventListener("selectionchange", refreshFromSelection)
+  }, [])
+
+  function refreshFormattingState() {
+    try {
+      setActiveFormats({
+        bold: document.queryCommandState("bold"),
+        italic: document.queryCommandState("italic"),
+        underline: document.queryCommandState("underline"),
+        list: document.queryCommandState("insertUnorderedList"),
+      })
+    } catch {
+      setActiveFormats({ bold: false, italic: false, underline: false, list: false })
+    }
+  }
+
   function sync() {
     const editor = editorRef.current
     if (!editor) return
@@ -464,6 +491,7 @@ function JournalRichEditor({
       editor.innerHTML = next
     }
     onChange(next)
+    refreshFormattingState()
   }
 
   function format(command: "bold" | "italic" | "underline" | "insertUnorderedList") {
@@ -472,6 +500,7 @@ function JournalRichEditor({
     editor.focus()
     document.execCommand(command, false)
     sync()
+    window.requestAnimationFrame(refreshFormattingState)
   }
 
   return (
@@ -485,12 +514,15 @@ function JournalRichEditor({
         data-placeholder={placeholder}
         suppressContentEditableWarning
         onInput={sync}
+        onFocus={refreshFormattingState}
+        onKeyUp={refreshFormattingState}
+        onPointerUp={refreshFormattingState}
       />
       <div className="journal-format-toolbar" aria-label="Text formatting">
-        <button type="button" aria-label="Bold" onMouseDown={(event) => event.preventDefault()} onClick={() => format("bold")}><Bold /></button>
-        <button type="button" aria-label="Italic" onMouseDown={(event) => event.preventDefault()} onClick={() => format("italic")}><Italic /></button>
-        <button type="button" aria-label="Underline" onMouseDown={(event) => event.preventDefault()} onClick={() => format("underline")}><Underline /></button>
-        <button type="button" aria-label="Bulleted list" onMouseDown={(event) => event.preventDefault()} onClick={() => format("insertUnorderedList")}><List /></button>
+        <button type="button" className={activeFormats.bold ? "is-active" : ""} aria-label="Bold" aria-pressed={activeFormats.bold} onMouseDown={(event) => event.preventDefault()} onClick={() => format("bold")}><Bold /></button>
+        <button type="button" className={activeFormats.italic ? "is-active" : ""} aria-label="Italic" aria-pressed={activeFormats.italic} onMouseDown={(event) => event.preventDefault()} onClick={() => format("italic")}><Italic /></button>
+        <button type="button" className={activeFormats.underline ? "is-active" : ""} aria-label="Underline" aria-pressed={activeFormats.underline} onMouseDown={(event) => event.preventDefault()} onClick={() => format("underline")}><Underline /></button>
+        <button type="button" className={activeFormats.list ? "is-active" : ""} aria-label="Bulleted list" aria-pressed={activeFormats.list} onMouseDown={(event) => event.preventDefault()} onClick={() => format("insertUnorderedList")}><List /></button>
       </div>
     </div>
   )

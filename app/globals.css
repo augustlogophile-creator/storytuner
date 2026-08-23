@@ -9723,3 +9723,244 @@ body.journal-fullscreen-open .book-bottom-nav {
   color: #211e1a !important;
 }
 .dark .journal-format-toolbar button { color: #211e1a !important; }
+
+/* August 23 mobile editor + home refinement. Keep full-screen notes fixed,
+   make formatting state obvious, remove browser resize artifacts, and tighten
+   the Home page into one consistent mobile book layout. */
+
+/* A full-screen Journal page itself never scrolls or rubber-bands. Only the
+   note body can scroll when the content is genuinely longer than the viewport. */
+body.journal-fullscreen-open,
+html:has(body.journal-fullscreen-open) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+.journal-note-sheet-overlay,
+.journal-media-detail-overlay,
+.journal-media-editor-overlay,
+.journal-capture-overlay {
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+.journal-note-sheet-overlay .journal-editor-notes,
+.journal-note-sheet-overlay .journal-detail-notes {
+  display: flex !important;
+  min-width: 0 !important;
+  max-width: 28rem !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+.journal-detail-reading {
+  overflow: hidden !important;
+}
+.journal-rich-editor,
+.journal-inline-editor-wrap {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+.journal-rich-editor-area,
+.journal-rich-display,
+.journal-inline-body,
+.journal-inline-textarea,
+.journal-title-input,
+.journal-inline-title {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+.journal-rich-editor-area {
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior: none !important;
+  touch-action: pan-y !important;
+}
+.journal-rich-display,
+.journal-inline-body {
+  max-height: calc(100dvh - 12.8rem) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: none !important;
+  -webkit-overflow-scrolling: auto !important;
+}
+.journal-title-input {
+  flex: 0 0 auto !important;
+}
+
+/* Real unordered lists. Enter inside a list produces the next bullet through
+   the browser's contenteditable behavior, while the marker remains visible. */
+.journal-rich-editor-area ul,
+.journal-rich-display ul {
+  display: block !important;
+  margin: .4rem 0 .5rem 0 !important;
+  padding-left: 1.35rem !important;
+  list-style: disc outside !important;
+}
+.journal-rich-editor-area ul > li,
+.journal-rich-display ul > li {
+  display: list-item !important;
+  margin: .18rem 0 !important;
+  padding-left: .08rem !important;
+  list-style: disc outside !important;
+}
+
+/* Formatting controls clearly show which style is active at the cursor. */
+.journal-format-toolbar button {
+  transition: background-color 120ms ease, color 120ms ease, transform 120ms ease !important;
+}
+.journal-format-toolbar button.is-active,
+.journal-format-toolbar button[aria-pressed="true"] {
+  background: #332f2a !important;
+  color: #fffdf7 !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important;
+}
+.journal-format-toolbar button:active {
+  transform: scale(.94) !important;
+}
+.dark .journal-format-toolbar button.is-active,
+.dark .journal-format-toolbar button[aria-pressed="true"] {
+  background: #312c27 !important;
+  color: #fffaf0 !important;
+}
+
+/* Browser textarea resize handles are the two diagonal lines seen beside the
+   planner counters. Mobile fields are intentionally fixed-size. */
+.book-app .planner-field-input,
+.book-app .planner-simple-fields .planner-field-input,
+.planner-field-input {
+  resize: none !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  overflow-wrap: anywhere !important;
+}
+.planner-simple-fields .planner-field-count {
+  right: .82rem !important;
+  bottom: .72rem !important;
+}
+
+/* Home: slightly quieter scale, tighter vertical rhythm, and consistent card
+   geometry so it reads as one designed mobile page rather than stacked parts. */
+.home-dashboard {
+  gap: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+.book-home-header {
+  padding-top: .05rem !important;
+  gap: .85rem !important;
+}
+.book-home-greeting {
+  max-width: 17rem !important;
+  font-size: clamp(1.72rem, 8.7vw, 1.94rem) !important;
+  line-height: 1.035 !important;
+}
+.book-home-subtitle {
+  margin-top: .48rem !important;
+  font-size: .75rem !important;
+}
+.book-streak-card {
+  width: 3.75rem !important;
+  min-height: 4.35rem !important;
+  padding: .48rem .38rem !important;
+  border-radius: 1.05rem !important;
+}
+.book-course-card {
+  margin-top: .95rem !important;
+  padding: .95rem 1rem 1rem !important;
+  border-radius: 1.32rem !important;
+  box-shadow: 0 7px 18px rgba(44,37,29,.065) !important;
+}
+.book-course-card > div:first-child {
+  font-size: .54rem !important;
+  letter-spacing: .145em !important;
+}
+.book-course-title {
+  margin-top: .62rem !important;
+  font-size: 1.1rem !important;
+  line-height: 1.16 !important;
+}
+.book-course-subtitle {
+  margin-top: .28rem !important;
+  font-size: .66rem !important;
+  line-height: 1.38 !important;
+}
+.book-course-button {
+  min-height: 2.65rem !important;
+  margin-top: .78rem !important;
+  padding-block: .58rem !important;
+  font-size: .76rem !important;
+}
+.home-dashboard > section.mt-4 {
+  margin-top: .95rem !important;
+}
+.book-practice-heading {
+  font-size: 1.08rem !important;
+}
+.book-week-card {
+  min-height: 6.15rem !important;
+  margin-bottom: .65rem !important;
+  padding: .8rem .9rem !important;
+  border-radius: 1.18rem !important;
+}
+.book-week-card ul {
+  margin-top: .72rem !important;
+}
+.book-week-card li span {
+  width: clamp(1.8rem, 8.25vw, 2.15rem) !important;
+  height: clamp(1.8rem, 8.25vw, 2.15rem) !important;
+}
+.book-practice-grid {
+  gap: .65rem !important;
+}
+.book-practice-card {
+  min-height: 7.15rem !important;
+  padding: .82rem !important;
+  border-radius: 1.18rem !important;
+}
+.book-practice-card > span:first-child {
+  width: 2rem !important;
+  height: 2rem !important;
+}
+.book-practice-card > div {
+  margin-top: .65rem !important;
+}
+.book-practice-card p:first-child {
+  font-size: .82rem !important;
+  line-height: 1.24 !important;
+}
+.book-practice-card p:nth-child(2) {
+  margin-top: .28rem !important;
+  font-size: .61rem !important;
+  line-height: 1.34 !important;
+}
+.book-home-closing-line {
+  min-height: 2.4rem !important;
+  margin-top: .75rem !important;
+  margin-bottom: .8rem !important;
+}
+.book-home-typewriter {
+  max-width: 90% !important;
+  font-size: .7rem !important;
+  opacity: .78;
+}
+
+/* Keep every interactive surface inside the mobile page box. */
+.book-app,
+.book-app-content,
+.home-dashboard,
+.journal-page,
+.planner-page {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+@media (max-width: 380px) {
+  .book-home-greeting { max-width: 14.8rem !important; }
+  .book-course-title { font-size: 1.02rem !important; }
+  .book-practice-card { min-height: 6.8rem !important; }
+}
