@@ -71,14 +71,14 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             {greeting()},<br />{displayName}.
           </h1>
           <p className="book-home-subtitle mt-2 max-w-[19rem] text-[0.77rem] leading-[1.42] text-muted-foreground text-pretty">
-            Learn one idea, then test it in a story of your own.
+            Learn one idea. Try it in a story.
           </p>
         </div>
 
         <div className="book-streak-card flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
           <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
           <span className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]">{state.streak}</span>
-          <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">days</span>
+          <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">{state.streak === 1 ? "day" : "days"}</span>
         </div>
       </header>
 
@@ -115,7 +115,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.8rem] font-semibold">This week</p>
-              <p className="mt-0.5 text-[0.65rem] text-muted-foreground">Keep the habit moving.</p>
+              <p className="mt-0.5 text-[0.65rem] text-muted-foreground">Keep the rhythm.</p>
             </div>
             <p className="text-[0.69rem] text-muted-foreground">{activeDays} of 7 days</p>
           </div>
@@ -135,13 +135,13 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             href="/studio?mode=free"
             icon={<Mic2 className="h-4 w-4" strokeWidth={2} />}
             title="Tell your own story"
-            description="No prompt. Choose any moment you want to tell."
+            description="No prompt. Any moment."
           />
           <PracticeCard
             href="/studio?mode=scenario"
             icon={<Shuffle className="h-4 w-4" strokeWidth={2} />}
             title="Choose a scenario"
-            description="Practice an interview, personal question, or real situation."
+            description="Practice a real situation."
           />
         </div>
 

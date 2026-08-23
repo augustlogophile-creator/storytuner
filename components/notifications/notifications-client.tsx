@@ -99,7 +99,7 @@ export function NotificationsClient() {
       <header>
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Updates for you</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Notifications</h1>
-        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">Replies, likes, and the practice moments worth noticing.</p>
+        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">Replies, likes, and streaks.</p>
       </header>
 
       <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Notification filters">
@@ -123,7 +123,7 @@ export function NotificationsClient() {
         <div className="rounded-3xl border border-dashed border-border bg-card px-6 py-10 text-center">
           <Sparkles className="mx-auto h-5 w-5 text-muted-foreground" />
           <p className="mt-3 text-sm font-semibold">You are all caught up</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">New replies, likes, and streak updates will show up here.</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">New updates appear here.</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-[1.7rem] border border-border bg-card">

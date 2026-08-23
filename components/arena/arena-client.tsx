@@ -791,7 +791,7 @@ export function ArenaClient() {
           <Link href="/studio/recordings" className="studio-recordings-pill">{recordingCountLabel(state.recordings.length)}</Link>
         </div>
         <h1>Tell a story. See what lands.</h1>
-        <p className="studio-intro">Tell any story you choose, or practice storytelling in a real-life situation. Parch grades the craft, not the topic.</p>
+        <p className="studio-intro">Tell a story or choose a real-life scenario. Parch grades the craft.</p>
         {!state.premium && (
           <div className="studio-meta-row">
             <span className="studio-free-badge">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>
@@ -807,12 +807,12 @@ export function ArenaClient() {
               <button type="button" onClick={() => setStoryMode("free")} className={cn("studio-mode-card", storyMode === "free" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Mic2 className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Tell any story</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Choose the story yourself.</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Your story.</p>
               </button>
               <button type="button" onClick={() => setStoryMode("scenario")} className={cn("studio-mode-card", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a common storytelling situation.</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a real situation.</p>
               </button>
             </div>
           </section>
@@ -939,7 +939,7 @@ export function ArenaClient() {
               <button type="button" onClick={enterRecordingRoom} className="studio-primary-action"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
             </>
           )}
-          <Link href="/studio/recordings" className="studio-secondary-action"><Play className="h-4 w-4" />View, review, or share past recordings</Link>
+          <Link href="/studio/recordings" className="studio-secondary-action"><Play className="h-4 w-4" />Past recordings</Link>
         </>
       )}
 

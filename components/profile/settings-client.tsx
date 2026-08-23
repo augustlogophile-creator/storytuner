@@ -215,7 +215,7 @@ export function SettingsClient({ username }: { username: string }) {
       </Section>
 
       <Section title="Appearance">
-        <Row title="Color theme" detail="Switch between Tellwise paper mode and a low-glare dark reading mode.">
+        <Row title="Color theme" detail="Paper or dark reading mode.">
           <CinematicThemeSwitcher />
         </Row>
       </Section>
@@ -229,12 +229,12 @@ export function SettingsClient({ username }: { username: string }) {
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold">Notification center</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">See replies, likes, and streak updates in one place.</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Replies, likes, and streaks.</p>
             </div>
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
-        <Row title="Tone" detail="Choose how future practice reminders are phrased.">
+        <Row title="Tone" detail="Reminder style.">
           <SelectControl
             value={state.settings.tone}
             onChange={(value) => updateSettings({ tone: value as "warm" | "minimal" })}
@@ -242,7 +242,7 @@ export function SettingsClient({ username }: { username: string }) {
             label="Notification tone"
           />
         </Row>
-        <Row title="Frequency" detail="Save your preference for a connected notification service.">
+        <Row title="Frequency" detail="Reminder schedule.">
           <SelectControl
             value={state.settings.frequency}
             onChange={(value) => updateSettings({ frequency: value as "daily" | "weekdays" | "off" })}

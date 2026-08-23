@@ -37,7 +37,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
     <div className="profile-page flex min-h-full flex-col gap-3 pb-4">
       <header className="px-1">
         <h1 className="text-[1.58rem] font-semibold tracking-[-0.035em]">Profile</h1>
-        <p className="mt-0.5 max-w-sm text-[0.74rem] leading-[1.2rem] text-muted-foreground">Your progress, account, and Tellwise settings in one place.</p>
+        <p className="mt-0.5 max-w-sm text-[0.74rem] leading-[1.2rem] text-muted-foreground">Your progress and account.</p>
       </header>
 
       <section className="story-card overflow-hidden rounded-[1.45rem]">
@@ -64,7 +64,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
         </div>
 
         <div className="grid grid-cols-3 border-t border-border bg-secondary/30 py-1.5">
-          <Stat value={state.streak} label="Days" />
+          <Stat value={state.streak} label={state.streak === 1 ? "Day" : "Days"} />
           <Stat value={state.xpBalance} label="XP available" />
           <Stat value={state.recordings.length} label="Stories" />
         </div>
@@ -73,16 +73,16 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       <section>
         <SectionLabel>Your work</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/journal" icon={BookOpenText} title="Journal" detail="Private notes, audio, and video ideas" />
+          <ProfileRow href="/journal" icon={BookOpenText} title="Journal" detail="Notes, audio, and video" />
           <Divider />
-          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Course, XP, story score, and streaks" />
+          <ProfileRow href="/progress" icon={BarChart3} title="Progress" detail="Course, scores, and streaks" />
         </div>
       </section>
 
       <section>
         <SectionLabel>Activity</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/notifications" icon={Bell} title="Notifications" detail="Replies, likes, and streak updates" unread={notificationsUnread} />
+          <ProfileRow href="/notifications" icon={Bell} title="Notifications" detail="Replies, likes, and streaks" unread={notificationsUnread} />
         </div>
       </section>
 
@@ -104,7 +104,7 @@ export function ProfileClient({ moderatorRole, displayName, username }: { modera
       <section>
         <SectionLabel>Account</SectionLabel>
         <div className="story-card overflow-hidden rounded-[1.35rem] px-4">
-          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Profile, notifications, privacy, and data" />
+          <ProfileRow href="/settings" icon={Settings} title="Settings" detail="Profile, privacy, and data" />
           <Divider />
           <ProfileRow href="/legal?from=profile" icon={ShieldCheck} title="Legal and accessibility" detail="Privacy, terms, Community rules, and accessibility" />
         </div>

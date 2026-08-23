@@ -74,11 +74,8 @@ export function MobileShell({
 
 function ShellLoadingSurface() {
   return (
-    <div className="route-stability-shell" aria-hidden="true">
-      <div className="route-stability-kicker skeleton-block" />
+    <div className="route-stability-shell route-stability-quiet" aria-hidden="true">
       <div className="route-stability-title skeleton-block" />
-      <div className="route-stability-subtitle skeleton-block" />
-      <div className="route-stability-card skeleton-block" />
       <div className="route-stability-card route-stability-card-short skeleton-block" />
     </div>
   )

@@ -90,13 +90,13 @@ export function MembershipClient({
       <header>
         <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Membership</p>
         <h1 className="mt-2 text-[1.55rem] font-semibold tracking-tight">Your Tellwise Membership</h1>
-        <p className="mt-1 text-[0.8rem] leading-relaxed text-muted-foreground">Full course, Studio, Community, Parch, and unlimited Story Planner access.</p>
+        <p className="mt-1 text-[0.8rem] leading-relaxed text-muted-foreground">Full Tellwise access.</p>
       </header>
 
       {checkoutSuccess && (
         <section role="status" className="rounded-3xl border border-brand/30 bg-brand-soft/45 p-5">
           <p className="text-sm font-semibold">Membership confirmed</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Your access is active across Tellwise.</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Access is active.</p>
         </section>
       )}
 
@@ -107,7 +107,7 @@ export function MembershipClient({
             ? renewalDate ? `Access continues through ${renewalDate}.` : "Access remains active through the current paid period."
             : renewalDate ? `Next renewal: ${renewalDate}` : "Membership is active."}
         </p>
-        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Manage payment details or stop future renewal below.</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Manage billing or renewal below.</p>
 
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           <button type="button" onClick={() => void openPortal()} disabled={busy !== null} className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">

@@ -210,7 +210,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
         </div>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share stories. Help each other improve.</h1>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
-          Community is built around stories people intentionally choose to share. Listen or read, then respond to what actually landed.
+          Share a story. Respond to what landed.
         </p>
       </header>
 
@@ -232,7 +232,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
       <section aria-labelledby="share-heading" className="rounded-3xl border border-border bg-card p-5">
         <div>
           <h2 id="share-heading" className="text-sm font-semibold">Post a note</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Reflections, tips, questions, or what you want to improve · @{currentUsername}</p>
+          <p className="mt-1 text-xs text-muted-foreground">A thought, question, or tip · @{currentUsername}</p>
         </div>
         <textarea value={draft} maxLength={5000} rows={3} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)} placeholder="Share a reflection, a storytelling tip, a question, or something you want to get better at…" className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
@@ -249,7 +249,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
         <div className="mb-4">
           <Eyebrow>Community feed</Eyebrow>
           <h2 id="community-feed-heading" className="mt-2 text-xl font-semibold tracking-tight">Top stories</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Ranked by likes, with newer stories breaking ties.</p>
+          
         </div>
 
         {loading && posts.length === 0 ? (
@@ -261,7 +261,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
         ) : posts.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card px-6 py-12 text-center">
             <p className="text-sm font-semibold">No stories have been shared yet.</p>
-            <p className="mt-1 text-sm text-muted-foreground">Your first post can begin the Community.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Be the first to share.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

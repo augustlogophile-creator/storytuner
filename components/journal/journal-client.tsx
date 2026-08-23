@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ArrowLeft,
+  Bold,
   Camera,
   ChevronRight,
+  Italic,
+  List,
   Mic2,
   PenLine,
+  Plus,
   Search,
   Square,
-  Plus,
   Trash2,
+  Underline,
   Video,
   X,
 } from "lucide-react"
@@ -78,7 +82,7 @@ export function JournalClient() {
   const visibleEntries = useMemo(() => {
     const normalized = query.trim().toLowerCase()
     if (!normalized) return entries
-    return entries.filter((entry) => `${entry.title} ${entry.body} ${entry.entry_type}`.toLowerCase().includes(normalized))
+    return entries.filter((entry) => `${entry.title} ${plainJournalText(entry.body)} ${entry.entry_type}`.toLowerCase().includes(normalized))
   }, [entries, query])
 
   const groups = useMemo(() => groupEntries(visibleEntries, Boolean(query.trim())), [visibleEntries, query])
@@ -104,9 +108,12 @@ export function JournalClient() {
         <div>
           <p className="journal-running-head">Tellwise</p>
           <h1>Journal</h1>
+          <p className="journal-deck journal-deck-notes">Capture ideas before they’re ready to tell.</p>
         </div>
+        <button type="button" className="journal-new-entry-button journal-new-entry-top" onClick={() => setEntryMenuOpen(true)}>
+          <Plus /> <span>New entry</span>
+        </button>
       </header>
-      <p className="journal-deck journal-deck-notes">Raw ideas, before they’re ready to tell.</p>
 
       <label className="journal-search journal-search-top" data-book-no-turn="true">
         <Search aria-hidden="true" />
@@ -164,12 +171,6 @@ export function JournalClient() {
           </div>
         )}
       </section>
-
-      <div className="journal-action-dock" aria-label="Journal tools">
-        <button type="button" className="journal-new-entry-button" onClick={() => setEntryMenuOpen(true)}>
-          <Plus /> <span>New entry</span>
-        </button>
-      </div>
 
       {entryMenuOpen && (
         <div className="journal-entry-menu-overlay" role="dialog" aria-modal="true" aria-label="Create Journal entry">
@@ -294,10 +295,11 @@ function TextComposer({
   }, [title, body])
 
   async function saveNow(nextTitle = title, nextBody = body) {
-    const cleanBody = nextBody.trim() || "No description"
+    const richBody = sanitizeJournalRichText(nextBody)
+    const cleanBody = plainJournalText(richBody).trim() ? richBody : "No description"
     const cleanTitle = nextTitle.trim() || "Untitled"
     if (!cleanTitle && !cleanBody) return true
-    if (cleanTitle.length > 120 || cleanBody.length > 20000) {
+    if (cleanTitle.length > 120 || plainJournalText(cleanBody).length > 20000) {
       if (mountedRef.current) {
         setStatus("error")
         setError("Keep the title under 120 characters and the note under 20,000 characters.")
@@ -379,6 +381,7 @@ function TextComposer({
           <button type="button" onClick={() => void closeEditor()}>Done</button>
         </div>
 
+        <p className="journal-editor-date">{journalLongDate(new Date().toISOString())}</p>
         <input
           className="journal-title-input"
           value={title}
@@ -387,20 +390,89 @@ function TextComposer({
           maxLength={120}
           autoFocus={!initialBody}
         />
-        <textarea
-          className="journal-body-input"
+        <JournalRichEditor
           value={body}
-          onChange={(event) => setBody(event.target.value)}
+          onChange={setBody}
           placeholder="Start writing…"
-          maxLength={20000}
           autoFocus={Boolean(initialBody)}
+          className="journal-body-rich"
         />
         <div className="journal-editor-foot">
-          <span>{body.trim() ? `${body.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words` : "0 words"}</span>
+          <span>{journalWordCount(body).toLocaleString()} words</span>
           <span>Autosaves</span>
         </div>
         {error && <p className="journal-error mt-3">{error}</p>}
       </article>
+    </div>
+  )
+}
+
+function JournalRichEditor({
+  value,
+  onChange,
+  placeholder,
+  autoFocus = false,
+  className = "",
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  autoFocus?: boolean
+  className?: string
+}) {
+  const editorRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor || document.activeElement === editor) return
+    const next = journalDisplayHtml(value)
+    if (editor.innerHTML !== next) editor.innerHTML = next
+  }, [value])
+
+  useEffect(() => {
+    if (!autoFocus) return
+    const timer = window.setTimeout(() => editorRef.current?.focus(), 40)
+    return () => window.clearTimeout(timer)
+  }, [autoFocus])
+
+  function sync() {
+    const editor = editorRef.current
+    if (!editor) return
+    let next = sanitizeJournalRichText(editor.innerHTML)
+    if (plainJournalText(next).length > 20000) {
+      const trimmed = plainJournalText(next).slice(0, 20000)
+      next = escapeJournalHtml(trimmed).replace(/\n/g, "<br>")
+      editor.innerHTML = next
+    }
+    onChange(next)
+  }
+
+  function format(command: "bold" | "italic" | "underline" | "insertUnorderedList") {
+    const editor = editorRef.current
+    if (!editor) return
+    editor.focus()
+    document.execCommand(command, false)
+    sync()
+  }
+
+  return (
+    <div className={`journal-rich-editor ${className}`}>
+      <div
+        ref={editorRef}
+        className="journal-rich-editor-area"
+        contentEditable
+        role="textbox"
+        aria-multiline="true"
+        data-placeholder={placeholder}
+        suppressContentEditableWarning
+        onInput={sync}
+      />
+      <div className="journal-format-toolbar" aria-label="Text formatting">
+        <button type="button" aria-label="Bold" onMouseDown={(event) => event.preventDefault()} onClick={() => format("bold")}><Bold /></button>
+        <button type="button" aria-label="Italic" onMouseDown={(event) => event.preventDefault()} onClick={() => format("italic")}><Italic /></button>
+        <button type="button" aria-label="Underline" onMouseDown={(event) => event.preventDefault()} onClick={() => format("underline")}><Underline /></button>
+        <button type="button" aria-label="Bulleted list" onMouseDown={(event) => event.preventDefault()} onClick={() => format("insertUnorderedList")}><List /></button>
+      </div>
     </div>
   )
 }
@@ -686,19 +758,43 @@ function EntryDetail({
           )}
 
           {editingField === "body" ? (
-            <textarea
-              className="journal-body-input journal-inline-textarea"
-              value={body}
-              onChange={(event) => setBody(event.target.value)}
-              onBlur={() => setEditingField(null)}
-              placeholder={bodyPlaceholder}
-              maxLength={20000}
-              autoFocus
-            />
+            entry.entry_type === "text" ? (
+              <div className="journal-inline-editor-wrap">
+                <JournalRichEditor
+                  value={body}
+                  onChange={setBody}
+                  placeholder={bodyPlaceholder}
+                  autoFocus
+                  className="journal-inline-rich"
+                />
+                <button type="button" className="journal-finish-edit" onClick={() => setEditingField(null)}>Done editing</button>
+              </div>
+            ) : (
+              <textarea
+                className="journal-body-input journal-inline-textarea"
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                onBlur={() => setEditingField(null)}
+                placeholder={bodyPlaceholder}
+                maxLength={20000}
+                autoFocus
+              />
+            )
           ) : (
-            <button type="button" className={`journal-inline-body ${showingPlaceholderBody ? "is-placeholder" : ""}`} onClick={() => { if (showingPlaceholderBody) setBody(""); setEditingField("body") }}>
-              {showingPlaceholderBody ? bodyPlaceholder : body}
-            </button>
+            entry.entry_type === "text" && !showingPlaceholderBody ? (
+              <div
+                role="button"
+                tabIndex={0}
+                className="journal-inline-body journal-rich-display"
+                onClick={() => setEditingField("body")}
+                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setEditingField("body") }}
+                dangerouslySetInnerHTML={{ __html: journalDisplayHtml(body) }}
+              />
+            ) : (
+              <button type="button" className={`journal-inline-body ${showingPlaceholderBody ? "is-placeholder" : ""}`} onClick={() => { if (showingPlaceholderBody) setBody(""); setEditingField("body") }}>
+                {showingPlaceholderBody ? bodyPlaceholder : plainJournalText(body)}
+              </button>
+            )
           )}
 
           {error && <p className="journal-error mt-3">{error}</p>}
@@ -770,7 +866,49 @@ function entryTypeLine(entry: JournalEntry) {
 }
 
 function cleanPreview(value: string, fallback: string) {
-  return value.replace(/\s+/g, " ").trim().slice(0, 110) || fallback
+  return plainJournalText(value).replace(/\s+/g, " ").trim().slice(0, 110) || fallback
+}
+
+function journalWordCount(value: string) {
+  const plain = plainJournalText(value).trim()
+  return plain ? plain.split(/\s+/).filter(Boolean).length : 0
+}
+
+function plainJournalText(value: string) {
+  return value
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(?:div|p|li)>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+}
+
+function escapeJournalHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
+function sanitizeJournalRichText(value: string) {
+  if (!value) return ""
+  const looksLikeMarkup = /<(?:strong|b|em|i|u|ul|ol|li|p|div|br)\b/i.test(value)
+  const source = looksLikeMarkup ? value : escapeJournalHtml(value).replace(/\n/g, "<br>")
+  return source
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<(?!\/?(?:strong|b|em|i|u|ul|ol|li|p|div|br)\b)[^>]*>/gi, "")
+    .replace(/<(strong|b|em|i|u|ul|ol|li|p|div)\b[^>]*>/gi, "<$1>")
+    .replace(/<br\b[^>]*>/gi, "<br>")
+}
+
+function journalDisplayHtml(value: string) {
+  return sanitizeJournalRichText(value)
 }
 
 function isJournalPlaceholderTitle(_kind: JournalEntryType, value: string) {
@@ -779,7 +917,7 @@ function isJournalPlaceholderTitle(_kind: JournalEntryType, value: string) {
 }
 
 function isJournalPlaceholderBody(_kind: JournalEntryType, value: string) {
-  const normalized = value.trim().toLowerCase()
+  const normalized = plainJournalText(value).trim().toLowerCase()
   return !normalized || normalized === "add a description" || normalized === "private audio note" || normalized === "private video note" || normalized === "no description"
 }
 
@@ -788,11 +926,12 @@ function journalStoredTitle(kind: JournalEntryType, title: string, _body: string
 }
 
 function journalStoredBody(kind: JournalEntryType, body: string) {
-  return isJournalPlaceholderBody(kind, body) ? "No description" : body.trim()
+  if (isJournalPlaceholderBody(kind, body)) return "No description"
+  return kind === "text" ? sanitizeJournalRichText(body) : plainJournalText(body).trim()
 }
 
 function titleFromBody(value: string) {
-  const sentence = value.split(/[.!?\n]/)[0]?.trim() || "Untitled note"
+  const sentence = plainJournalText(value).split(/[.!?\n]/)[0]?.trim() || "Untitled note"
   return sentence.split(/\s+/).slice(0, 7).join(" ").slice(0, 120)
 }
 

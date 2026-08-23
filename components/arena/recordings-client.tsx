@@ -43,7 +43,7 @@ export function RecordingsClient() {
           <div className="mt-4">
             <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private audio, transcripts, scores, and revisions follow your account across devices. Full video remains on the device where it was recorded.</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private recordings, transcripts, and scores.</p>
         </header>
 
         {deleteError && (

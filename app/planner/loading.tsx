@@ -8,8 +8,6 @@ export default function PlannerLoading() {
           <div className="planner-route-loading-back skeleton-block" />
           <div className="planner-route-loading-hero skeleton-block" />
           <div className="planner-route-loading-row skeleton-block" />
-          <div className="planner-route-loading-title skeleton-block" />
-          <div className="planner-route-loading-card skeleton-block" />
         </div>
       </main>
       <BottomNav />

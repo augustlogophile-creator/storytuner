@@ -11,27 +11,27 @@ const reasonCopy: Record<UpgradeReason, { eyebrow: string; title: string; descri
   general: {
     eyebrow: "Tellwise Membership",
     title: "Keep building your storytelling practice.",
-    description: "Use Tellwise free, or unlock the complete course and every practice tool with Membership.",
+    description: "Unlock the full course and every practice tool.",
   },
   lessons: {
     eyebrow: "Course access",
     title: "Keep going with the full course.",
-    description: "You have reached the free lesson limit. Membership opens the rest of the curriculum without changing your progress.",
+    description: "Membership opens the rest of the course.",
   },
   studio: {
     eyebrow: "Studio access",
     title: "Keep practicing with full Studio access.",
-    description: "Your free story reviews are complete. Membership unlocks unlimited graded Studio takes and keeps every saved recording available.",
+    description: "Membership unlocks unlimited graded Studio takes.",
   },
   community: {
     eyebrow: "Community access",
     title: "Join the Tellwise Community.",
-    description: "Membership unlocks the private Community so you can share selected stories, respond, and learn from other storytellers.",
+    description: "Membership unlocks the private Community.",
   },
   planner: {
     eyebrow: "Story Planner",
     title: "Plan the story before you tell it.",
-    description: "Your first Story Planner is free. Membership unlocks unlimited AI story plans so you can shape a clear opening, sequence, and landing before you record.",
+    description: "Your first plan is free. Membership unlocks unlimited plans.",
   },
 }
 

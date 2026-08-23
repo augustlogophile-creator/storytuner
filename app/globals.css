@@ -9061,3 +9061,419 @@ body {
   .book-app :is(button,a,.story-card,.journal-row,.planner-field-card,.membership-plan-choice),
   .theme-switcher-thumb { transition: none !important; }
 }
+
+/* August 23 refinement: denser copy, richer Journal editing, dark-mode contrast,
+   tighter theme control, and tactile mobile interactions. */
+
+/* Keep full-screen Journal surfaces truly viewport-fixed. The previous route
+   entrance transform made fixed descendants behave like they were fixed to the
+   content pane, which could expose the Journal underneath. */
+.app-content-reveal {
+  animation: tellwise-page-fade 150ms ease-out both !important;
+}
+@keyframes tellwise-page-fade {
+  from { opacity: .88; }
+  to { opacity: 1; }
+}
+
+/* Smaller appearance toggle, same cinematic behavior. */
+.theme-switcher,
+.theme-switcher-placeholder {
+  width: 5.25rem !important;
+  height: 3.15rem !important;
+  padding: .28rem !important;
+  border-width: 1.5px !important;
+}
+.theme-switcher-icons { padding-inline: .78rem !important; }
+.theme-switcher-icons svg { width: .88rem !important; height: .88rem !important; }
+.theme-switcher-thumb {
+  width: 2.28rem !important;
+  height: 2.28rem !important;
+}
+.theme-switcher-thumb > svg { width: .9rem !important; height: .9rem !important; }
+.theme-switcher.is-dark .theme-switcher-thumb { transform: translateX(1.96rem) !important; }
+
+/* Give BEST VALUE a little room after Annual without changing the highlight. */
+.membership-plan-name-row { gap: .72rem !important; }
+.membership-plan-name-row > .membership-plan-badge { margin-left: .14rem !important; }
+
+/* Progress streak totals always share a single horizontal row. */
+.progress-streak-summary {
+  display: flex !important;
+  width: 100% !important;
+  max-width: 18.5rem !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 2.25rem !important;
+}
+.progress-streak-summary > div {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  padding-inline: .35rem !important;
+}
+
+/* Planner counters should breathe inside the writing box. */
+.planner-simple-fields .planner-field-count {
+  right: 1.82rem !important;
+  bottom: 1.48rem !important;
+}
+
+/* Journal index: title/action share the top line and the list reads more like a
+   polished notebook than a floating stack of UI cards. */
+.journal-page { padding-bottom: 2.5rem !important; }
+.journal-header-notes {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  padding-top: .1rem !important;
+}
+.journal-header-notes > div { min-width: 0; }
+.journal-header-notes h1 {
+  margin: 0 !important;
+  font-size: clamp(2.25rem, 10vw, 3rem) !important;
+  line-height: 1 !important;
+}
+.journal-deck-notes {
+  margin-top: .42rem !important;
+  max-width: 16rem !important;
+  font-size: .74rem !important;
+  line-height: 1.35 !important;
+}
+.journal-new-entry-top {
+  position: static !important;
+  flex: 0 0 auto !important;
+  min-height: 2.55rem !important;
+  margin-top: .28rem !important;
+  border: 1px solid rgba(70,111,159,.34) !important;
+  border-radius: 999px !important;
+  background: #5f86ad !important;
+  padding: 0 .82rem !important;
+  box-shadow: 0 7px 16px rgba(62,86,112,.11) !important;
+  color: #fffdf8 !important;
+  font-size: .7rem !important;
+}
+.journal-new-entry-top svg { width: .82rem !important; height: .82rem !important; }
+.journal-search-top { margin-top: 1rem !important; }
+.journal-groups { margin-top: .9rem !important; }
+.journal-notes-group {
+  overflow: hidden !important;
+  border: 1px solid var(--journal-rule) !important;
+  border-radius: 1.35rem !important;
+  background: rgba(255,252,246,.48) !important;
+}
+.journal-row {
+  min-height: 5.8rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: .9rem .82rem !important;
+  box-shadow: none !important;
+}
+.journal-row + .journal-row { border-top: 1px solid var(--journal-rule) !important; }
+.journal-row-heading strong { font-size: .9rem !important; }
+.journal-row-preview { margin-top: .22rem !important; font-size: .7rem !important; line-height: 1.35 !important; }
+.journal-row-type { margin-top: .32rem !important; font-size: .49rem !important; }
+.journal-row-icon {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.journal-row-icon svg { width: 1rem !important; height: 1rem !important; }
+
+/* Entry chooser is centered and compact. */
+.journal-entry-menu-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 320 !important;
+  display: grid !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  place-items: center !important;
+  padding: 1rem !important;
+  background: rgba(45,40,34,.24) !important;
+  backdrop-filter: blur(8px) !important;
+}
+.journal-entry-menu {
+  width: min(calc(100vw - 2rem), 24rem) !important;
+  max-height: none !important;
+  border: 1px solid #d9cebd !important;
+  border-radius: 1.6rem !important;
+  background: #fffaf1 !important;
+  padding: 1rem !important;
+  box-shadow: 0 18px 48px rgba(34,29,24,.16) !important;
+}
+.journal-entry-menu-options { margin-top: .6rem !important; }
+.journal-entry-menu-options button {
+  min-height: 4.15rem !important;
+  padding: .62rem .25rem !important;
+}
+.journal-entry-menu-options small { margin-top: .12rem !important; }
+
+/* Full note/editor pages always occupy the full viewport. */
+.journal-note-sheet-overlay,
+.journal-media-detail-overlay,
+.journal-media-editor-overlay,
+.journal-capture-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 310 !important;
+  display: flex !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  background: #e9e4da !important;
+  backdrop-filter: none !important;
+}
+.journal-note-sheet-overlay .journal-editor-notes,
+.journal-note-sheet-overlay .journal-detail-notes,
+.journal-capture-panel {
+  position: relative !important;
+  width: min(100%, 28rem) !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  margin: 0 auto !important;
+  overflow-y: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(90deg, transparent 0 2.55rem, rgba(181,94,61,.12) 2.55rem 2.62rem, transparent 2.62rem),
+    radial-gradient(circle at 20% 30%, rgba(92,74,50,.03) 0 .5px, transparent .7px),
+    #fffdf7 !important;
+  background-size: 100% 100%, 8px 8px, 100% 100% !important;
+  padding: 1.05rem 1.05rem calc(1.15rem + env(safe-area-inset-bottom)) !important;
+  box-shadow: 0 0 0 1px rgba(126,106,79,.12) !important;
+}
+.journal-editor-top-notes,
+.journal-detail-top {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 4 !important;
+  min-height: 2.6rem !important;
+  background: color-mix(in srgb, #fffdf7 92%, transparent) !important;
+  backdrop-filter: blur(9px) !important;
+}
+.journal-editor-date,
+.journal-entry-date {
+  margin-top: 1rem !important;
+  color: #9a8b77 !important;
+  font-family: var(--font-geist-mono), ui-monospace, monospace !important;
+  font-size: .52rem !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+}
+.journal-title-input,
+.journal-inline-title {
+  min-height: 2.55rem !important;
+  overflow: visible !important;
+  margin-top: .42rem !important;
+  padding: .08rem 0 .12rem !important;
+  color: #2f2923 !important;
+  font-size: 1.75rem !important;
+  line-height: 1.16 !important;
+  font-weight: 650 !important;
+}
+.journal-title-input::placeholder { color: #b6aa98 !important; }
+
+/* Rich text editor and Apple-Notes-like format rail. */
+.journal-rich-editor {
+  display: flex !important;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+.journal-body-rich { margin-top: .22rem !important; }
+.journal-rich-editor-area {
+  min-height: 45dvh;
+  outline: none;
+  color: #4f473e;
+  font-family: var(--font-book-serif), Georgia, serif;
+  font-size: .93rem;
+  line-height: 1.68;
+  white-space: pre-wrap;
+}
+.journal-rich-editor-area:empty::before {
+  content: attr(data-placeholder);
+  color: #afa391;
+  font-style: italic;
+  pointer-events: none;
+}
+.journal-rich-editor-area :is(p,div) { margin: 0 0 .38rem; }
+.journal-rich-editor-area :is(ul,ol) { margin: .35rem 0 .35rem 1.2rem; }
+.journal-format-toolbar {
+  position: sticky;
+  bottom: .15rem;
+  z-index: 5;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: .12rem;
+  margin: auto 0 .25rem;
+  border: 1px solid #d7ccb9;
+  border-radius: 1rem;
+  background: rgba(44,41,37,.94);
+  padding: .28rem;
+  color: #fffdf8;
+  box-shadow: 0 8px 24px rgba(37,31,26,.12);
+}
+.journal-format-toolbar button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: .7rem;
+  color: #fffdf8;
+}
+.journal-format-toolbar button:active { background: rgba(255,255,255,.12); }
+.journal-format-toolbar svg { width: .92rem; height: .92rem; }
+.journal-editor-foot {
+  margin-top: .45rem !important;
+  border-top: 1px solid rgba(216,204,185,.7) !important;
+  background: transparent !important;
+  padding: .55rem 0 0 !important;
+  font-size: .58rem !important;
+}
+.journal-inline-body,
+.journal-rich-display {
+  min-height: 3rem !important;
+  margin-top: .35rem !important;
+  color: #51483e !important;
+  font-size: .92rem !important;
+  line-height: 1.66 !important;
+}
+.journal-rich-display { cursor: text; }
+.journal-rich-display :is(p,div) { margin: 0 0 .35rem; }
+.journal-inline-editor-wrap { margin-top: .25rem; }
+.journal-inline-rich .journal-rich-editor-area { min-height: 32dvh; }
+.journal-finish-edit {
+  margin-top: .45rem;
+  border-radius: 999px;
+  background: #5f86ad;
+  padding: .58rem .88rem;
+  color: white;
+  font-size: .66rem;
+  font-weight: 700;
+}
+
+/* Quicker route loading without the five-card skeleton flash. */
+.route-stability-shell { gap: .55rem !important; }
+.skeleton-block { animation-duration: .85s !important; }
+
+/* Dark mode remains a warm book, not a black UI. Raise low-contrast copy and
+   fix custom surfaces that were bypassing theme tokens. */
+.dark {
+  --muted-foreground: #c8bcac;
+  --border: #50483e;
+}
+.dark .book-app,
+.dark .book-app-content {
+  background-color: #1f1c18 !important;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(244,237,225,.045) 0 .55px, transparent .72px),
+    linear-gradient(90deg, rgba(255,255,255,.008), rgba(0,0,0,.02)) !important;
+}
+.dark .book-app .text-muted-foreground { color: #c8bcac !important; }
+.dark .lesson-score-complete { color: #d4c9ba !important; }
+.dark .lesson-score-highlight { color: #201c18 !important; }
+.dark .lesson-score-highlight::before { opacity: .9 !important; }
+.dark .studio-intro,
+.dark .studio-mode-card > p:nth-of-type(2),
+.dark .studio-free-badge,
+.dark .studio-recordings-pill { color: #c8bcac !important; }
+.dark .studio-planner-link {
+  border-color: #5a5145 !important;
+  background: #302b25 !important;
+  color: #eee5d7 !important;
+}
+.dark .studio-mode-card {
+  border-color: #50483e !important;
+  background: #28241f !important;
+  color: #f3ede1 !important;
+}
+.dark .studio-duration-card button,
+.dark .studio-secondary-action {
+  border-color: #544b40 !important;
+  background: #24211d !important;
+  color: #eee5d7 !important;
+}
+.dark .studio-duration-card button.border-brand,
+.dark .studio-mode-card.border-brand { border-color: #7aa3cc !important; background: #283846 !important; }
+.dark .membership-benefit-row,
+.dark .membership-plan-detail,
+.dark .membership-renewal-consent,
+.dark .membership-upgrade-fineprint,
+.dark .membership-upgrade-header > p:last-child { color: #c9beae !important; }
+.dark .membership-plan-name-row > .membership-plan-badge { color: #7b6218 !important; }
+.dark .journal-note-sheet-overlay,
+.dark .journal-media-detail-overlay,
+.dark .journal-media-editor-overlay,
+.dark .journal-capture-overlay { background: #12110f !important; }
+.dark .journal-note-sheet-overlay .journal-editor-notes,
+.dark .journal-note-sheet-overlay .journal-detail-notes,
+.dark .journal-capture-panel {
+  background:
+    linear-gradient(90deg, transparent 0 2.55rem, rgba(199,111,74,.15) 2.55rem 2.62rem, transparent 2.62rem),
+    radial-gradient(circle at 20% 30%, rgba(244,237,225,.04) 0 .5px, transparent .7px),
+    #1f1c18 !important;
+  color: #f3ede1 !important;
+}
+.dark .journal-editor-top-notes,
+.dark .journal-detail-top { background: rgba(31,28,24,.93) !important; }
+.dark .journal-title-input,
+.dark .journal-inline-title { color: #f5eee3 !important; }
+.dark .journal-rich-editor-area,
+.dark .journal-inline-body,
+.dark .journal-rich-display { color: #ddd2c2 !important; }
+.dark .journal-rich-editor-area:empty::before { color: #8f8477 !important; }
+.dark .journal-format-toolbar { border-color: #5a5146 !important; background: rgba(238,230,216,.94) !important; color: #221f1b !important; }
+.dark .journal-format-toolbar button { color: #221f1b !important; }
+.dark .journal-entry-menu { border-color: #51483d !important; background: #28241f !important; }
+.dark .journal-notes-group { border-color: #4e463c !important; background: rgba(39,35,30,.72) !important; }
+.dark .journal-row + .journal-row { border-top-color: #4a4339 !important; }
+.dark .planner-simple-fields .planner-field-count { color: #bfb3a4 !important; }
+
+/* Extra dark-mode coverage for hand-coded collection/course accents. */
+.dark .parch-archive,
+.dark .parch-archive [class*="bg-[#fbfaf7]"],
+.dark .parch-archive [class*="bg-white"] {
+  border-color: #50483e !important;
+  background: #27231f !important;
+  color: #f3ede1 !important;
+}
+.dark .parch-archive [class*="text-[#27231f]"],
+.dark .parch-archive [class*="text-[#39342e]"] { color: #f3ede1 !important; }
+.dark .parch-archive [class*="text-[#716b64]"],
+.dark .parch-archive [class*="text-[#91887d]"],
+.dark .parch-archive [class*="text-[#989187]"] { color: #c5b9aa !important; }
+.dark .learning-page [class*="bg-[#f8f4fc]"],
+.dark .learning-page [class*="bg-[#fffaf0]"] { background: #2a2621 !important; border-color: #534a3f !important; }
+.dark .learning-page [class*="text-[#6f5599]"],
+.dark .learning-page [class*="text-[#956119]"] { color: #d4c2e8 !important; }
+
+/* Mobile personality: quick tactile spring on every real control. Web vibration
+   is used by GlobalInteractions where supported; the visual response works on
+   iOS even when browser vibration is unavailable. */
+@keyframes tellwise-tap-pop {
+  0% { transform: scale(1); }
+  38% { transform: scale(.972); }
+  100% { transform: scale(1); }
+}
+.tellwise-tap { animation: tellwise-tap-pop 220ms cubic-bezier(.2,.9,.24,1) !important; }
+.book-app :is(button,a,[role="button"],[role="switch"]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 70%, white) !important;
+  outline-offset: 3px !important;
+}
+.book-app .story-card-interactive,
+.book-app .journal-row,
+.book-app .planner-field-card {
+  transition: transform 150ms cubic-bezier(.2,.9,.24,1), border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tellwise-tap { animation: none !important; }
+  .app-content-reveal { animation: none !important; }
+}

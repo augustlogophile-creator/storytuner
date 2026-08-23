@@ -301,8 +301,8 @@ export function CoachClient() {
 
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
           {recording
-            ? "Parch will use this story’s transcript, feedback, and scores until you switch the focus."
-            : "Parch will answer as a general storytelling coach without tying the conversation to one saved story."}
+            ? "Using this story’s transcript and feedback."
+            : "General storytelling coaching."}
         </p>
       </section>
 
@@ -314,7 +314,7 @@ export function CoachClient() {
       <section className="flex min-h-[30rem] flex-1 flex-col overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm">
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-5 sm:px-5">
           {safeMessages.length === 0 && !pendingUserMessage ? (
-            <div className="m-auto max-w-xs text-center"><CoachMark size="lg" className="mx-auto" /><p className="mt-4 text-sm font-semibold">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Ask about a story, an opening, an ending, your feedback, or what to practice next.</p></div>
+            <div className="m-auto max-w-xs text-center"><CoachMark size="lg" className="mx-auto" /><p className="mt-4 text-sm font-semibold">What are you working on?</p><p className="mt-2 text-sm leading-6 text-muted-foreground">Ask about a story or what to practice next.</p></div>
           ) : (
             <>
               {safeMessages.map((message: CoachMessage) => message.role === "user" ? (
@@ -332,7 +332,7 @@ export function CoachClient() {
         {error && <div className="mx-4 mb-3 flex items-start justify-between gap-3 rounded-2xl border border-destructive/15 bg-destructive/5 px-4 py-3 text-sm text-destructive"><span>{error}</span><button type="button" onClick={() => setError("")} className="shrink-0 font-semibold opacity-70 hover:opacity-100">Dismiss</button></div>}
 
         {blocked ? (
-          <div className="border-t border-border p-5 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="mt-2 text-sm font-semibold">Your five free messages are used.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Your five exchanges stay here so you can revisit Parch’s advice. Membership includes unlimited coaching.</p><Link href="/membership?from=general" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link></div>
+          <div className="border-t border-border p-5 text-center"><Lock className="mx-auto h-5 w-5 text-muted-foreground" /><p className="mt-2 text-sm font-semibold">Your five free messages are used.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Membership includes unlimited coaching.</p><Link href="/membership?from=general" className="mt-4 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">See Membership</Link></div>
         ) : (
           <div className="border-t border-border bg-background/75 p-3 backdrop-blur-sm">
             <div className="flex items-end gap-2 rounded-[1.45rem] border border-border bg-card px-2.5 py-2 shadow-sm focus-within:border-brand">
@@ -340,7 +340,7 @@ export function CoachClient() {
               <textarea value={input} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { requestKeyRef.current = null; setInput(event.target.value) }} onKeyDown={(event: KeyboardEvent<HTMLTextAreaElement>) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send() } }} rows={1} placeholder={listening ? "Listening… speak naturally" : recording ? `Ask Parch about ${recording.title}…` : "Message Parch…"} className="max-h-36 min-h-10 flex-1 resize-none bg-transparent px-1 py-2 text-sm leading-relaxed outline-none placeholder:text-muted-foreground" />
               <button type="button" disabled={!input.trim() || loading} onClick={() => void send()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground transition-transform active:scale-95 disabled:opacity-30" aria-label="Send message"><ArrowUp className="h-4 w-4" /></button>
             </div>
-            <p className="mt-2 px-2 text-[0.62rem] leading-4 text-muted-foreground">Press Enter to send. The microphone fills your message so you can review it before sending.</p>
+            
           </div>
         )}
       </section>

@@ -28,7 +28,7 @@ export function ActivitiesClient() {
         <Eyebrow>Curriculum</Eyebrow>
         <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-balance">The craft of true storytelling</h1>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
-          Fourteen focused units, a capstone, and five cumulative unit tests along the way.
+          Fifteen lessons on the craft of true storytelling.
         </p>
       </header>
 
@@ -40,7 +40,7 @@ export function ActivitiesClient() {
         <ProgressBar value={course.percent}  />
         {!state.premium && (
           <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-            The free plan includes the first {FREE_UNIT_LIMIT} complete lessons. Each one includes Learn, Check, and Practice.
+            The first {FREE_UNIT_LIMIT} lessons are free.
           </p>
         )}
       </section>

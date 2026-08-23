@@ -155,7 +155,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         <div className="min-w-0">
           <Eyebrow>Story Planner</Eyebrow>
           <h1>Plan your story.</h1>
-          <p>Answer five short prompts. Parch will turn the pieces into a clear story arc.</p>
+          <p>Five prompts. Parch shapes the arc.</p>
         </div>
       </header>
 
@@ -183,7 +183,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               number={1}
               icon={MapPin}
               title="Where will you tell this story?"
-              help="Audience or situation"
+              help="Audience or setting"
               value={form.audienceContext}
               onChange={(value) => update("audienceContext", value)}
               placeholder="Interview, class, speech, conversation..."
@@ -195,7 +195,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               number={2}
               icon={Target}
               title="What should the listener take away?"
-              help="The point beneath the events"
+              help="What should land"
               value={form.goal}
               onChange={(value) => update("goal", value)}
               placeholder="I want them to understand that..."
@@ -207,7 +207,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               number={3}
               icon={ListChecks}
               title="What happens?"
-              help="Fragments or bullets are fine"
+              help="Rough beats are enough"
               value={form.roughPlan}
               onChange={(value) => update("roughPlan", value)}
               placeholder="First... then... finally..."
@@ -219,7 +219,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               number={4}
               icon={FileText}
               title="What must stay in?"
-              help="Names, facts, lines, or details"
+              help="Anything essential"
               value={form.mustInclude}
               onChange={(value) => update("mustInclude", value)}
               placeholder="Write “None” if there is nothing essential."
@@ -231,7 +231,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               number={5}
               icon={ShieldQuestion}
               title="What feels hard?"
-              help="Length, privacy, delivery, or clarity"
+              help="What needs help"
               value={form.nervousAbout}
               onChange={(value) => update("nervousAbout", value)}
               placeholder="Write “None” if you feel ready."

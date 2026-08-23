@@ -4,6 +4,7 @@ import { useLayoutEffect } from "react"
 import { usePathname } from "next/navigation"
 import { AppProvider } from "@/lib/app-state"
 import { MembershipSync } from "@/components/membership-sync"
+import { GlobalInteractions } from "@/components/global-interactions"
 
 export function AppProviders({
   children,
@@ -32,6 +33,7 @@ export function AppProviders({
       initialMembershipActive={initialMembershipActive}
     >
       <MembershipSync />
+      <GlobalInteractions />
       {children}
     </AppProvider>
   )
