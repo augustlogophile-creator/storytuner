@@ -77,16 +77,16 @@ export function ProgressClient({ sharedStoryCount: _sharedStoryCount }: { shared
       </div>
 
       <div className="mt-5 flex items-center justify-between gap-1.5">
-        {week.map((day) => (
+        {week.map((day, index) => (
           <div key={day.key} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
             <span className={`flex h-10 w-10 items-center justify-center rounded-full border text-xs font-medium ${day.active ? "border-brand/35 bg-brand-soft text-brand" : day.today ? "border-dashed border-foreground/45 bg-card text-foreground" : "border-border bg-card text-muted-foreground"}`}>
-              {day.active ? <Check className="h-3.5 w-3.5" strokeWidth={2.6} /> : day.label}
+              {day.active ? <Check className="h-3.5 w-3.5" strokeWidth={2.6} /> : (index === 3 ? "T" : day.label)}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="progress-streak-summary mt-5 grid grid-cols-2 divide-x divide-border border-t border-border pt-4 text-center">
+      <div className="progress-streak-summary mt-5 border-t border-border pt-4 text-center">
         <div>
           <p className="text-[1rem] font-semibold tabular-nums leading-none">{streaks.current}</p>
           <p className="mt-1 text-[0.62rem] text-muted-foreground">Current streak</p>

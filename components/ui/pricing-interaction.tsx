@@ -46,7 +46,7 @@ export function PricingInteraction({
             <span className="membership-plan-copy">
               <span className="membership-plan-name-row">
                 <strong>{copy.name}</strong>
-                {copy.badge && <span>{copy.badge}</span>}
+                {copy.badge && <span className="membership-plan-badge">{copy.badge}</span>}
               </span>
               <span className="membership-plan-price-row">
                 <strong>{copy.price}</strong>

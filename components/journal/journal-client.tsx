@@ -104,16 +104,15 @@ export function JournalClient() {
           <p className="journal-running-head">Tellwise</p>
           <h1>Journal</h1>
         </div>
-        <span className="journal-count">{entries.length}</span>
       </header>
-      <p className="journal-deck journal-deck-notes">Ideas, fragments, voice notes, and video moments. Private by default.</p>
+      <p className="journal-deck journal-deck-notes">Raw ideas, before they’re ready to tell.</p>
 
       <label className="journal-search journal-search-top" data-book-no-turn="true">
         <Search aria-hidden="true" />
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search your Journal"
+          placeholder="Search entries"
           aria-label="Search Journal notes"
           autoComplete="off"
           spellCheck={false}
@@ -151,12 +150,9 @@ export function JournalClient() {
                         <span>{entryPreview(entry)}</span>
                       </span>
                     </span>
-                    {entry.entry_type !== "text" && (
-                      <span className={`journal-row-kind is-${entry.entry_type}`}>
-                        {entry.entry_type === "audio" ? <Mic2 /> : <Video />}
-                        {entry.entry_type}
-                      </span>
-                    )}
+                    <span className={`journal-row-kind is-${entry.entry_type}`} aria-hidden="true">
+                      {entry.entry_type === "audio" ? <Mic2 /> : entry.entry_type === "video" ? <Video /> : <PenLine />}
+                    </span>
                     <ChevronRight className="journal-row-chevron" aria-hidden="true" />
                   </button>
                 ))}
@@ -181,7 +177,7 @@ export function JournalClient() {
         </button>
         <button type="button" className="journal-dock-button is-compose journal-write-button" onClick={() => startNewText()} aria-label="Write a new note">
           <SquarePen />
-          <span>Write a note</span>
+          <span>New entry</span>
         </button>
       </div>
 
@@ -381,7 +377,7 @@ function TextComposer({
           className="journal-title-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Add a title"
+          placeholder="Untitled Spark"
           maxLength={120}
           autoFocus={!initialBody}
         />
@@ -389,7 +385,7 @@ function TextComposer({
           className="journal-body-input"
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          placeholder="Add a description or start writing…"
+          placeholder="What’s on your mind?"
           maxLength={20000}
           autoFocus={Boolean(initialBody)}
         />
@@ -501,7 +497,7 @@ function MediaCapture({
 
   return (
     <div className="journal-overlay journal-overlay-blue journal-capture-overlay" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
-      <section className="journal-capture-panel">
+      <section className={`journal-capture-panel ${kind === "video" ? "is-video" : "is-audio"}`}>
         <div className="journal-editor-top journal-editor-top-notes">
           <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Close"><X /></button>
           <span>{kind === "video" ? "Video note" : "Audio note"}</span>
@@ -517,8 +513,8 @@ function MediaCapture({
           <div className={recording ? "journal-record-orb is-recording" : "journal-record-orb"}><Mic2 /></div>
         )}
 
-        <h2>{saving ? "Saving privately…" : recording ? "Recording" : kind === "video" ? "Capture a moment" : "Record a thought"}</h2>
-        <p>{saving ? "Your media stays private in your Journal." : recording ? `${duration(elapsed)} of ${duration(maxSeconds)}` : "Use this like a pocket notebook. Keep it short, private, and easy to find later."}</p>
+        <h2>{saving ? "Saving…" : recording ? duration(elapsed) : kind === "video" ? "0:00" : "0:00"}</h2>
+        <p>{saving ? "Your media stays private in your Journal." : recording ? (kind === "video" ? "…that’s the moment everything changes." : "—she turned back toward the harbor") : kind === "video" ? "Capture a moment before it slips away." : "Record a thought, line, or memory."}</p>
 
         {error && <p className="journal-error">{error}</p>}
 

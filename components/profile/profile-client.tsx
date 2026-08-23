@@ -178,7 +178,7 @@ function ProfileRow({
 }) {
   return (
     <Link prefetch href={href} className="group flex items-center gap-3 py-[0.61rem]">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+      <span className="profile-blue-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
         <Icon className="h-4 w-4" strokeWidth={1.9} />
       </span>
       <span className="min-w-0 flex-1">

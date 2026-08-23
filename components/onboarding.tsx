@@ -75,7 +75,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
       setPage(1)
       setCoverOpening(false)
       coverTimerRef.current = null
-    }, 1120)
+    }, 1320)
   }
 
   function nextPage() {
