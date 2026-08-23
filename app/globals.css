@@ -8582,3 +8582,482 @@ body {
   .planner-simple-fields .planner-field-card { padding-inline: .9rem !important; }
   .journal-row { padding-inline: .82rem !important; }
 }
+
+/* August 22 late polish: theme control, journal reliability, planner route
+   stability, streak layout, and quieter book-like motion. */
+
+/* Faster intro turn requested after the 850ms pass. */
+.book-standalone-cover {
+  transition-duration: 720ms !important;
+  transition-timing-function: cubic-bezier(.22,.72,.18,1) !important;
+}
+
+/* BEST VALUE now reads as one light marker oval, with comfortable breathing room. */
+.membership-plan-name-row > .membership-plan-badge {
+  position: relative !important;
+  isolation: isolate;
+  display: inline-block !important;
+  padding: .06rem .12rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #81650f !important;
+  line-height: 1.1;
+}
+.membership-plan-name-row > .membership-plan-badge::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  left: -.48rem !important;
+  right: -.48rem !important;
+  top: -.23rem !important;
+  bottom: -.23rem !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  clip-path: none !important;
+  transform: rotate(-1deg) !important;
+  background: rgba(246, 226, 132, .62) !important;
+  box-shadow: inset 0 0 0 1px rgba(225,198,84,.06) !important;
+  opacity: 1 !important;
+}
+
+/* Streak totals always share one horizontal row. */
+.progress-streak-summary {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start !important;
+  gap: 2.5rem !important;
+  max-width: 17rem !important;
+  margin-inline: auto !important;
+}
+.progress-streak-summary > div {
+  min-width: 0 !important;
+  padding-inline: .3rem !important;
+}
+
+/* Journal title glyphs must never clip descenders or right-side letterforms. */
+.journal-title-input {
+  min-height: 3.05rem !important;
+  overflow: visible !important;
+  padding: .06rem .02rem .24rem !important;
+  line-height: 1.22 !important;
+  text-overflow: clip !important;
+}
+.journal-inline-title {
+  overflow: visible !important;
+  padding-bottom: .16rem !important;
+  line-height: 1.18 !important;
+}
+.journal-row-heading strong {
+  line-height: 1.26 !important;
+  padding-bottom: .04rem;
+}
+
+/* New-entry chooser stays inside the app footprint and appears in the center. */
+.journal-entry-menu-overlay {
+  align-items: center !important;
+  width: min(100vw, 28rem) !important;
+  padding: 1rem !important;
+  background: rgba(54, 48, 40, .16) !important;
+  -webkit-backdrop-filter: blur(5px) saturate(.94) !important;
+  backdrop-filter: blur(5px) saturate(.94) !important;
+  pointer-events: auto !important;
+}
+.journal-entry-menu {
+  width: min(100%, 21.5rem) !important;
+  border-radius: 1.45rem !important;
+  padding: .9rem !important;
+  box-shadow: 0 20px 54px rgba(38,32,25,.15) !important;
+  animation: book-pop-in 210ms cubic-bezier(.2,.8,.22,1) both;
+}
+.journal-entry-menu-options {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.journal-entry-menu-options button {
+  min-height: 3.55rem !important;
+  border: 0 !important;
+  border-top: 1px solid #e6dccf !important;
+  background: transparent !important;
+  padding: .68rem .45rem !important;
+}
+.journal-entry-menu-options button:first-child { border-top: 0 !important; }
+.journal-entry-menu-top button { background: transparent !important; }
+.journal-entry-menu-options button > svg {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #5f7f9f !important;
+}
+
+/* Audio and video creation use the same paper page as the rest of Journal. */
+.journal-capture-panel.is-video,
+.journal-capture-panel.is-audio {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(92,74,50,.026) 0 .5px, transparent .7px),
+    #fffdf7 !important;
+  color: #302a24 !important;
+}
+.journal-capture-panel.is-video .journal-capture-top,
+.journal-capture-panel.is-video .journal-capture-top button {
+  color: #5f7f9f !important;
+}
+.journal-video-stage {
+  border-color: #ddd2c2 !important;
+  background: #faf7ef !important;
+}
+.journal-video-placeholder,
+.journal-video-stage > svg {
+  color: #8e8374 !important;
+}
+.journal-capture-panel.is-video .journal-capture-actions button {
+  border-color: #5f7f9f !important;
+  background: #5f7f9f !important;
+  color: #fffdf8 !important;
+}
+.journal-error {
+  border-left: 2px solid #b65c4f !important;
+  border-radius: .55rem !important;
+  background: rgba(182,92,79,.055) !important;
+  color: #9e4f45 !important;
+}
+
+/* Planner loading mirrors the live planner so navigation never flashes the old
+   black hero. */
+.planner-route-loading {
+  display: grid;
+  gap: 1rem;
+}
+.planner-route-loading-back { width: 4.2rem; height: 1.4rem; border-radius: .6rem; }
+.planner-route-loading-hero { height: 14.3rem; border-radius: 1.55rem; }
+.planner-route-loading-row { height: 4.55rem; border-radius: 1.3rem; }
+.planner-route-loading-title { width: 72%; height: 2rem; margin-top: .45rem; border-radius: .75rem; }
+.planner-route-loading-card { height: 13rem; border-radius: 1.45rem; }
+
+/* Theme switcher adapted from the supplied cinematic toggle: same sun/moon
+   concept, layered groove, spring-like thumb and brief particle flare, without
+   adding a new animation runtime dependency. */
+.theme-switcher {
+  position: relative;
+  display: inline-flex;
+  width: 6.5rem;
+  height: 4rem;
+  align-items: center;
+  border: 2px solid rgba(203,213,225,.6);
+  border-radius: 999px;
+  padding: .35rem;
+  overflow: hidden;
+  background: radial-gradient(ellipse at top left,#fff 0%,#f1f5f9 42%,#cbd5e1 100%);
+  box-shadow:
+    inset 5px 5px 12px rgba(148,163,184,.46),
+    inset -5px -5px 12px rgba(255,255,255,.94),
+    0 5px 18px rgba(42,50,62,.09);
+  transition: background 320ms ease, border-color 320ms ease, box-shadow 320ms ease, transform 140ms ease;
+}
+.theme-switcher:active { transform: scale(.985); }
+.theme-switcher-placeholder { opacity: .45; pointer-events: none; }
+.theme-switcher-groove {
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  box-shadow: inset 0 2px 6px rgba(100,116,139,.3), inset 0 -1px 3px rgba(255,255,255,.78);
+  pointer-events: none;
+}
+.theme-switcher-icons {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 1rem;
+  pointer-events: none;
+}
+.theme-switcher-icons svg { width: 1.05rem; height: 1.05rem; }
+.theme-switcher-icons svg:first-child { color: #d18c19; }
+.theme-switcher-icons svg:last-child { color: #48586e; }
+.theme-switcher-thumb {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  overflow: visible;
+  border: 2px solid rgba(255,255,255,.9);
+  border-radius: 999px;
+  background: linear-gradient(145deg,#fff 0%,#fefefe 52%,#f8fafc 100%);
+  color: #d59626;
+  box-shadow: 0 7px 20px rgba(35,42,52,.16), inset 2px 2px 4px rgba(203,213,225,.28);
+  transform: translateX(0);
+  transition: transform 420ms cubic-bezier(.22,1.28,.32,1), background 300ms ease, color 300ms ease, box-shadow 300ms ease;
+}
+.theme-switcher-thumb > svg { width: 1.08rem; height: 1.08rem; }
+.theme-switcher.is-dark {
+  border-color: rgba(71,85,105,.72);
+  background: radial-gradient(ellipse at top left,#2e3745 0%,#18202c 42%,#090d14 100%);
+  box-shadow: inset 5px 5px 12px rgba(0,0,0,.72), inset -5px -5px 12px rgba(71,85,105,.25), 0 8px 22px rgba(0,0,0,.22);
+}
+.theme-switcher.is-dark .theme-switcher-groove { box-shadow: inset 0 2px 6px rgba(0,0,0,.8), inset 0 -1px 3px rgba(71,85,105,.28); }
+.theme-switcher.is-dark .theme-switcher-thumb {
+  transform: translateX(2.48rem);
+  border-color: rgba(148,163,184,.28);
+  background: linear-gradient(145deg,#64748b 0%,#475569 52%,#334155 100%);
+  color: #f4df91;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), inset 2px 2px 4px rgba(148,163,184,.24), inset -2px -2px 4px rgba(0,0,0,.5);
+}
+.theme-switcher-particle {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: .55rem;
+  height: .55rem;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+}
+.theme-switcher.is-animating .theme-switcher-particle {
+  animation: theme-particle 620ms ease-out both;
+  background: radial-gradient(circle, rgba(246,201,91,.65), rgba(246,201,91,0) 70%);
+}
+.theme-switcher.is-dark.is-animating .theme-switcher-particle {
+  background: radial-gradient(circle, rgba(147,197,253,.46), rgba(147,197,253,0) 70%);
+}
+.theme-switcher.is-animating .p2 { animation-delay: 70ms; }
+.theme-switcher.is-animating .p3 { animation-delay: 130ms; }
+@keyframes theme-particle {
+  from { opacity: .7; transform: translate(-50%,-50%) scale(.2); }
+  to { opacity: 0; transform: translate(-50%,-50%) scale(7); }
+}
+
+/* Warm dark reading mode. Variables cover utility classes, while the custom
+   book surfaces below handle the app's hand-authored paper colors. */
+.dark {
+  color-scheme: dark;
+  --background: #1d1b18;
+  --foreground: #f3ede1;
+  --card: #27231e;
+  --card-foreground: #f3ede1;
+  --popover: #2a2621;
+  --popover-foreground: #f3ede1;
+  --primary: #eee6d7;
+  --primary-foreground: #211e1a;
+  --secondary: #302b25;
+  --secondary-foreground: #f0e8dc;
+  --muted: #302b25;
+  --muted-foreground: #b7ac9d;
+  --accent: #302b25;
+  --accent-foreground: #f0e8dc;
+  --border: #494239;
+  --input: #494239;
+  --ring: #759bc5;
+  --brand: #6f96bf;
+  --brand-foreground: #fffaf2;
+  --brand-soft: #263646;
+  --streak: #d77c52;
+  --streak-soft: #493026;
+}
+.dark body { background: #171613 !important; }
+.dark .book-app,
+.dark .book-app-content {
+  color: #f3ede1 !important;
+  background-color: #1d1b18 !important;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(244,237,225,.035) 0 .55px, transparent .72px),
+    linear-gradient(180deg, rgba(255,255,255,.01), rgba(0,0,0,.025)) !important;
+  background-size: 9px 9px, 100% 100% !important;
+}
+.dark .book-app :is(h1,h2,h3,h4,h5,h6,strong),
+.dark .book-home-greeting,
+.dark .book-practice-heading,
+.dark .studio-section-title {
+  color: #f6efe4 !important;
+}
+.dark .book-app .text-muted-foreground,
+.dark .book-home-subtitle,
+.dark .book-practice-card p:nth-child(2),
+.dark .studio-intro {
+  color: #b9ae9e !important;
+}
+.dark .book-app :is(input,textarea,select) {
+  border-color: #4d463d !important;
+  background: rgba(39,35,30,.82) !important;
+  color: #f2eadf !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+.dark .book-app :is(input,textarea,select)::placeholder { color: #8e8478 !important; }
+.dark .book-app .story-card,
+.dark .book-app .app-surface,
+.dark .book-app :is(section,article,div)[class*="bg-card"],
+.dark .profile-page .story-card,
+.dark .progress-streak-card,
+.dark .studio-setup-card,
+.dark .studio-duration-card,
+.dark .studio-mode-card {
+  border-color: #4a4339 !important;
+  background:
+    radial-gradient(circle at 14% 22%, rgba(255,247,235,.025) 0 .5px, transparent .7px),
+    rgba(39,35,30,.86) !important;
+  color: #f3ede1 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+.dark .book-app .bg-secondary,
+.dark .book-app .bg-muted,
+.dark .profile-page .story-card .bg-secondary { background: #302b25 !important; }
+.dark .book-app .border-border { border-color: #4a4339 !important; }
+.dark .book-app .bg-primary { background: #ede4d4 !important; color: #211e1a !important; }
+.dark .book-app .bg-brand { background: #668db6 !important; }
+.dark .book-app .bg-brand-soft { background: #263646 !important; }
+.dark .book-app .text-brand { color: #85acd4 !important; }
+.dark .book-bottom-nav {
+  border-top-color: rgba(238,229,214,.08) !important;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,247,235,.028) 0 .5px, transparent .7px),
+    rgba(29,27,24,.94) !important;
+  color: #c9beae !important;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.12) !important;
+}
+.dark .book-nav-item[aria-current="page"] .book-nav-pill { background: #668db6 !important; color: #fffaf2 !important; }
+.dark .book-streak-card,
+.dark .book-week-card,
+.dark .book-practice-card {
+  border-color: #484137 !important;
+  background: rgba(38,34,29,.78) !important;
+}
+.dark .book-week-card li span {
+  border-color: #534a3e !important;
+  background: #28241f !important;
+  color: #cfc4b4 !important;
+}
+.dark .book-week-card li span:has(svg) { border-color: #7095bd !important; background: #253442 !important; color: #90b6dd !important; }
+.dark .book-home-date,
+.dark .book-streak-card span:last-child { color: #c8bdad !important; }
+.dark .learning-page section:first-of-type,
+.dark .planner-simple-hero,
+.dark .planner-simple-saved,
+.dark .planner-simple-fields .planner-field-card,
+.dark .planner-library-card,
+.dark .membership-plan-choice,
+.dark .membership-benefits {
+  border-color: #4a4339 !important;
+  background: rgba(39,35,30,.86) !important;
+  color: #f3ede1 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+.dark .planner-simple-mark { background: #263646 !important; color: #8eb3da !important; }
+.dark .planner-simple-hero h1,
+.dark .planner-simple-heading h2,
+.dark .planner-simple-fields .planner-field-title,
+.dark .planner-simple-saved { color: #f4ede1 !important; }
+.dark .planner-simple-hero p:last-child,
+.dark .planner-simple-fields .planner-field-help,
+.dark .planner-library-throughline,
+.dark .planner-library-heading p { color: #b8ad9d !important; }
+.dark .planner-simple-fields .planner-field-number { border-color: #5a5144 !important; background: #25211d !important; color: #d7ccbc !important; }
+.dark .planner-simple-fields .planner-field-input { border-color: #4c443a !important; background: #211f1b !important; color: #eee6da !important; }
+.dark .planner-library-plan-section { background: #302b25 !important; }
+.dark .membership-upgrade-header h1,
+.dark .membership-plan-name-row strong,
+.dark .membership-plan-price-row strong { color: #f3ede1 !important; }
+.dark .membership-plan-choice.is-selected { border-color: #759bc5 !important; background: #26313c !important; }
+.dark .membership-upgrade-mark { border-color: #4d463c !important; background: #302b25 !important; }
+.dark .membership-renewal-consent > span { border-color: #62584a !important; background: #24211d !important; }
+.dark .journal-page {
+  --journal-paper: #1d1b18;
+  --journal-paper-2: #27231e;
+  --journal-ink: #f3ede1;
+  --journal-muted: #b7ac9d;
+  --journal-rule: #494239;
+  --journal-rust: #db805a;
+  --journal-rust-soft: #493026;
+  --journal-blue: #7ca3ca;
+  --journal-blue-soft: #263646;
+  color: #f3ede1 !important;
+}
+.dark .journal-deck-notes { color: #b9ae9e !important; }
+.dark .journal-search-top,
+.dark .journal-notes-group,
+.dark .journal-entry-menu {
+  border-color: #4a4339 !important;
+  background: rgba(39,35,30,.94) !important;
+  color: #f3ede1 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+.dark .journal-row { color: #f3ede1 !important; }
+.dark .journal-row + .journal-row { border-top-color: #494239 !important; }
+.dark .journal-row-heading strong { color: #f4ede1 !important; }
+.dark .journal-row-preview { color: #b8ad9d !important; }
+.dark .journal-entry-menu-overlay { background: rgba(5,5,4,.28) !important; }
+.dark .journal-entry-menu-options button { border-top-color: #494239 !important; color: #f3ede1 !important; }
+.dark .journal-note-sheet-overlay,
+.dark .journal-media-detail-overlay,
+.dark .journal-media-editor-overlay,
+.dark .journal-capture-overlay,
+.dark .journal-note-sheet-overlay .journal-editor-notes,
+.dark .journal-note-sheet-overlay .journal-detail-notes,
+.dark .journal-capture-panel.is-video,
+.dark .journal-capture-panel.is-audio {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,247,235,.028) 0 .5px, transparent .7px),
+    #1d1b18 !important;
+  color: #f3ede1 !important;
+}
+.dark .journal-title-input,
+.dark .journal-inline-title,
+.dark .journal-audio-stage > strong { color: #f3ede1 !important; }
+.dark .journal-body-input,
+.dark .journal-inline-body,
+.dark .journal-audio-stage p { color: #bdb2a3 !important; }
+.dark .journal-media-player,
+.dark .journal-video-stage { border-color: #4d453b !important; background: #26221e !important; }
+.dark .journal-save-status { color: #9db293 !important; }
+.dark .journal-error { background: rgba(190,90,75,.08) !important; color: #df8e82 !important; }
+.dark .planner-route-loading .skeleton-block { background: linear-gradient(90deg,#29251f,#342f28,#29251f) !important; }
+.dark .app-dialog-panel,
+.dark .confirm-dialog-panel { background: #28241f !important; border-color: #4b4439 !important; color: #f3ede1 !important; }
+.dark .book-intro-canvas,
+.dark .book-intro-canvas.is-cover,
+.dark .story-book-page-inner:not(.story-book-cover-inner) {
+  background-color: #211f1b !important;
+  color: #f3ede1 !important;
+}
+.dark .book-paper-heading h1,
+.dark .book-paper-heading p,
+.dark .book-choice-title,
+.dark .book-choice-detail { color: #efe7da !important; }
+.dark .book-choice { border-color: #4c443a !important; background: #29251f !important; }
+.dark .book-choice.is-selected { border-color: #6f96bf !important; background: #263646 !important; }
+
+/* A little more motion throughout, but still restrained and book-like. */
+@keyframes book-page-settle {
+  from { opacity: .78; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes book-pop-in {
+  from { opacity: 0; transform: translateY(7px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.app-content-reveal { animation: book-page-settle 230ms cubic-bezier(.2,.75,.22,1) both; }
+.book-app :is(button,a,.story-card,.journal-row,.planner-field-card,.membership-plan-choice) {
+  transition-property: transform, background-color, border-color, color, box-shadow, opacity !important;
+  transition-duration: 155ms !important;
+  transition-timing-function: cubic-bezier(.22,.9,.28,1) !important;
+}
+.book-app button:active:not(:disabled),
+.book-app a:active { transform: scale(.985); }
+.book-nav-pill { transition: transform 210ms cubic-bezier(.2,1.25,.3,1), background-color 180ms ease, color 180ms ease !important; }
+.book-nav-item[aria-current="page"] .book-nav-pill { transform: translateY(-1px) scale(1.025); }
+.story-card,
+.planner-simple-fields .planner-field-card,
+.journal-row { transform-origin: center; }
+@media (hover:hover) and (pointer:fine) {
+  .story-card-interactive:hover,
+  .planner-simple-fields .planner-field-card:hover,
+  .journal-row:hover { transform: translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-content-reveal,
+  .journal-entry-menu,
+  .theme-switcher-particle { animation: none !important; }
+  .book-app :is(button,a,.story-card,.journal-row,.planner-field-card,.membership-plan-choice),
+  .theme-switcher-thumb { transition: none !important; }
+}

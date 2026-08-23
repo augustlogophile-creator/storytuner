@@ -11,6 +11,7 @@ import { validateDisplayName } from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
 import { clearMedia } from "@/lib/media-store"
 import { useRouter } from "next/navigation"
+import { CinematicThemeSwitcher } from "@/components/ui/cinematic-theme-switcher"
 
 type DialogKind = "save-name" | "logout" | "delete-recordings" | "delete-all" | "delete-account" | null
 
@@ -213,6 +214,12 @@ export function SettingsClient({ username }: { username: string }) {
         </Row>
       </Section>
 
+      <Section title="Appearance">
+        <Row title="Color theme" detail="Switch between Tellwise paper mode and a low-glare dark reading mode.">
+          <CinematicThemeSwitcher />
+        </Row>
+      </Section>
+
       <Section title="Notifications">
         <Link href="/notifications" prefetch className="group flex items-center justify-between gap-4 py-4 first:pt-1">
           <div className="flex min-w-0 items-center gap-3">
@@ -272,7 +279,7 @@ export function SettingsClient({ username }: { username: string }) {
       <Link href="/membership" className="flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{state.premium ? "Tellwise Membership is active" : "Free plan"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Review the $11.99/year founding offer and demo status.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Review the $5.99/month and $60/year Membership plans.</p>
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>

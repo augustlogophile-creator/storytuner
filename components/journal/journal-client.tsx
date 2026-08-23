@@ -294,7 +294,7 @@ function TextComposer({
   }, [title, body])
 
   async function saveNow(nextTitle = title, nextBody = body) {
-    const cleanBody = nextBody.trim()
+    const cleanBody = nextBody.trim() || "No description"
     const cleanTitle = nextTitle.trim() || "Untitled"
     if (!cleanTitle && !cleanBody) return true
     if (cleanTitle.length > 120 || cleanBody.length > 20000) {
@@ -669,7 +669,7 @@ function EntryDetail({
               autoFocus
             />
           ) : (
-            <button type="button" className={`journal-inline-title ${showingPlaceholderTitle ? "is-placeholder" : ""}`} onClick={() => setEditingField("title")}>
+            <button type="button" className={`journal-inline-title ${showingPlaceholderTitle ? "is-placeholder" : ""}`} onClick={() => { if (showingPlaceholderTitle) setTitle(""); setEditingField("title") }}>
               {showingPlaceholderTitle ? titlePlaceholder : title}
             </button>
           )}
@@ -696,7 +696,7 @@ function EntryDetail({
               autoFocus
             />
           ) : (
-            <button type="button" className={`journal-inline-body ${showingPlaceholderBody ? "is-placeholder" : ""}`} onClick={() => setEditingField("body")}>
+            <button type="button" className={`journal-inline-body ${showingPlaceholderBody ? "is-placeholder" : ""}`} onClick={() => { if (showingPlaceholderBody) setBody(""); setEditingField("body") }}>
               {showingPlaceholderBody ? bodyPlaceholder : body}
             </button>
           )}
@@ -788,7 +788,7 @@ function journalStoredTitle(kind: JournalEntryType, title: string, _body: string
 }
 
 function journalStoredBody(kind: JournalEntryType, body: string) {
-  return isJournalPlaceholderBody(kind, body) ? "" : body.trim()
+  return isJournalPlaceholderBody(kind, body) ? "No description" : body.trim()
 }
 
 function titleFromBody(value: string) {

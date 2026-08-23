@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Handlee, Lora } from "next/font/google"
+import { cookies } from "next/headers"
 import { AppProviders } from "@/components/app-providers"
 import { getMembershipByUserId } from "@/lib/membership-server"
 import { getAuthenticatedUser } from "@/lib/require-auth"
@@ -18,13 +19,15 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "light",
+  colorScheme: "light dark",
   themeColor: "#faf8f2",
   viewportFit: "cover",
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const authenticated = await getAuthenticatedUser()
+  const cookieStore = await cookies()
+  const initialTheme = cookieStore.get("tellwise_theme")?.value === "dark" ? "dark" : "light"
   let initialDisplayName = "Storyteller"
   let initialMembershipActive = false
 
@@ -42,7 +45,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   }
 
   return (
-    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable} ${bookHand.variable} ${lora.variable}`}>
+    <html lang="en" className={`${initialTheme} bg-background ${geistSans.variable} ${geistMono.variable} ${bookHand.variable} ${lora.variable}`}>
       <body className="font-sans antialiased">
         <AppProviders
           initialUserId={authenticated?.id ?? null}
