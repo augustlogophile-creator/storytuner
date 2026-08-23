@@ -9,7 +9,6 @@ import {
   Clipboard,
   Download,
   FileText,
-  Lightbulb,
   MapPin,
   ListChecks,
   Map,
@@ -151,133 +150,92 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
           <ArrowLeft className="h-4 w-4" /> Studio
         </Link>
       ) : <span />}
-      <header className="planner-hero planner-hero-polished">
-        <div className="planner-hero-main">
-          <span className="planner-hero-mark">
-            <Map className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <Eyebrow>Parch's Story Planner</Eyebrow>
-            <h1 className="planner-hero-title">Turn rough notes into a story you can tell.</h1>
-            <p className="planner-hero-copy">Five quick prompts. Fragments are enough. Parch will shape the arc without rewriting your voice.</p>
-          </div>
-        </div>
-        <div className="planner-hero-output" aria-label="Your plan will include">
-          <span>Opening</span><i />
-          <span>Story beats</span><i />
-          <span>Landing</span>
+      <header className="planner-simple-hero">
+        <span className="planner-simple-mark"><Map className="h-5 w-5" /></span>
+        <div className="min-w-0">
+          <Eyebrow>Story Planner</Eyebrow>
+          <h1>Plan your story.</h1>
+          <p>Answer five short prompts. Parch will turn the pieces into a clear story arc.</p>
         </div>
       </header>
 
-      <Link href="/planner/saved" className="planner-past-plans-link planner-past-plans-polished">
-        <span className="planner-past-plans-icon"><FileText aria-hidden="true" /></span>
-        <span className="min-w-0 flex-1">
-          <strong>Your saved plans</strong>
-          <small>Pick up a story you already planned.</small>
-        </span>
+      <Link href="/planner/saved" className="planner-simple-saved">
+        <FileText aria-hidden="true" />
+        <span>Your saved plans</span>
         <ChevronDown className="-rotate-90" aria-hidden="true" />
       </Link>
 
       {!building && !plan && (
-        <section className="planner-form-section planner-form-polished">
-          <div className="planner-form-heading planner-form-heading-polished">
+        <section className="planner-simple-form">
+          <div className="planner-simple-heading">
             <div>
-              <Eyebrow>Build your plan</Eyebrow>
-              <h2>Start messy. Parch will organize it.</h2>
+              <Eyebrow>Your story</Eyebrow>
+              <h2>Give Parch the rough version.</h2>
             </div>
-            <span>~3 min</span>
+            <span>{answeredCount}/5</span>
           </div>
 
-          <div className="planner-question-progress" aria-label={`${answeredCount} of 5 prompts answered`}>
-            <div className="planner-question-progress-copy"><span>{answeredCount}/5</span><small>answered</small></div>
-            <div className="planner-question-progress-dots" aria-hidden="true">
-              {[0, 1, 2, 3, 4].map((index) => <span key={index} className={index < answeredCount ? "is-done" : ""} />)}
-            </div>
-          </div>
-
-          <div className="planner-prompt-group">
-            <div className="planner-prompt-group-heading">
-              <span>01</span>
-              <div><strong>Set the direction</strong><small>Who is listening, and what should stay with them?</small></div>
-            </div>
-            <div className="planner-field-stack planner-field-stack-compact">
-              <PlannerField
-                number={1}
-                icon={MapPin}
-                title="Where will you tell this story?"
-                help="Audience + situation"
-                value={form.audienceContext}
-                onChange={(value) => update("audienceContext", value)}
-                placeholder="Interview, class, speech, conversation..."
-                maxLength={1000}
-                rows={2}
-                required
-              />
-              <PlannerField
-                number={2}
-                icon={Lightbulb}
-                title="What should the listener understand or feel?"
-                help="The point beneath the events"
-                value={form.goal}
-                onChange={(value) => update("goal", value)}
-                placeholder="I want them to see that..."
-                maxLength={1500}
-                rows={2}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="planner-prompt-group">
-            <div className="planner-prompt-group-heading">
-              <span>02</span>
-              <div><strong>Drop in the raw story</strong><small>Do not polish it. Just give Parch the sequence.</small></div>
-            </div>
+          <div className="planner-simple-fields">
+            <PlannerField
+              number={1}
+              icon={MapPin}
+              title="Where will you tell this story?"
+              help="Audience or situation"
+              value={form.audienceContext}
+              onChange={(value) => update("audienceContext", value)}
+              placeholder="Interview, class, speech, conversation..."
+              maxLength={1000}
+              rows={2}
+              required
+            />
+            <PlannerField
+              number={2}
+              icon={Target}
+              title="What should the listener take away?"
+              help="The point beneath the events"
+              value={form.goal}
+              onChange={(value) => update("goal", value)}
+              placeholder="I want them to understand that..."
+              maxLength={1500}
+              rows={2}
+              required
+            />
             <PlannerField
               number={3}
               icon={ListChecks}
-              title="What basically happens?"
-              help="Fragments and bullets are perfect"
+              title="What happens?"
+              help="Fragments or bullets are fine"
               value={form.roughPlan}
               onChange={(value) => update("roughPlan", value)}
-              placeholder="First... then... the turning point... finally..."
+              placeholder="First... then... finally..."
               maxLength={5000}
               rows={4}
               required
             />
-          </div>
-
-          <div className="planner-prompt-group">
-            <div className="planner-prompt-group-heading">
-              <span>03</span>
-              <div><strong>Keep it yours</strong><small>Protect the details and flag what feels difficult.</small></div>
-            </div>
-            <div className="planner-field-stack planner-field-stack-compact">
-              <PlannerField
-                number={4}
-                icon={FileText}
-                title="Anything Parch must keep?"
-                help="Facts, names, details, or boundaries"
-                value={form.mustInclude}
-                onChange={(value) => update("mustInclude", value)}
-                placeholder="Write “None” if nothing is essential."
-                maxLength={3000}
-                rows={2}
-                required
-              />
-              <PlannerField
-                number={5}
-                icon={ShieldQuestion}
-                title="What feels difficult about telling it?"
-                help="Length, privacy, delivery, clarity..."
-                value={form.nervousAbout}
-                onChange={(value) => update("nervousAbout", value)}
-                placeholder="Write “None” if you feel ready."
-                maxLength={2000}
-                rows={2}
-                required
-              />
-            </div>
+            <PlannerField
+              number={4}
+              icon={FileText}
+              title="Anything Parch must keep?"
+              help="Facts, names, or details"
+              value={form.mustInclude}
+              onChange={(value) => update("mustInclude", value)}
+              placeholder="Write “None” if there is nothing essential."
+              maxLength={3000}
+              rows={2}
+              required
+            />
+            <PlannerField
+              number={5}
+              icon={ShieldQuestion}
+              title="What feels difficult?"
+              help="Length, privacy, delivery, clarity..."
+              value={form.nervousAbout}
+              onChange={(value) => update("nervousAbout", value)}
+              placeholder="Write “None” if you feel ready."
+              maxLength={2000}
+              rows={2}
+              required
+            />
           </div>
 
           {error && (
@@ -285,16 +243,11 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
               <p className="text-sm text-destructive">{error}</p>
             </div>
           )}
-          <button
-            type="button"
-            onClick={buildPlan}
-            disabled={!ready}
-            className="planner-build-button"
-          >
+          <button type="button" onClick={buildPlan} disabled={!ready} className="planner-build-button planner-simple-build">
             <Sparkles className="h-4 w-4" />
             Build my story plan
           </button>
-          <p className="planner-build-hint">{ready ? "Ready. Your plan stays private and saves to your account." : `Answer ${5 - answeredCount} more ${5 - answeredCount === 1 ? "prompt" : "prompts"} to build your plan.`}</p>
+          <p className="planner-build-hint">{ready ? "Ready to build." : `Answer ${5 - answeredCount} more ${5 - answeredCount === 1 ? "prompt" : "prompts"}.`}</p>
         </section>
       )}
 

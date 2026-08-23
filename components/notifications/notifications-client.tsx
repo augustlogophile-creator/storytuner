@@ -140,7 +140,7 @@ export function NotificationsClient() {
           {showCommunity && community.map((item) => {
             const isLike = item.kind === "post_like" || item.kind === "reply_like"
             return (
-              <Link key={item.id} href={item.href} className="flex gap-3 border-b border-border px-4 py-4 last:border-b-0 active:bg-secondary/35">
+              <div key={item.id} className="flex gap-3 border-b border-border px-4 py-4 last:border-b-0">
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isLike ? "bg-rose-50 text-rose-500" : "bg-brand-soft text-brand"}`}>
                   {isLike ? <Heart className="h-4.5 w-4.5" /> : <MessageCircle className="h-4.5 w-4.5" />}
                 </span>
@@ -150,7 +150,7 @@ export function NotificationsClient() {
                     <span className="shrink-0 text-[0.65rem] text-muted-foreground">{relativeTime(item.createdAt)}</span>
                   </div>
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

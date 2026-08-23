@@ -9,7 +9,7 @@ import {
   PenLine,
   Search,
   Square,
-  SquarePen,
+  Plus,
   Trash2,
   Video,
   X,
@@ -44,6 +44,7 @@ export function JournalClient() {
   const [draftSeed, setDraftSeed] = useState<DraftSeed | null>(null)
   const [detail, setDetail] = useState<JournalEntry | null>(null)
   const [captureKind, setCaptureKind] = useState<JournalMediaKind | null>(null)
+  const [entryMenuOpen, setEntryMenuOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -137,21 +138,17 @@ export function JournalClient() {
               </div>
               <div className="journal-notes-group">
                 {group.entries.map((entry) => (
-                  <button
-                    key={entry.id}
-                    type="button"
-                    className="journal-row"
-                    onClick={() => setDetail(entry)}
-                  >
-                    <span className="journal-row-main">
-                      <strong>{entry.title}</strong>
-                      <span className="journal-row-meta">
-                        <time>{journalDate(entry.updated_at)}</time>
-                        <span>{entryPreview(entry)}</span>
-                      </span>
-                    </span>
-                    <span className={`journal-row-kind is-${entry.entry_type}`} aria-hidden="true">
+                  <button key={entry.id} type="button" className="journal-row" onClick={() => setDetail(entry)}>
+                    <span className={`journal-row-icon is-${entry.entry_type}`} aria-hidden="true">
                       {entry.entry_type === "audio" ? <Mic2 /> : entry.entry_type === "video" ? <Video /> : <PenLine />}
+                    </span>
+                    <span className="journal-row-main">
+                      <span className="journal-row-heading">
+                        <strong>{entry.title}</strong>
+                        <time>{journalDate(entry.updated_at)}</time>
+                      </span>
+                      <span className="journal-row-preview">{entryPreview(entry)}</span>
+                      <span className={`journal-row-type is-${entry.entry_type}`}>{entryTypeLine(entry)}</span>
                     </span>
                     <ChevronRight className="journal-row-chevron" aria-hidden="true" />
                   </button>
@@ -168,18 +165,27 @@ export function JournalClient() {
         )}
       </section>
 
-      <div className="journal-bottom-dock journal-action-dock" aria-label="Journal tools">
-        <button type="button" className="journal-dock-button" onClick={() => setCaptureKind("audio")} aria-label="Record an audio note">
-          <Mic2 />
-        </button>
-        <button type="button" className="journal-dock-button" onClick={() => setCaptureKind("video")} aria-label="Record a video note">
-          <Camera />
-        </button>
-        <button type="button" className="journal-dock-button is-compose journal-write-button" onClick={() => startNewText()} aria-label="Write a new note">
-          <SquarePen />
-          <span>New entry</span>
+      <div className="journal-action-dock" aria-label="Journal tools">
+        <button type="button" className="journal-new-entry-button" onClick={() => setEntryMenuOpen(true)}>
+          <Plus /> <span>New entry</span>
         </button>
       </div>
+
+      {entryMenuOpen && (
+        <div className="journal-entry-menu-overlay" role="dialog" aria-modal="true" aria-label="Create Journal entry">
+          <section className="journal-entry-menu">
+            <div className="journal-entry-menu-top">
+              <h2>New entry</h2>
+              <button type="button" onClick={() => setEntryMenuOpen(false)} aria-label="Close"><X /></button>
+            </div>
+            <div className="journal-entry-menu-options">
+              <button type="button" onClick={() => { setEntryMenuOpen(false); startNewText() }}><PenLine /><span><strong>Write</strong><small>Text note</small></span></button>
+              <button type="button" onClick={() => { setEntryMenuOpen(false); setCaptureKind("audio") }}><Mic2 /><span><strong>Audio</strong><small>Voice note</small></span></button>
+              <button type="button" onClick={() => { setEntryMenuOpen(false); setCaptureKind("video") }}><Camera /><span><strong>Video</strong><small>Video moment</small></span></button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {composerOpen && (
         <TextComposer
@@ -366,7 +372,7 @@ function TextComposer({
     <div className={mediaEntry ? "journal-note-sheet-overlay journal-media-editor-overlay" : "journal-note-sheet-overlay"} role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
       <article className={mediaEntry ? "journal-editor journal-editor-notes journal-editor-media" : "journal-editor journal-editor-notes"}>
         <div className="journal-editor-top journal-editor-top-notes">
-          <button type="button" onClick={() => void closeEditor()} aria-label="Back"><ArrowLeft /></button>
+          <button type="button" onClick={() => void closeEditor()}>Close</button>
           <span className={`journal-save-status is-${status}`}>
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
           </span>
@@ -496,30 +502,33 @@ function MediaCapture({
   }
 
   return (
-    <div className="journal-overlay journal-overlay-blue journal-capture-overlay" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
+    <div className="journal-capture-overlay" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
       <section className={`journal-capture-panel ${kind === "video" ? "is-video" : "is-audio"}`}>
-        <div className="journal-editor-top journal-editor-top-notes">
+        <div className="journal-capture-top">
           <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Close"><X /></button>
-          <span>{kind === "video" ? "Video note" : "Audio note"}</span>
-          <span className="journal-capture-privacy">Private</span>
+          <span className={recording ? "is-recording" : ""}>{recording ? duration(elapsed) : kind === "video" ? "Video note" : "Audio note"}</span>
+          <span>Private</span>
         </div>
 
         {kind === "video" ? (
-          <div className="journal-video-preview-wrap">
+          <div className="journal-video-stage">
             <video ref={previewRef} muted playsInline className="journal-video-preview" />
-            {!recording && !saving && <Camera className="journal-video-placeholder" />}
+            {!recording && !saving && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
           </div>
         ) : (
-          <div className={recording ? "journal-record-orb is-recording" : "journal-record-orb"}><Mic2 /></div>
+          <div className="journal-audio-stage">
+            <strong>{saving ? "Saving…" : duration(elapsed)}</strong>
+            <div className={recording ? "journal-waveform is-active" : "journal-waveform"} aria-hidden="true">
+              {[18,32,46,28,55,38,49,24,42,58,31,45,26,52,35,48,22,41,56,29].map((height, index) => <i key={index} style={{ height: `${height}px` }} />)}
+            </div>
+            <p>{recording ? "Keep going. Stop when the thought is complete." : "Record a thought, line, or memory."}</p>
+          </div>
         )}
-
-        <h2>{saving ? "Saving…" : recording ? duration(elapsed) : kind === "video" ? "0:00" : "0:00"}</h2>
-        <p>{saving ? "Your media stays private in your Journal." : recording ? (kind === "video" ? "…that’s the moment everything changes." : "—she turned back toward the harbor") : kind === "video" ? "Capture a moment before it slips away." : "Record a thought, line, or memory."}</p>
 
         {error && <p className="journal-error">{error}</p>}
 
         <div className="journal-capture-actions">
-          {!recording && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start</button>}
+          {!recording && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start recording</button>}
           {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop and save</button>}
           {saving && <div className="journal-processing-line"><span />Saving privately</div>}
         </div>
@@ -744,9 +753,15 @@ function groupEntries(entries: JournalEntry[], searching: boolean) {
 }
 
 function entryPreview(entry: JournalEntry) {
-  if (entry.entry_type === "audio") return `${duration(entry.media_duration_seconds ?? 0)}  ${cleanPreview(entry.body, "Audio note")}`
-  if (entry.entry_type === "video") return `${duration(entry.media_duration_seconds ?? 0)}  ${cleanPreview(entry.body, "Video note")}`
-  return cleanPreview(entry.body, entry.title || "Untitled note")
+  if (entry.entry_type === "audio") return cleanPreview(entry.body, "Voice note")
+  if (entry.entry_type === "video") return cleanPreview(entry.body, "Video note")
+  return cleanPreview(entry.body, entry.title || "Text note")
+}
+
+function entryTypeLine(entry: JournalEntry) {
+  if (entry.entry_type === "audio") return `Audio · ${duration(entry.media_duration_seconds ?? 0)}`
+  if (entry.entry_type === "video") return `Video · ${duration(entry.media_duration_seconds ?? 0)}`
+  return "Text"
 }
 
 function cleanPreview(value: string, fallback: string) {
