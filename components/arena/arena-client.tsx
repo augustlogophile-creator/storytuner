@@ -1161,17 +1161,16 @@ function DurationOptionsDialog({
                 className={cn(
                   "relative flex min-h-16 items-center justify-center rounded-2xl border px-2 text-center transition",
                   selected ? "border-brand bg-brand-soft" : "border-border bg-background",
-                  premium ? "hover:border-brand/50" : "cursor-not-allowed opacity-80",
+                  premium ? "hover:border-brand/50" : "cursor-not-allowed",
                 )}
               >
                 <span className="text-sm font-semibold leading-tight tabular-nums">{duration === 600 ? "10 minutes" : duration === 900 ? "15 minutes" : "20 minutes"}</span>
-                {!premium && <LockKeyhole className="absolute right-3 top-3 h-3.5 w-3.5 text-muted-foreground" />}
               </button>
             )
           })}
         </div>
 
-        <div className={cn("mt-2.5 rounded-2xl border p-3.5", customSelected ? "border-brand bg-brand-soft/45" : "border-border bg-background", !premium && "opacity-80")}>
+        <div className={cn("mt-2.5 rounded-2xl border p-3.5", customSelected ? "border-brand bg-brand-soft/45" : "border-border bg-background")}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">Custom time</p>

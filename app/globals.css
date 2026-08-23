@@ -9477,3 +9477,249 @@ body {
   .tellwise-tap { animation: none !important; }
   .app-content-reveal { animation: none !important; }
 }
+
+/* August 23 consistency repair: no blur-behind-dialog effect, stable Journal
+   full-screen surfaces, readable dark-mode Studio badges, and aligned book UI. */
+
+/* Modal depth comes from a quiet dim/tint, never from blurring the page. */
+.app-dialog-overlay,
+.journal-entry-menu-overlay,
+.journal-overlay-blue {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: rgba(44, 48, 51, .30) !important;
+}
+.app-dialog-panel {
+  animation: book-pop-in 170ms cubic-bezier(.2,.82,.22,1) both !important;
+  box-shadow: 0 18px 48px rgba(34, 29, 24, .16) !important;
+}
+.app-page-enter,
+.app-content-reveal {
+  filter: none !important;
+  animation: none !important;
+}
+
+/* The long-duration choices have one clear membership lock treatment below,
+   instead of tiny locks hanging off individual compact buttons. */
+.app-dialog-panel button[disabled] {
+  opacity: 1 !important;
+}
+.app-dialog-panel button[disabled]:not(.app-dialog-close) {
+  color: #7c7266 !important;
+}
+.dark .app-dialog-overlay { background: rgba(5, 5, 4, .46) !important; }
+.dark .app-dialog-panel {
+  border-color: #554d42 !important;
+  background: #29251f !important;
+  color: #f3ede1 !important;
+}
+.dark .app-dialog-panel button[disabled]:not(.app-dialog-close) { color: #c9beae !important; }
+
+/* Journal index uses the same heading scale and spacing language as Profile,
+   Learn and Studio. */
+.journal-header-notes {
+  align-items: center !important;
+}
+.journal-header-notes h1 {
+  font-size: 2rem !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.03em !important;
+}
+.journal-deck-notes {
+  margin-top: .28rem !important;
+  font-size: .72rem !important;
+  line-height: 1.35 !important;
+}
+.journal-new-entry-top {
+  min-height: 2.45rem !important;
+  margin-top: 0 !important;
+  cursor: pointer !important;
+  box-shadow: 0 5px 13px rgba(62,86,112,.10) !important;
+}
+.journal-new-entry-top:hover { border-color: rgba(70,111,159,.55) !important; }
+.journal-new-entry-top:active { transform: translateY(1px) scale(.98) !important; }
+
+/* New Entry chooser dims the page without smearing it. */
+.journal-entry-menu-overlay {
+  background: rgba(43, 42, 39, .32) !important;
+}
+.journal-entry-menu {
+  border-color: #d9cfbf !important;
+  background: #fffdf7 !important;
+}
+
+/* A Journal note/capture is a real full-screen page. Never reveal or scroll the
+   route underneath it, and never leave the global footer on top. */
+body.journal-fullscreen-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+body.journal-fullscreen-open .book-bottom-nav {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.journal-note-sheet-overlay,
+.journal-media-detail-overlay,
+.journal-media-editor-overlay,
+.journal-capture-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  background: #e9e4da !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overscroll-behavior: none !important;
+}
+.journal-note-sheet-overlay .journal-editor-notes,
+.journal-note-sheet-overlay .journal-detail-notes,
+.journal-capture-panel {
+  width: min(100%, 28rem) !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  max-height: 100dvh !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(92,74,50,.028) 0 .5px, transparent .72px),
+    #fffdf7 !important;
+  background-size: 8px 8px, 100% 100% !important;
+  box-shadow: 0 0 0 1px rgba(126,106,79,.11) !important;
+}
+.journal-note-sheet-overlay .journal-editor-notes {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+.journal-note-sheet-overlay .journal-detail-notes {
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+.journal-editor-top-notes,
+.journal-detail-top {
+  background: #fffdf7 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.journal-editor-date,
+.journal-entry-date { margin-top: .72rem !important; }
+.journal-title-input,
+.journal-inline-title {
+  margin-top: .24rem !important;
+  font-size: 1.72rem !important;
+}
+.journal-rich-editor {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.journal-rich-editor-area {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  padding: .15rem .1rem 4.25rem 0 !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Formatting rail is paper-colored and always visible above the safe area. */
+.journal-format-toolbar {
+  position: absolute !important;
+  left: 1.05rem !important;
+  bottom: calc(.95rem + env(safe-area-inset-bottom)) !important;
+  z-index: 8 !important;
+  margin: 0 !important;
+  border: 1px solid #d7ccb9 !important;
+  border-radius: 1rem !important;
+  background: rgba(255, 252, 245, .98) !important;
+  color: #332e28 !important;
+  box-shadow: 0 7px 20px rgba(37,31,26,.10) !important;
+}
+.journal-format-toolbar button { color: #332e28 !important; }
+.journal-format-toolbar button:active { background: #ede6da !important; }
+.journal-editor-foot {
+  display: none !important;
+}
+
+/* Camera/audio capture keeps the record action inside the viewport. */
+.journal-capture-panel {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto auto !important;
+  gap: .75rem !important;
+  overflow: hidden !important;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)) !important;
+}
+.journal-capture-top {
+  min-height: 2.5rem !important;
+}
+.journal-video-stage {
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid #ddd2c2 !important;
+  border-radius: 1.35rem !important;
+  background: #faf7ef !important;
+}
+.journal-video-preview {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  background: #faf7ef !important;
+}
+.journal-video-idle {
+  color: #817668 !important;
+}
+.journal-audio-stage {
+  min-height: 0 !important;
+  align-self: center !important;
+}
+.journal-capture-actions {
+  position: static !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.journal-capture-actions button {
+  width: 100% !important;
+  min-height: 3.15rem !important;
+}
+
+/* Studio free-limit text must remain readable in dark mode. */
+.dark .studio-free-badge {
+  border-color: #5a5145 !important;
+  background: #302b25 !important;
+  color: #eee5d7 !important;
+  opacity: 1 !important;
+}
+.dark .studio-meta-row { color: #eee5d7 !important; }
+.dark .studio-duration-card,
+.dark .studio-setup-card {
+  border-color: #50483e !important;
+  background: #28241f !important;
+}
+.dark .studio-duration-card .text-muted-foreground,
+.dark .studio-setup-card .text-muted-foreground { color: #c8bcac !important; }
+
+/* Dark Journal remains the same book, only printed on warm charcoal paper. */
+.dark .journal-note-sheet-overlay,
+.dark .journal-media-detail-overlay,
+.dark .journal-media-editor-overlay,
+.dark .journal-capture-overlay { background: #14120f !important; }
+.dark .journal-note-sheet-overlay .journal-editor-notes,
+.dark .journal-note-sheet-overlay .journal-detail-notes,
+.dark .journal-capture-panel {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(244,237,225,.04) 0 .5px, transparent .72px),
+    #1f1c18 !important;
+}
+.dark .journal-editor-top-notes,
+.dark .journal-detail-top { background: #1f1c18 !important; }
+.dark .journal-video-stage,
+.dark .journal-video-preview { background: #27231e !important; border-color: #50483e !important; }
+.dark .journal-format-toolbar {
+  border-color: #5b5247 !important;
+  background: #eee6d8 !important;
+  color: #211e1a !important;
+}
+.dark .journal-format-toolbar button { color: #211e1a !important; }

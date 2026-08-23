@@ -79,6 +79,25 @@ export function JournalClient() {
     void load()
   }, [load])
 
+  useEffect(() => {
+    const fullscreenOpen = composerOpen || Boolean(detail) || Boolean(captureKind)
+    const anyOverlayOpen = fullscreenOpen || entryMenuOpen
+    if (!anyOverlayOpen) return
+
+    const bodyOverflow = document.body.style.overflow
+    const rootOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = "hidden"
+    document.documentElement.style.overflow = "hidden"
+    document.body.classList.toggle("journal-fullscreen-open", fullscreenOpen)
+    document.body.classList.toggle("journal-menu-open", entryMenuOpen)
+
+    return () => {
+      document.body.style.overflow = bodyOverflow
+      document.documentElement.style.overflow = rootOverflow
+      document.body.classList.remove("journal-fullscreen-open", "journal-menu-open")
+    }
+  }, [composerOpen, detail, captureKind, entryMenuOpen])
+
   const visibleEntries = useMemo(() => {
     const normalized = query.trim().toLowerCase()
     if (!normalized) return entries
