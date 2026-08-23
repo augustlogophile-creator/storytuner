@@ -9950,13 +9950,18 @@ html:has(body.journal-fullscreen-open) {
   opacity: .78;
 }
 
-/* Keep every interactive surface inside the mobile page box. */
-.book-app,
+/* Keep every interactive surface inside the existing mobile shell.
+   Never let a page-level polish rule override MobileShell's max-w-md frame. */
+.app-shell.book-app {
+  width: 100% !important;
+  max-width: 28rem !important;
+  margin-inline: auto !important;
+}
 .book-app-content,
 .home-dashboard,
 .journal-page,
 .planner-page {
-  max-width: 100vw !important;
+  max-width: 100% !important;
   overflow-x: hidden !important;
 }
 @media (max-width: 380px) {
