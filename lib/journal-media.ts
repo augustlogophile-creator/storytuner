@@ -48,8 +48,8 @@ export async function createJournalMediaEntry({
   const id = crypto.randomUUID()
   const storagePath = `${authData.user.id}/${id}.${sniffed.extension}`
   const safeDuration = Math.max(1, Math.min(kind === "video" ? 180 : 600, Math.round(durationSeconds || 1)))
-  const title = "Add a title"
-  const body = "Add a description"
+  const title = "Untitled"
+  const body = ""
 
   const { data: created, error: rowError } = await supabase
     .from("journal_entries")

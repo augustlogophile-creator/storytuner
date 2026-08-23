@@ -174,6 +174,9 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             </div>
             <span>{answeredCount}/5</span>
           </div>
+          <div className="planner-simple-progress" aria-label={`${answeredCount} of 5 prompts answered`}>
+            {Array.from({ length: 5 }, (_, index) => <span key={index} className={index < answeredCount ? "is-done" : ""} />)}
+          </div>
 
           <div className="planner-simple-fields">
             <PlannerField
@@ -215,8 +218,8 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <PlannerField
               number={4}
               icon={FileText}
-              title="Anything Parch must keep?"
-              help="Facts, names, or details"
+              title="What must stay in?"
+              help="Names, facts, lines, or details"
               value={form.mustInclude}
               onChange={(value) => update("mustInclude", value)}
               placeholder="Write “None” if there is nothing essential."
@@ -227,8 +230,8 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <PlannerField
               number={5}
               icon={ShieldQuestion}
-              title="What feels difficult?"
-              help="Length, privacy, delivery, clarity..."
+              title="What feels hard?"
+              help="Length, privacy, delivery, or clarity"
               value={form.nervousAbout}
               onChange={(value) => update("nervousAbout", value)}
               placeholder="Write “None” if you feel ready."

@@ -144,10 +144,10 @@ export function JournalClient() {
                     </span>
                     <span className="journal-row-main">
                       <span className="journal-row-heading">
-                        <strong>{entry.title}</strong>
+                        <strong>{entryDisplayTitle(entry)}</strong>
                         <time>{journalDate(entry.updated_at)}</time>
                       </span>
-                      <span className="journal-row-preview">{entryPreview(entry)}</span>
+                      <span className={`journal-row-preview ${entryHasDescription(entry) ? "" : "is-empty"}`}>{entryPreview(entry)}</span>
                       <span className={`journal-row-type is-${entry.entry_type}`}>{entryTypeLine(entry)}</span>
                     </span>
                     <ChevronRight className="journal-row-chevron" aria-hidden="true" />
@@ -295,7 +295,7 @@ function TextComposer({
 
   async function saveNow(nextTitle = title, nextBody = body) {
     const cleanBody = nextBody.trim()
-    const cleanTitle = nextTitle.trim() || titleFromBody(cleanBody) || "Untitled note"
+    const cleanTitle = nextTitle.trim() || "Untitled"
     if (!cleanTitle && !cleanBody) return true
     if (cleanTitle.length > 120 || cleanBody.length > 20000) {
       if (mountedRef.current) {
@@ -372,7 +372,7 @@ function TextComposer({
     <div className={mediaEntry ? "journal-note-sheet-overlay journal-media-editor-overlay" : "journal-note-sheet-overlay"} role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
       <article className={mediaEntry ? "journal-editor journal-editor-notes journal-editor-media" : "journal-editor journal-editor-notes"}>
         <div className="journal-editor-top journal-editor-top-notes">
-          <button type="button" onClick={() => void closeEditor()}>Close</button>
+          <button type="button" onClick={() => void closeEditor()} aria-label="Back to Journal"><ArrowLeft /></button>
           <span className={`journal-save-status is-${status}`}>
             {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
           </span>
@@ -383,7 +383,7 @@ function TextComposer({
           className="journal-title-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Untitled Spark"
+          placeholder="Title"
           maxLength={120}
           autoFocus={!initialBody}
         />
@@ -391,7 +391,7 @@ function TextComposer({
           className="journal-body-input"
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          placeholder="What’s on your mind?"
+          placeholder="Start writing…"
           maxLength={20000}
           autoFocus={Boolean(initialBody)}
         />
@@ -505,7 +505,7 @@ function MediaCapture({
     <div className="journal-capture-overlay" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
       <section className={`journal-capture-panel ${kind === "video" ? "is-video" : "is-audio"}`}>
         <div className="journal-capture-top">
-          <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Close"><X /></button>
+          <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Back to Journal"><ArrowLeft /></button>
           <span className={recording ? "is-recording" : ""}>{recording ? duration(elapsed) : kind === "video" ? "Video note" : "Audio note"}</span>
           <span>Private</span>
         </div>
@@ -642,8 +642,8 @@ function EntryDetail({
     }
   }
 
-  const titlePlaceholder = entry.entry_type === "text" ? "Add a title" : "Add a title"
-  const bodyPlaceholder = entry.entry_type === "text" ? "Add a description or start writing…" : "Add a description"
+  const titlePlaceholder = "Untitled"
+  const bodyPlaceholder = "No description"
   const showingPlaceholderTitle = isJournalPlaceholderTitle(entry.entry_type, title)
   const showingPlaceholderBody = isJournalPlaceholderBody(entry.entry_type, body)
 
@@ -701,7 +701,6 @@ function EntryDetail({
             </button>
           )}
 
-          <p className="journal-inline-hint">Tap the title or description to edit. Changes save automatically.</p>
           {error && <p className="journal-error mt-3">{error}</p>}
         </article>
       </div>
@@ -752,10 +751,16 @@ function groupEntries(entries: JournalEntry[], searching: boolean) {
   return groups
 }
 
+function entryDisplayTitle(entry: JournalEntry) {
+  return isJournalPlaceholderTitle(entry.entry_type, entry.title) ? "Untitled" : entry.title.trim()
+}
+
+function entryHasDescription(entry: JournalEntry) {
+  return !isJournalPlaceholderBody(entry.entry_type, entry.body)
+}
+
 function entryPreview(entry: JournalEntry) {
-  if (entry.entry_type === "audio") return cleanPreview(entry.body, "Voice note")
-  if (entry.entry_type === "video") return cleanPreview(entry.body, "Video note")
-  return cleanPreview(entry.body, entry.title || "Text note")
+  return entryHasDescription(entry) ? cleanPreview(entry.body, "No description") : "No description"
 }
 
 function entryTypeLine(entry: JournalEntry) {
@@ -768,27 +773,22 @@ function cleanPreview(value: string, fallback: string) {
   return value.replace(/\s+/g, " ").trim().slice(0, 110) || fallback
 }
 
-function isJournalPlaceholderTitle(kind: JournalEntryType, value: string) {
+function isJournalPlaceholderTitle(_kind: JournalEntryType, value: string) {
   const normalized = value.trim().toLowerCase()
-  return !normalized || normalized === "add a title"
+  return !normalized || normalized === "add a title" || normalized === "untitled note" || normalized === "untitled"
 }
 
-function isJournalPlaceholderBody(kind: JournalEntryType, value: string) {
+function isJournalPlaceholderBody(_kind: JournalEntryType, value: string) {
   const normalized = value.trim().toLowerCase()
-  if (kind === "text") return !normalized
-  return !normalized || normalized === "add a description" || normalized === "private audio note" || normalized === "private video note"
+  return !normalized || normalized === "add a description" || normalized === "private audio note" || normalized === "private video note" || normalized === "no description"
 }
 
-function journalStoredTitle(kind: JournalEntryType, title: string, body: string) {
-  const cleanTitle = title.trim()
-  if (kind === "text") return cleanTitle || titleFromBody(body.trim()) || "Untitled note"
-  return cleanTitle || "Add a title"
+function journalStoredTitle(kind: JournalEntryType, title: string, _body: string) {
+  return isJournalPlaceholderTitle(kind, title) ? "Untitled" : title.trim()
 }
 
 function journalStoredBody(kind: JournalEntryType, body: string) {
-  const cleanBody = body.trim()
-  if (kind === "text") return cleanBody
-  return cleanBody || "Add a description"
+  return isJournalPlaceholderBody(kind, body) ? "" : body.trim()
 }
 
 function titleFromBody(value: string) {
