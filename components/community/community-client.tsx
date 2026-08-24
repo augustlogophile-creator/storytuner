@@ -234,7 +234,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
             <h2 className="mt-1 text-lg font-semibold">Choose a recording to share</h2>
           </div>
         </div>
-        <Link href="/studio/recordings" className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
+        <Link href="/studio/recordings" className="community-choose-story-button mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.985]">
           <Headphones className="h-4 w-4" /> Choose a story
         </Link>
       </section>

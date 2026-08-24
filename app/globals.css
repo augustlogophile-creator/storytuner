@@ -12484,3 +12484,189 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     transition: none !important;
   }
 }
+
+/* August 23, 10:58pm consistency cleanup. Final authority for the Journal
+   chooser, typing focus treatment, capture cards, Library book typography,
+   and dark Community share action. */
+
+/* The New Entry chooser should never draw a blue seam or left-edge stripe when
+   pointer/focus state moves between rows. Selection is communicated only by a
+   soft full-row tint. */
+.journal-entry-menu-options button,
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus,
+.journal-entry-menu-options button:focus-visible,
+.journal-entry-menu-options button:active,
+.journal-entry-menu-options button.is-selected {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus-visible {
+  background: rgba(82,123,164,.055) !important;
+}
+.journal-entry-menu-options button:active,
+.journal-entry-menu-options button.is-selected {
+  background: rgba(82,123,164,.10) !important;
+}
+.dark .journal-entry-menu-options button,
+.dark .journal-entry-menu-options button:hover,
+.dark .journal-entry-menu-options button:focus,
+.dark .journal-entry-menu-options button:focus-visible,
+.dark .journal-entry-menu-options button:active,
+.dark .journal-entry-menu-options button.is-selected {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.dark .journal-entry-menu-options button:hover,
+.dark .journal-entry-menu-options button:focus-visible {
+  background: rgba(112,159,204,.07) !important;
+}
+.dark .journal-entry-menu-options button:active,
+.dark .journal-entry-menu-options button.is-selected {
+  background: rgba(112,159,204,.13) !important;
+}
+
+/* Book covers keep the same physical size while title/author typography is
+   easier to read. Author names are deliberately brighter against the cover. */
+.home-library-book-copy strong {
+  font-size: .54rem !important;
+  line-height: 1.16 !important;
+  letter-spacing: -.006em !important;
+}
+.home-library-book-copy span {
+  color: rgba(250,246,238,.82) !important;
+  font-size: .325rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: .025em !important;
+}
+@media (max-width: 380px) {
+  .home-library-book-copy strong { font-size: .515rem !important; }
+  .home-library-book-copy span { font-size: .31rem !important; }
+}
+
+/* Audio capture gets the same intentional framed recording surface as video in
+   every state, before recording, while recording, and during review. */
+.journal-audio-stage {
+  box-sizing: border-box !important;
+  display: flex !important;
+  min-height: 24.5rem !important;
+  height: 24.5rem !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2.4rem 1.1rem 1.8rem !important;
+  border: 1px solid #ddd2c3 !important;
+  border-radius: 1.45rem !important;
+  background: rgba(255,253,248,.58) !important;
+  box-shadow: none !important;
+}
+.journal-audio-stage > strong {
+  flex: 0 0 auto;
+  margin: 0 !important;
+}
+.journal-audio-stage .journal-waveform {
+  flex: 0 0 auto;
+}
+.journal-audio-stage .journal-inline-audio-player {
+  flex: 0 0 auto;
+}
+.journal-audio-stage p {
+  flex: 0 0 auto;
+}
+.dark .journal-audio-stage {
+  border-color: #4b4339 !important;
+  background: #211e1a !important;
+}
+
+/* Save must stay legible even before a recording exists. The inner backdrop
+   used by the animated button now follows the disabled surface instead of
+   covering it with the active blue. */
+.tellwise-save-button:disabled {
+  border-color: #9fb6cb !important;
+  background: #d9e5f0 !important;
+  color: #3f6283 !important;
+  opacity: 1 !important;
+}
+.tellwise-save-button:disabled .tellwise-save-backdrop {
+  background: #d9e5f0 !important;
+}
+.tellwise-save-button:disabled .tellwise-save-content {
+  color: #3f6283 !important;
+  opacity: 1 !important;
+}
+.dark .tellwise-save-button:disabled {
+  border-color: #4e6d88 !important;
+  background: #33495d !important;
+  color: #d2e2f0 !important;
+}
+.dark .tellwise-save-button:disabled .tellwise-save-backdrop {
+  background: #33495d !important;
+}
+.dark .tellwise-save-button:disabled .tellwise-save-content {
+  color: #d2e2f0 !important;
+}
+
+/* Text fields should not acquire a second browser/system focus rectangle. Keep
+   each component's intentional field/card styling, but remove the extra focus
+   halo and the dark rectangular fill that was appearing behind transparent
+   editor fields. */
+.book-app :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  [contenteditable="true"]
+):focus,
+.book-app :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  [contenteditable="true"]
+):focus-visible {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.book-app .journal-media-title-only input,
+.book-app .journal-media-title-only input:focus,
+.book-app .journal-media-title-only input:focus-visible,
+.dark .book-app .journal-media-title-only input,
+.dark .book-app .journal-media-title-only input:focus,
+.dark .book-app .journal-media-title-only input:focus-visible,
+.book-app .journal-title-input,
+.book-app .journal-title-input:focus,
+.book-app .journal-title-input:focus-visible,
+.dark .book-app .journal-title-input,
+.dark .book-app .journal-title-input:focus,
+.dark .book-app .journal-title-input:focus-visible,
+.book-app .journal-body-input,
+.book-app .journal-body-input:focus,
+.book-app .journal-body-input:focus-visible,
+.dark .book-app .journal-body-input,
+.dark .book-app .journal-body-input:focus,
+.dark .book-app .journal-body-input:focus-visible,
+.book-app .coach-composer-input,
+.book-app .coach-composer-input:focus,
+.book-app .coach-composer-input:focus-visible,
+.dark .book-app .coach-composer-input,
+.dark .book-app .coach-composer-input:focus,
+.dark .book-app .coach-composer-input:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* The dark Community share CTA should belong to the dark paper/blue palette,
+   not read as a bright cream slab. */
+.dark .community-choose-story-button {
+  border: 1px solid #4e6b84 !important;
+  background: #30485d !important;
+  color: #f3ece2 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055) !important;
+}
+.dark .community-choose-story-button:hover,
+.dark .community-choose-story-button:focus-visible {
+  background: #365168 !important;
+  color: #fff8ef !important;
+}
+.dark .community-choose-story-button:active {
+  background: #2a4154 !important;
+}
