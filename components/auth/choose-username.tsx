@@ -55,6 +55,8 @@ export function ChooseUsername({ email, destination }: { email: string; destinat
     setLoading(true)
     const supabase = createClient()
     await supabase.auth.signOut()
+    document.documentElement.classList.remove("dark")
+    document.documentElement.classList.add("light")
     router.replace("/sign-up?mode=sign-in")
     router.refresh()
   }

@@ -8,23 +8,17 @@ import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
 import { Celebration } from "@/components/ui/celebration"
-import { TypewriterText } from "@/components/ui/typewriter-text"
 import { LibraryShelf } from "@/components/home/library-shelf"
 import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
-  const { state, ready, syncStatus } = useApp()
+  const { state, ready } = useApp()
   const [celebrateStreak, setCelebrateStreak] = useState(false)
-  const [homeReady, setHomeReady] = useState(() => ready && syncStatus !== "syncing")
   const progress = courseProgress(state)
   const next = nextCourseItem(state)
   const freeLimitReached = freeLessonLimitReached(state) && progress.done < progress.total
   const week = getCurrentWeek(state.activityDates)
-
-  useEffect(() => {
-    if (!homeReady && ready && syncStatus !== "syncing") setHomeReady(true)
-  }, [homeReady, ready, syncStatus])
 
   useEffect(() => {
     if (!ready || state.streak < 1 || !state.activityDates.includes(localDateKey(new Date()))) return
@@ -146,12 +140,9 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
         </div>
 
-        <div className="book-home-closing-line home-typewriter-before-library flex shrink-0 items-center justify-center overflow-hidden px-3 text-center">
-          <TypewriterText active={homeReady} typingMs={90} deletingMs={42} pauseMs={1900} className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />
-        </div>
-
         <section className="home-library-section" aria-labelledby="home-library-heading">
           <h2 id="home-library-heading" className="book-practice-heading home-library-heading text-[1rem] font-semibold tracking-[-0.015em]">Library</h2>
+          <p className="home-library-section-description">Browse a small, curated shelf of craft books for different parts of storytelling, from finding material to structure, voice, endings, and delivery.</p>
           <LibraryShelf />
         </section>
       </section>

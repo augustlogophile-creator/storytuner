@@ -21,10 +21,17 @@ export function AppProviders({
 
   useLayoutEffect(() => {
     // Never let a stale modal/body lock survive navigation. Native vertical
-    // scrolling is the default for every StoryTuner route, including legal pages.
+    // scrolling is the default for every Tellwise route, including legal pages.
     document.documentElement.style.removeProperty("overflow")
     document.body.style.removeProperty("overflow")
-  }, [pathname])
+
+    // Public/auth/legal pages should never inherit a signed-in dark theme after
+    // logout. We leave the preference cookie alone so it can return after login.
+    if (!initialUserId) {
+      document.documentElement.classList.remove("dark")
+      document.documentElement.classList.add("light")
+    }
+  }, [initialUserId, pathname])
 
   return (
     <AppProvider

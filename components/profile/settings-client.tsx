@@ -108,6 +108,8 @@ export function SettingsClient({ username }: { username: string }) {
     setBusy(true)
     const supabase = createClient()
     await supabase.auth.signOut()
+    document.documentElement.classList.remove("dark")
+    document.documentElement.classList.add("light")
     router.replace("/sign-up?mode=sign-in")
     router.refresh()
   }, [router])

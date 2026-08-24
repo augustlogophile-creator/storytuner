@@ -11,7 +11,6 @@ import {
   FileText,
   MapPin,
   ListChecks,
-  Map,
   Mic2,
   RefreshCw,
   ShieldQuestion,
@@ -151,7 +150,6 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         </Link>
       ) : <span />}
       <header className="planner-simple-hero">
-        <span className="planner-simple-mark"><Map className="h-5 w-5" /></span>
         <div className="min-w-0">
           <Eyebrow>Story Planner</Eyebrow>
           <h1>Plan your story.</h1>

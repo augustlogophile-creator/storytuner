@@ -734,7 +734,7 @@ function MediaCapture({
         durationSeconds: draftSeconds,
         title,
       })
-      window.setTimeout(() => onSaved(created), 360)
+      window.setTimeout(() => onSaved(created), 760)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `That ${kind} note could not be saved.`)
       throw caught
@@ -753,6 +753,17 @@ function MediaCapture({
             className="journal-capture-save-button"
             disabled={!draftBlob || recording || saving}
             onSave={saveRecording}
+          />
+        </div>
+
+        <div className="journal-media-metadata journal-media-title-only">
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            maxLength={120}
+            disabled={recording || saving}
+            placeholder="Add a title"
+            aria-label="Recording title"
           />
         </div>
 
@@ -775,20 +786,9 @@ function MediaCapture({
                 {[18,32,46,28,55,38,49,24,42,58,31,45,26,52,35,48,22,41,56,29].map((height, index) => <i key={index} style={{ height: `${height}px` }} />)}
               </div>
             )}
-            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Add a title if you want, then save." : "Record a thought, line, or memory."}</p>
+            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Review it, then save when you are ready." : "Record a thought, line, or memory."}</p>
           </div>
         )}
-
-        <div className="journal-media-metadata journal-media-title-only">
-          <input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            maxLength={120}
-            disabled={recording || saving}
-            placeholder="Add a title"
-            aria-label="Recording title"
-          />
-        </div>
 
         {error && <p className="journal-error">{error}</p>}
 

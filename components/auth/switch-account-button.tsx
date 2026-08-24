@@ -15,6 +15,8 @@ export function SwitchAccountButton() {
     try {
       const supabase = createClient()
       await supabase.auth.signOut()
+      document.documentElement.classList.remove("dark")
+      document.documentElement.classList.add("light")
     } finally {
       router.replace("/sign-up?mode=sign-in")
       router.refresh()

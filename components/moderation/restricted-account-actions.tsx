@@ -32,6 +32,8 @@ export function RestrictedAccountActions() {
         sessionStorage.clear()
       } catch {}
       await createClient().auth.signOut().catch(() => undefined)
+      document.documentElement.classList.remove("dark")
+      document.documentElement.classList.add("light")
       router.replace("/?accountDeleted=1")
       router.refresh()
     } catch (caught) {

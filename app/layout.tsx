@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const authenticated = await getAuthenticatedUser()
   const cookieStore = await cookies()
-  const initialTheme = cookieStore.get("tellwise_theme")?.value === "dark" ? "dark" : "light"
+  const initialTheme = authenticated && cookieStore.get("tellwise_theme")?.value === "dark" ? "dark" : "light"
   let initialDisplayName = "Storyteller"
   let initialMembershipActive = false
 

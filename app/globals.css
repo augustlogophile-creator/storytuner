@@ -10722,3 +10722,430 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   .journal-capture-top { grid-template-columns: 2.4rem minmax(0,1fr) 4.75rem !important; }
   .tellwise-save-button { min-width: 4.45rem; }
 }
+
+/* August 23 final refinement: quieter Home Library, cleaner media capture,
+   planner hero without a card, and deliberate chooser/save interactions. */
+
+/* Home Library */
+.home-library-section {
+  margin-top: 1.15rem !important;
+}
+.home-library-heading {
+  margin: 0 !important;
+}
+.home-library-section-description {
+  max-width: 22rem;
+  margin: .35rem 0 .72rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-book-serif), Georgia, serif;
+  font-size: .68rem;
+  line-height: 1.48;
+}
+.home-library {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #ddd1bf !important;
+  border-radius: 1.45rem !important;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(87,70,50,.024) 0 .45px, transparent .68px),
+    linear-gradient(180deg, rgba(255,254,250,.88), rgba(250,246,237,.76)) !important;
+  padding: .85rem .9rem 1rem !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.82) !important;
+}
+.home-library::after {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: .62rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(112,96,76,.22), transparent);
+  pointer-events: none;
+}
+.home-library-copy {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 2rem !important;
+  align-items: start !important;
+  gap: .72rem !important;
+  min-height: 3.55rem;
+}
+.home-library-label {
+  min-height: 3.3rem;
+  max-width: none !important;
+  color: #665d52 !important;
+  font-family: var(--font-book-serif), Georgia, serif !important;
+  font-size: .66rem !important;
+  font-weight: 500 !important;
+  line-height: 1.43 !important;
+  text-wrap: pretty;
+  animation: home-library-copy-in 260ms cubic-bezier(.2,.78,.22,1) both;
+}
+.home-library-label.is-changing {
+  opacity: .12 !important;
+  transform: translateY(3px) !important;
+}
+.home-library-shuffle {
+  width: 2rem !important;
+  height: 2rem !important;
+  align-self: start;
+  border: 1px solid #ded2c0 !important;
+  border-radius: 999px !important;
+  background: rgba(255,253,248,.86) !important;
+  color: #4e7398 !important;
+  box-shadow: 0 2px 7px rgba(46,40,34,.035), inset 0 1px 0 rgba(255,255,255,.9) !important;
+  transition: transform 150ms cubic-bezier(.2,.85,.2,1), background-color 150ms ease !important;
+}
+.home-library-shuffle:active {
+  transform: scale(.92) !important;
+}
+.home-library-books {
+  align-items: end !important;
+  justify-content: center !important;
+  gap: .65rem !important;
+  margin: .5rem auto .35rem !important;
+  perspective: 600px;
+  animation: home-library-shelf-in 250ms cubic-bezier(.2,.78,.22,1) both;
+}
+.home-library-books.is-changing {
+  opacity: .1 !important;
+  transform: translateY(3px) !important;
+}
+.home-library-books.is-2 {
+  grid-template-columns: repeat(2, minmax(0, 5.05rem)) !important;
+  max-width: 10.8rem !important;
+}
+.home-library-books.is-3 {
+  grid-template-columns: repeat(3, minmax(0, 4.3rem)) !important;
+  max-width: 14rem !important;
+}
+.home-library-book {
+  position: relative;
+  min-height: 7.15rem !important;
+  height: 7.15rem !important;
+  transform-origin: center bottom;
+  animation: home-library-book-settle 380ms cubic-bezier(.2,.82,.22,1) var(--book-delay) both !important;
+}
+.home-library-book-pages {
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: .14rem -.2rem .12rem .13rem !important;
+  border: 1px solid rgba(126,112,93,.18);
+  border-radius: .18rem .35rem .35rem .18rem !important;
+  background:
+    repeating-linear-gradient(0deg, rgba(124,112,95,.08) 0 1px, transparent 1px 3px),
+    linear-gradient(90deg, #dfd8c9 0 8%, #f3eee4 24%, #fffdf8 80%, #e9e2d5 100%) !important;
+  box-shadow: .17rem .22rem .34rem rgba(44,38,31,.08) !important;
+}
+.home-library-book-cover {
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(45,38,31,.18);
+  border-radius: .17rem .34rem .34rem .17rem !important;
+  background: #221f1b;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.12) inset,
+    0 5px 10px rgba(42,35,29,.11),
+    0 12px 18px -11px rgba(42,35,29,.28) !important;
+}
+.home-library-book-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(108deg, rgba(255,255,255,.14), transparent 17% 72%, rgba(0,0,0,.08));
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+.home-library-book-color {
+  position: relative;
+  flex: 0 0 2.3rem !important;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px),
+    var(--book-color) !important;
+  box-shadow: inset 0 -1px rgba(0,0,0,.16);
+}
+.home-library-book-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  flex-direction: column;
+  padding: .43rem .34rem .4rem .56rem !important;
+  background: linear-gradient(180deg, #292620, #1e1c18) !important;
+}
+.home-library-book-copy strong {
+  display: block;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  color: #f8f2e8 !important;
+  font-size: .49rem !important;
+  font-weight: 650 !important;
+  line-height: 1.16 !important;
+  text-wrap: pretty;
+}
+.home-library-book-copy span {
+  display: block;
+  margin-top: auto !important;
+  padding-top: .36rem;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  color: rgba(248,242,232,.56) !important;
+  font-size: .29rem !important;
+  font-weight: 650 !important;
+  line-height: 1.24 !important;
+  letter-spacing: .045em !important;
+}
+.home-library-book-spine {
+  width: 11% !important;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.17) 50%, rgba(255,255,255,.06) 70%, transparent) !important;
+  box-shadow: inset -1px 0 rgba(255,255,255,.08), 1px 0 rgba(0,0,0,.16) !important;
+}
+.dark .home-library {
+  border-color: #50483e !important;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(244,237,225,.036) 0 .45px, transparent .68px),
+    linear-gradient(180deg, #27231e, #211e1a) !important;
+}
+.dark .home-library-section-description { color: #ad9f8e; }
+.dark .home-library-label { color: #d4c8b9 !important; }
+.dark .home-library-shuffle {
+  border-color: #51483e !important;
+  background: #2d2822 !important;
+  color: #92b8dc !important;
+}
+@keyframes home-library-copy-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-library-shelf-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes home-library-book-settle {
+  from { opacity: 0; transform: translateY(8px) rotateX(4deg); }
+  to { opacity: 1; transform: translateY(0) rotateX(0); }
+}
+
+/* New-entry chooser: no clipped gray selection bar. */
+.journal-entry-menu-options button {
+  width: 100% !important;
+  margin-inline: 0 !important;
+  border-radius: 1rem !important;
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1px transparent !important;
+  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms cubic-bezier(.2,.85,.2,1) !important;
+}
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus-visible {
+  outline: none !important;
+  background: rgba(78,110,143,.07) !important;
+  box-shadow: inset 0 0 0 1px rgba(78,110,143,.09) !important;
+}
+.journal-entry-menu-options button:active {
+  background: rgba(78,110,143,.11) !important;
+  box-shadow: inset 0 0 0 1px rgba(78,110,143,.14) !important;
+  transform: scale(.985) !important;
+}
+.dark .journal-entry-menu-options button:hover,
+.dark .journal-entry-menu-options button:focus-visible,
+.dark .journal-entry-menu-options button:active {
+  background: rgba(143,183,223,.075) !important;
+  box-shadow: inset 0 0 0 1px rgba(143,183,223,.1) !important;
+}
+
+/* Journal capture: title comes first, media keeps its size, and audio spans the page. */
+.journal-capture-panel {
+  gap: .72rem !important;
+}
+.journal-media-title-only {
+  order: 1;
+  border-top: 0 !important;
+  border-bottom: 1px solid #e2d7c8 !important;
+  padding: .18rem 0 .58rem !important;
+}
+.journal-media-title-only input {
+  min-height: 2.7rem !important;
+  padding: .15rem .04rem !important;
+  font-size: 1.28rem !important;
+  line-height: 1.12 !important;
+}
+.journal-video-stage,
+.journal-audio-stage {
+  order: 2;
+}
+.journal-video-stage {
+  margin-top: .05rem !important;
+}
+.journal-audio-stage {
+  width: 100% !important;
+  min-height: 12rem !important;
+  padding-inline: 0 !important;
+}
+.journal-audio-draft-player {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0;
+  margin: .85rem 0 0 !important;
+}
+.journal-audio-stage p {
+  max-width: 20rem !important;
+  margin-inline: auto !important;
+}
+.journal-capture-actions {
+  order: 4;
+}
+.journal-error {
+  order: 3;
+}
+.dark .journal-media-title-only { border-bottom-color: #4d453b !important; }
+
+/* Exact intended Save control treatment: contained rounded pill, animated
+   saving/saved states, with no stray glow outside the button. */
+.tellwise-save-button {
+  position: relative !important;
+  isolation: isolate !important;
+  display: inline-grid !important;
+  min-width: 6.65rem !important;
+  height: 2.35rem !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  border: 1px solid #3e3e3e !important;
+  border-radius: 999px !important;
+  background: #111 !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 2px 7px rgba(0,0,0,.08) !important;
+  font-family: var(--font-geist-sans), ui-sans-serif, sans-serif !important;
+  font-size: .7rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  transition: transform 160ms cubic-bezier(.2,.9,.2,1), background-color 180ms ease, border-color 180ms ease !important;
+}
+.tellwise-save-button:not(:disabled):hover {
+  border-color: #555 !important;
+  background: #171717 !important;
+}
+.tellwise-save-button:not(:disabled):active {
+  transform: scale(.95) !important;
+}
+.tellwise-save-button:disabled {
+  border-color: #d7d0c6 !important;
+  background: #e9e5de !important;
+  color: #a39a8e !important;
+  box-shadow: none !important;
+}
+.tellwise-save-button[data-status="saving"] {
+  border-color: #4c79ad !important;
+  background: #3b82f6 !important;
+  color: #fff !important;
+}
+.tellwise-save-button[data-status="saved"] {
+  border-color: #4f9364 !important;
+  background: #22a34a !important;
+  color: #fff !important;
+  animation: tellwise-save-bounce 220ms ease both;
+}
+.tellwise-save-shimmer {
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: -55% !important;
+  border-radius: inherit !important;
+  background: conic-gradient(from 0deg, transparent 0 330deg, rgba(255,255,255,.52) 348deg, transparent 360deg) !important;
+  animation: tellwise-save-rotate 2.4s linear infinite !important;
+  opacity: .3;
+  pointer-events: none;
+}
+.tellwise-save-backdrop {
+  position: absolute !important;
+  z-index: 1 !important;
+  inset: 1px !important;
+  border-radius: inherit !important;
+  background: #111 !important;
+  transition: background-color 180ms ease !important;
+}
+.tellwise-save-button[data-status="saving"] .tellwise-save-backdrop { background: #3b82f6 !important; }
+.tellwise-save-button[data-status="saved"] .tellwise-save-backdrop { background: #22a34a !important; }
+.tellwise-save-content {
+  position: relative !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: .35rem !important;
+  white-space: nowrap !important;
+}
+.tellwise-save-content svg {
+  width: .8rem !important;
+  height: .8rem !important;
+}
+.tellwise-save-sparkle {
+  display: none !important;
+}
+.dark .tellwise-save-button,
+.dark .tellwise-save-backdrop {
+  background: #0e0e0e !important;
+  color: #fff !important;
+}
+.dark .tellwise-save-button:disabled {
+  border-color: #49443e !important;
+  background: #2a2723 !important;
+  color: #746d63 !important;
+}
+@keyframes tellwise-save-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* Planner intro is editorial text, not another card. */
+.planner-simple-hero {
+  display: block !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: .15rem .1rem .2rem !important;
+  box-shadow: none !important;
+}
+.planner-simple-mark {
+  display: none !important;
+}
+.planner-simple-hero h1 {
+  margin-top: .28rem !important;
+  font-size: 1.72rem !important;
+}
+.planner-simple-hero p:last-child {
+  max-width: none !important;
+  margin-top: .35rem !important;
+  font-size: .76rem !important;
+  line-height: 1.45 !important;
+}
+.dark .planner-simple-hero {
+  border: 0 !important;
+  background: transparent !important;
+}
+.dark .planner-simple-hero h1 { color: #f4ecdf !important; }
+.dark .planner-simple-hero p:last-child { color: #b9ad9d !important; }
+
+@media (max-width: 380px) {
+  .home-library-section-description { font-size: .64rem; }
+  .home-library-books.is-2 { grid-template-columns: repeat(2, minmax(0, 4.85rem)) !important; }
+  .home-library-books.is-3 { grid-template-columns: repeat(3, minmax(0, 4.05rem)) !important; gap: .48rem !important; }
+  .home-library-book { height: 6.85rem !important; min-height: 6.85rem !important; }
+  .home-library-book-copy strong { font-size: .46rem !important; }
+  .tellwise-save-button { min-width: 6rem !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-library-label,
+  .home-library-books,
+  .home-library-book,
+  .tellwise-save-button { animation: none !important; transition: none !important; }
+}

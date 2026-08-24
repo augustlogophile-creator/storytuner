@@ -6,49 +6,49 @@ import { Shuffle } from "lucide-react"
 const SPINE_COLORS = ["#4E6E8F", "#B26A45", "#6E6047"]
 
 const SHELVES = [
-  { label: "How to find true stories worth telling, straight from your own life.", books: [
+  { label: "Finding material: notice specific moments from your own life that can become strong stories.", books: [
     { title: "Bird by Bird", author: "Anne Lamott" },
     { title: "Storyworthy", author: "Matthew Dicks" },
     { title: "How to Tell a Story", author: "The Moth" },
   ] },
-  { label: "How to hook someone in the first line instead of losing them by the third.", books: [
+  { label: "Openings: learn how to establish attention, tension, and direction from the first lines.", books: [
     { title: "The First Five Pages", author: "Noah Lukeman" },
     { title: "Wired for Story", author: "Lisa Cron" },
   ] },
-  { label: "How to land an ending that actually pays off everything before it.", books: [
+  { label: "Endings: learn how to resolve a story clearly without over-explaining the point.", books: [
     { title: "Story", author: "Robert McKee" },
     { title: "Plot & Structure", author: "James Scott Bell" },
     { title: "The Story Grid", author: "Shawn Coyne" },
   ] },
-  { label: "How to keep a story moving once the setup wears off.", books: [
+  { label: "Structure and pacing: shape scenes so the story keeps moving and each beat earns the next.", books: [
     { title: "Into the Woods", author: "John Yorke" },
     { title: "The Anatomy of Story", author: "John Truby" },
     { title: "Techniques of the Selling Writer", author: "Dwight V. Swain" },
   ] },
-  { label: "How to make someone actually care what happens next.", books: [
+  { label: "Stakes: make clear why the outcome matters and why a listener should care what happens next.", books: [
     { title: "Conflict and Suspense", author: "James Scott Bell" },
     { title: "The Art of Dramatic Writing", author: "Lajos Egri" },
     { title: "Story Genius", author: "Lisa Cron" },
   ] },
-  { label: "How to sound like yourself instead of a writing exercise.", books: [
+  { label: "Voice: develop language and rhythm that still sound natural, specific, and recognizably yours.", books: [
     { title: "On Writing", author: "Stephen King" },
     { title: "Steering the Craft", author: "Ursula K. Le Guin" },
   ] },
-  { label: "How to tell a story out loud, not just write it down.", books: [
+  { label: "Oral storytelling: adapt story structure, pacing, and emphasis for speaking to a real audience.", books: [
     { title: "Confessions of a Public Speaker", author: "Scott Berkun" },
     { title: "Talk Like TED", author: "Carmine Gallo" },
     { title: "Resonate", author: "Nancy Duarte" },
   ] },
-  { label: "How to write about your own life honestly, without oversharing.", books: [
+  { label: "Memoir and ethics: write honestly about your life while handling privacy and other people with care.", books: [
     { title: "The Art of Memoir", author: "Mary Karr" },
     { title: "Handling the Truth", author: "Beth Kephart" },
     { title: "Inventing the Truth", author: "ed. William Zinsser" },
   ] },
-  { label: "A few competing ideas about what actually makes a story work.", books: [
+  { label: "Story theory: compare different frameworks for structure, meaning, and why stories hold attention.", books: [
     { title: "The Seven Basic Plots", author: "Christopher Booker" },
     { title: "Poetics", author: "Aristotle" },
   ] },
-  { label: "How comic timing works, beat by beat.", books: [
+  { label: "Comic timing: study setup, beat, pause, surprise, and payoff in stories that are meant to be funny.", books: [
     { title: "The Comic Toolbox", author: "John Vorhaus" },
     { title: "Poking a Dead Frog", author: "Mike Sacks" },
   ] },
@@ -73,13 +73,13 @@ export function LibraryShelf() {
   return (
     <section className="home-library" aria-label="Curated storytelling books">
       <div className="home-library-copy">
-        <p className={`home-library-label ${changing ? "is-changing" : ""}`}>{shelf.label}</p>
+        <p key={index} className={`home-library-label ${changing ? "is-changing" : ""}`} aria-live="polite">{shelf.label}</p>
         <button type="button" className="home-library-shuffle" onClick={shuffleShelf} aria-label="Show a different book shelf">
           <span key={spinKey}><Shuffle /></span>
         </button>
       </div>
 
-      <div className={`home-library-books is-${shelf.books.length} ${changing ? "is-changing" : ""}`}>
+      <div key={`shelf-${index}`} className={`home-library-books is-${shelf.books.length} ${changing ? "is-changing" : ""}`}>
         {shelf.books.map((book, bookIndex) => (
           <LibraryBook
             key={`${index}-${book.title}`}
