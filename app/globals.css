@@ -10468,3 +10468,257 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-top button {
 html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disabled) {
   color: #4f7398 !important;
 }
+
+/* August 23 late polish: intentional chooser focus, compact Journal save,
+   cleaner Library hierarchy, and mobile-first recording flow. */
+
+/* The chooser selection reads as an intentional soft row highlight instead of
+   a browser-generated rectangular focus artifact. */
+.journal-entry-menu-options button {
+  width: calc(100% + .5rem) !important;
+  margin-inline: -.25rem !important;
+  border-radius: .9rem !important;
+  transition: background-color 120ms ease, transform 120ms ease !important;
+}
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus-visible,
+.journal-entry-menu-options button:active {
+  outline: none !important;
+  background: rgba(129, 116, 96, .105) !important;
+  box-shadow: none !important;
+}
+.journal-entry-menu-options button:active {
+  transform: scale(.988);
+}
+.dark .journal-entry-menu-options button:hover,
+.dark .journal-entry-menu-options button:focus-visible,
+.dark .journal-entry-menu-options button:active {
+  background: rgba(235, 226, 212, .075) !important;
+}
+
+/* Adapted from the supplied SaveButton concept, kept dependency-free so the
+   existing project does not gain motion/confetti packages just for one control. */
+.tellwise-save-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  min-width: 4.7rem;
+  height: 2.18rem;
+  place-items: center;
+  overflow: visible;
+  border: 1px solid rgba(78, 110, 143, .24);
+  border-radius: 999px;
+  background: #edf2f7;
+  color: #315c87;
+  box-shadow: inset 0 1px rgba(255,255,255,.85), 0 2px 8px rgba(55,73,92,.07);
+  font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
+  font-size: .68rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 150ms cubic-bezier(.2,.9,.24,1), background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.tellwise-save-button:not(:disabled):active {
+  transform: translateY(1px) scale(.97);
+}
+.tellwise-save-button:disabled {
+  border-color: #ded6c9;
+  background: #f5f1e9;
+  color: #aaa193;
+  box-shadow: none;
+}
+.tellwise-save-button[data-status="saving"] {
+  border-color: #4e77a4;
+  background: #5d83ad;
+  color: #fff;
+}
+.tellwise-save-button[data-status="saved"] {
+  border-color: #6f9273;
+  background: #789b7b;
+  color: #fff;
+}
+.tellwise-save-backdrop {
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.tellwise-save-shimmer {
+  position: absolute;
+  z-index: -2;
+  inset: -40% -30%;
+  background: conic-gradient(from 180deg, transparent 0 72%, rgba(92,128,164,.2) 80%, transparent 88% 100%);
+  animation: tellwise-save-rotate 2.8s linear infinite;
+  pointer-events: none;
+}
+.tellwise-save-content {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  white-space: nowrap;
+}
+.tellwise-save-content svg {
+  width: .78rem;
+  height: .78rem;
+}
+.tellwise-save-spinner { animation: tellwise-save-spin .78s linear infinite; }
+.tellwise-save-sparkle {
+  position: absolute;
+  right: -.2rem;
+  top: -.28rem;
+  width: .72rem;
+  height: .72rem;
+  color: #d6aa42;
+  animation: tellwise-save-pop 300ms cubic-bezier(.2,.9,.24,1) both;
+}
+@keyframes tellwise-save-rotate { to { transform: rotate(360deg); } }
+@keyframes tellwise-save-spin { to { transform: rotate(360deg); } }
+@keyframes tellwise-save-pop { from { opacity: 0; transform: scale(.4) rotate(-18deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+.dark .tellwise-save-button {
+  border-color: #536a82;
+  background: #2a3540;
+  color: #c5d9ed;
+  box-shadow: inset 0 1px rgba(255,255,255,.04), 0 2px 8px rgba(0,0,0,.16);
+}
+.dark .tellwise-save-button:disabled {
+  border-color: #474039;
+  background: #27231f;
+  color: #746b60;
+}
+.dark .tellwise-save-button[data-status="saving"] { background: #4c729a; color: #fff; }
+.dark .tellwise-save-button[data-status="saved"] { background: #617f65; color: #fff; }
+
+.journal-capture-top {
+  grid-template-columns: 2.65rem minmax(0,1fr) 5rem !important;
+  min-height: 2.85rem !important;
+}
+.journal-capture-save-button { justify-self: end; }
+.journal-top-circle-button {
+  display: inline-grid !important;
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  place-items: center !important;
+  border-radius: 999px !important;
+  color: #5f7f9f !important;
+  transition: background-color 130ms ease, transform 130ms ease !important;
+}
+.journal-top-circle-button:hover { background: rgba(79,113,150,.08) !important; }
+.journal-top-circle-button:active { transform: scale(.94) !important; }
+.journal-detail-top-spacer { width: 2.2rem; height: 2.2rem; justify-self: end; }
+
+/* Audio/video notes only accept an optional title before saving. */
+.journal-media-title-only {
+  border-top: 1px solid #e2d7c8 !important;
+  padding-top: .78rem !important;
+  padding-bottom: .15rem !important;
+}
+.journal-media-title-only input {
+  min-height: 2.9rem !important;
+  font-size: 1.12rem !important;
+}
+.journal-capture-actions {
+  margin-top: auto !important;
+}
+.dark .journal-media-title-only { border-top-color: #4d453b !important; }
+
+/* Home Library sits beneath a real page heading, like Practice. The shelf
+   stays secondary and the books are intentionally smaller than before. */
+.home-typewriter-before-library {
+  min-height: 2.2rem !important;
+  margin: .7rem 0 .45rem !important;
+}
+.home-library-section {
+  margin-top: .15rem;
+}
+.home-library-heading {
+  margin: 0 0 .6rem !important;
+}
+.home-library {
+  margin-top: 0 !important;
+  border-radius: 1.5rem !important;
+  padding: .8rem .85rem .9rem !important;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(92,74,50,.025) 0 .5px, transparent .72px),
+    rgba(255,253,248,.7) !important;
+}
+.home-library-copy {
+  align-items: center !important;
+  gap: .65rem !important;
+}
+.home-library-label {
+  max-width: 18.6rem !important;
+  margin: 0 !important;
+  font-size: .65rem !important;
+  line-height: 1.36 !important;
+  font-weight: 550 !important;
+  color: #62594f !important;
+}
+.home-library-shuffle {
+  width: 1.9rem !important;
+  height: 1.9rem !important;
+  border-radius: .72rem !important;
+  background: #fbf7ee !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.8);
+}
+.home-library-books {
+  align-items: stretch !important;
+  gap: .52rem !important;
+  margin-top: .68rem !important;
+}
+.home-library-books.is-2 {
+  grid-template-columns: repeat(2, minmax(0, 5.35rem)) !important;
+  max-width: 11.4rem !important;
+}
+.home-library-books.is-3 {
+  grid-template-columns: repeat(3, minmax(0, 4.65rem)) !important;
+  max-width: 15rem !important;
+}
+.home-library-book {
+  display: flex !important;
+  min-height: 7.5rem !important;
+  height: auto !important;
+}
+.home-library-book-cover {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-height: 7.5rem !important;
+  height: auto !important;
+}
+.home-library-book-color {
+  flex: 0 0 2.55rem !important;
+}
+.home-library-book-copy {
+  min-height: 4.9rem !important;
+  padding: .45rem .35rem .42rem .56rem !important;
+}
+.home-library-book-copy strong {
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  font-size: .53rem !important;
+  line-height: 1.18 !important;
+}
+.home-library-book-copy span {
+  margin-top: .32rem !important;
+  overflow: visible !important;
+  font-size: .35rem !important;
+  line-height: 1.22 !important;
+}
+.home-library-book-pages {
+  inset: .12rem -.16rem .08rem .11rem !important;
+}
+.dark .home-library-label { color: #c9bdad !important; }
+.dark .home-library-shuffle { background: #2b2722 !important; }
+
+@media (max-width: 380px) {
+  .home-library-books.is-2 { grid-template-columns: repeat(2, minmax(0, 5rem)) !important; }
+  .home-library-books.is-3 { grid-template-columns: repeat(3, minmax(0, 4.25rem)) !important; gap: .42rem !important; }
+  .home-library-book-copy strong { font-size: .49rem !important; }
+  .home-library-book-copy span { font-size: .32rem !important; }
+  .journal-capture-top { grid-template-columns: 2.4rem minmax(0,1fr) 4.75rem !important; }
+  .tellwise-save-button { min-width: 4.45rem; }
+}

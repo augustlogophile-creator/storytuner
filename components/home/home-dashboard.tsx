@@ -146,11 +146,14 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
         </div>
 
-        <LibraryShelf />
-
-        <div className="book-home-closing-line flex shrink-0 items-center justify-center overflow-hidden px-3 text-center">
+        <div className="book-home-closing-line home-typewriter-before-library flex shrink-0 items-center justify-center overflow-hidden px-3 text-center">
           <TypewriterText active={homeReady} typingMs={90} deletingMs={42} pauseMs={1900} className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />
         </div>
+
+        <section className="home-library-section" aria-labelledby="home-library-heading">
+          <h2 id="home-library-heading" className="book-practice-heading home-library-heading text-[1rem] font-semibold tracking-[-0.015em]">Library</h2>
+          <LibraryShelf />
+        </section>
       </section>
     </div>
   )

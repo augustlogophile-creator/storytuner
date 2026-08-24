@@ -27,6 +27,7 @@ import {
   type JournalMediaKind,
 } from "@/lib/journal-media"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { SaveButton } from "@/components/ui/save-button"
 
 type JournalEntry = JournalMediaEntry
 type JournalEntryType = JournalEntry["entry_type"]
@@ -239,7 +240,6 @@ export function JournalClient() {
           onSaved={async (entry) => {
             setCaptureKind(null)
             upsertEntry(entry)
-            setDetail(entry)
           }}
         />
       )}
@@ -252,10 +252,6 @@ export function JournalClient() {
             await load()
           }}
           onUpdated={upsertEntry}
-          onDeleted={async () => {
-            setDetail(null)
-            await load()
-          }}
         />
       )}
 
@@ -489,7 +485,7 @@ function TextComposer({
         <div className="journal-editor-top journal-editor-top-notes">
           <button type="button" onClick={() => void closeEditor()} aria-label="Back to Journal"><ArrowLeft /></button>
           <span className={`journal-save-status is-${status}`}>
-            {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
+            {status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
           </span>
           <button type="button" onClick={() => void closeEditor()}>Done</button>
         </div>
@@ -640,7 +636,6 @@ function MediaCapture({
   const [draftUrl, setDraftUrl] = useState("")
   const draftUrlRef = useRef("")
   const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const previewRef = useRef<HTMLVideoElement | null>(null)
@@ -738,11 +733,11 @@ function MediaCapture({
         blob: draftBlob,
         durationSeconds: draftSeconds,
         title,
-        body: description,
       })
-      onSaved(created)
+      window.setTimeout(() => onSaved(created), 360)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `That ${kind} note could not be saved.`)
+      throw caught
     } finally {
       setSaving(false)
     }
@@ -752,11 +747,13 @@ function MediaCapture({
     <div className="journal-capture-overlay" role="dialog" aria-modal="true" aria-label={`${kind} note`}>
       <section className={`journal-capture-panel ${kind === "video" ? "is-video" : "is-audio"}`}>
         <div className="journal-capture-top">
-          <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Back to Journal"><ArrowLeft /></button>
+          <button type="button" className="journal-top-circle-button" onClick={onClose} disabled={recording || saving} aria-label="Back to Journal"><ArrowLeft /></button>
           <span className={recording ? "is-recording" : ""}>{recording ? duration(elapsed) : kind === "video" ? "Video note" : "Audio note"}</span>
-          <button type="button" className="journal-capture-save" disabled={!draftBlob || recording || saving} onClick={() => void saveRecording()}>
-            {saving ? "Saving…" : "Save"}
-          </button>
+          <SaveButton
+            className="journal-capture-save-button"
+            disabled={!draftBlob || recording || saving}
+            onSave={saveRecording}
+          />
         </div>
 
         {kind === "video" ? (
@@ -778,11 +775,11 @@ function MediaCapture({
                 {[18,32,46,28,55,38,49,24,42,58,31,45,26,52,35,48,22,41,56,29].map((height, index) => <i key={index} style={{ height: `${height}px` }} />)}
               </div>
             )}
-            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Add a title or description if you want, then save." : "Record a thought, line, or memory."}</p>
+            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Add a title if you want, then save." : "Record a thought, line, or memory."}</p>
           </div>
         )}
 
-        <div className="journal-media-metadata">
+        <div className="journal-media-metadata journal-media-title-only">
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -790,15 +787,6 @@ function MediaCapture({
             disabled={recording || saving}
             placeholder="Add a title"
             aria-label="Recording title"
-          />
-          <textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            maxLength={20000}
-            rows={2}
-            disabled={recording || saving}
-            placeholder="Add a description"
-            aria-label="Recording description"
           />
         </div>
 
@@ -808,7 +796,6 @@ function MediaCapture({
           {!recording && !draftBlob && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start recording</button>}
           {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop recording</button>}
           {draftBlob && !recording && !saving && <button type="button" className="is-secondary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Record again</button>}
-          {saving && <div className="journal-processing-line"><span />Saving</div>}
         </div>
       </section>
     </div>
@@ -819,19 +806,15 @@ function EntryDetail({
   entry,
   onClose,
   onUpdated,
-  onDeleted,
 }: {
   entry: JournalEntry
   onClose: () => void
   onUpdated: (entry: JournalEntry) => void
-  onDeleted: () => void | Promise<void>
 }) {
   const [title, setTitle] = useState(entry.title)
   const [body, setBody] = useState(entry.body)
   const [editingField, setEditingField] = useState<"title" | "body" | null>(null)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved")
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState("")
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaLoading, setMediaLoading] = useState(false)
@@ -903,23 +886,6 @@ function EntryDetail({
     }
   }
 
-  async function deleteEntry() {
-    setDeleting(true)
-    setError("")
-    try {
-      if (entry.media_storage_path) await deleteJournalMedia(entry.media_storage_path)
-      const supabase = createClient()
-      const { error: deleteError } = await supabase.from("journal_entries").delete().eq("id", entry.id)
-      if (deleteError) throw new Error(deleteError.message)
-      setDeleteOpen(false)
-      await onDeleted()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "This note could not be deleted.")
-    } finally {
-      setDeleting(false)
-    }
-  }
-
   const titlePlaceholder = "Add a title"
   const bodyPlaceholder = "Add a description"
   const showingPlaceholderTitle = isJournalPlaceholderTitle(entry.entry_type, title)
@@ -930,9 +896,9 @@ function EntryDetail({
       <div className={entry.entry_type === "text" ? "journal-note-sheet-overlay" : "journal-note-sheet-overlay journal-media-detail-overlay"} role="dialog" aria-modal="true" aria-label="Journal note">
         <article className={entry.entry_type === "text" ? "journal-detail journal-detail-notes journal-detail-reading" : "journal-detail journal-detail-notes journal-detail-media journal-detail-reading"}>
           <div className="journal-detail-top journal-editor-top-notes">
-            <button type="button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
-            <span className={`journal-save-status is-${saveStatus}`}>{saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Not saved" : "Saved"}</span>
-            <button type="button" className="journal-delete-icon" onClick={() => setDeleteOpen(true)} aria-label="Delete note"><Trash2 /></button>
+            <button type="button" className="journal-top-circle-button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
+            <span className={`journal-save-status is-${saveStatus}`}>{saveStatus === "error" ? "Not saved" : saveStatus === "saved" ? "Saved" : "Editing"}</span>
+            <span className="journal-detail-top-spacer" aria-hidden="true" />
           </div>
           <p className="journal-entry-date">{journalLongDate(entry.updated_at)}</p>
 
@@ -963,61 +929,36 @@ function EntryDetail({
             </div>
           )}
 
-          {editingField === "body" ? (
-            entry.entry_type === "text" ? (
-              <div className="journal-inline-editor-wrap">
-                <JournalRichEditor
-                  value={body}
-                  onChange={setBody}
-                  placeholder={bodyPlaceholder}
-                  autoFocus
-                  className="journal-inline-rich"
-                />
-                <button type="button" className="journal-finish-edit" onClick={() => setEditingField(null)}>Done editing</button>
-              </div>
-            ) : (
-              <textarea
-                className="journal-body-input journal-inline-textarea"
+          {entry.entry_type === "text" && (editingField === "body" ? (
+            <div className="journal-inline-editor-wrap">
+              <JournalRichEditor
                 value={body}
-                onChange={(event) => setBody(event.target.value)}
-                onBlur={() => setEditingField(null)}
+                onChange={setBody}
                 placeholder={bodyPlaceholder}
-                maxLength={20000}
                 autoFocus
+                className="journal-inline-rich"
               />
-            )
+              <button type="button" className="journal-finish-edit" onClick={() => setEditingField(null)}>Done editing</button>
+            </div>
+          ) : !showingPlaceholderBody ? (
+            <div
+              role="button"
+              tabIndex={0}
+              className="journal-inline-body journal-rich-display"
+              onClick={() => setEditingField("body")}
+              onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setEditingField("body") }}
+              dangerouslySetInnerHTML={{ __html: journalDisplayHtml(body) }}
+            />
           ) : (
-            entry.entry_type === "text" && !showingPlaceholderBody ? (
-              <div
-                role="button"
-                tabIndex={0}
-                className="journal-inline-body journal-rich-display"
-                onClick={() => setEditingField("body")}
-                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setEditingField("body") }}
-                dangerouslySetInnerHTML={{ __html: journalDisplayHtml(body) }}
-              />
-            ) : (
-              <button type="button" className={`journal-inline-body ${showingPlaceholderBody ? "is-placeholder" : ""}`} onClick={() => { if (showingPlaceholderBody) setBody(""); setEditingField("body") }}>
-                {showingPlaceholderBody ? bodyPlaceholder : plainJournalText(body)}
-              </button>
-            )
-          )}
+            <button type="button" className="journal-inline-body is-placeholder" onClick={() => { setBody(""); setEditingField("body") }}>
+              {bodyPlaceholder}
+            </button>
+          ))}
 
           {error && <p className="journal-error mt-3">{error}</p>}
         </article>
       </div>
 
-      <ConfirmDialog
-        open={deleteOpen}
-        title="Delete this Journal note?"
-        confirmLabel={deleting ? "Deleting…" : "Delete"}
-        tone="danger"
-        busy={deleting}
-        onCancel={() => { if (!deleting) setDeleteOpen(false) }}
-        onConfirm={() => void deleteEntry()}
-      >
-        This permanently removes the note{entry.entry_type !== "text" ? " and its private recording" : ""}.
-      </ConfirmDialog>
     </>
   )
 }

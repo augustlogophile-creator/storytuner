@@ -108,7 +108,7 @@ export function SettingsClient({ username }: { username: string }) {
     setBusy(true)
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.replace("/")
+    router.replace("/sign-up?mode=sign-in")
     router.refresh()
   }, [router])
 

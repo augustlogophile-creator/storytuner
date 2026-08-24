@@ -71,12 +71,9 @@ export function LibraryShelf() {
   }
 
   return (
-    <section className="home-library" aria-labelledby="home-library-title">
+    <section className="home-library" aria-label="Curated storytelling books">
       <div className="home-library-copy">
-        <div>
-          <p id="home-library-title" className="home-library-eyebrow">Library</p>
-          <p className={`home-library-label ${changing ? "is-changing" : ""}`}>{shelf.label}</p>
-        </div>
+        <p className={`home-library-label ${changing ? "is-changing" : ""}`}>{shelf.label}</p>
         <button type="button" className="home-library-shuffle" onClick={shuffleShelf} aria-label="Show a different book shelf">
           <span key={spinKey}><Shuffle /></span>
         </button>
