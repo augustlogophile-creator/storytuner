@@ -19,7 +19,7 @@ export function GlobalInteractions() {
     function tap(target: EventTarget | null) {
       if (!(target instanceof Element)) return
       const interactive = target.closest<HTMLElement>(INTERACTIVE_SELECTOR)
-      if (!interactive || interactive.matches(":disabled") || interactive.getAttribute("aria-disabled") === "true") return
+      if (!interactive || interactive.matches(":disabled") || interactive.getAttribute("aria-disabled") === "true" || interactive.dataset.noGlobalTap === "true") return
 
       interactive.classList.remove("tellwise-tap")
       void interactive.offsetWidth

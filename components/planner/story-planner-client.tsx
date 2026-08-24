@@ -386,8 +386,10 @@ function PlannerField({ number, icon: Icon, title, help, value, onChange, placeh
         </span>
         <Icon className="planner-field-icon" aria-hidden="true" />
       </span>
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} maxLength={maxLength} rows={rows} placeholder={placeholder} className="planner-field-input" />
-      <span className="planner-field-count">{value.length}/{maxLength}</span>
+      <span className="planner-field-writing">
+        <textarea value={value} onChange={(event) => onChange(event.target.value)} maxLength={maxLength} rows={rows} placeholder={placeholder} className="planner-field-input" />
+        <span className="planner-field-count">{value.length}/{maxLength}</span>
+      </span>
     </label>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 import {
   ArrowLeft,
   Bold,
@@ -49,6 +49,8 @@ export function JournalClient() {
   const [detail, setDetail] = useState<JournalEntry | null>(null)
   const [captureKind, setCaptureKind] = useState<JournalMediaKind | null>(null)
   const [entryMenuOpen, setEntryMenuOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<JournalEntry | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -81,7 +83,7 @@ export function JournalClient() {
 
   useEffect(() => {
     const fullscreenOpen = composerOpen || Boolean(detail) || Boolean(captureKind)
-    const anyOverlayOpen = fullscreenOpen || entryMenuOpen
+    const anyOverlayOpen = fullscreenOpen || entryMenuOpen || Boolean(deleteTarget)
     if (!anyOverlayOpen) return
 
     const bodyOverflow = document.body.style.overflow
@@ -96,7 +98,7 @@ export function JournalClient() {
       document.documentElement.style.overflow = rootOverflow
       document.body.classList.remove("journal-fullscreen-open", "journal-menu-open")
     }
-  }, [composerOpen, detail, captureKind, entryMenuOpen])
+  }, [composerOpen, detail, captureKind, entryMenuOpen, deleteTarget])
 
   const visibleEntries = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -119,6 +121,24 @@ export function JournalClient() {
   function startNewText(seed?: DraftSeed) {
     setDraftSeed(seed ?? null)
     setComposerOpen(true)
+  }
+
+  async function deleteSavedEntry() {
+    if (!deleteTarget || deleteBusy) return
+    setDeleteBusy(true)
+    setError("")
+    try {
+      if (deleteTarget.media_storage_path) await deleteJournalMedia(deleteTarget.media_storage_path)
+      const supabase = createClient()
+      const { error: deleteError } = await supabase.from("journal_entries").delete().eq("id", deleteTarget.id)
+      if (deleteError) throw new Error(deleteError.message)
+      setEntries((current) => current.filter((entry) => entry.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "This note could not be deleted.")
+    } finally {
+      setDeleteBusy(false)
+    }
   }
 
   return (
@@ -164,20 +184,12 @@ export function JournalClient() {
               </div>
               <div className="journal-notes-group">
                 {group.entries.map((entry) => (
-                  <button key={entry.id} type="button" className="journal-row" onClick={() => setDetail(entry)}>
-                    <span className={`journal-row-icon is-${entry.entry_type}`} aria-hidden="true">
-                      {entry.entry_type === "audio" ? <Mic2 /> : entry.entry_type === "video" ? <Video /> : <PenLine />}
-                    </span>
-                    <span className="journal-row-main">
-                      <span className="journal-row-heading">
-                        <strong>{entryDisplayTitle(entry)}</strong>
-                        <time>{journalDate(entry.updated_at)}</time>
-                      </span>
-                      <span className={`journal-row-preview ${entryHasDescription(entry) ? "" : "is-empty"}`}>{entryPreview(entry)}</span>
-                      <span className={`journal-row-type is-${entry.entry_type}`}>{entryTypeLine(entry)}</span>
-                    </span>
-                    <ChevronRight className="journal-row-chevron" aria-hidden="true" />
-                  </button>
+                  <JournalSwipeRow
+                    key={entry.id}
+                    entry={entry}
+                    onOpen={() => setDetail(entry)}
+                    onDelete={() => setDeleteTarget(entry)}
+                  />
                 ))}
               </div>
             </section>
@@ -246,6 +258,88 @@ export function JournalClient() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete this Journal entry?"
+        confirmLabel={deleteBusy ? "Deleting…" : "Delete"}
+        tone="danger"
+        busy={deleteBusy}
+        onCancel={() => { if (!deleteBusy) setDeleteTarget(null) }}
+        onConfirm={() => void deleteSavedEntry()}
+      >
+        This permanently removes the entry{deleteTarget?.entry_type !== "text" ? " and its recording" : ""}.
+      </ConfirmDialog>
+    </div>
+  )
+}
+
+function JournalSwipeRow({ entry, onOpen, onDelete }: { entry: JournalEntry; onOpen: () => void; onDelete: () => void }) {
+  const [offset, setOffset] = useState(0)
+  const startRef = useRef<{ x: number; y: number } | null>(null)
+  const draggedRef = useRef(false)
+
+  function pointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
+    startRef.current = { x: event.clientX, y: event.clientY }
+    draggedRef.current = false
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+  }
+
+  function pointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    const start = startRef.current
+    if (!start) return
+    const dx = event.clientX - start.x
+    const dy = event.clientY - start.y
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) return
+    if (dx > 8) {
+      draggedRef.current = true
+      setOffset(Math.min(76, Math.max(0, dx)))
+    } else if (dx < -8 && offset > 0) {
+      draggedRef.current = true
+      setOffset(Math.max(0, 76 + dx))
+    }
+  }
+
+  function pointerEnd() {
+    if (!startRef.current) return
+    setOffset((value) => value >= 38 ? 72 : 0)
+    startRef.current = null
+  }
+
+  return (
+    <div className={`journal-swipe-row ${offset > 0 ? "is-revealed" : ""}`}>
+      <button type="button" className="journal-swipe-delete" onClick={onDelete} aria-label={`Delete ${entryDisplayTitle(entry)}`}>
+        <Trash2 />
+        <span>Delete</span>
+      </button>
+      <button
+        type="button"
+        className="journal-row"
+        data-no-global-tap="true"
+        style={{ transform: `translateX(${offset}px)` }}
+        onPointerDown={pointerDown}
+        onPointerMove={pointerMove}
+        onPointerUp={pointerEnd}
+        onPointerCancel={pointerEnd}
+        onClick={() => {
+          if (draggedRef.current) { draggedRef.current = false; return }
+          if (offset > 0) { setOffset(0); return }
+          onOpen()
+        }}
+      >
+        <span className={`journal-row-icon is-${entry.entry_type}`} aria-hidden="true">
+          {entry.entry_type === "audio" ? <Mic2 /> : entry.entry_type === "video" ? <Video /> : <PenLine />}
+        </span>
+        <span className="journal-row-main">
+          <span className="journal-row-heading">
+            <strong>{entryDisplayTitle(entry)}</strong>
+            <time>{journalDate(entry.updated_at)}</time>
+          </span>
+          <span className={`journal-row-preview ${entryHasDescription(entry) ? "" : "is-empty"}`}>{entryPreview(entry)}</span>
+          <span className={`journal-row-type is-${entry.entry_type}`}>{entryTypeLine(entry)}</span>
+        </span>
+        <ChevronRight className="journal-row-chevron" aria-hidden="true" />
+      </button>
     </div>
   )
 }
@@ -405,14 +499,14 @@ function TextComposer({
           className="journal-title-input"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Title"
+          placeholder="Add a title"
           maxLength={120}
           autoFocus={!initialBody}
         />
         <JournalRichEditor
           value={body}
           onChange={setBody}
-          placeholder="Start writing…"
+          placeholder="Add a description"
           autoFocus={Boolean(initialBody)}
           className="journal-body-rich"
         />
@@ -541,6 +635,12 @@ function MediaCapture({
   const [saving, setSaving] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState("")
+  const [draftBlob, setDraftBlob] = useState<Blob | null>(null)
+  const [draftSeconds, setDraftSeconds] = useState(0)
+  const [draftUrl, setDraftUrl] = useState("")
+  const draftUrlRef = useRef("")
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const previewRef = useRef<HTMLVideoElement | null>(null)
@@ -549,7 +649,10 @@ function MediaCapture({
   const startedAtRef = useRef(0)
   const maxSeconds = kind === "video" ? VIDEO_MAX_SECONDS : AUDIO_MAX_SECONDS
 
-  useEffect(() => () => stopTracks(), [])
+  useEffect(() => () => {
+    stopTracks()
+    if (draftUrlRef.current) URL.revokeObjectURL(draftUrlRef.current)
+  }, [])
 
   function stopTracks() {
     if (timerRef.current) clearInterval(timerRef.current)
@@ -559,9 +662,18 @@ function MediaCapture({
     if (previewRef.current) previewRef.current.srcObject = null
   }
 
+  function clearDraftMedia() {
+    if (draftUrlRef.current) URL.revokeObjectURL(draftUrlRef.current)
+    draftUrlRef.current = ""
+    setDraftUrl("")
+    setDraftBlob(null)
+    setDraftSeconds(0)
+  }
+
   async function startRecording() {
     if (recording || saving) return
     setError("")
+    clearDraftMedia()
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
         throw new Error("Recording is not available in this browser.")
@@ -589,7 +701,12 @@ function MediaCapture({
         const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || (kind === "video" ? "video/webm" : "audio/webm") })
         stopTracks()
-        void saveRecording(blob, seconds)
+        const nextDraftUrl = URL.createObjectURL(blob)
+        draftUrlRef.current = nextDraftUrl
+        setDraftBlob(blob)
+        setDraftSeconds(seconds)
+        setElapsed(seconds)
+        setDraftUrl(nextDraftUrl)
       }
       recorder.start(500)
       setRecording(true)
@@ -611,11 +728,18 @@ function MediaCapture({
     recorder.stop()
   }
 
-  async function saveRecording(blob: Blob, seconds: number) {
+  async function saveRecording() {
+    if (!draftBlob || saving || recording) return
     setSaving(true)
     setError("")
     try {
-      const created = await createJournalMediaEntry({ kind, blob, durationSeconds: seconds })
+      const created = await createJournalMediaEntry({
+        kind,
+        blob: draftBlob,
+        durationSeconds: draftSeconds,
+        title,
+        body: description,
+      })
       onSaved(created)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `That ${kind} note could not be saved.`)
@@ -630,30 +754,61 @@ function MediaCapture({
         <div className="journal-capture-top">
           <button type="button" onClick={onClose} disabled={recording || saving} aria-label="Back to Journal"><ArrowLeft /></button>
           <span className={recording ? "is-recording" : ""}>{recording ? duration(elapsed) : kind === "video" ? "Video note" : "Audio note"}</span>
-          <span>Private</span>
+          <button type="button" className="journal-capture-save" disabled={!draftBlob || recording || saving} onClick={() => void saveRecording()}>
+            {saving ? "Saving…" : "Save"}
+          </button>
         </div>
 
         {kind === "video" ? (
           <div className="journal-video-stage">
-            <video ref={previewRef} muted playsInline className="journal-video-preview" />
-            {!recording && !saving && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
+            {draftUrl ? (
+              <video controls playsInline preload="metadata" className="journal-video-preview" src={draftUrl} />
+            ) : (
+              <video ref={previewRef} muted playsInline className="journal-video-preview" />
+            )}
+            {!recording && !draftUrl && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
           </div>
         ) : (
           <div className="journal-audio-stage">
-            <strong>{saving ? "Saving…" : duration(elapsed)}</strong>
-            <div className={recording ? "journal-waveform is-active" : "journal-waveform"} aria-hidden="true">
-              {[18,32,46,28,55,38,49,24,42,58,31,45,26,52,35,48,22,41,56,29].map((height, index) => <i key={index} style={{ height: `${height}px` }} />)}
-            </div>
-            <p>{recording ? "Keep going. Stop when the thought is complete." : "Record a thought, line, or memory."}</p>
+            <strong>{duration(elapsed)}</strong>
+            {draftUrl ? (
+              <audio controls preload="metadata" src={draftUrl} className="journal-audio-draft-player" />
+            ) : (
+              <div className={recording ? "journal-waveform is-active" : "journal-waveform"} aria-hidden="true">
+                {[18,32,46,28,55,38,49,24,42,58,31,45,26,52,35,48,22,41,56,29].map((height, index) => <i key={index} style={{ height: `${height}px` }} />)}
+              </div>
+            )}
+            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Add a title or description if you want, then save." : "Record a thought, line, or memory."}</p>
           </div>
         )}
+
+        <div className="journal-media-metadata">
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            maxLength={120}
+            disabled={recording || saving}
+            placeholder="Add a title"
+            aria-label="Recording title"
+          />
+          <textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            maxLength={20000}
+            rows={2}
+            disabled={recording || saving}
+            placeholder="Add a description"
+            aria-label="Recording description"
+          />
+        </div>
 
         {error && <p className="journal-error">{error}</p>}
 
         <div className="journal-capture-actions">
-          {!recording && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start recording</button>}
-          {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop and save</button>}
-          {saving && <div className="journal-processing-line"><span />Saving privately</div>}
+          {!recording && !draftBlob && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start recording</button>}
+          {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop recording</button>}
+          {draftBlob && !recording && !saving && <button type="button" className="is-secondary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Record again</button>}
+          {saving && <div className="journal-processing-line"><span />Saving</div>}
         </div>
       </section>
     </div>
@@ -765,8 +920,8 @@ function EntryDetail({
     }
   }
 
-  const titlePlaceholder = "Untitled"
-  const bodyPlaceholder = "No description"
+  const titlePlaceholder = "Add a title"
+  const bodyPlaceholder = "Add a description"
   const showingPlaceholderTitle = isJournalPlaceholderTitle(entry.entry_type, title)
   const showingPlaceholderBody = isJournalPlaceholderBody(entry.entry_type, body)
 

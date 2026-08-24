@@ -30,10 +30,14 @@ export async function createJournalMediaEntry({
   kind,
   blob,
   durationSeconds,
+  title,
+  body,
 }: {
   kind: JournalMediaKind
   blob: Blob
   durationSeconds: number
+  title?: string
+  body?: string
 }) {
   if (!blob.size) throw new Error("The recording did not contain any media.")
   if (blob.size > MAX_JOURNAL_MEDIA_BYTES) {
@@ -48,16 +52,16 @@ export async function createJournalMediaEntry({
   const id = crypto.randomUUID()
   const storagePath = `${authData.user.id}/${id}.${sniffed.extension}`
   const safeDuration = Math.max(1, Math.min(kind === "video" ? 180 : 600, Math.round(durationSeconds || 1)))
-  const title = "Untitled"
-  const body = "No description"
+  const safeTitle = title?.trim().slice(0, 120) || "Untitled"
+  const safeBody = body?.trim().slice(0, 20000) || "No description"
 
   const { data: created, error: rowError } = await supabase
     .from("journal_entries")
     .insert({
       id,
       user_id: authData.user.id,
-      title,
-      body,
+      title: safeTitle,
+      body: safeBody,
       entry_type: kind,
       media_storage_path: storagePath,
       media_content_type: sniffed.contentType,

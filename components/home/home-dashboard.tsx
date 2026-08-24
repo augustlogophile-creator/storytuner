@@ -9,6 +9,7 @@ import { ProgressBar } from "@/components/progress-bar"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
 import { Celebration } from "@/components/ui/celebration"
 import { TypewriterText } from "@/components/ui/typewriter-text"
+import { LibraryShelf } from "@/components/home/library-shelf"
 import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
 import { stageLabels } from "@/lib/curriculum"
 
@@ -144,6 +145,8 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             description="Practice a real situation."
           />
         </div>
+
+        <LibraryShelf />
 
         <div className="book-home-closing-line flex shrink-0 items-center justify-center overflow-hidden px-3 text-center">
           <TypewriterText active={homeReady} typingMs={90} deletingMs={42} pauseMs={1900} className="book-home-typewriter block max-w-full whitespace-nowrap font-light italic leading-none text-muted-foreground/80" />

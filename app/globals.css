@@ -9969,3 +9969,502 @@ html:has(body.journal-fullscreen-open) {
   .book-course-title { font-size: 1.02rem !important; }
   .book-practice-card { min-height: 6.8rem !important; }
 }
+
+/* August 23 evening repair: deliberate mobile focus states, stable Journal
+   recording/editing geometry, swipe-to-delete, Planner counter containment,
+   and the curated Home Library. These are the final authority for the affected
+   surfaces so older polish layers cannot fight them. */
+
+/* Touch should never leave a random gray/brown browser focus rectangle behind.
+   Keyboard users still get a soft rounded brand ring on desktop. */
+.book-app :is(button, a, [role="button"], [role="switch"]):focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(79, 120, 161, .18) !important;
+}
+@media (hover: none), (pointer: coarse) {
+  .book-app :is(button, a, [role="button"], [role="switch"]):focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+.app-dialog-panel button[disabled] {
+  background: #fffdf8 !important;
+  border-color: #ddd1bf !important;
+  color: #7f766a !important;
+  box-shadow: none !important;
+}
+.dark .app-dialog-panel button[disabled] {
+  background: #26221e !important;
+  border-color: #50483e !important;
+  color: #c6bbab !important;
+}
+
+/* Journal list: one clean notebook surface with swipe actions, not floating UI. */
+.journal-page {
+  overflow-x: hidden !important;
+}
+.journal-notes-group {
+  overflow: hidden !important;
+}
+.journal-swipe-row {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #c84f43;
+}
+.journal-swipe-row + .journal-swipe-row {
+  border-top: 1px solid var(--journal-rule);
+}
+.journal-swipe-delete {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  display: flex;
+  width: 4.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .18rem;
+  border: 0;
+  background: #c84f43;
+  color: #fff;
+  font-family: var(--font-book-serif), Georgia, serif;
+  font-size: .56rem;
+  font-weight: 650;
+}
+.journal-swipe-delete svg {
+  width: 1rem;
+  height: 1rem;
+}
+.journal-swipe-row .journal-row {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  touch-action: pan-y;
+  background: #fffdf8 !important;
+  transition: transform 180ms cubic-bezier(.2,.82,.22,1), background-color 150ms ease !important;
+  will-change: transform;
+}
+.journal-swipe-row .journal-row:active {
+  background: #faf5eb !important;
+}
+.dark .journal-swipe-row .journal-row {
+  background: #24201c !important;
+}
+.dark .journal-swipe-row .journal-row:active {
+  background: #2b2621 !important;
+}
+
+/* New media is a draft until Save is tapped. The recording viewport is sized
+   from width, so the iOS keyboard can never squash the video rectangle. */
+.journal-capture-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: .72rem !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  padding: .72rem 1rem calc(.9rem + env(safe-area-inset-bottom)) !important;
+}
+.journal-capture-top {
+  display: grid !important;
+  grid-template-columns: 4.25rem 1fr 4.25rem !important;
+  align-items: center !important;
+  min-height: 2.7rem !important;
+  gap: .4rem !important;
+  color: #736a5f !important;
+  font-family: var(--font-book-serif), Georgia, serif;
+  font-size: .7rem !important;
+  text-align: center;
+}
+.journal-capture-top > button:first-child {
+  justify-self: start;
+  display: inline-grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #5f7f9f !important;
+}
+.journal-capture-top > button:first-child svg {
+  width: 1rem;
+  height: 1rem;
+}
+.journal-capture-save {
+  justify-self: end;
+  min-width: 3.7rem;
+  min-height: 2.15rem;
+  border-radius: 999px;
+  color: #4f7398 !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+}
+.journal-capture-save:disabled {
+  color: #b3aa9c !important;
+  opacity: 1 !important;
+}
+.journal-video-stage {
+  position: relative;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: 4 / 5 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid #ded3c2 !important;
+  border-radius: 1.35rem !important;
+  background: #fbf8f1 !important;
+}
+.journal-video-preview {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  background: #fbf8f1 !important;
+}
+.journal-video-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  color: #9b907f !important;
+}
+.journal-video-idle svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+.journal-audio-stage {
+  flex: 0 0 auto !important;
+  min-height: 13rem !important;
+  padding: 1.2rem .5rem !important;
+}
+.journal-audio-draft-player {
+  width: min(100%, 20rem);
+  margin-top: 1rem;
+}
+.journal-media-metadata {
+  flex: 0 0 auto;
+  border-top: 1px solid #e2d7c8;
+  padding-top: .72rem;
+}
+.journal-media-metadata input,
+.journal-media-metadata textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #342e28 !important;
+  font-family: var(--font-book-serif), Georgia, serif;
+  outline: none !important;
+}
+.journal-media-metadata input {
+  min-height: 2.55rem;
+  padding: .18rem .08rem .28rem !important;
+  font-size: 1.1rem !important;
+  font-weight: 650 !important;
+}
+.journal-media-metadata textarea {
+  min-height: 4.35rem;
+  resize: none !important;
+  padding: .2rem .08rem .5rem !important;
+  font-size: .78rem !important;
+  line-height: 1.45 !important;
+}
+.journal-media-metadata :is(input, textarea)::placeholder {
+  color: #aaa08f !important;
+  opacity: 1;
+}
+.journal-capture-actions {
+  flex: 0 0 auto !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
+}
+.journal-capture-actions button {
+  min-height: 3rem !important;
+  border-radius: 999px !important;
+}
+.journal-capture-actions .is-secondary {
+  border: 1px solid #d8ccb9 !important;
+  background: #fffdf8 !important;
+  color: #554c42 !important;
+}
+.dark .journal-capture-panel {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(244,237,225,.04) 0 .5px, transparent .72px),
+    #1f1c18 !important;
+}
+.dark .journal-capture-top { color: #c9bdad !important; }
+.dark .journal-capture-save { color: #8fb7df !important; }
+.dark .journal-capture-save:disabled { color: #6e665d !important; }
+.dark .journal-video-stage,
+.dark .journal-video-preview {
+  border-color: #51493f !important;
+  background: #29251f !important;
+}
+.dark .journal-media-metadata { border-top-color: #4d453b; }
+.dark .journal-media-metadata :is(input, textarea) { color: #f0e8dc !important; }
+.dark .journal-media-metadata :is(input, textarea)::placeholder { color: #8e8375 !important; }
+.dark .journal-capture-actions .is-secondary {
+  border-color: #51493f !important;
+  background: #28231f !important;
+  color: #eee5d8 !important;
+}
+
+/* Saved audio/video details keep their media geometry while the keyboard opens. */
+.journal-detail-media {
+  overflow: hidden !important;
+}
+.journal-detail-media .journal-media-player {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+}
+.journal-detail-media .journal-media-player.is-video {
+  aspect-ratio: 16 / 9 !important;
+  padding: .5rem !important;
+}
+.journal-detail-media .journal-media-player.is-video video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+.journal-detail-media .journal-inline-textarea {
+  flex: 0 0 auto !important;
+  min-height: 5.75rem !important;
+  max-height: 8.5rem !important;
+  overflow-y: auto !important;
+}
+.journal-detail-top button {
+  border-radius: 999px !important;
+}
+.journal-delete-icon {
+  display: inline-grid !important;
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  place-items: center !important;
+  color: #a75347 !important;
+}
+
+/* Planner character count is physically inside its own writing surface. */
+.planner-field-writing {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin-top: .85rem !important;
+}
+.planner-simple-fields .planner-field-writing .planner-field-input {
+  margin-top: 0 !important;
+  padding-bottom: 1.8rem !important;
+  resize: none !important;
+}
+.planner-simple-fields .planner-field-writing .planner-field-count {
+  position: absolute !important;
+  right: .78rem !important;
+  bottom: .62rem !important;
+  margin: 0 !important;
+  color: #a99d8d !important;
+  line-height: 1 !important;
+  pointer-events: none;
+}
+.dark .planner-simple-fields .planner-field-writing .planner-field-count {
+  color: #bdb1a2 !important;
+}
+
+/* Curated Home Library. The layout has separate widths for two- and three-book
+   shelves so every verified title can wrap without ever clipping. */
+.home-library {
+  margin-top: .8rem;
+  overflow: hidden;
+  border: 1px solid #d8ccb9;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(92,74,50,.026) 0 .5px, transparent .72px),
+    rgba(255,253,248,.74);
+  background-size: 8px 8px, 100% 100%;
+  padding: .9rem .9rem 1rem;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
+}
+.home-library-copy {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .8rem;
+}
+.home-library-copy > div {
+  min-width: 0;
+}
+.home-library-eyebrow {
+  margin: 0;
+  color: #8b8174;
+  font-family: var(--font-geist-mono), ui-monospace, monospace !important;
+  font-size: .52rem !important;
+  font-weight: 650;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+.home-library-label {
+  max-width: 18rem;
+  margin-top: .3rem;
+  color: #3d3731;
+  font-family: var(--font-book-serif), Georgia, serif;
+  font-size: .7rem;
+  font-weight: 600;
+  line-height: 1.38;
+  transition: opacity 145ms ease, transform 145ms ease;
+}
+.home-library-label.is-changing {
+  opacity: 0;
+  transform: translateY(3px);
+}
+.home-library-shuffle {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #ddd2c1;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #4e7196;
+}
+.home-library-shuffle svg {
+  width: .82rem;
+  height: .82rem;
+}
+.home-library-shuffle span {
+  display: inline-flex;
+  animation: home-library-spin 360ms ease both;
+}
+.home-library-books {
+  display: grid;
+  align-items: stretch;
+  justify-content: center;
+  gap: .65rem;
+  margin: .85rem auto 0;
+  transition: opacity 145ms ease;
+}
+.home-library-books.is-2 {
+  grid-template-columns: repeat(2, minmax(0, 6.65rem));
+  max-width: 14rem;
+}
+.home-library-books.is-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 21rem;
+}
+.home-library-books.is-changing { opacity: 0; }
+.home-library-book {
+  position: relative;
+  min-width: 0;
+  height: 9.6rem;
+  animation: home-library-book-in 300ms cubic-bezier(.2,.82,.22,1) var(--book-delay) both;
+}
+.home-library-book-pages {
+  position: absolute;
+  z-index: 0;
+  inset: .15rem -.22rem .1rem .14rem;
+  border-radius: .18rem .35rem .35rem .18rem;
+  background: linear-gradient(90deg, #ddd7c9, #fff 65%);
+}
+.home-library-book-cover {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: .2rem .38rem .38rem .2rem;
+  background: #211f1b;
+  box-shadow: 0 7px 15px rgba(40,34,29,.14), 0 1px 1px rgba(0,0,0,.04);
+}
+.home-library-book-color {
+  flex: 0 0 37%;
+  background: var(--book-color);
+}
+.home-library-book-copy {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: .55rem .48rem .48rem .72rem;
+  background: linear-gradient(180deg, #292722, #1d1b18);
+}
+.home-library-book-copy strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #f6f1e7;
+  font-family: var(--font-book-serif), Georgia, serif;
+  font-size: clamp(.57rem, 2.65vw, .69rem);
+  font-weight: 650;
+  line-height: 1.17;
+}
+.home-library-book-copy span {
+  display: block;
+  margin-top: .42rem;
+  overflow-wrap: anywhere;
+  color: rgba(246,241,231,.58);
+  font-family: var(--font-geist-sans), ui-sans-serif, sans-serif;
+  font-size: clamp(.39rem, 1.8vw, .47rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+.home-library-book-spine {
+  position: absolute;
+  z-index: 3;
+  inset: 0 auto 0 0;
+  width: 10%;
+  background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.16) 58%, transparent);
+  box-shadow: inset -1px 0 rgba(255,255,255,.09);
+  pointer-events: none;
+}
+.dark .home-library {
+  border-color: #51483e;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(244,237,225,.04) 0 .5px, transparent .72px),
+    #26221e;
+}
+.dark .home-library-eyebrow { color: #a89d8e; }
+.dark .home-library-label { color: #eee5d8; }
+.dark .home-library-shuffle {
+  border-color: #524a40;
+  background: #2c2722;
+  color: #8fb7df;
+}
+@keyframes home-library-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes home-library-book-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 380px) {
+  .home-library { padding-inline: .75rem; }
+  .home-library-books { gap: .48rem; }
+  .home-library-book { height: 9.2rem; }
+  .home-library-book-copy { padding-left: .62rem; padding-right: .4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-library-shuffle span,
+  .home-library-book { animation: none !important; }
+  .home-library-label,
+  .home-library-books { transition: none !important; }
+}
+
+html:not(.dark) .journal-capture-panel.is-video {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(92,74,50,.028) 0 .5px, transparent .72px),
+    #fffdf7 !important;
+  color: #302a24 !important;
+}
+html:not(.dark) .journal-capture-panel.is-video .journal-capture-top,
+html:not(.dark) .journal-capture-panel.is-video .journal-capture-top button {
+  color: #6f665b !important;
+}
+html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disabled) {
+  color: #4f7398 !important;
+}
