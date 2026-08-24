@@ -56,38 +56,36 @@ const SHELVES = [
 
 export function LibraryShelf() {
   const [index, setIndex] = useState(0)
-  const [changing, setChanging] = useState<"idle" | "out" | "in">("idle")
+  const [changing, setChanging] = useState(false)
   const [spinKey, setSpinKey] = useState(0)
   const shelf = SHELVES[index]
 
   function shuffleShelf() {
-    if (changing !== "idle") return
+    if (changing) return
     setSpinKey((value) => value + 1)
-    setChanging("out")
+    setChanging(true)
     window.setTimeout(() => {
       setIndex((value) => (value + 1) % SHELVES.length)
-      setChanging("in")
-      window.setTimeout(() => setChanging("idle"), 220)
+      window.setTimeout(() => setChanging(false), 90)
     }, 150)
   }
 
   return (
     <section className="home-library" aria-label="Curated storytelling books">
       <div className="home-library-copy">
-        <p className={`home-library-label ${changing !== "idle" ? `is-${changing}` : ""}`} aria-live="polite">{shelf.label}</p>
+        <p className={`home-library-label ${changing ? "is-changing" : ""}`} aria-live="polite">{shelf.label}</p>
         <button type="button" className="home-library-shuffle" onClick={shuffleShelf} aria-label="Show a different book shelf">
           <span key={spinKey}><Shuffle /></span>
         </button>
       </div>
 
-      <div className={`home-library-books is-${shelf.books.length} ${changing !== "idle" ? `is-${changing}` : ""}`}>
+      <div className={`home-library-books is-${shelf.books.length} ${changing ? "is-changing" : ""}`}>
         {shelf.books.map((book, bookIndex) => (
           <LibraryBook
-            key={`${index}-${book.title}`}
+            key={bookIndex}
             title={book.title}
             author={book.author}
             color={SPINE_COLORS[bookIndex % SPINE_COLORS.length]}
-            delay={bookIndex * 45}
           />
         ))}
       </div>
@@ -95,9 +93,9 @@ export function LibraryShelf() {
   )
 }
 
-function LibraryBook({ title, author, color, delay }: { title: string; author: string; color: string; delay: number }) {
+function LibraryBook({ title, author, color }: { title: string; author: string; color: string }) {
   return (
-    <article className="home-library-book" style={{ "--book-color": color, "--book-delay": `${delay}ms` } as CSSProperties}>
+    <article className="home-library-book" style={{ "--book-color": color } as CSSProperties}>
       <div className="home-library-book-pages" aria-hidden="true" />
       <div className="home-library-book-cover">
         <div className="home-library-book-color" />

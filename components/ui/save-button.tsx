@@ -40,7 +40,7 @@ export function SaveButton({
       window.setTimeout(() => {
         void onSaved?.()
         setStatus("idle")
-      }, 760)
+      }, 460)
     } catch {
       setStatus("idle")
     }

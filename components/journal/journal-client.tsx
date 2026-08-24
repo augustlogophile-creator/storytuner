@@ -230,7 +230,7 @@ export function JournalClient() {
               <h2>New entry</h2>
               <button type="button" onClick={() => { setEntryMenuOpen(false); setEntryMenuSelection(null) }} aria-label="Close"><X /></button>
             </div>
-            <p className="journal-entry-menu-note">Choose the format that fits the way you want to capture the idea.</p>
+            <p className="journal-entry-menu-note">Choose a format.</p>
             <div className="journal-entry-menu-options">
               <button type="button" className={entryMenuSelection === "text" ? "is-selected" : ""} onClick={() => openEntryChoice("text")}>
                 <span className="journal-entry-menu-option-icon"><PenLine /></span>
@@ -513,6 +513,7 @@ function TextComposer({
 
   async function saveTextNote() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    while (savingRef.current) await new Promise((resolve) => window.setTimeout(resolve, 24))
     const ok = await saveNow(latestTitleRef.current, latestBodyRef.current)
     if (!ok) throw new Error("This note could not be saved.")
   }
@@ -743,6 +744,8 @@ function MediaCapture({
         previewRef.current.srcObject = stream
         previewRef.current.muted = true
         await previewRef.current.play().catch(() => {})
+        // Give the mobile camera a brief moment to expose before the saved clip begins.
+        await new Promise((resolve) => window.setTimeout(resolve, 140))
       }
 
       chunksRef.current = []
@@ -877,7 +880,7 @@ function MediaCapture({
               <>
                 <div className="journal-video-live-stage">
                   <video ref={previewRef} muted playsInline className="journal-video-preview" />
-                  {!recording && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
+                  {!recording && <div className="journal-video-idle" aria-hidden="true"><Camera /></div>}
                   {recording && (
                     <>
                       <div className="journal-video-live-overlay" />
@@ -888,7 +891,6 @@ function MediaCapture({
                     </>
                   )}
                 </div>
-                {!recording && <p className="journal-media-helper-text">Capture a quick moment, then review it before saving.</p>}
               </>
             )}
           </div>
@@ -1039,7 +1041,14 @@ function JournalVideoReviewPlayer({ src, durationSeconds }: { src: string; durat
     setCurrentTime(0)
     setDurationValue(durationSeconds || 0)
 
-    const syncDuration = () => setDurationValue(Number.isFinite(video.duration) && video.duration > 0 ? video.duration : durationSeconds || 0)
+    const syncDuration = () => {
+      const resolvedDuration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : durationSeconds || 0
+      setDurationValue(resolvedDuration)
+      if (video.currentTime < 0.05 && resolvedDuration > 0.18) {
+        const previewTime = Math.min(0.45, Math.max(0.12, resolvedDuration * 0.18))
+        try { video.currentTime = previewTime } catch {}
+      }
+    }
     const syncTime = () => setCurrentTime(Number.isFinite(video.currentTime) ? video.currentTime : 0)
     const syncPlay = () => setPlaying(!video.paused && !video.ended)
     const syncMute = () => setMuted(video.muted)

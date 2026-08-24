@@ -85,6 +85,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [showInitialLoading, setShowInitialLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [feedError, setFeedError] = useState("")
   const [draft, setDraft] = useState("")
@@ -124,6 +125,15 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
   useEffect(() => {
     void loadPage(0, true)
   }, [loadPage])
+
+  useEffect(() => {
+    if (!loading || posts.length > 0) {
+      setShowInitialLoading(false)
+      return
+    }
+    const timer = window.setTimeout(() => setShowInitialLoading(true), 180)
+    return () => window.clearTimeout(timer)
+  }, [loading, posts.length])
 
   useEffect(() => {
     const refreshAfterBlock = () => void loadPage(0, true)
@@ -253,9 +263,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
         </div>
 
         {loading && posts.length === 0 ? (
-          <div className="flex items-center justify-center rounded-3xl border border-border bg-card px-6 py-12 text-sm text-muted-foreground">
-            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> Loading Community…
-          </div>
+          showInitialLoading ? <CommunityLoadingPlaceholder /> : <div className="community-loading-reserve" aria-hidden="true" />
         ) : feedError && posts.length === 0 ? (
           <FeedError message={feedError} onRetry={() => void loadPage(0, true)} />
         ) : posts.length === 0 ? (
@@ -300,6 +308,21 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
       <NoticeDialog open={Boolean(publishNotice)} title="Held for review" onClose={() => setPublishNotice("")}>
         {publishNotice}
       </NoticeDialog>
+    </div>
+  )
+}
+
+function CommunityLoadingPlaceholder() {
+  return (
+    <div className="community-loading-placeholder" aria-label="Loading Community">
+      <div className="community-loading-card">
+        <span className="community-loading-avatar" />
+        <div className="community-loading-copy"><i /><i /><i /></div>
+      </div>
+      <div className="community-loading-card is-secondary">
+        <span className="community-loading-avatar" />
+        <div className="community-loading-copy"><i /><i /></div>
+      </div>
     </div>
   )
 }
