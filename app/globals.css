@@ -11149,3 +11149,488 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   .home-library-book,
   .tellwise-save-button { animation: none !important; transition: none !important; }
 }
+
+/* August 23 follow-up polish: better Journal chooser/capture UI, lighter save button,
+   cleaner audio/video review controls, and smoother Home Library copy swapping. */
+
+.journal-entry-menu {
+  width: min(calc(100vw - 2rem), 28rem) !important;
+  border: 1px solid #e1d6c7 !important;
+  border-radius: 1.65rem !important;
+  background: linear-gradient(180deg, rgba(255,254,250,.98), rgba(249,246,239,.98)) !important;
+  box-shadow: 0 22px 46px rgba(57,49,39,.18), inset 0 1px 0 rgba(255,255,255,.95) !important;
+  padding: 1.1rem 1.1rem 1.05rem !important;
+}
+.journal-entry-menu-top {
+  align-items: center !important;
+  margin-bottom: .45rem !important;
+}
+.journal-entry-menu-top h2 {
+  font-size: 1.06rem !important;
+}
+.journal-entry-menu-top button {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 999px !important;
+  color: #73695d !important;
+  background: transparent !important;
+}
+.journal-entry-menu-note {
+  margin: 0 0 .7rem !important;
+  color: #7b7164;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+.journal-entry-menu-options {
+  display: grid !important;
+  gap: .56rem !important;
+  margin-top: 0 !important;
+}
+.journal-entry-menu-options button {
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center !important;
+  gap: .72rem !important;
+  padding: .95rem .95rem !important;
+  border: 1px solid #e7ddd0 !important;
+  border-radius: 1.08rem !important;
+  background: linear-gradient(180deg, #fffdfa, #f7f3eb) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 8px 18px rgba(80,67,53,.06) !important;
+}
+.journal-entry-menu-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: .85rem;
+  background: #edf3fa;
+  color: #5b7fa4;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
+}
+.journal-entry-menu-options strong {
+  display: block;
+  color: #342e28 !important;
+  font-size: .95rem !important;
+}
+.journal-entry-menu-options small {
+  margin-top: .14rem !important;
+  color: #7d7367 !important;
+  font-size: .72rem !important;
+}
+.journal-entry-menu-option-arrow {
+  width: .95rem !important;
+  height: .95rem !important;
+  color: #998d7d;
+}
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus-visible {
+  background: linear-gradient(180deg, #fffdfb, #f5f0e7) !important;
+  border-color: #d8cab6 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 12px 24px rgba(80,67,53,.09) !important;
+  transform: translateY(-1px) !important;
+}
+.journal-entry-menu-options button.is-selected,
+.journal-entry-menu-options button:active {
+  background: linear-gradient(180deg, #eef4fb, #e5edf7) !important;
+  border-color: rgba(92,123,158,.34) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 14px 28px rgba(68,100,138,.12) !important;
+  transform: scale(.986) !important;
+}
+
+.tellwise-save-button {
+  min-width: 6.15rem !important;
+  height: 2.32rem !important;
+  border: 1px solid rgba(93,123,157,.25) !important;
+  background: linear-gradient(180deg, #f9fcff, #edf3fb) !important;
+  color: #4f7398 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 7px 16px rgba(69,91,119,.08) !important;
+}
+.tellwise-save-button:not(:disabled):hover {
+  border-color: rgba(93,123,157,.38) !important;
+  background: linear-gradient(180deg, #fcfeff, #e8f1fa) !important;
+}
+.tellwise-save-button:disabled {
+  border-color: #ddd4c8 !important;
+  background: #f5f1ea !important;
+  color: #aba194 !important;
+}
+.tellwise-save-button[data-status="saving"] {
+  border-color: #5d83ad !important;
+  background: #6c8fb7 !important;
+  color: #fff !important;
+}
+.tellwise-save-button[data-status="saved"] {
+  border-color: #85a087 !important;
+  background: #95b198 !important;
+  color: #fff !important;
+}
+.tellwise-save-backdrop {
+  background: linear-gradient(180deg, #f8fbff, #edf3fb) !important;
+}
+.tellwise-save-button[data-status="saving"] .tellwise-save-backdrop {
+  background: #6c8fb7 !important;
+}
+.tellwise-save-button[data-status="saved"] .tellwise-save-backdrop {
+  background: #95b198 !important;
+}
+.tellwise-save-shimmer {
+  inset: -48% !important;
+  background: conic-gradient(from 0deg, transparent 0 325deg, rgba(93,123,157,.24) 344deg, transparent 360deg) !important;
+  opacity: .5 !important;
+}
+
+.journal-capture-panel {
+  gap: .95rem !important;
+}
+.journal-capture-top {
+  grid-template-columns: 2.5rem minmax(0,1fr) minmax(6.15rem, auto) !important;
+  align-items: center !important;
+  column-gap: .75rem !important;
+}
+.journal-capture-top > span {
+  font-size: .95rem !important;
+  line-height: 1.1 !important;
+}
+.journal-capture-save-button,
+.journal-text-save-button {
+  justify-self: end !important;
+}
+.journal-media-title-only {
+  display: grid;
+  gap: .35rem;
+  border-bottom: 1px solid #e2d7c8 !important;
+  padding: .1rem 0 .72rem !important;
+}
+.journal-media-metadata-label {
+  color: #958876;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.journal-media-title-only input {
+  min-height: 2.6rem !important;
+  padding: 0 !important;
+  color: #b3a491;
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+}
+.journal-media-title-only input::placeholder {
+  color: #b3a491;
+  opacity: 1;
+}
+.journal-audio-stage,
+.journal-video-stage {
+  width: 100% !important;
+}
+.journal-audio-stage {
+  min-height: 13rem !important;
+  padding: .45rem 0 0 !important;
+}
+.journal-audio-stage > strong {
+  display: block;
+  color: #2f2823 !important;
+  font-size: 4.1rem !important;
+  line-height: .95 !important;
+  text-align: center;
+}
+.journal-audio-stage p,
+.journal-media-helper-text {
+  margin: 1rem auto 0 !important;
+  max-width: 21rem;
+  color: #766b60 !important;
+  font-size: .8rem !important;
+  line-height: 1.5 !important;
+  text-align: center;
+}
+.journal-inline-audio-player {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: .7rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: .72rem .9rem;
+  border: 1px solid #e4ded4;
+  border-radius: 999px;
+  background: #eef0f6;
+}
+.journal-inline-audio-button,
+.journal-inline-audio-mute {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.68);
+  color: #171717;
+}
+.journal-inline-audio-time {
+  min-width: 4.8rem;
+  color: #3f3a33;
+  font-size: .78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.journal-inline-audio-track {
+  position: relative;
+  height: 1rem;
+}
+.journal-inline-audio-rail,
+.journal-inline-audio-progress {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: .26rem;
+  border-radius: 999px;
+  transform: translateY(-50%);
+}
+.journal-inline-audio-rail {
+  right: 0;
+  background: rgba(61,54,47,.22);
+}
+.journal-inline-audio-progress {
+  background: #262626;
+}
+.journal-inline-audio-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.journal-video-live-stage,
+.journal-video-review-player {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 25rem;
+  border: 1px solid #dfd5c7;
+  border-radius: 1.65rem;
+  background: #1f1b18;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.journal-video-preview {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 25rem;
+  object-fit: cover !important;
+}
+.journal-video-live-overlay,
+.journal-video-review-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.46), transparent 30%, transparent 62%, rgba(0,0,0,.66));
+  pointer-events: none;
+}
+.journal-video-live-top {
+  position: absolute;
+  inset: 1rem 1rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  color: #fff;
+  z-index: 2;
+}
+.journal-video-live-top strong {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+.journal-video-live-top span {
+  padding: .34rem .72rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  font-size: .74rem;
+  font-weight: 600;
+}
+.journal-video-live-controls {
+  position: absolute;
+  inset: auto .8rem 1rem;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap: .5rem;
+}
+.journal-video-live-controls button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .26rem;
+  min-height: 4.15rem;
+  padding: .6rem .35rem;
+  border-radius: 1.05rem;
+  background: rgba(13,12,11,.58);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+.journal-video-live-controls button span,
+.journal-video-live-controls button.is-done span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+}
+.journal-video-live-controls button small {
+  font-size: .67rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.journal-video-live-controls button.is-done {
+  background: rgba(88,125,162,.9);
+}
+.journal-video-idle,
+.journal-video-camera-off {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .7rem;
+  color: #f4ede1;
+  z-index: 1;
+}
+.journal-video-camera-off {
+  background: rgba(17,15,13,.72);
+}
+.journal-video-idle svg,
+.journal-video-camera-off svg {
+  width: 1.8rem;
+  height: 1.8rem;
+}
+.journal-video-review-controls {
+  position: absolute;
+  inset: auto .85rem .85rem;
+  z-index: 2;
+  display: grid;
+  gap: .55rem;
+}
+.journal-video-review-track {
+  position: relative;
+  height: 1rem;
+}
+.journal-video-review-rail,
+.journal-video-review-progress {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: .25rem;
+  border-radius: 999px;
+  transform: translateY(-50%);
+}
+.journal-video-review-rail {
+  right: 0;
+  background: rgba(255,255,255,.32);
+}
+.journal-video-review-progress {
+  background: #fff;
+}
+.journal-video-review-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.journal-video-review-bottom {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  align-items: center;
+  gap: .7rem;
+}
+.journal-video-review-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  background: rgba(0,0,0,.52);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+.journal-video-review-time {
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: center;
+}
+.journal-capture-actions {
+  margin-top: auto !important;
+}
+.journal-capture-actions button.is-secondary {
+  border-color: #ddd2c2 !important;
+  background: #f5f1e9 !important;
+  color: #544a40 !important;
+}
+.journal-text-save-button {
+  min-width: 6rem !important;
+}
+
+.home-library-section-description {
+  max-width: 20rem;
+}
+.home-library-label.is-out,
+.home-library-books.is-out {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.home-library-label.is-in,
+.home-library-books.is-in {
+  animation: home-library-copy-in 220ms ease both;
+}
+.home-library-label {
+  transition: opacity 180ms ease, transform 180ms ease !important;
+}
+.home-library-books {
+  transition: opacity 180ms ease, transform 180ms ease !important;
+}
+.home-library-book-copy {
+  padding: .48rem .34rem .42rem .68rem !important;
+}
+.home-library-book-copy strong {
+  line-height: 1.2 !important;
+}
+.home-library-book-spine {
+  width: 12.5% !important;
+}
+
+@media (max-width: 380px) {
+  .journal-entry-menu { width: min(calc(100vw - 1.3rem), 27rem) !important; padding: .95rem !important; }
+  .journal-capture-top { grid-template-columns: 2.35rem minmax(0,1fr) minmax(5.6rem, auto) !important; }
+  .tellwise-save-button { min-width: 5.7rem !important; }
+  .journal-inline-audio-player { grid-template-columns: auto minmax(0,1fr) auto; row-gap: .55rem; padding: .75rem .8rem; }
+  .journal-inline-audio-time { grid-column: 1 / -1; order: 4; min-width: 0; text-align: center; }
+  .journal-video-live-controls { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+.dark .journal-entry-menu {
+  border-color: #4f473d !important;
+  background: linear-gradient(180deg, #2c2823, #24211d) !important;
+}
+.dark .journal-entry-menu-note,
+.dark .journal-entry-menu-options small { color: #c2b7a8 !important; }
+.dark .journal-entry-menu-options button {
+  border-color: #4b433a !important;
+  background: linear-gradient(180deg, #322d27, #29251f) !important;
+}
+.dark .journal-entry-menu-options strong { color: #f5eee2 !important; }
+.dark .journal-entry-menu-option-icon { background: rgba(86,119,154,.2); color: #9dc0e2; }
+.dark .tellwise-save-button { border-color: #566f8e !important; background: linear-gradient(180deg, #2a3540, #25303a) !important; color: #c7d9ec !important; }
+.dark .tellwise-save-backdrop { background: linear-gradient(180deg, #2a3540, #25303a) !important; }
+.dark .journal-media-title-only { border-bottom-color: #4b433a !important; }
+.dark .journal-inline-audio-player { border-color: #474038; background: #2c2924; }
+.dark .journal-inline-audio-time { color: #ede4d7; }
+.dark .journal-inline-audio-rail { background: rgba(236,226,212,.2); }
+.dark .journal-audio-stage p,
+.dark .journal-media-helper-text,
+.dark .journal-media-metadata-label { color: #c5b9aa !important; }
+.dark .journal-capture-actions button.is-secondary { border-color: #50483e !important; background: #2a2722 !important; color: #ece3d6 !important; }

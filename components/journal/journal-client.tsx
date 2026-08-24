@@ -5,17 +5,23 @@ import {
   ArrowLeft,
   Bold,
   Camera,
+  CameraOff,
   ChevronRight,
   Italic,
   List,
   Mic2,
+  Pause,
   PenLine,
+  Play,
   Plus,
+  RotateCcw,
   Search,
   Square,
   Trash2,
   Underline,
   Video,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -50,6 +56,7 @@ export function JournalClient() {
   const [detail, setDetail] = useState<JournalEntry | null>(null)
   const [captureKind, setCaptureKind] = useState<JournalMediaKind | null>(null)
   const [entryMenuOpen, setEntryMenuOpen] = useState(false)
+  const [entryMenuSelection, setEntryMenuSelection] = useState<JournalEntryType | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<JournalEntry | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
 
@@ -122,6 +129,17 @@ export function JournalClient() {
   function startNewText(seed?: DraftSeed) {
     setDraftSeed(seed ?? null)
     setComposerOpen(true)
+  }
+
+  function openEntryChoice(kind: JournalEntryType) {
+    if (entryMenuSelection) return
+    setEntryMenuSelection(kind)
+    window.setTimeout(() => {
+      setEntryMenuOpen(false)
+      setEntryMenuSelection(null)
+      if (kind === "text") startNewText()
+      else setCaptureKind(kind)
+    }, 140)
   }
 
   async function deleteSavedEntry() {
@@ -209,12 +227,25 @@ export function JournalClient() {
           <section className="journal-entry-menu">
             <div className="journal-entry-menu-top">
               <h2>New entry</h2>
-              <button type="button" onClick={() => setEntryMenuOpen(false)} aria-label="Close"><X /></button>
+              <button type="button" onClick={() => { setEntryMenuOpen(false); setEntryMenuSelection(null) }} aria-label="Close"><X /></button>
             </div>
+            <p className="journal-entry-menu-note">Choose the format that fits the way you want to capture the idea.</p>
             <div className="journal-entry-menu-options">
-              <button type="button" onClick={() => { setEntryMenuOpen(false); startNewText() }}><PenLine /><span><strong>Write</strong><small>Text note</small></span></button>
-              <button type="button" onClick={() => { setEntryMenuOpen(false); setCaptureKind("audio") }}><Mic2 /><span><strong>Audio</strong><small>Voice note</small></span></button>
-              <button type="button" onClick={() => { setEntryMenuOpen(false); setCaptureKind("video") }}><Camera /><span><strong>Video</strong><small>Video moment</small></span></button>
+              <button type="button" className={entryMenuSelection === "text" ? "is-selected" : ""} onClick={() => openEntryChoice("text")}>
+                <span className="journal-entry-menu-option-icon"><PenLine /></span>
+                <span><strong>Write</strong><small>Start a text note</small></span>
+                <ChevronRight className="journal-entry-menu-option-arrow" />
+              </button>
+              <button type="button" className={entryMenuSelection === "audio" ? "is-selected" : ""} onClick={() => openEntryChoice("audio")}>
+                <span className="journal-entry-menu-option-icon"><Mic2 /></span>
+                <span><strong>Audio</strong><small>Capture a voice note</small></span>
+                <ChevronRight className="journal-entry-menu-option-arrow" />
+              </button>
+              <button type="button" className={entryMenuSelection === "video" ? "is-selected" : ""} onClick={() => openEntryChoice("video")}>
+                <span className="journal-entry-menu-option-icon"><Camera /></span>
+                <span><strong>Video</strong><small>Record a quick video</small></span>
+                <ChevronRight className="journal-entry-menu-option-arrow" />
+              </button>
             </div>
           </section>
         </div>
@@ -479,6 +510,13 @@ function TextComposer({
     await onClose()
   }
 
+  async function saveAndClose() {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    const ok = await saveNow(latestTitleRef.current, latestBodyRef.current)
+    if (!ok) throw new Error("This note could not be saved.")
+    await onClose()
+  }
+
   return (
     <div className={mediaEntry ? "journal-note-sheet-overlay journal-media-editor-overlay" : "journal-note-sheet-overlay"} role="dialog" aria-modal="true" aria-label={entry ? "Edit Journal note" : "New Journal note"}>
       <article className={mediaEntry ? "journal-editor journal-editor-notes journal-editor-media" : "journal-editor journal-editor-notes"}>
@@ -487,7 +525,7 @@ function TextComposer({
           <span className={`journal-save-status is-${status}`}>
             {status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
           </span>
-          <button type="button" onClick={() => void closeEditor()}>Done</button>
+          <SaveButton className="journal-text-save-button" onSave={saveAndClose} />
         </div>
 
         <p className="journal-editor-date">{journalLongDate(new Date().toISOString())}</p>
@@ -628,6 +666,7 @@ function MediaCapture({
   onSaved: (entry: JournalEntry) => void
 }) {
   const [recording, setRecording] = useState(false)
+  const [paused, setPaused] = useState(false)
   const [saving, setSaving] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [error, setError] = useState("")
@@ -636,18 +675,34 @@ function MediaCapture({
   const [draftUrl, setDraftUrl] = useState("")
   const draftUrlRef = useRef("")
   const [title, setTitle] = useState("")
+  const [cameraEnabled, setCameraEnabled] = useState(true)
+  const [previewMuted, setPreviewMuted] = useState(true)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const previewRef = useRef<HTMLVideoElement | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAtRef = useRef(0)
+  const pausedAtRef = useRef(0)
+  const pausedMsRef = useRef(0)
   const maxSeconds = kind === "video" ? VIDEO_MAX_SECONDS : AUDIO_MAX_SECONDS
 
   useEffect(() => () => {
     stopTracks()
     if (draftUrlRef.current) URL.revokeObjectURL(draftUrlRef.current)
   }, [])
+
+  function currentElapsedSeconds() {
+    if (!startedAtRef.current) return 0
+    const anchor = pausedAtRef.current || Date.now()
+    return Math.max(0, Math.floor((anchor - startedAtRef.current - pausedMsRef.current) / 1000))
+  }
+
+  function syncElapsed() {
+    const next = currentElapsedSeconds()
+    setElapsed(next)
+    if (recording && !paused && next >= maxSeconds) stopRecording()
+  }
 
   function stopTracks() {
     if (timerRef.current) clearInterval(timerRef.current)
@@ -669,6 +724,9 @@ function MediaCapture({
     if (recording || saving) return
     setError("")
     clearDraftMedia()
+    setPaused(false)
+    pausedAtRef.current = 0
+    pausedMsRef.current = 0
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
         throw new Error("Recording is not available in this browser.")
@@ -678,8 +736,11 @@ function MediaCapture({
         video: kind === "video" ? { facingMode: "user" } : false,
       })
       streamRef.current = stream
+      setCameraEnabled(true)
+      setPreviewMuted(true)
       if (kind === "video" && previewRef.current) {
         previewRef.current.srcObject = stream
+        previewRef.current.muted = true
         await previewRef.current.play().catch(() => {})
       }
 
@@ -693,7 +754,7 @@ function MediaCapture({
         if (event.data.size > 0) chunksRef.current.push(event.data)
       }
       recorder.onstop = () => {
-        const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000))
+        const seconds = Math.max(1, currentElapsedSeconds())
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || (kind === "video" ? "video/webm" : "audio/webm") })
         stopTracks()
         const nextDraftUrl = URL.createObjectURL(blob)
@@ -702,25 +763,59 @@ function MediaCapture({
         setDraftSeconds(seconds)
         setElapsed(seconds)
         setDraftUrl(nextDraftUrl)
+        setPaused(false)
       }
       recorder.start(500)
       setRecording(true)
-      timerRef.current = setInterval(() => {
-        const next = Math.floor((Date.now() - startedAtRef.current) / 1000)
-        setElapsed(next)
-        if (next >= maxSeconds) stopRecording()
-      }, 250)
+      timerRef.current = setInterval(syncElapsed, 250)
     } catch (caught) {
       stopTracks()
+      setPaused(false)
       setError(caught instanceof Error ? caught.message : `${kind === "video" ? "Camera" : "Microphone"} access is needed.`)
     }
+  }
+
+  function togglePause() {
+    const recorder = recorderRef.current
+    if (!recorder || recorder.state === "inactive") return
+    if (!paused) {
+      recorder.pause()
+      pausedAtRef.current = Date.now()
+      setPaused(true)
+      syncElapsed()
+      return
+    }
+    if (pausedAtRef.current) pausedMsRef.current += Date.now() - pausedAtRef.current
+    pausedAtRef.current = 0
+    recorder.resume()
+    setPaused(false)
   }
 
   function stopRecording() {
     const recorder = recorderRef.current
     if (!recorder || recorder.state === "inactive") return
+    if (pausedAtRef.current) pausedMsRef.current += Date.now() - pausedAtRef.current
+    pausedAtRef.current = 0
+    syncElapsed()
     setRecording(false)
+    setPaused(false)
     recorder.stop()
+  }
+
+  function toggleCamera() {
+    if (kind !== "video") return
+    const track = streamRef.current?.getVideoTracks?.()[0]
+    if (!track) return
+    const next = !track.enabled
+    track.enabled = next
+    setCameraEnabled(next)
+  }
+
+  function togglePreviewMute() {
+    if (kind !== "video" || !previewRef.current) return
+    const next = !previewMuted
+    previewRef.current.muted = next
+    setPreviewMuted(next)
   }
 
   async function saveRecording() {
@@ -734,7 +829,7 @@ function MediaCapture({
         durationSeconds: draftSeconds,
         title,
       })
-      window.setTimeout(() => onSaved(created), 760)
+      window.setTimeout(() => onSaved(created), 380)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `That ${kind} note could not be saved.`)
       throw caught
@@ -748,7 +843,7 @@ function MediaCapture({
       <section className={`journal-capture-panel ${kind === "video" ? "is-video" : "is-audio"}`}>
         <div className="journal-capture-top">
           <button type="button" className="journal-top-circle-button" onClick={onClose} disabled={recording || saving} aria-label="Back to Journal"><ArrowLeft /></button>
-          <span className={recording ? "is-recording" : ""}>{recording ? duration(elapsed) : kind === "video" ? "Video note" : "Audio note"}</span>
+          <span className={recording ? "is-recording" : ""}>{kind === "video" ? "Video note" : "Audio note"}</span>
           <SaveButton
             className="journal-capture-save-button"
             disabled={!draftBlob || recording || saving}
@@ -757,6 +852,7 @@ function MediaCapture({
         </div>
 
         <div className="journal-media-metadata journal-media-title-only">
+          <label className="journal-media-metadata-label">Title</label>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -770,23 +866,44 @@ function MediaCapture({
         {kind === "video" ? (
           <div className="journal-video-stage">
             {draftUrl ? (
-              <video controls playsInline preload="metadata" className="journal-video-preview" src={draftUrl} />
+              <JournalVideoReviewPlayer src={draftUrl} durationSeconds={draftSeconds} />
             ) : (
-              <video ref={previewRef} muted playsInline className="journal-video-preview" />
+              <>
+                <div className="journal-video-live-stage">
+                  <video ref={previewRef} muted playsInline className="journal-video-preview" />
+                  {!cameraEnabled && recording && <div className="journal-video-camera-off"><CameraOff /><span>Camera off</span></div>}
+                  {!recording && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
+                  {recording && (
+                    <>
+                      <div className="journal-video-live-overlay" />
+                      <div className="journal-video-live-top">
+                        <strong>{duration(elapsed)}</strong>
+                        <span>{paused ? "Paused" : "Recording"}</span>
+                      </div>
+                      <div className="journal-video-live-controls">
+                        <button type="button" onClick={toggleCamera} aria-label={cameraEnabled ? "Turn camera off" : "Turn camera on"}><span>{cameraEnabled ? <Camera /> : <CameraOff />}</span><small>{cameraEnabled ? "Camera" : "Camera off"}</small></button>
+                        <button type="button" onClick={togglePause} aria-label={paused ? "Resume recording" : "Pause recording"}><span>{paused ? <Play /> : <Pause />}</span><small>{paused ? "Resume" : "Pause"}</small></button>
+                        <button type="button" onClick={togglePreviewMute} aria-label={previewMuted ? "Unmute preview" : "Mute preview"}><span>{previewMuted ? <VolumeX /> : <Volume2 />}</span><small>{previewMuted ? "Muted" : "Sound"}</small></button>
+                        <button type="button" className="is-done" onClick={stopRecording} aria-label="Stop recording"><span><Square /></span><small>Done</small></button>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <p className="journal-media-helper-text">{recording ? "Keep going. Pause if you need a moment, then stop when the thought is complete." : "Capture a quick moment, then review it before saving."}</p>
+              </>
             )}
-            {!recording && !draftUrl && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
           </div>
         ) : (
           <div className="journal-audio-stage">
             <strong>{duration(elapsed)}</strong>
             {draftUrl ? (
-              <audio controls preload="metadata" src={draftUrl} className="journal-audio-draft-player" />
+              <JournalAudioPlayer src={draftUrl} durationSeconds={draftSeconds} />
             ) : (
               <div className={recording ? "journal-waveform is-active" : "journal-waveform"} aria-hidden="true">
                 {[18,32,46,28,55,38,49,24,42,58,31,45,26,52,35,48,22,41,56,29].map((height, index) => <i key={index} style={{ height: `${height}px` }} />)}
               </div>
             )}
-            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Review it, then save when you are ready." : "Record a thought, line, or memory."}</p>
+            <p>{recording ? "Keep going. Stop when the thought is complete." : draftUrl ? "Review the note, then save it when you are ready." : "Record a thought, line, or memory."}</p>
           </div>
         )}
 
@@ -794,10 +911,222 @@ function MediaCapture({
 
         <div className="journal-capture-actions">
           {!recording && !draftBlob && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start recording</button>}
-          {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop recording</button>}
-          {draftBlob && !recording && !saving && <button type="button" className="is-secondary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Record again</button>}
+          {recording && kind === "audio" && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop recording</button>}
+          {draftBlob && !recording && !saving && <button type="button" className="is-secondary" onClick={() => void startRecording()}><RotateCcw /> Retake</button>}
         </div>
       </section>
+    </div>
+  )
+}
+
+function JournalAudioPlayer({ src, durationSeconds }: { src: string; durationSeconds: number }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [durationValue, setDurationValue] = useState(durationSeconds || 0)
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.pause()
+    try { audio.currentTime = 0 } catch {}
+    setPlaying(false)
+    setMuted(false)
+    setCurrentTime(0)
+    setDurationValue(durationSeconds || 0)
+
+    const syncDuration = () => setDurationValue(Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : durationSeconds || 0)
+    const syncTime = () => setCurrentTime(Number.isFinite(audio.currentTime) ? audio.currentTime : 0)
+    const syncPlay = () => setPlaying(!audio.paused && !audio.ended)
+
+    audio.addEventListener("loadedmetadata", syncDuration)
+    audio.addEventListener("durationchange", syncDuration)
+    audio.addEventListener("timeupdate", syncTime)
+    audio.addEventListener("play", syncPlay)
+    audio.addEventListener("pause", syncPlay)
+    audio.addEventListener("ended", syncPlay)
+    syncDuration()
+    syncTime()
+    syncPlay()
+
+    return () => {
+      audio.removeEventListener("loadedmetadata", syncDuration)
+      audio.removeEventListener("durationchange", syncDuration)
+      audio.removeEventListener("timeupdate", syncTime)
+      audio.removeEventListener("play", syncPlay)
+      audio.removeEventListener("pause", syncPlay)
+      audio.removeEventListener("ended", syncPlay)
+    }
+  }, [durationSeconds, src])
+
+  async function togglePlay() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (!audio.paused) {
+      audio.pause()
+      return
+    }
+    try {
+      if (durationValue > 0 && currentTime >= durationValue - 0.08) audio.currentTime = 0
+      await audio.play()
+    } catch {
+      setPlaying(false)
+    }
+  }
+
+  function seek(value: number) {
+    const audio = audioRef.current
+    const safeDuration = durationValue > 0 ? durationValue : 1
+    if (!audio) return
+    const next = Math.max(0, Math.min(safeDuration, value))
+    audio.currentTime = next
+    setCurrentTime(next)
+  }
+
+  function toggleMute() {
+    const audio = audioRef.current
+    if (!audio) return
+    const next = !audio.muted
+    audio.muted = next
+    setMuted(next)
+  }
+
+  const safeDuration = durationValue > 0 ? durationValue : 1
+  const progress = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100))
+
+  return (
+    <div className="journal-inline-audio-player">
+      <audio ref={audioRef} preload="metadata" src={src} />
+      <button type="button" className="journal-inline-audio-button" onClick={() => void togglePlay()} aria-label={playing ? "Pause audio note" : "Play audio note"}>
+        {playing ? <Pause className="h-4 w-4" fill="currentColor" /> : <Play className="ml-0.5 h-4 w-4" fill="currentColor" />}
+      </button>
+      <span className="journal-inline-audio-time">{duration(currentTime)} / {duration(durationValue)}</span>
+      <div className="journal-inline-audio-track">
+        <div className="journal-inline-audio-rail" />
+        <div className="journal-inline-audio-progress" style={{ width: `${progress}%` }} />
+        <input
+          type="range"
+          min={0}
+          max={safeDuration}
+          step={0.01}
+          value={Math.min(currentTime, safeDuration)}
+          onChange={(event) => seek(Number(event.target.value))}
+          className="journal-inline-audio-range"
+          aria-label="Audio note playback position"
+        />
+      </div>
+      <button type="button" className="journal-inline-audio-mute" onClick={toggleMute} aria-label={muted ? "Unmute audio note" : "Mute audio note"}>
+        {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+      </button>
+    </div>
+  )
+}
+
+function JournalVideoReviewPlayer({ src, durationSeconds }: { src: string; durationSeconds: number }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [durationValue, setDurationValue] = useState(durationSeconds || 0)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    video.pause()
+    try { video.currentTime = 0 } catch {}
+    setPlaying(false)
+    setMuted(video.muted)
+    setCurrentTime(0)
+    setDurationValue(durationSeconds || 0)
+
+    const syncDuration = () => setDurationValue(Number.isFinite(video.duration) && video.duration > 0 ? video.duration : durationSeconds || 0)
+    const syncTime = () => setCurrentTime(Number.isFinite(video.currentTime) ? video.currentTime : 0)
+    const syncPlay = () => setPlaying(!video.paused && !video.ended)
+    const syncMute = () => setMuted(video.muted)
+
+    video.addEventListener("loadedmetadata", syncDuration)
+    video.addEventListener("durationchange", syncDuration)
+    video.addEventListener("timeupdate", syncTime)
+    video.addEventListener("play", syncPlay)
+    video.addEventListener("pause", syncPlay)
+    video.addEventListener("ended", syncPlay)
+    video.addEventListener("volumechange", syncMute)
+    syncDuration()
+    syncTime()
+    syncPlay()
+    syncMute()
+
+    return () => {
+      video.removeEventListener("loadedmetadata", syncDuration)
+      video.removeEventListener("durationchange", syncDuration)
+      video.removeEventListener("timeupdate", syncTime)
+      video.removeEventListener("play", syncPlay)
+      video.removeEventListener("pause", syncPlay)
+      video.removeEventListener("ended", syncPlay)
+      video.removeEventListener("volumechange", syncMute)
+    }
+  }, [durationSeconds, src])
+
+  async function togglePlay() {
+    const video = videoRef.current
+    if (!video) return
+    if (!video.paused) {
+      video.pause()
+      return
+    }
+    try {
+      if (durationValue > 0 && currentTime >= durationValue - 0.08) video.currentTime = 0
+      await video.play()
+    } catch {
+      setPlaying(false)
+    }
+  }
+
+  function seek(value: number) {
+    const video = videoRef.current
+    const safeDuration = durationValue > 0 ? durationValue : 1
+    if (!video) return
+    const next = Math.max(0, Math.min(safeDuration, value))
+    video.currentTime = next
+    setCurrentTime(next)
+  }
+
+  function toggleMute() {
+    const video = videoRef.current
+    if (!video) return
+    video.muted = !video.muted
+    setMuted(video.muted)
+  }
+
+  const safeDuration = durationValue > 0 ? durationValue : 1
+  const progress = Math.min(100, Math.max(0, (currentTime / safeDuration) * 100))
+
+  return (
+    <div className="journal-video-review-player">
+      <video ref={videoRef} playsInline preload="metadata" src={src} className="journal-video-preview" />
+      <div className="journal-video-review-overlay" />
+      <div className="journal-video-review-controls">
+        <div className="journal-video-review-track">
+          <div className="journal-video-review-rail" />
+          <div className="journal-video-review-progress" style={{ width: `${progress}%` }} />
+          <input
+            type="range"
+            min={0}
+            max={safeDuration}
+            step={0.01}
+            value={Math.min(currentTime, safeDuration)}
+            onChange={(event) => seek(Number(event.target.value))}
+            className="journal-video-review-range"
+            aria-label="Video note playback position"
+          />
+        </div>
+        <div className="journal-video-review-bottom">
+          <button type="button" className="journal-video-review-icon" onClick={() => void togglePlay()} aria-label={playing ? "Pause video note" : "Play video note"}>{playing ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}</button>
+          <span className="journal-video-review-time">{duration(currentTime)} / {duration(durationValue)}</span>
+          <button type="button" className="journal-video-review-icon" onClick={toggleMute} aria-label={muted ? "Unmute video note" : "Mute video note"}>{muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}</button>
+        </div>
+      </div>
     </div>
   )
 }

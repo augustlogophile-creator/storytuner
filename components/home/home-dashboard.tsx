@@ -142,7 +142,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
 
         <section className="home-library-section" aria-labelledby="home-library-heading">
           <h2 id="home-library-heading" className="book-practice-heading home-library-heading text-[1rem] font-semibold tracking-[-0.015em]">Library</h2>
-          <p className="home-library-section-description">Browse a small, curated shelf of craft books for different parts of storytelling, from finding material to structure, voice, endings, and delivery.</p>
+          <p className="home-library-section-description">Find books that can improve a specific storytelling skill. Tap regenerate to see a new theme and a new set of recommendations.</p>
           <LibraryShelf />
         </section>
       </section>
