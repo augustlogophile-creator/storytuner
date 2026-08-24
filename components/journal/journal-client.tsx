@@ -570,6 +570,12 @@ function JournalRichEditor({
 }) {
   const editorRef = useRef<HTMLDivElement | null>(null)
   const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false, list: false })
+  const [toolbarReady, setToolbarReady] = useState(false)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setToolbarReady(true), 120)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const editor = editorRef.current
@@ -647,7 +653,7 @@ function JournalRichEditor({
         onKeyUp={refreshFormattingState}
         onPointerUp={refreshFormattingState}
       />
-      <div className="journal-format-toolbar" aria-label="Text formatting">
+      <div className={`journal-format-toolbar ${toolbarReady ? "is-ready" : ""}`} aria-label="Text formatting">
         <button type="button" className={activeFormats.bold ? "is-active" : ""} aria-label="Bold" aria-pressed={activeFormats.bold} onMouseDown={(event) => event.preventDefault()} onClick={() => format("bold")}><Bold /></button>
         <button type="button" className={activeFormats.italic ? "is-active" : ""} aria-label="Italic" aria-pressed={activeFormats.italic} onMouseDown={(event) => event.preventDefault()} onClick={() => format("italic")}><Italic /></button>
         <button type="button" className={activeFormats.underline ? "is-active" : ""} aria-label="Underline" aria-pressed={activeFormats.underline} onMouseDown={(event) => event.preventDefault()} onClick={() => format("underline")}><Underline /></button>
@@ -1152,16 +1158,18 @@ function EntryDetail({
   const [body, setBody] = useState(entry.body)
   const [editingField, setEditingField] = useState<"title" | "body" | null>(null)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved")
+  const [showSave, setShowSave] = useState(false)
   const [error, setError] = useState("")
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaLoading, setMediaLoading] = useState(false)
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedEditRef = useRef<JournalEntry | null>(null)
 
   useEffect(() => {
     setTitle(entry.title)
     setBody(entry.body)
     setEditingField(null)
     setSaveStatus("saved")
+    setShowSave(false)
     setError("")
   }, [entry.id, entry.title, entry.body])
 
@@ -1185,22 +1193,16 @@ function EntryDetail({
     return () => { cancelled = true }
   }, [entry.media_storage_path])
 
+  const dirty = title.trim() !== entry.title.trim() || body.trim() !== entry.body.trim()
+
   useEffect(() => {
-    const nextTitle = title.trim()
-    const nextBody = body.trim()
-    const unchanged = nextTitle === entry.title.trim() && nextBody === entry.body.trim()
-    if (unchanged) return
-
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    setSaveStatus("saving")
-    saveTimerRef.current = setTimeout(() => {
-      void saveEdits(title, body)
-    }, 650)
-
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    if (dirty) {
+      setShowSave(true)
+      setSaveStatus("saving")
+    } else if (!showSave) {
+      setSaveStatus("saved")
     }
-  }, [title, body, entry])
+  }, [dirty, showSave])
 
   async function saveEdits(nextTitle = title, nextBody = body) {
     const cleanTitle = journalStoredTitle(entry.entry_type, nextTitle, nextBody)
@@ -1215,11 +1217,13 @@ function EntryDetail({
         .select("id,user_id,title,body,entry_type,media_storage_path,media_content_type,media_size_bytes,media_duration_seconds,created_at,updated_at")
         .single<JournalEntry>()
       if (updateError || !data) throw new Error(updateError?.message || "This note could not be saved.")
-      onUpdated(data)
+      savedEditRef.current = data
       setSaveStatus("saved")
+      return data
     } catch (caught) {
       setSaveStatus("error")
       setError(caught instanceof Error ? caught.message : "This note could not be saved.")
+      throw caught
     }
   }
 
@@ -1235,7 +1239,20 @@ function EntryDetail({
           <div className="journal-detail-top journal-editor-top-notes">
             <button type="button" className="journal-top-circle-button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
             <span className={`journal-save-status is-${saveStatus}`}>{saveStatus === "error" ? "Not saved" : saveStatus === "saved" ? "Saved" : "Editing"}</span>
-            <span className="journal-detail-top-spacer" aria-hidden="true" />
+            {showSave ? (
+              <SaveButton
+                className="journal-detail-save-button"
+                disabled={!dirty}
+                onSave={async () => { await saveEdits(title, body) }}
+                onSaved={() => {
+                  const saved = savedEditRef.current
+                  if (saved) onUpdated(saved)
+                  savedEditRef.current = null
+                  setShowSave(false)
+                  setEditingField(null)
+                }}
+              />
+            ) : <span className="journal-detail-top-spacer" aria-hidden="true" />}
           </div>
           <p className="journal-entry-date">{journalLongDate(entry.updated_at)}</p>
 
@@ -1244,7 +1261,6 @@ function EntryDetail({
               className="journal-title-input journal-inline-input"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              onBlur={() => setEditingField(null)}
               placeholder={titlePlaceholder}
               maxLength={120}
               autoFocus
@@ -1275,7 +1291,6 @@ function EntryDetail({
                 autoFocus
                 className="journal-inline-rich"
               />
-              <button type="button" className="journal-finish-edit" onClick={() => setEditingField(null)}>Done editing</button>
             </div>
           ) : !showingPlaceholderBody ? (
             <div

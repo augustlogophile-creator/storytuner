@@ -12670,3 +12670,218 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 .dark .community-choose-story-button:active {
   background: #2a4154 !important;
 }
+
+/* August 23, 11:14pm final visual-consistency repair. This block intentionally
+   overrides earlier experimental layers for the touched surfaces. */
+
+/* Home Library now begins directly under its heading. */
+.home-library-heading + .home-library {
+  margin-top: .5rem !important;
+}
+
+/* Journal chooser: no blue seams, edge bars, or focus artifacts between rows. */
+.journal-entry-menu-options {
+  display: grid !important;
+  gap: .28rem !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.journal-entry-menu-options button,
+.journal-entry-menu-options button + button,
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus,
+.journal-entry-menu-options button:focus-visible,
+.journal-entry-menu-options button:active,
+.journal-entry-menu-options button.is-selected {
+  border: 0 !important;
+  border-top: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+  border-left: 0 !important;
+  border-radius: 1rem !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+.journal-entry-menu-options button::before,
+.journal-entry-menu-options button::after,
+.journal-entry-menu-options button + button::before,
+.journal-entry-menu-options button + button::after {
+  display: none !important;
+  content: none !important;
+}
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus-visible {
+  background: rgba(54,48,42,.045) !important;
+}
+.journal-entry-menu-options button:active,
+.journal-entry-menu-options button.is-selected {
+  background: rgba(82,123,164,.09) !important;
+  transform: scale(.992) !important;
+}
+.dark .journal-entry-menu-options {
+  border: 0 !important;
+  background: transparent !important;
+}
+.dark .journal-entry-menu-options button:hover,
+.dark .journal-entry-menu-options button:focus-visible {
+  background: rgba(255,249,239,.045) !important;
+}
+.dark .journal-entry-menu-options button:active,
+.dark .journal-entry-menu-options button.is-selected {
+  background: rgba(112,159,204,.11) !important;
+}
+
+/* Every Journal Save action uses one identical Tellwise button. Disabled still
+   reads clearly, with white copy on a quieter blue instead of gray-on-blue. */
+.journal-text-save-button,
+.journal-capture-save-button,
+.journal-detail-save-button {
+  min-width: 0 !important;
+  width: auto !important;
+  justify-self: end !important;
+}
+.journal-text-save-button .tellwise-save-button,
+.journal-capture-save-button .tellwise-save-button,
+.journal-detail-save-button .tellwise-save-button,
+.tellwise-save-button {
+  min-width: 6.6rem !important;
+  width: 6.6rem !important;
+  height: 2.45rem !important;
+  border: 1px solid #456f9b !important;
+  border-radius: 999px !important;
+  background: #527da8 !important;
+  color: #fff !important;
+  box-shadow: 0 5px 14px rgba(53,77,105,.16), inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+.tellwise-save-backdrop {
+  background: #527da8 !important;
+}
+.tellwise-save-content,
+.tellwise-save-content > span {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+.tellwise-save-button:disabled {
+  border-color: #6689aa !important;
+  background: #7192b2 !important;
+  color: #fff !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 11px rgba(53,77,105,.10), inset 0 1px 0 rgba(255,255,255,.13) !important;
+}
+.tellwise-save-button:disabled .tellwise-save-backdrop {
+  background: #7192b2 !important;
+}
+.tellwise-save-button:disabled .tellwise-save-content,
+.tellwise-save-button:disabled .tellwise-save-content > span {
+  color: #fff !important;
+  opacity: 1 !important;
+}
+.dark .tellwise-save-button,
+.dark .tellwise-save-button:disabled {
+  border-color: #6f99c1 !important;
+  background: #567fa6 !important;
+  color: #fff !important;
+}
+.dark .tellwise-save-backdrop,
+.dark .tellwise-save-button:disabled .tellwise-save-backdrop {
+  background: #567fa6 !important;
+}
+.dark .tellwise-save-button .tellwise-save-content,
+.dark .tellwise-save-button:disabled .tellwise-save-content {
+  color: #fff !important;
+}
+
+/* Saved-note editing: protect descenders and long titles from clipping. */
+.journal-title-input,
+.journal-inline-title {
+  box-sizing: border-box !important;
+  min-height: 3rem !important;
+  padding-top: .12rem !important;
+  padding-bottom: .3rem !important;
+  overflow: visible !important;
+  line-height: 1.22 !important;
+}
+.journal-inline-title {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  text-align: left !important;
+}
+.journal-detail-top-spacer,
+.journal-detail-save-button {
+  width: 6.6rem !important;
+}
+
+/* Formatting toolbar should never flash under the cursor while the editor is
+   mounting. It occupies its final location first, then fades in. */
+.journal-format-toolbar {
+  opacity: 0 !important;
+  transform: translateY(5px) !important;
+  pointer-events: none !important;
+  transition: opacity 120ms ease, transform 120ms ease !important;
+}
+.journal-format-toolbar.is-ready {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+/* The outer video frame owns the border/radius. Removing the nested frame
+   eliminates the little corner strokes visible before recording starts. */
+.journal-video-stage {
+  border: 1px solid #ddd2c3 !important;
+  border-radius: 1.45rem !important;
+  box-shadow: none !important;
+}
+.journal-video-live-stage,
+.journal-video-review-player {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: none !important;
+}
+.journal-video-live-stage::before,
+.journal-video-live-stage::after,
+.journal-video-review-player::before,
+.journal-video-review-player::after {
+  display: none !important;
+  content: none !important;
+}
+.dark .journal-video-stage {
+  border-color: #51483e !important;
+}
+
+/* Unify card curvature with Learn's rounded-3xl language. */
+.studio-setup-card,
+.studio-duration-card,
+.community-page > section[class*="rounded"],
+.profile-page .story-card {
+  border-radius: 1.5rem !important;
+}
+.studio-mode-card,
+.studio-duration-card .grid-cols-4 button,
+.studio-duration-card > button,
+.studio-primary-action,
+.studio-secondary-action {
+  border-radius: 1.25rem !important;
+}
+
+@media (max-width: 380px) {
+  .journal-text-save-button .tellwise-save-button,
+  .journal-capture-save-button .tellwise-save-button,
+  .journal-detail-save-button .tellwise-save-button,
+  .tellwise-save-button,
+  .journal-detail-top-spacer,
+  .journal-detail-save-button {
+    width: 6.15rem !important;
+    min-width: 6.15rem !important;
+  }
+}
