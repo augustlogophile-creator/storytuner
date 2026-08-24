@@ -12928,3 +12928,214 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     max-width: 6.2rem !important;
   }
 }
+
+/* August 23 late-night fixes: faster auth mascot paint, stable media/planner
+   geometry, readable checkpoint states in both themes, and full-height score ink. */
+
+/* Parch auth video: poster paints immediately while the MP4 is being decoded. */
+.auth-parch-video {
+  object-position: center center !important;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Journal video should always fill the recording frame. The previous 100%
+   height could resolve against an auto-height parent and leave a dark strip. */
+.journal-video-stage,
+.journal-video-live-stage,
+.journal-video-review-player {
+  height: 24.5rem !important;
+  min-height: 24.5rem !important;
+  max-height: 24.5rem !important;
+}
+.journal-video-live-stage,
+.journal-video-review-player {
+  position: relative !important;
+  overflow: hidden !important;
+  background: #f8f4ec !important;
+}
+.journal-video-preview,
+.journal-video-live-stage > video,
+.journal-video-review-player > video {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  background: transparent !important;
+}
+.dark .journal-video-live-stage,
+.dark .journal-video-review-player {
+  background: #24211d !important;
+}
+
+/* Story Planner: focusing or typing must not change the textarea geometry.
+   This explicitly beats older global :focus rules that flattened the radius. */
+.book-app .planner-simple-fields .planner-field-input,
+.book-app .planner-simple-fields .planner-field-input:focus,
+.book-app .planner-simple-fields .planner-field-input:focus-visible {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 7rem !important;
+  border: 1px solid #ddd1bf !important;
+  border-radius: 1.05rem !important;
+  background: #fbf8f1 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.74) !important;
+  outline: 0 !important;
+  padding: .82rem .9rem 1.8rem !important;
+  resize: none !important;
+  overflow-x: hidden !important;
+}
+.dark .book-app .planner-simple-fields .planner-field-input,
+.dark .book-app .planner-simple-fields .planner-field-input:focus,
+.dark .book-app .planner-simple-fields .planner-field-input:focus-visible {
+  border-color: #50483e !important;
+  background: #211f1b !important;
+  color: #f1e9dc !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+.planner-simple-hero,
+.planner-simple-hero::before,
+.planner-simple-hero::after {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+.planner-simple-hero::before,
+.planner-simple-hero::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Saved plans: keep muted hierarchy, but never let controls or essential copy
+   fall into near-black gray on the warm dark paper. */
+.dark .planner-library-topbar,
+.dark .planner-library-back,
+.dark .planner-library-topbar > span,
+.dark .planner-library-meta {
+  color: #c6baa9 !important;
+}
+.dark .planner-library-card h2,
+.dark .planner-library-beats strong,
+.dark .planner-library-actions button,
+.dark .planner-library-empty,
+.dark .planner-library-empty p {
+  color: #f2eadf !important;
+}
+.dark .planner-library-throughline,
+.dark .planner-library-heading p,
+.dark .planner-library-plan-section p,
+.dark .planner-library-beats p,
+.dark .planner-library-reminders ul {
+  color: #cbbfaf !important;
+}
+.dark .planner-library-actions button {
+  border-color: #665c4f !important;
+  background: #24211d !important;
+}
+.dark .planner-library-expanded,
+.dark .planner-library-reminders {
+  border-color: #4f473d !important;
+}
+.dark .planner-library-beats li > span {
+  border-color: #62584b !important;
+  color: #d6cab9 !important;
+}
+
+/* Unit/checkpoint tests: hard-coded light result colors need a deliberate dark
+   counterpart. Day mode remains unchanged and readable. */
+.checkpoint-complete-card,
+.checkpoint-result-card,
+.checkpoint-intro-card,
+.checkpoint-writing-card,
+.checkpoint-loading-card {
+  color: #2f2923;
+}
+.dark .checkpoint-complete-card,
+.dark .checkpoint-result-card,
+.dark .checkpoint-intro-card,
+.dark .checkpoint-writing-card,
+.dark .checkpoint-loading-card {
+  border-color: #544b40 !important;
+  background: #28241f !important;
+  color: #f4ede1 !important;
+}
+.dark .checkpoint-complete-card h1,
+.dark .checkpoint-result-card h1,
+.dark .checkpoint-intro-card h1,
+.dark .checkpoint-writing-card :is(h1,h2,p),
+.dark .checkpoint-loading-card h1 {
+  color: #f4ede1 !important;
+}
+.dark .checkpoint-complete-card .text-muted-foreground,
+.dark .checkpoint-result-card .text-muted-foreground,
+.dark .checkpoint-intro-card .text-muted-foreground,
+.dark .checkpoint-writing-card .text-muted-foreground,
+.dark .checkpoint-loading-card .text-muted-foreground {
+  color: #c9bdad !important;
+}
+.dark .checkpoint-theme-icon {
+  background: #3b304a !important;
+  color: #ddc9f5 !important;
+}
+.dark .checkpoint-score-chip {
+  background: #39312d !important;
+  color: #f1e8dc !important;
+}
+.dark .checkpoint-result-score {
+  color: #f4ede1 !important;
+}
+.dark .checkpoint-intro-badge {
+  background: #352e41 !important;
+  color: #ddc9f5 !important;
+}
+.dark .checkpoint-estimate,
+.dark .checkpoint-writing-label {
+  color: #d7c5ea !important;
+}
+.dark .checkpoint-stat-chip,
+.dark .checkpoint-criterion-chip {
+  border-color: #5a5146 !important;
+  background: #211e1a !important;
+  color: #cfc3b3 !important;
+}
+.dark .checkpoint-option {
+  border-color: #51493f !important;
+  background: #24211d !important;
+  color: #eee5d8 !important;
+  box-shadow: none !important;
+}
+.dark .checkpoint-option.is-chosen {
+  border-color: #789dca !important;
+  background: #283746 !important;
+}
+.dark .checkpoint-option-letter {
+  color: #d4c8b8 !important;
+  background: #302b25 !important;
+}
+.dark .checkpoint-option.is-chosen .checkpoint-option-letter {
+  background: #668fb9 !important;
+  color: #fff !important;
+}
+
+/* Score marker covers the entire numeral, not only the lower half. */
+.lesson-score-highlight {
+  padding: .08em .14em .1em !important;
+}
+.lesson-score-highlight::before {
+  left: -.17em !important;
+  right: -.2em !important;
+  top: -.08em !important;
+  bottom: -.08em !important;
+  border-radius: 46% 54% 43% 57% / 35% 47% 53% 65% !important;
+  clip-path: polygon(1% 15%, 12% 7%, 31% 11%, 49% 4%, 69% 10%, 96% 6%, 100% 82%, 87% 91%, 62% 87%, 43% 96%, 20% 88%, 0 94%) !important;
+  opacity: .58 !important;
+}
+.dark .lesson-score-highlight::before {
+  opacity: .78 !important;
+}

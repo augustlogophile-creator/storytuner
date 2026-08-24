@@ -1,6 +1,10 @@
 "use client"
 
+import { preload } from "react-dom"
+
 export const ParchReading = () => {
+  preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
+
   return (
     <div className="auth-parch mx-auto" style={{ maxWidth: 132 }}>
       <video
@@ -10,6 +14,7 @@ export const ParchReading = () => {
         loop
         playsInline
         preload="auto"
+        poster="/parch-reading-poster.jpg"
         aria-label="Parch reading a book"
         style={{
           aspectRatio: "752 / 560",
