@@ -12885,3 +12885,46 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     min-width: 6.15rem !important;
   }
 }
+
+/* Auth Parch reading video: remove the visible rectangular video canvas and
+   let the mascot sit directly on the paper. The source remains the regular
+   iOS-friendly MP4, while a soft CSS edge mask prevents its solid background
+   from reading as a separate box. */
+.auth-stage {
+  min-height: clamp(7rem, 16svh, 8.8rem) !important;
+  overflow: visible !important;
+}
+
+.auth-stage-paper {
+  width: min(82%, 17rem) !important;
+  height: 6.4rem !important;
+  background: radial-gradient(ellipse, rgba(112, 91, 65, .045), transparent 70%) !important;
+}
+
+.auth-parch {
+  width: clamp(6.75rem, 21vw, 8.25rem) !important;
+  max-width: 8.25rem !important;
+  max-height: none !important;
+  overflow: visible !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 7px 13px rgba(52, 43, 34, .075));
+}
+
+.auth-parch-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  mix-blend-mode: multiply;
+}
+
+@media (max-height: 720px) {
+  .auth-stage { min-height: 5.8rem !important; }
+  .auth-parch {
+    width: 6.2rem !important;
+    max-width: 6.2rem !important;
+  }
+}
