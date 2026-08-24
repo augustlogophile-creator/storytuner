@@ -138,7 +138,8 @@ export function JournalClient() {
       setEntryMenuOpen(false)
       setEntryMenuSelection(null)
       if (kind === "text") startNewText()
-      else setCaptureKind(kind)
+      else if (kind === "audio") setCaptureKind("audio")
+      else setCaptureKind("video")
     }, 140)
   }
 
@@ -510,11 +511,10 @@ function TextComposer({
     await onClose()
   }
 
-  async function saveAndClose() {
+  async function saveTextNote() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     const ok = await saveNow(latestTitleRef.current, latestBodyRef.current)
     if (!ok) throw new Error("This note could not be saved.")
-    await onClose()
   }
 
   return (
@@ -525,7 +525,7 @@ function TextComposer({
           <span className={`journal-save-status is-${status}`}>
             {status === "saved" ? "Saved" : status === "error" ? "Not saved" : "Editing"}
           </span>
-          <SaveButton className="journal-text-save-button" onSave={saveAndClose} />
+          <SaveButton className="journal-text-save-button" onSave={saveTextNote} onSaved={onClose} />
         </div>
 
         <p className="journal-editor-date">{journalLongDate(new Date().toISOString())}</p>
@@ -685,6 +685,7 @@ function MediaCapture({
   const startedAtRef = useRef(0)
   const pausedAtRef = useRef(0)
   const pausedMsRef = useRef(0)
+  const savedEntryRef = useRef<JournalEntry | null>(null)
   const maxSeconds = kind === "video" ? VIDEO_MAX_SECONDS : AUDIO_MAX_SECONDS
 
   useEffect(() => () => {
@@ -829,7 +830,7 @@ function MediaCapture({
         durationSeconds: draftSeconds,
         title,
       })
-      window.setTimeout(() => onSaved(created), 380)
+      savedEntryRef.current = created
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `That ${kind} note could not be saved.`)
       throw caught
@@ -848,11 +849,16 @@ function MediaCapture({
             className="journal-capture-save-button"
             disabled={!draftBlob || recording || saving}
             onSave={saveRecording}
+            onSaved={() => {
+              const stored = savedEntryRef.current
+              if (!stored) return
+              savedEntryRef.current = null
+              onSaved(stored)
+            }}
           />
         </div>
 
         <div className="journal-media-metadata journal-media-title-only">
-          <label className="journal-media-metadata-label">Title</label>
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
@@ -871,25 +877,18 @@ function MediaCapture({
               <>
                 <div className="journal-video-live-stage">
                   <video ref={previewRef} muted playsInline className="journal-video-preview" />
-                  {!cameraEnabled && recording && <div className="journal-video-camera-off"><CameraOff /><span>Camera off</span></div>}
                   {!recording && <div className="journal-video-idle"><Camera /><span>Ready when you are</span></div>}
                   {recording && (
                     <>
                       <div className="journal-video-live-overlay" />
                       <div className="journal-video-live-top">
                         <strong>{duration(elapsed)}</strong>
-                        <span>{paused ? "Paused" : "Recording"}</span>
-                      </div>
-                      <div className="journal-video-live-controls">
-                        <button type="button" onClick={toggleCamera} aria-label={cameraEnabled ? "Turn camera off" : "Turn camera on"}><span>{cameraEnabled ? <Camera /> : <CameraOff />}</span><small>{cameraEnabled ? "Camera" : "Camera off"}</small></button>
-                        <button type="button" onClick={togglePause} aria-label={paused ? "Resume recording" : "Pause recording"}><span>{paused ? <Play /> : <Pause />}</span><small>{paused ? "Resume" : "Pause"}</small></button>
-                        <button type="button" onClick={togglePreviewMute} aria-label={previewMuted ? "Unmute preview" : "Mute preview"}><span>{previewMuted ? <VolumeX /> : <Volume2 />}</span><small>{previewMuted ? "Muted" : "Sound"}</small></button>
-                        <button type="button" className="is-done" onClick={stopRecording} aria-label="Stop recording"><span><Square /></span><small>Done</small></button>
+                        <span>Recording</span>
                       </div>
                     </>
                   )}
                 </div>
-                <p className="journal-media-helper-text">{recording ? "Keep going. Pause if you need a moment, then stop when the thought is complete." : "Capture a quick moment, then review it before saving."}</p>
+                {!recording && <p className="journal-media-helper-text">Capture a quick moment, then review it before saving.</p>}
               </>
             )}
           </div>
@@ -911,7 +910,7 @@ function MediaCapture({
 
         <div className="journal-capture-actions">
           {!recording && !draftBlob && !saving && <button type="button" className="is-primary" onClick={() => void startRecording()}>{kind === "video" ? <Camera /> : <Mic2 />} Start recording</button>}
-          {recording && kind === "audio" && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop recording</button>}
+          {recording && <button type="button" className="is-stop" onClick={stopRecording}><Square /> Stop recording</button>}
           {draftBlob && !recording && !saving && <button type="button" className="is-secondary" onClick={() => void startRecording()}><RotateCcw /> Retake</button>}
         </div>
       </section>

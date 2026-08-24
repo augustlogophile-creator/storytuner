@@ -113,9 +113,11 @@ export async function POST(req: Request) {
         )
       }
       return Response.json({
-        code: "NO_SPEECH",
+        code: rawWordCount === 0 ? "NO_SPEECH" : "STORY_TOO_SHORT",
         wordCount: rawWordCount,
-        error: "Parch could not hear a story. Check your microphone and try another take.",
+        error: rawWordCount === 0
+          ? "Parch could not hear a story. Check your microphone and try another take."
+          : `This story was under ${MIN_STORY_WORDS} words. Try telling a longer one, then grade it again.`,
       }, { status: 422 })
     }
     try {

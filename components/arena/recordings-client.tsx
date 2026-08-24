@@ -63,7 +63,9 @@ export function RecordingsClient() {
         ) : (
           <div className="flex flex-col gap-4">
             {state.recordings.map((recording) => {
-              const hasGrade = recording.overall > 0
+              const derivedOverall = Math.round((recording.scores.hook + recording.scores.development + recording.scores.landing) / 3)
+              const overall = recording.overall > 0 ? recording.overall : derivedOverall
+              const hasGrade = overall > 0 || recording.scores.hook > 0 || recording.scores.development > 0 || recording.scores.landing > 0
               const strengths = recording.strengths?.length ? recording.strengths : recording.praise ? [recording.praise] : []
               const improvements = recording.improvements?.length ? recording.improvements : recording.weakness || recording.fix ? [recording.weakness || recording.fix] : []
               return (
@@ -73,7 +75,7 @@ export function RecordingsClient() {
                       <p className="text-sm font-semibold leading-snug">{recording.title}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{recording.context} · {new Date(recording.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {formatTime(recording.duration)}</p>
                     </div>
-                    <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{hasGrade ? recording.overall : "Saved"}</span>
+                    <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{hasGrade ? overall : "Saved"}</span>
                   </div>
                   <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} cloudStoragePath={recording.cloudStoragePath} durationSeconds={recording.duration} />
                   {hasGrade && (

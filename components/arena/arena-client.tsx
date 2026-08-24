@@ -704,7 +704,7 @@ export function ArenaClient() {
         setTranscriptionOutcome(wordCount === 0 ? "no-speech" : "success")
         throw new Error(wordCount === 0
           ? "Parch could not hear a story. Check your microphone and try another take."
-          : `Parch caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again.`)
+          : `This story was under ${MIN_STORY_WORDS} words. Try telling a longer one, then grade it again.`)
       }
       const requestKey = reviewRequestKeyRef.current ?? crypto.randomUUID()
       reviewRequestKeyRef.current = requestKey
@@ -1015,7 +1015,7 @@ export function ArenaClient() {
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
               <p className="text-sm font-semibold text-amber-950">{transcriptWordCount === 0 ? "Parch could not hear a story." : "Your story needs a little more before grading."}</p>
-              <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `Parch caught ${transcriptWordCount} ${transcriptWordCount === 1 ? "word" : "words"}. Tell at least ${MIN_STORY_WORDS} words, then try again. This will not use one of your free stories.`}</p>
+              <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `This story was under ${MIN_STORY_WORDS} words. Try telling a longer one, then grade it again. This will not use one of your free stories.`}</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
                 <button type="button" onClick={() => transcriptRef.current?.focus()} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-semibold"><FileText className="h-4 w-4" />Review transcript</button>
@@ -1405,7 +1405,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
         ) : (
           <Link href="/membership?from=studio" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Share2 className="h-4 w-4" />Unlock Community sharing</Link>
         )}
-        <Link href="/studio/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Play className="h-4 w-4" />Open all recordings</Link>
+        <Link href="/studio/recordings" className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-xs font-semibold"><Play className="h-4 w-4" />View all stories</Link>
         <p className="text-center text-[0.68rem] leading-relaxed text-muted-foreground">Recordings remain private unless you share a specific story.</p>
       </div>
       <ShareRecordingDialog

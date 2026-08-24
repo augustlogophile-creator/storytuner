@@ -11634,3 +11634,501 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 .dark .journal-media-helper-text,
 .dark .journal-media-metadata-label { color: #c5b9aa !important; }
 .dark .journal-capture-actions button.is-secondary { border-color: #50483e !important; background: #2a2722 !important; color: #ece3d6 !important; }
+
+/* August 23 late-night consistency pass. This block is intentionally the final
+   authority for the Journal capture menu/save states, Coach composer focus,
+   onboarding choice stability, and the Home Library shelf. */
+
+/* Parch composer should never draw a second rectangle around typed text. */
+.coach-composer,
+.coach-composer:focus-within {
+  border-color: var(--border) !important;
+  box-shadow: 0 1px 2px rgba(32,28,24,.025) !important;
+  outline: 0 !important;
+}
+.coach-composer-input,
+.coach-composer-input:focus,
+.coach-composer-input:focus-visible {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Intro choices stay physically still when tapped. */
+.book-choice,
+.book-choice:active,
+.book-choice[data-selected="true"],
+.book-choice[data-selected="true"]:active {
+  transform: none !important;
+}
+
+/* New Journal entry menu: compact, clean, and flat rather than a stack of cards. */
+.journal-entry-menu {
+  width: min(calc(100vw - 2.6rem), 21.75rem) !important;
+  padding: .92rem .9rem .8rem !important;
+  border: 1px solid #ddd2c3 !important;
+  border-radius: 1.45rem !important;
+  background: #fffdf8 !important;
+  box-shadow: 0 18px 42px rgba(50,43,35,.16) !important;
+}
+.journal-entry-menu-top {
+  margin: 0 0 .2rem !important;
+}
+.journal-entry-menu-top h2 {
+  font-size: 1rem !important;
+  line-height: 1.15 !important;
+}
+.journal-entry-menu-top button {
+  width: 1.9rem !important;
+  height: 1.9rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.journal-entry-menu-note {
+  margin: .18rem 0 .48rem !important;
+  max-width: 18rem;
+  color: #817568 !important;
+  font-size: .67rem !important;
+  line-height: 1.42 !important;
+}
+.journal-entry-menu-options {
+  display: block !important;
+  margin: 0 !important;
+}
+.journal-entry-menu-options button {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 2rem minmax(0,1fr) .9rem !important;
+  align-items: center !important;
+  gap: .66rem !important;
+  width: 100% !important;
+  min-height: 3.55rem !important;
+  padding: .56rem .54rem !important;
+  border: 0 !important;
+  border-radius: .88rem !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.journal-entry-menu-options button + button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 2.66rem;
+  right: .5rem;
+  height: 1px;
+  background: #e7ded2;
+}
+.journal-entry-menu-option-icon {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: .7rem !important;
+  background: #edf3f9 !important;
+  color: #5d82a7 !important;
+  box-shadow: none !important;
+}
+.journal-entry-menu-option-icon svg {
+  width: 1rem !important;
+  height: 1rem !important;
+}
+.journal-entry-menu-options strong {
+  font-size: .88rem !important;
+  line-height: 1.15 !important;
+}
+.journal-entry-menu-options small {
+  margin-top: .08rem !important;
+  color: #857a6e !important;
+  font-size: .64rem !important;
+  line-height: 1.2 !important;
+}
+.journal-entry-menu-option-arrow {
+  width: .85rem !important;
+  height: .85rem !important;
+  color: #718eac !important;
+}
+.journal-entry-menu-options button:hover,
+.journal-entry-menu-options button:focus-visible {
+  border: 0 !important;
+  background: rgba(83,121,158,.055) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.journal-entry-menu-options button.is-selected,
+.journal-entry-menu-options button:active {
+  border: 0 !important;
+  background: rgba(83,121,158,.11) !important;
+  box-shadow: inset 0 0 0 1px rgba(83,121,158,.08) !important;
+  transform: scale(.992) !important;
+}
+.dark .journal-entry-menu {
+  border-color: #4b443a !important;
+  background: #26221e !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,.3) !important;
+}
+.dark .journal-entry-menu-note,
+.dark .journal-entry-menu-options small { color: #b8ac9d !important; }
+.dark .journal-entry-menu-options button,
+.dark .journal-entry-menu-options button:hover,
+.dark .journal-entry-menu-options button:focus-visible {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.dark .journal-entry-menu-options button.is-selected,
+.dark .journal-entry-menu-options button:active { background: rgba(105,150,194,.14) !important; }
+.dark .journal-entry-menu-options button + button::before { background: #494239 !important; }
+.dark .journal-entry-menu-option-icon { background: rgba(86,119,154,.18) !important; box-shadow: none !important; }
+
+/* Save button, matching the supplied animated component's state changes while
+   using Tellwise paper/blue tones instead of the original black idle state. */
+.tellwise-save-wrap {
+  position: relative;
+  display: inline-flex;
+  justify-self: end;
+  overflow: visible;
+}
+.tellwise-save-button {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  min-width: 7.35rem !important;
+  height: 2.55rem !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(82,119,155,.28) !important;
+  border-radius: 999px !important;
+  background: #f0f5fb !important;
+  color: #4d7095 !important;
+  box-shadow: 0 5px 15px rgba(56,78,103,.08) !important;
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease !important;
+}
+.tellwise-save-button:not(:disabled):hover {
+  border-color: rgba(82,119,155,.42) !important;
+  box-shadow: 0 8px 19px rgba(56,78,103,.12) !important;
+  transform: scale(1.025) !important;
+}
+.tellwise-save-button:not(:disabled):active { transform: scale(.965) !important; }
+.tellwise-save-button:disabled {
+  border-color: #e1d8cc !important;
+  background: #f5f1ea !important;
+  color: #aaa094 !important;
+  box-shadow: none !important;
+}
+.tellwise-save-backdrop {
+  position: absolute;
+  inset: 1px;
+  border-radius: 999px;
+  background: linear-gradient(180deg,#f8fbff,#edf3fa) !important;
+  transition: background-color 200ms ease !important;
+}
+.tellwise-save-shimmer {
+  position: absolute;
+  width: 210%;
+  aspect-ratio: 1;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  background: conic-gradient(from 0deg,transparent 0 338deg,rgba(77,112,149,.28) 349deg,transparent 360deg) !important;
+  animation: tellwise-save-orbit 1.35s linear infinite !important;
+  opacity: .7;
+}
+.tellwise-save-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .42rem;
+  padding: 0 .9rem;
+  color: inherit;
+  font-size: .74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: tellwise-save-copy-in 200ms ease both;
+}
+.tellwise-save-content svg { width: .9rem; height: .9rem; }
+.tellwise-save-spinner { animation: tellwise-save-spin 1s linear infinite; }
+.tellwise-save-button[data-status="saving"] {
+  border-color: #668ab0 !important;
+  background: #668ab0 !important;
+  color: #fff !important;
+  transform: scale(1) !important;
+}
+.tellwise-save-button[data-status="saving"] .tellwise-save-backdrop { background: #668ab0 !important; }
+.tellwise-save-button[data-status="saved"] {
+  border-color: #88a48c !important;
+  background: #91ad95 !important;
+  color: #fff !important;
+  animation: tellwise-save-success-bounce 220ms ease both;
+}
+.tellwise-save-button[data-status="saved"] .tellwise-save-backdrop { background: #91ad95 !important; }
+.tellwise-save-celebration {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 6;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.tellwise-save-sparkle {
+  position: absolute;
+  right: -4.25rem;
+  top: -1.65rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: #d2a942;
+  animation: tellwise-save-sparkle-pop 560ms ease both;
+}
+.tellwise-save-particle {
+  --particle-angle: 0deg;
+  --particle-delay: 0ms;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: .24rem;
+  height: .24rem;
+  border-radius: 999px;
+  background: #6e91b4;
+  transform: rotate(var(--particle-angle)) translateX(0);
+  opacity: 0;
+  animation: tellwise-save-particle-pop 560ms cubic-bezier(.2,.75,.2,1) var(--particle-delay) both;
+}
+.tellwise-save-particle:nth-child(3n) { background: #d2aa51; }
+.tellwise-save-particle:nth-child(4n) { background: #8ca78f; }
+@keyframes tellwise-save-orbit { to { rotate: 360deg; } }
+@keyframes tellwise-save-copy-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tellwise-save-success-bounce { 0% { transform: scale(1); } 52% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes tellwise-save-sparkle-pop { 0% { opacity:0; transform: scale(.25) rotate(-20deg); } 45% { opacity:1; transform: scale(1.15) rotate(8deg); } 100% { opacity:0; transform: scale(.75) rotate(22deg); } }
+@keyframes tellwise-save-particle-pop { 0% { opacity:0; transform: rotate(var(--particle-angle)) translateX(0) scale(.5); } 34% { opacity:1; } 100% { opacity:0; transform: rotate(var(--particle-angle)) translateX(2.35rem) scale(.9); } }
+.dark .tellwise-save-button {
+  border-color: #566f8c !important;
+  background: #2a3540 !important;
+  color: #c8d9ea !important;
+  box-shadow: none !important;
+}
+.dark .tellwise-save-backdrop { background: #2a3540 !important; }
+.dark .tellwise-save-button:disabled {
+  border-color: #4b443b !important;
+  background: #28241f !important;
+  color: #776e63 !important;
+}
+.dark .tellwise-save-button[data-status="saving"] .tellwise-save-backdrop { background: #5e82a8 !important; }
+.dark .tellwise-save-button[data-status="saved"] .tellwise-save-backdrop { background: #728f75 !important; }
+
+/* Journal capture page. */
+.journal-capture-panel { gap: .72rem !important; }
+.journal-capture-top {
+  grid-template-columns: 2.25rem minmax(0,1fr) auto !important;
+  gap: .55rem !important;
+  padding-inline: .15rem !important;
+}
+.journal-capture-top > span { font-size: .9rem !important; }
+.journal-capture-save-button,
+.journal-text-save-button { min-width: 7.35rem !important; }
+.journal-media-title-only {
+  display: block !important;
+  padding: .48rem .15rem .18rem !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+}
+.journal-media-title-only::after { display: none !important; content: none !important; }
+.journal-media-title-only input {
+  width: 100%;
+  min-height: 2.6rem !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #2f2923 !important;
+  font-family: var(--font-book-serif), Georgia, serif !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  box-shadow: none !important;
+}
+.journal-media-title-only input::placeholder { color: #a99c89 !important; font-weight: 700 !important; opacity: 1 !important; }
+.journal-audio-stage {
+  min-height: 18.5rem !important;
+  padding: 4rem .2rem 0 !important;
+}
+.journal-audio-stage > strong {
+  color: #2e2822 !important;
+  font-size: 2.8rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -.04em !important;
+  line-height: 1 !important;
+}
+.journal-audio-stage p {
+  margin-top: 1.25rem !important;
+  max-width: 18rem !important;
+}
+.journal-waveform { margin-top: 1.6rem !important; }
+.journal-inline-audio-player {
+  width: min(100%, 25rem) !important;
+  margin: 1.7rem auto 0 !important;
+  padding: .78rem .9rem !important;
+  gap: .7rem !important;
+  border: 0 !important;
+  background: #eef0f4 !important;
+  box-shadow: inset 0 0 0 1px rgba(72,68,62,.035) !important;
+}
+.journal-inline-audio-track { min-width: 0 !important; }
+.journal-inline-audio-rail { background: rgba(48,45,41,.18) !important; }
+.journal-inline-audio-progress { background: #4f7398 !important; }
+.journal-inline-audio-range { touch-action: pan-x; }
+.dark .journal-inline-audio-player { background: #2d2924 !important; box-shadow: none !important; }
+.dark .journal-inline-audio-rail { background: rgba(235,226,214,.2) !important; }
+.dark .journal-inline-audio-progress { background: #86add2 !important; }
+.dark .journal-audio-stage > strong { color: #f2ebe0 !important; }
+.dark .journal-media-title-only input { color: #f2ebe0 !important; }
+.dark .journal-media-title-only input::placeholder { color: #958a7c !important; }
+
+.journal-video-stage {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.journal-video-live-stage,
+.journal-video-review-player {
+  min-height: 24.5rem !important;
+  border: 0 !important;
+  border-radius: 1.45rem !important;
+  box-shadow: none !important;
+}
+.journal-video-preview { min-height: 24.5rem !important; }
+.journal-video-live-top {
+  top: 1rem !important;
+  left: 1rem !important;
+  right: 1rem !important;
+}
+.journal-video-live-top strong {
+  font-size: 1.85rem !important;
+  font-weight: 700 !important;
+}
+.journal-video-live-top span {
+  background: rgba(28,24,21,.5) !important;
+  backdrop-filter: blur(8px);
+}
+.journal-video-live-controls { display: none !important; }
+.journal-media-helper-text {
+  margin: .75rem auto 0 !important;
+  max-width: 18rem !important;
+  font-size: .72rem !important;
+}
+.journal-capture-actions {
+  margin-top: auto !important;
+  padding-bottom: max(1.35rem, env(safe-area-inset-bottom)) !important;
+  transform: translateY(-.35rem);
+}
+.journal-capture-actions button {
+  min-height: 3rem !important;
+}
+.journal-capture-actions button.is-stop {
+  border-color: #5d82a7 !important;
+  background: #5d82a7 !important;
+  color: #fff !important;
+}
+.journal-capture-actions button.is-secondary {
+  border: 1px solid #ddd4c7 !important;
+  background: #efede8 !important;
+  color: #5a5147 !important;
+  box-shadow: none !important;
+}
+.dark .journal-capture-actions button.is-secondary {
+  border-color: #4b443b !important;
+  background: #2b2823 !important;
+  color: #ddd3c5 !important;
+}
+
+/* Home Library copy, motion, and more book-like covers. */
+.home-library-section-description {
+  max-width: 18.75rem !important;
+  margin-top: .28rem !important;
+  font-size: .64rem !important;
+  line-height: 1.42 !important;
+}
+.home-library {
+  box-shadow: none !important;
+}
+.home-library-copy {
+  min-height: 3.2rem !important;
+}
+.home-library-label {
+  min-height: 2.9rem !important;
+  max-width: 19rem !important;
+  font-size: .65rem !important;
+  line-height: 1.4 !important;
+  animation: none !important;
+  transition: opacity 190ms ease, transform 190ms ease !important;
+}
+.home-library-label.is-out,
+.home-library-books.is-out {
+  opacity: 0 !important;
+  transform: translateY(4px) !important;
+}
+.home-library-label.is-in,
+.home-library-books.is-in {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  animation: none !important;
+}
+.home-library-shuffle {
+  box-shadow: none !important;
+}
+.home-library-shuffle span { animation: home-library-spin 620ms cubic-bezier(.22,.72,.24,1) both !important; }
+.home-library-books {
+  animation: none !important;
+  transition: opacity 190ms ease, transform 190ms ease !important;
+}
+.home-library-book {
+  animation-duration: 320ms !important;
+}
+.home-library-book-cover {
+  box-shadow: 0 4px 8px rgba(42,35,29,.1), 0 12px 16px -12px rgba(42,35,29,.28) !important;
+}
+.home-library-book-cover::after {
+  opacity: .46 !important;
+}
+.home-library-book-copy {
+  padding: .48rem .36rem .42rem .86rem !important;
+}
+.home-library-book-copy strong {
+  font-size: .47rem !important;
+  line-height: 1.2 !important;
+}
+.home-library-book-copy span { font-size: .29rem !important; }
+.home-library-book-spine {
+  width: 9.5% !important;
+}
+.dark .home-library,
+.dark .home-library-shuffle,
+.dark .home-library-book-cover,
+.dark .home-library-book-pages,
+.dark .home-library-book-copy,
+.dark .home-library-book-color {
+  box-shadow: none !important;
+}
+.dark .home-library-book-cover::after { opacity: .08 !important; }
+
+@media (max-width: 380px) {
+  .journal-entry-menu { width: min(calc(100vw - 1.6rem), 21rem) !important; }
+  .journal-capture-save-button,
+  .journal-text-save-button,
+  .tellwise-save-button { min-width: 6.5rem !important; }
+  .journal-audio-stage { padding-top: 3.25rem !important; }
+  .journal-inline-audio-player { grid-template-columns: auto auto minmax(0,1fr) auto !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tellwise-save-button,
+  .tellwise-save-content,
+  .tellwise-save-shimmer,
+  .tellwise-save-sparkle,
+  .tellwise-save-particle,
+  .home-library-label,
+  .home-library-books,
+  .home-library-shuffle span { animation: none !important; transition: none !important; }
+}
+.dark .home-library-book-cover::after { display: none !important; }

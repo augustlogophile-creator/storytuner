@@ -6,49 +6,49 @@ import { Shuffle } from "lucide-react"
 const SPINE_COLORS = ["#4E6E8F", "#B26A45", "#6E6047"]
 
 const SHELVES = [
-  { label: "Finding material, helps you notice personal moments that can turn into stronger stories.", books: [
+  { label: "Offers practical ideas for finding true stories in ordinary moments.", books: [
     { title: "Bird by Bird", author: "Anne Lamott" },
     { title: "Storyworthy", author: "Matthew Dicks" },
     { title: "How to Tell a Story", author: "The Moth" },
   ] },
-  { label: "Openings, offers tips on how to grab attention and guide the audience from the start.", books: [
+  { label: "Offers tips for starting a story clearly and holding attention from the first lines.", books: [
     { title: "The First Five Pages", author: "Noah Lukeman" },
     { title: "Wired for Story", author: "Lisa Cron" },
   ] },
-  { label: "Endings, offers advice on how to land a story clearly without over-explaining it.", books: [
+  { label: "Offers advice on improving your landing and ending a story cleanly.", books: [
     { title: "Story", author: "Robert McKee" },
     { title: "Plot & Structure", author: "James Scott Bell" },
     { title: "The Story Grid", author: "Shawn Coyne" },
   ] },
-  { label: "Structure and pacing, helps you organize events and keep the story moving at the right speed.", books: [
+  { label: "Offers techniques for organizing events and keeping a story moving at the right pace.", books: [
     { title: "Into the Woods", author: "John Yorke" },
     { title: "The Anatomy of Story", author: "John Truby" },
     { title: "Techniques of the Selling Writer", author: "Dwight V. Swain" },
   ] },
-  { label: "Stakes, helps you show why the outcome matters and why the listener should care.", books: [
+  { label: "Offers guidance on making the audience care about what happens next.", books: [
     { title: "Conflict and Suspense", author: "James Scott Bell" },
     { title: "The Art of Dramatic Writing", author: "Lajos Egri" },
     { title: "Story Genius", author: "Lisa Cron" },
   ] },
-  { label: "Voice, helps you sound more natural, specific, and recognizably like yourself.", books: [
+  { label: "Offers advice on sounding natural, specific, and recognizably like yourself.", books: [
     { title: "On Writing", author: "Stephen King" },
     { title: "Steering the Craft", author: "Ursula K. Le Guin" },
   ] },
-  { label: "Oral storytelling, gives practical guidance for telling a story out loud to a real audience.", books: [
+  { label: "Offers practical techniques for telling a story clearly and confidently out loud.", books: [
     { title: "Confessions of a Public Speaker", author: "Scott Berkun" },
     { title: "Talk Like TED", author: "Carmine Gallo" },
     { title: "Resonate", author: "Nancy Duarte" },
   ] },
-  { label: "Memoir and ethics, helps you tell true personal stories while handling other people with care.", books: [
+  { label: "Offers guidance for telling true personal stories while handling other people with care.", books: [
     { title: "The Art of Memoir", author: "Mary Karr" },
     { title: "Handling the Truth", author: "Beth Kephart" },
     { title: "Inventing the Truth", author: "ed. William Zinsser" },
   ] },
-  { label: "Story theory, explains different ways stories create meaning, structure, and attention.", books: [
+  { label: "Explores different ideas about structure, meaning, and what makes a story work.", books: [
     { title: "The Seven Basic Plots", author: "Christopher Booker" },
     { title: "Poetics", author: "Aristotle" },
   ] },
-  { label: "Comic timing, teaches setup, pause, surprise, and payoff in stories meant to be funny.", books: [
+  { label: "Offers techniques for setup, timing, surprise, and payoff in funny stories.", books: [
     { title: "The Comic Toolbox", author: "John Vorhaus" },
     { title: "Poking a Dead Frog", author: "Mike Sacks" },
   ] },
@@ -74,13 +74,13 @@ export function LibraryShelf() {
   return (
     <section className="home-library" aria-label="Curated storytelling books">
       <div className="home-library-copy">
-        <p key={index} className={`home-library-label ${changing !== "idle" ? `is-${changing}` : ""}`} aria-live="polite">{shelf.label}</p>
+        <p className={`home-library-label ${changing !== "idle" ? `is-${changing}` : ""}`} aria-live="polite">{shelf.label}</p>
         <button type="button" className="home-library-shuffle" onClick={shuffleShelf} aria-label="Show a different book shelf">
           <span key={spinKey}><Shuffle /></span>
         </button>
       </div>
 
-      <div key={`shelf-${index}`} className={`home-library-books is-${shelf.books.length} ${changing !== "idle" ? `is-${changing}` : ""}`}>
+      <div className={`home-library-books is-${shelf.books.length} ${changing !== "idle" ? `is-${changing}` : ""}`}>
         {shelf.books.map((book, bookIndex) => (
           <LibraryBook
             key={`${index}-${book.title}`}

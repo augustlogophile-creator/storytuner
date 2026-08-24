@@ -358,6 +358,7 @@ function BookChoice({
       onClick={onClick}
       aria-pressed={selected}
       data-book-no-turn="true"
+      data-no-global-tap="true"
       className={compact ? "book-choice is-compact" : "book-choice"}
       data-selected={selected ? "true" : "false"}
     >

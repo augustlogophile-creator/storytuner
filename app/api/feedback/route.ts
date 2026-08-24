@@ -264,7 +264,7 @@ export async function POST(req: Request) {
           wordCount,
           error: wordCount === 0
             ? "Parch could not hear a story. Check your microphone and try another take."
-            : `Parch caught ${wordCount} ${wordCount === 1 ? "word" : "words"}. Tell at least 50 words, then try again.`,
+            : "This story was under 50 words. Try telling a longer one, then grade it again.",
         }, { status: 400 })
       }
       const requestKey = body.requestKey

@@ -215,6 +215,20 @@ function normalizeLessonQuizScores(raw: unknown): Record<string, number> {
   return scores
 }
 
+function normalizeRecording(raw: Recording): Recording {
+  const scores = {
+    hook: Number.isFinite(raw.scores?.hook) ? raw.scores.hook : 0,
+    development: Number.isFinite(raw.scores?.development) ? raw.scores.development : 0,
+    landing: Number.isFinite(raw.scores?.landing) ? raw.scores.landing : 0,
+  }
+  const derivedOverall = Math.round((scores.hook + scores.development + scores.landing) / 3)
+  return {
+    ...raw,
+    scores,
+    overall: Number.isFinite(raw.overall) && raw.overall > 0 ? raw.overall : derivedOverall,
+  }
+}
+
 function normalize(raw: unknown, accountOwnerId: string | null = null, premium = false, displayName = "Storyteller"): AppState {
   const base = freshState(accountOwnerId, premium, displayName)
   if (!raw || typeof raw !== "object") return base
@@ -232,7 +246,7 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
     arenaUses: value.arenaUses && typeof value.arenaUses === "object" ? value.arenaUses : {},
     arenaTotal: typeof value.arenaTotal === "number" ? value.arenaTotal : Object.values(value.arenaUses ?? {}).reduce((sum, count) => sum + (typeof count === "number" ? count : 0), 0),
     ownedWeavers: Array.isArray(value.ownedWeavers) && value.ownedWeavers.length ? value.ownedWeavers : ["classic"],
-    recordings: Array.isArray(value.recordings) ? value.recordings : [],
+    recordings: Array.isArray(value.recordings) ? value.recordings.map((recording) => normalizeRecording(recording)) : [],
     community: Array.isArray(value.community) ? [...seedCommunityPosts().filter((seed) => !value.community?.some((post) => post.id === seed.id)), ...value.community] : seedCommunityPosts(),
     likedPosts: Array.isArray(value.likedPosts) ? value.likedPosts : [],
     coach: value.coach && typeof value.coach === "object"
