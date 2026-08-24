@@ -1,7 +1,7 @@
-import Image from "next/image"
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { ArrowLeft } from "lucide-react"
+import { ParchReading } from "@/components/ui/parch-reading"
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -19,14 +19,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <div className="auth-content auth-content-polished">
             <div className="auth-stage" aria-hidden="true">
               <span className="auth-stage-paper" />
-              <Image
-                src="/parch-classic.png"
-                alt=""
-                width={294}
-                height={244}
-                priority
-                className="auth-parch"
-              />
+              <ParchReading />
             </div>
             <div className="auth-panel">{children}</div>
           </div>
