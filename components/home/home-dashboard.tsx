@@ -9,8 +9,7 @@ import { ProgressBar } from "@/components/progress-bar"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
 import { Celebration } from "@/components/ui/celebration"
 import { LibraryShelf } from "@/components/home/library-shelf"
-import { courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
-import { stageLabels } from "@/lib/curriculum"
+import { activityStreaks, courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
   const { state, ready } = useApp()
@@ -18,11 +17,20 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
   const progress = courseProgress(state)
   const next = nextCourseItem(state)
   const freeLimitReached = freeLessonLimitReached(state) && progress.done < progress.total
-  const week = getCurrentWeek(state.activityDates)
+  const [now, setNow] = useState(() => new Date())
+  const streaks = activityStreaks(state.activityDates, now)
+  const week = getCurrentWeek(state.activityDates, now)
 
   useEffect(() => {
-    if (!ready || state.streak < 1 || !state.activityDates.includes(localDateKey(new Date()))) return
-    const key = `storytuner:streak-celebrated:${localDateKey(new Date())}:${state.streak}`
+    const updateClock = () => setNow(new Date())
+    updateClock()
+    const timer = window.setInterval(updateClock, 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!ready || streaks.current < 1 || !state.activityDates.includes(localDateKey(now))) return
+    const key = `storytuner:streak-celebrated:${localDateKey(now)}:${streaks.current}`
     try {
       if (window.localStorage.getItem(key)) return
       window.localStorage.setItem(key, "1")
@@ -31,7 +39,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
     } catch {
       return
     }
-  }, [ready, state.activityDates, state.streak])
+  }, [now, ready, state.activityDates, streaks.current])
 
   const courseTitle = next
     ? next.type === "lesson" ? next.unit.title : next.checkpoint.title
@@ -39,41 +47,33 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       ? "You finished your five free lessons"
       : "Your storytelling course is complete"
 
-  const courseSubtitle = next
-    ? next.type === "lesson"
-      ? `Unit ${next.unit.index} · ${stageLabels[next.stage]} · ${next.unit.skill}`
-      : `${next.checkpoint.subtitle} · Test what you remember`
-    : freeLimitReached
-      ? "Founding Membership unlocks the remaining ten lessons."
-      : "Review any lesson or record a complete story in the Studio."
-
   const courseHref = next
     ? next.type === "lesson" ? `/activities/${next.unit.id}` : `/test/${next.checkpoint.id}`
     : freeLimitReached ? "/membership?from=lessons" : "/activities"
   const courseAction = next ? (next.type === "lesson" ? "Continue learning" : "Take unit test") : freeLimitReached ? "Unlock lessons" : "Review course"
   const activeDays = week.filter((day) => day.active).length
-  const displayName = state.profile.name.trim().slice(0, 15) || "Storyteller"
+  const displayName = state.profile.name.trim() || "Storyteller"
 
   return (
     <div className="home-dashboard flex min-h-full flex-col">
-      <Celebration active={celebrateStreak} label={`${state.streak} day streak`} onDone={() => setCelebrateStreak(false)} />
+      <Celebration active={celebrateStreak} label={`${streaks.current} day streak`} onDone={() => setCelebrateStreak(false)} />
       {accountNotice && <AccountRestoredNotice message={accountNotice} updatedAt={accountNoticeUpdatedAt} />}
 
       <header className="book-home-header flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <Eyebrow className="book-home-date text-[0.64rem] tracking-[0.2em]">{today()}</Eyebrow>
+          <Eyebrow className="book-home-date text-[0.64rem] tracking-[0.2em]">{today(now)}</Eyebrow>
           <h1 className="book-home-greeting mt-2 max-w-full break-words text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
-            {greeting()},<br />{displayName}.
+            {greeting(now)},<br />{displayName}.
           </h1>
           <p className="book-home-subtitle mt-2 max-w-[19rem] text-[0.77rem] leading-[1.42] text-muted-foreground text-pretty">
-            Learn one idea. Try it in a story.
+            Learn the ideas, then apply them to stories of your own.
           </p>
         </div>
 
         <div className="book-streak-card flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
           <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
-          <span className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]">{state.streak}</span>
-          <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">{state.streak === 1 ? "day" : "days"}</span>
+          <span className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]">{streaks.current}</span>
+          <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">{streaks.current === 1 ? "day" : "days"}</span>
         </div>
       </header>
 
@@ -85,8 +85,6 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
         <h2 className="book-course-title mt-3 text-[1.2rem] font-semibold leading-tight tracking-[-0.028em] text-balance">
           {courseTitle}
         </h2>
-        <p className="book-course-subtitle mt-1.5 text-[0.72rem] leading-relaxed text-[#bdb7af] text-pretty">{courseSubtitle}</p>
-
         <div className="mt-3">
           <ProgressBar value={progress.percent} className="h-1.5 bg-white/15" barClassName="bg-white/65 transition-none" />
         </div>
@@ -130,13 +128,13 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             href="/studio?mode=free"
             icon={<Mic2 className="h-4 w-4" strokeWidth={2} />}
             title="Tell your own story"
-            description="No prompt. Any moment."
+            description="No prompt, practice any story you've been working on."
           />
           <PracticeCard
             href="/studio?mode=scenario"
             icon={<Shuffle className="h-4 w-4" strokeWidth={2} />}
             title="Choose a scenario"
-            description="Practice a real situation."
+            description="Practice a real life storytelling situation."
           />
         </div>
 
@@ -162,19 +160,18 @@ function PracticeCard({ href, icon, title, description }: { href: string; icon: 
   )
 }
 
-function greeting() {
-  const hour = new Date().getHours()
+function greeting(date: Date) {
+  const hour = date.getHours()
   if (hour < 12) return "Good morning"
-  if (hour < 18) return "Good afternoon"
+  if (hour < 17) return "Good afternoon"
   return "Good evening"
 }
 
-function today() {
-  return new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
+function today(date: Date) {
+  return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
 }
 
-function getCurrentWeek(activityDates: string[]) {
-  const now = new Date()
+function getCurrentWeek(activityDates: string[], now: Date) {
   const day = now.getDay() || 7
   const monday = new Date(now)
   monday.setHours(0, 0, 0, 0)

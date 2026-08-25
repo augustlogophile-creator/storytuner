@@ -170,6 +170,43 @@ function daysBetween(a: string, b: string) {
   return Math.round((Date.UTC(bYear, bMonth - 1, bDay) - Date.UTC(aYear, aMonth - 1, aDay)) / 86400000)
 }
 
+function dayOrdinal(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  if (!year || month < 1 || month > 12 || day < 1 || day > 31) return null
+  return Math.floor(Date.UTC(year, month - 1, day) / 86_400_000)
+}
+
+export function activityStreaks(activityDates: string[], now = new Date()) {
+  const ordinals = [...new Set(activityDates.map(dayOrdinal).filter((value): value is number => value !== null))].sort((a, b) => a - b)
+  if (!ordinals.length) return { current: 0, longest: 0 }
+
+  let longest = 1
+  let run = 1
+  for (let index = 1; index < ordinals.length; index += 1) {
+    if (ordinals[index] === ordinals[index - 1] + 1) {
+      run += 1
+      longest = Math.max(longest, run)
+    } else {
+      run = 1
+    }
+  }
+
+  const todayOrdinal = dayOrdinal(todayKey(now))!
+  const latest = ordinals.at(-1)!
+  if (todayOrdinal - latest > 1) return { current: 0, longest }
+
+  let current = 1
+  for (let index = ordinals.length - 1; index > 0; index -= 1) {
+    if (ordinals[index] !== ordinals[index - 1] + 1) break
+    current += 1
+  }
+  return { current, longest }
+}
+
 function freshState(accountOwnerId: string | null = null, premium = false, displayName = "Storyteller"): AppState {
   return {
     version: 6,
@@ -233,6 +270,10 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
   const base = freshState(accountOwnerId, premium, displayName)
   if (!raw || typeof raw !== "object") return base
   const value = raw as Partial<AppState>
+  const activityDates = Array.isArray(value.activityDates)
+    ? Array.from(new Set(value.activityDates.filter((date): date is string => typeof date === "string" && dayOrdinal(date) !== null))).sort().slice(-180)
+    : []
+  const derivedStreaks = activityStreaks(activityDates)
   return {
     ...base,
     ...value,
@@ -242,7 +283,9 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
     onboardingPreferences: { ...base.onboardingPreferences, ...(value.onboardingPreferences ?? {}) },
     settings: { ...base.settings, ...(value.settings ?? {}) },
     completed: Array.isArray(value.completed) ? value.completed : [],
-    activityDates: Array.isArray(value.activityDates) ? value.activityDates : [],
+    activityDates,
+    streak: derivedStreaks.current,
+    longestStreak: Math.max(typeof value.longestStreak === "number" ? value.longestStreak : 0, derivedStreaks.longest),
     arenaUses: value.arenaUses && typeof value.arenaUses === "object" ? value.arenaUses : {},
     arenaTotal: typeof value.arenaTotal === "number" ? value.arenaTotal : Object.values(value.arenaUses ?? {}).reduce((sum, count) => sum + (typeof count === "number" ? count : 0), 0),
     ownedWeavers: Array.isArray(value.ownedWeavers) && value.ownedWeavers.length ? value.ownedWeavers : ["classic"],
@@ -264,16 +307,15 @@ function normalize(raw: unknown, accountOwnerId: string | null = null, premium =
 
 function applyActivity(state: AppState) {
   const today = todayKey()
-  if (state.activityDates.includes(today)) return state
-  const dates = [...state.activityDates, today].slice(-180)
-  const sorted = [...dates].sort()
-  const prior = sorted.at(-2)
-  const streak = prior && daysBetween(prior, today) === 1 ? state.streak + 1 : 1
+  const dates = state.activityDates.includes(today)
+    ? state.activityDates
+    : [...state.activityDates, today].sort().slice(-180)
+  const derivedStreaks = activityStreaks(dates)
   return {
     ...state,
     activityDates: dates,
-    streak,
-    longestStreak: Math.max(state.longestStreak, streak),
+    streak: derivedStreaks.current,
+    longestStreak: Math.max(state.longestStreak, derivedStreaks.longest),
   }
 }
 

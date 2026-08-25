@@ -13397,3 +13397,48 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 .dark .journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-content > span {
   color: #938a7f !important;
 }
+
+
+/* Progress week browser: compact, tappable controls with a subtle page-like
+   horizontal shift when moving through earlier weeks. */
+.progress-week-arrow {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.progress-week-arrow:not(:disabled):hover {
+  background: color-mix(in oklch, var(--secondary) 72%, var(--card)) !important;
+  color: var(--foreground) !important;
+}
+.progress-week-arrow:not(:disabled):active {
+  transform: scale(.94);
+}
+.progress-week-strip {
+  will-change: transform, opacity;
+}
+.progress-week-strip-back {
+  animation: progress-week-in-from-left 240ms cubic-bezier(.22,.8,.24,1) both;
+}
+.progress-week-strip-forward {
+  animation: progress-week-in-from-right 240ms cubic-bezier(.22,.8,.24,1) both;
+}
+@keyframes progress-week-in-from-left {
+  from { opacity: .28; transform: translateX(-.7rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes progress-week-in-from-right {
+  from { opacity: .28; transform: translateX(.7rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-week-strip-back,
+  .progress-week-strip-forward { animation: none !important; }
+}
+.dark .progress-week-arrow {
+  background: #302b26 !important;
+  border-color: #51493f !important;
+  color: #c9beae !important;
+}
+.dark .progress-week-arrow:not(:disabled):hover {
+  background: #3a342e !important;
+  color: #f0e8dc !important;
+}
