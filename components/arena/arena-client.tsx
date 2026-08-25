@@ -202,6 +202,8 @@ export function ArenaClient() {
   const captureVersionRef = useRef(0)
   const reviewRequestKeyRef = useRef<string | null>(null)
   const [draftId, setDraftId] = useState<string | null>(null)
+  const [openedFromDraft, setOpenedFromDraft] = useState(false)
+  const draftIdRef = useRef<string | null>(null)
   const draftPersistedRef = useRef(false)
   const draftCreatedAtRef = useRef<string | null>(null)
   const transcriptWordCount = meaningfulWordCount(transcript)
@@ -274,6 +276,8 @@ export function ArenaClient() {
     if (!recording || recordingHasGrade(recording) || !recording.transcript.trim()) return
 
     setDraftId(recording.id)
+    draftIdRef.current = recording.id
+    setOpenedFromDraft(true)
     draftPersistedRef.current = true
     draftCreatedAtRef.current = recording.createdAt
     setTitle(recording.title === "Untitled story" ? "" : recording.title)
@@ -395,6 +399,8 @@ export function ArenaClient() {
     setTranscriptionStage("idle")
     setSavedId(null)
     setDraftId(null)
+    draftIdRef.current = null
+    setOpenedFromDraft(false)
     draftPersistedRef.current = false
     draftCreatedAtRef.current = null
     setPromptOverride("")
@@ -545,6 +551,8 @@ export function ArenaClient() {
       setTranscript("")
       setTitle("")
       setDraftId(null)
+      draftIdRef.current = null
+      setOpenedFromDraft(false)
       draftPersistedRef.current = false
       draftCreatedAtRef.current = null
       setTranscriptionOutcome("idle")
@@ -568,6 +576,8 @@ export function ArenaClient() {
       void cleanupDraftCloudUpload()
     }
     setDraftId(null)
+    draftIdRef.current = null
+    setOpenedFromDraft(false)
     draftPersistedRef.current = false
     draftCreatedAtRef.current = null
     captureVersionRef.current += 1
@@ -611,6 +621,8 @@ export function ArenaClient() {
       void cleanupDraftCloudUpload()
     }
     setDraftId(null)
+    draftIdRef.current = null
+    setOpenedFromDraft(false)
     draftPersistedRef.current = false
     draftCreatedAtRef.current = null
     captureVersionRef.current += 1
@@ -671,6 +683,44 @@ export function ArenaClient() {
     setCameraOn(track.enabled)
   }
 
+  function persistTranscriptDraft(nextTranscript: string) {
+    const cleanTranscript = nextTranscript.trim()
+    if (!cleanTranscript || phase !== "review") return
+
+    const id = draftIdRef.current ?? draftId ?? cloudUploadRef.current?.id ?? crypto.randomUUID()
+    if (!draftIdRef.current) {
+      draftIdRef.current = id
+      setDraftId(id)
+    }
+
+    const createdAt = draftCreatedAtRef.current ?? new Date().toISOString()
+    draftCreatedAtRef.current = createdAt
+    draftPersistedRef.current = true
+
+    const draftTitle = title.trim() || firstSentence(cleanTranscript)
+    saveDraftRecording(makeDraftRecording({
+      id,
+      createdAt,
+      title: draftTitle,
+      transcript: cleanTranscript,
+      context: contextName,
+      prompt,
+      duration: Math.max(1, seconds),
+      mediaKind,
+      mimeType,
+      cloudRecordingId: cloudUploadRef.current?.id,
+      cloudStoragePath: cloudUploadRef.current?.storagePath,
+      storyMode,
+      scenarioId: storyMode === "scenario" ? scenario.id : undefined,
+      promptIndex: storyMode === "scenario" ? promptIndex : undefined,
+      targetSeconds,
+      cameraOn,
+      usageRequestKey: reviewRequestKeyRef.current ?? undefined,
+    }))
+
+    if (mediaBlob) void saveMedia(id, mediaBlob).catch(() => undefined)
+  }
+
   async function transcribeRecording() {
     if (transcriptionPromiseRef.current) return transcriptionPromiseRef.current
 
@@ -712,6 +762,7 @@ export function ArenaClient() {
         setTranscript(result.transcript)
         setTitle(draftTitle)
         setDraftId(result.id)
+        draftIdRef.current = result.id
         draftPersistedRef.current = true
         saveDraftRecording(makeDraftRecording({
           id: result.id,
@@ -762,6 +813,7 @@ export function ArenaClient() {
             setTranscript(fallback.text)
             setTitle(draftTitle)
             setDraftId(localDraftId)
+            draftIdRef.current = localDraftId
             draftPersistedRef.current = true
             saveDraftRecording(makeDraftRecording({
               id: localDraftId,
@@ -860,7 +912,7 @@ export function ArenaClient() {
         if (data.code === "ARENA_LIMIT_REACHED") setServerRemainingFreeStories(0)
         throw new Error(data.error || "Parch could not grade this story.")
       }
-      const id = draftId ?? cloudUploadRef.current?.id ?? crypto.randomUUID()
+      const id = draftIdRef.current ?? draftId ?? cloudUploadRef.current?.id ?? crypto.randomUUID()
       if (mediaBlob) await saveMedia(id, mediaBlob).catch(() => undefined)
       const cloudUpload = cloudUploadRef.current
       const aiTitle = data.title?.trim() || title.trim() || firstSentence(clean)
@@ -909,6 +961,8 @@ export function ArenaClient() {
       setFeedback(data)
       setSavedId(id)
       setDraftId(null)
+      draftIdRef.current = null
+      setOpenedFromDraft(false)
       draftPersistedRef.current = false
       draftCreatedAtRef.current = null
       setPhase("result")
@@ -1131,11 +1185,13 @@ export function ArenaClient() {
 
       {phase === "review" && (
         <>
-          <section className="rounded-3xl border border-border bg-card p-5">
-            <Eyebrow>Review your take</Eyebrow>
-            {mediaUrl && mediaKind !== "none" && <ReviewMediaPlayer src={mediaUrl} kind={mediaKind} duration={Math.max(1, seconds)} />}
-            {!mediaUrl && <div className="mt-4 flex h-28 items-center justify-center rounded-2xl bg-secondary text-sm text-muted-foreground">Text-only review</div>}
-          </section>
+          {!openedFromDraft && (
+            <section className="rounded-3xl border border-border bg-card p-5">
+              <Eyebrow>Review your take</Eyebrow>
+              {mediaUrl && mediaKind !== "none" && <ReviewMediaPlayer src={mediaUrl} kind={mediaKind} duration={Math.max(1, seconds)} />}
+              {!mediaUrl && <div className="mt-4 flex h-28 items-center justify-center rounded-2xl bg-secondary text-sm text-muted-foreground">Text-only review</div>}
+            </section>
+          )}
           <section className="rounded-3xl border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-semibold">Clean transcript</h2>
@@ -1150,7 +1206,22 @@ export function ArenaClient() {
               )}
             </div>
             <label className="sr-only" htmlFor="arena-transcript">Clean transcript</label>
-            <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} onBlur={() => { if (draftId && transcript.trim()) saveDraftRecording(makeDraftRecording({ id: draftId, createdAt: draftCreatedAtRef.current ?? new Date().toISOString(), title: title.trim() || firstSentence(transcript), transcript, context: contextName, prompt, duration: Math.max(1, seconds), mediaKind, mimeType, cloudRecordingId: cloudUploadRef.current?.id, cloudStoragePath: cloudUploadRef.current?.storagePath, storyMode, scenarioId: storyMode === "scenario" ? scenario.id : undefined, promptIndex: storyMode === "scenario" ? promptIndex : undefined, targetSeconds, cameraOn, usageRequestKey: reviewRequestKeyRef.current ?? undefined })) }} rows={10} placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
+            <textarea
+              ref={transcriptRef}
+              id="arena-transcript"
+              value={transcript}
+              onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
+                const nextTranscript = event.target.value
+                setTranscript(nextTranscript)
+                setTranscriptionOutcome("success")
+                persistTranscriptDraft(nextTranscript)
+                if (error) setError("")
+              }}
+              onBlur={() => persistTranscriptDraft(transcript)}
+              rows={10}
+              placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"}
+              className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand"
+            />
           </section>
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
@@ -1264,11 +1335,11 @@ function makeDraftRecording(values: {
 }
 
 function transcriptionStageLabel(stage: CloudTranscriptionStage | "idle") {
-  if (stage === "preparing") return "Preparing a secure private upload…"
-  if (stage === "uploading") return "Uploading the audio directly to your private Tellwise storage…"
-  if (stage === "transcribing") return "Parch is transcribing the private audio…"
-  if (stage === "saving") return "Saving the transcript securely…"
-  return "Parch is preparing your transcript…"
+  if (stage === "preparing") return "Preparing your recording…"
+  if (stage === "uploading") return "Securely uploading your recording…"
+  if (stage === "transcribing") return "Our AI is transcribing your story…"
+  if (stage === "saving") return "Saving your transcript…"
+  return "Our AI is preparing your transcript…"
 }
 
 function DurationOptionsDialog({

@@ -20,7 +20,7 @@ export function DraftsClient() {
           <Eyebrow>Private archive</Eyebrow>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight">Past drafts</h1>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Transcribed stories you have not graded yet.</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Transcribed stories that have not been graded yet.</p>
       </header>
 
       {drafts.length === 0 ? (
