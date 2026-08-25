@@ -196,7 +196,7 @@ export function ShopClient() {
                       className="group flex h-4 w-full min-w-0 items-center justify-center"
                       aria-label={`View ${item.name}`}
                     >
-                      <span className={`block h-2 w-2 shrink-0 rounded-full transition-[transform,background-color] duration-150 ${index === selectedIndex ? "scale-110 bg-[#2b2823]" : "bg-[#d2cdc5] group-hover:bg-[#aaa39a]"}`} />
+                      <span className={`parch-marker-dot ${index === selectedIndex ? "is-selected" : ""}`} />
                     </button>
                   ))}
                 </div>
@@ -207,7 +207,8 @@ export function ShopClient() {
               type="button"
               onClick={chooseSelected}
               disabled={equipped}
-              className={`mt-auto flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-[inset_0_-2px_0_rgba(0,0,0,0.1)] disabled:cursor-default ${equipped ? "bg-[#ece8e1] text-[#716b64] shadow-none" : owned ? "bg-[#2b2823] text-white hover:bg-[#35312b]" : affordable ? "bg-brand text-brand-foreground hover:brightness-[1.03]" : "bg-[#ddd9d2] text-[#79736c] hover:bg-[#d3cfc8]"}`}
+              data-state={equipped ? "equipped" : owned ? "owned" : affordable ? "affordable" : "locked"}
+              className={`parch-shop-action mt-auto flex h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold shadow-[inset_0_-2px_0_rgba(0,0,0,0.1)] disabled:cursor-default ${equipped ? "bg-[#ece8e1] text-[#716b64] shadow-none" : owned ? "bg-[#2b2823] text-white hover:bg-[#35312b]" : affordable ? "bg-brand text-brand-foreground hover:brightness-[1.03]" : "bg-[#ddd9d2] text-[#79736c] hover:bg-[#d3cfc8]"}`}
             >
               {equipped ? <><Check className="h-4 w-4" />Equipped</> : owned ? "Equip Parch" : <><Sparkles className="h-4 w-4" />Unlock for {selected.cost} XP</>}
             </button>

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState, type ReactNode } from "react"
+import { preload } from "react-dom"
 import { BookOpen, Check } from "lucide-react"
 import BookSlider, { BookPage, type BookSliderHandle } from "@/components/ui/book-slider"
 import {
@@ -25,6 +26,11 @@ type StoryBlockerChoice = Exclude<StoryBlocker, "">
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
+  // Warm the tiny poster and looping mascot video during onboarding so the
+  // authentication page can render Parch immediately instead of waiting for
+  // the navigation to begin the media request.
+  preload("/parch-reading-poster.jpg", { as: "image" })
+  preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
   const normalizedInitialPage = Math.max(0, Math.min(4, initialPage))
   const [page, setPage] = useState(normalizedInitialPage)
   const [coverOpening, setCoverOpening] = useState(false)

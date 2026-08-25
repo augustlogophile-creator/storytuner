@@ -13614,3 +13614,203 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 .dark .book-app .community-reply-input {
   background: transparent !important;
 }
+
+
+/* August 24 late polish: instant auth mascot handoff, borderless Journal search,
+   calmer dark-mode Parch collection controls, and a softened reverse side on
+   intro page turns. These live at the end of the cascade intentionally. */
+.auth-parch {
+  overflow: visible !important;
+  background: transparent !important;
+}
+.auth-parch-poster,
+.auth-parch-video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  -webkit-mask-image: radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%);
+}
+.auth-parch-poster {
+  z-index: 1;
+  opacity: 1;
+  transform: translateZ(0);
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+.auth-parch-poster.is-hidden {
+  opacity: 0;
+}
+.auth-parch-video {
+  z-index: 2;
+  opacity: 0;
+  transform: translateZ(0);
+  transition: opacity 150ms ease;
+  will-change: opacity;
+}
+.auth-parch-video.is-ready {
+  opacity: 1;
+}
+
+/* Journal search should read like a line of type on paper, not an input nested
+   inside another input. No fill, focus box, autofill flash, or dark-mode white
+   rectangle is allowed. */
+.book-app .journal-search-top,
+.journal-search-top {
+  min-height: 2.8rem !important;
+  padding: 0 .12rem !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--journal-rule) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.book-app .journal-search-top:focus-within,
+.journal-search-top:focus-within {
+  border-color: var(--journal-rule) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.book-app .journal-search-top input,
+.book-app .journal-search-top input:hover,
+.book-app .journal-search-top input:active,
+.book-app .journal-search-top input:focus,
+.book-app .journal-search-top input:focus-visible,
+.book-app .journal-search-top input:-webkit-autofill,
+.book-app .journal-search-top input:-webkit-autofill:hover,
+.book-app .journal-search-top input:-webkit-autofill:focus,
+.journal-search-top input,
+.journal-search-top input:hover,
+.journal-search-top input:active,
+.journal-search-top input:focus,
+.journal-search-top input:focus-visible {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+}
+.book-app .journal-search-top input:-webkit-autofill,
+.book-app .journal-search-top input:-webkit-autofill:hover,
+.book-app .journal-search-top input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--journal-ink) !important;
+  transition: background-color 9999s ease-out 0s !important;
+}
+.dark .book-app .journal-search-top,
+.dark .journal-search-top,
+.dark .book-app .journal-search-top:focus-within {
+  border-bottom-color: #4f473d !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.dark .book-app .journal-search-top input,
+.dark .book-app .journal-search-top input:hover,
+.dark .book-app .journal-search-top input:active,
+.dark .book-app .journal-search-top input:focus,
+.dark .book-app .journal-search-top input:focus-visible,
+.dark .book-app .journal-search-top input:-webkit-autofill {
+  border: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #eee6da !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: 0 0 0 1000px #1d1b18 inset !important;
+  -webkit-text-fill-color: #eee6da !important;
+}
+
+/* Parch collection markers stay legible in both themes without a bright-white
+   row of dots or a selected marker disappearing into the dark paper. */
+.parch-marker-dot {
+  display: block;
+  width: .48rem;
+  height: .48rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #c8c1b7;
+  box-shadow: 0 0 0 1px rgba(74,65,55,.05);
+  transform: scale(1);
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+.group:hover .parch-marker-dot {
+  background: #9e968c;
+}
+.parch-marker-dot.is-selected {
+  background: #547ca5;
+  box-shadow: 0 0 0 3px rgba(84,124,165,.13);
+  transform: scale(1.14);
+}
+.dark .parch-archive {
+  background-image:
+    radial-gradient(circle at 50% 14%, rgba(171,129,69,.09), transparent 31%),
+    linear-gradient(180deg, #2d2924 0%, #29251f 100%) !important;
+}
+.dark .parch-grid {
+  background-image: radial-gradient(circle, rgba(211,198,180,.075) 1px, transparent 1px) !important;
+  opacity: .58 !important;
+}
+.dark .parch-marker-dot {
+  background: #746b61 !important;
+  box-shadow: none !important;
+}
+.dark .group:hover .parch-marker-dot {
+  background: #91877c !important;
+}
+.dark .parch-marker-dot.is-selected {
+  background: #79a4cf !important;
+  box-shadow: 0 0 0 3px rgba(121,164,207,.16) !important;
+}
+.dark .parch-archive > div.relative > div[class*="bg-white"] {
+  background: #35302a !important;
+  border-color: #5a5146 !important;
+}
+.dark .parch-shop-action[data-state="equipped"] {
+  border: 1px solid #51493f !important;
+  background: #3b3630 !important;
+  color: #aaa092 !important;
+}
+.dark .parch-shop-action[data-state="owned"],
+.dark .parch-shop-action[data-state="affordable"] {
+  border: 1px solid #6d94bb !important;
+  background: #557fa8 !important;
+  color: #fffaf2 !important;
+}
+.dark .parch-shop-action[data-state="locked"] {
+  border: 1px solid #4c453c !important;
+  background: #35302a !important;
+  color: #938a7e !important;
+}
+
+/* During a paper turn, soften the page that has crossed to the reverse side.
+   The content remains recognizable, but reads as ink showing through paper
+   rather than a sharp mirrored duplicate of the page that was just flipped. */
+.book-inside-pages .story-book-wrap.is-flipping .stf__item.--left .story-book-page-inner:not(.story-book-cover-inner) {
+  filter: blur(1.15px) saturate(.88) contrast(.96) !important;
+  opacity: .9 !important;
+}
+.book-inside-pages .story-book-wrap.is-flipping .stf__item.--left .story-book-page-inner:not(.story-book-cover-inner)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  background: rgba(255,254,250,.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-parch-poster,
+  .auth-parch-video { transition: none !important; }
+  .book-inside-pages .story-book-wrap.is-flipping .stf__item.--left .story-book-page-inner:not(.story-book-cover-inner) {
+    filter: none !important;
+  }
+}
