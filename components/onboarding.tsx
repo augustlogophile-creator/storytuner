@@ -6,7 +6,6 @@ import { BookOpen, Check } from "lucide-react"
 import BookSlider, { BookPage, type BookSliderHandle } from "@/components/ui/book-slider"
 import {
   blockerLabels,
-  goalLabels,
   readOnboardingPreferences,
   writeOnboardingPreferences,
   type OnboardingPreferences,
@@ -21,7 +20,9 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
   { value: "confidence", title: "Confidence", detail: "Feel better when people are listening." },
 ]
 
-const blockers: Array<Exclude<StoryBlocker, "">> = ["ramble", "start", "boring", "details", "nervous", "confident"]
+type StoryBlockerChoice = Exclude<StoryBlocker, "">
+
+const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const normalizedInitialPage = Math.max(0, Math.min(4, initialPage))
@@ -30,7 +31,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const coverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageRef = useRef(normalizedInitialPage)
   const bookRef = useRef<BookSliderHandle>(null)
-  const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", goals: [], blocker: "" })
+  const [preferences, setPreferences] = useState<OnboardingPreferences>({ goal: "", goals: [], blocker: "", blockers: [] })
 
   useEffect(() => {
     setPreferences(readOnboardingPreferences())
@@ -40,7 +41,8 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   }, [])
 
   const selectedGoals = preferences.goals ?? (preferences.goal && preferences.goal !== "everything" ? [preferences.goal as StoryGoalChoice] : [])
-  const canAdvance = page === 1 ? selectedGoals.length > 0 : page === 2 ? Boolean(preferences.blocker) : true
+  const selectedBlockers: StoryBlockerChoice[] = preferences.blockers ?? (preferences.blocker ? [preferences.blocker as StoryBlockerChoice] : [])
+  const canAdvance = page === 1 ? selectedGoals.length > 0 : page === 2 ? selectedBlockers.length > 0 : true
 
   function save(next: OnboardingPreferences) {
     setPreferences(next)
@@ -60,9 +62,17 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     })
   }
 
-  function chooseBlocker(blocker: Exclude<StoryBlocker, "">) {
+  function toggleBlocker(blocker: StoryBlockerChoice) {
     triggerIntroFeedback("selection")
-    save({ ...preferences, blocker })
+    const nextBlockers = selectedBlockers.includes(blocker)
+      ? selectedBlockers.filter((item) => item !== blocker)
+      : [...selectedBlockers, blocker]
+
+    save({
+      ...preferences,
+      blockers: nextBlockers,
+      blocker: nextBlockers[0] ?? "",
+    })
   }
 
   function openCover() {
@@ -125,7 +135,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
           </BookPage>
 
           <BookPage>
-            <BlockerPage value={preferences.blocker} onChoose={chooseBlocker} onNext={nextPage} onBack={previousPage} />
+            <BlockerPage values={selectedBlockers} onToggle={toggleBlocker} onNext={nextPage} onBack={previousPage} />
           </BookPage>
 
           <BookPage>
@@ -133,7 +143,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
           </BookPage>
 
           <BookPage>
-            <ReadyPage preferences={preferences} onBack={previousPage} />
+            <ReadyPage onBack={previousPage} />
           </BookPage>
         </BookSlider>
       </div>
@@ -206,13 +216,13 @@ function GoalPage({
 }
 
 function BlockerPage({
-  value,
-  onChoose,
+  values,
+  onToggle,
   onNext,
   onBack,
 }: {
-  value: StoryBlocker
-  onChoose: (value: Exclude<StoryBlocker, "">) => void
+  values: StoryBlockerChoice[]
+  onToggle: (value: StoryBlockerChoice) => void
   onNext: () => void
   onBack: () => void
 }) {
@@ -221,17 +231,18 @@ function BlockerPage({
       <div className="book-paper-heading compact">
         <p className="book-paper-eyebrow">Be honest</p>
         <h1>What usually gets in your way?</h1>
+        <p>Choose as many as you want.</p>
       </div>
 
       <div className="book-choice-list book-choice-list-compact is-visible">
         {blockers.map((blocker) => (
-          <BookChoice key={blocker} selected={value === blocker} compact onClick={() => onChoose(blocker)}>
+          <BookChoice key={blocker} selected={values.includes(blocker)} compact onClick={() => onToggle(blocker)}>
             <span className="book-choice-title">{blockerLabels[blocker]}</span>
           </BookChoice>
         ))}
       </div>
 
-      <PageTurnAction onClick={onNext} disabled={!value}>Continue</PageTurnAction>
+      <PageTurnAction onClick={onNext} disabled={values.length === 0}>Continue</PageTurnAction>
     </PaperLayout>
   )
 }
@@ -258,10 +269,8 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
   )
 }
 
-function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences; onBack: () => void }) {
+function ReadyPage({ onBack }: { onBack: () => void }) {
   const items = ["Learn", "Practice", "Get feedback", "Improve"]
-  const goals = preferences.goals ?? []
-  const focus = goals.length > 0 ? `Starting focus: ${goals.map((goal) => goalLabels[goal]).join(", ")}.` : ""
 
   return (
     <PaperLayout pageNumber={4} onBack={onBack}>
@@ -279,9 +288,6 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
           </div>
         ))}
       </div>
-
-      {focus && <p className="book-focus-note">{focus}</p>}
-      <p className="book-focus-note">Your private Journal is a quiet notebook for fragments, observations, and voice-to-text thoughts before they become full stories.</p>
 
       <div className="book-final-actions" data-book-no-turn="true">
         <Link

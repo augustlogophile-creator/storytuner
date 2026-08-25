@@ -218,7 +218,7 @@ function freshState(accountOwnerId: string | null = null, premium = false, displ
     version: 6,
     accountOwnerId,
     profile: { name: displayName || "Storyteller", joinedAt: new Date().toISOString() },
-    onboardingPreferences: { goal: "", blocker: "" },
+    onboardingPreferences: { goal: "", goals: [], blocker: "", blockers: [] },
     sessions: 0,
     lastOpen: null,
     activityDates: [],
@@ -492,7 +492,9 @@ function mergeSyncedState(local: AppState, remoteRaw: unknown, accountOwnerId: s
     settings: { ...remote.settings, ...local.settings },
     onboardingPreferences: {
       goal: local.onboardingPreferences.goal || remote.onboardingPreferences.goal,
+      goals: local.onboardingPreferences.goals?.length ? local.onboardingPreferences.goals : remote.onboardingPreferences.goals,
       blocker: local.onboardingPreferences.blocker || remote.onboardingPreferences.blocker,
+      blockers: local.onboardingPreferences.blockers?.length ? local.onboardingPreferences.blockers : remote.onboardingPreferences.blockers,
     },
     onboardingComplete: remote.onboardingComplete || local.onboardingComplete,
     premium: local.premium,

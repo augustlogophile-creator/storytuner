@@ -13451,9 +13451,9 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   aspect-ratio: 752 / 560 !important;
   contain: layout paint;
 }
-.auth-parch-poster,
 .auth-parch-video {
   position: absolute !important;
+  z-index: 2;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
@@ -13463,24 +13463,14 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   background: transparent !important;
   -webkit-mask-image: radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%);
   mask-image: radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%);
-}
-.auth-parch-poster {
-  z-index: 1;
-  opacity: 1;
-  transition: opacity 180ms ease;
-  pointer-events: none;
-}
-.auth-parch-poster.is-hidden { opacity: 0; }
-.auth-parch-video {
-  z-index: 2;
   opacity: 0;
-  transform: translateZ(0) scale(.992);
-  transition: opacity 220ms ease, transform 300ms cubic-bezier(.2,.72,.2,1);
-  will-change: opacity, transform;
+  transform: translateZ(0);
+  transition: opacity 220ms ease;
+  will-change: opacity;
 }
 .auth-parch-video.is-ready {
   opacity: 1;
-  transform: translateZ(0) scale(1);
+  transform: translateZ(0);
 }
 
 /* The cover keeps its original text treatment. It simply opens a little more
@@ -13600,7 +13590,6 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-parch-poster,
   .auth-parch-video,
   .book-turn-action,
   .book-start-link {
