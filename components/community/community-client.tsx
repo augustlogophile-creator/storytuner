@@ -240,7 +240,6 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
       <section aria-labelledby="share-heading" className="rounded-3xl border border-border bg-card p-5">
         <div>
           <h2 id="share-heading" className="text-sm font-semibold">Post a note</h2>
-          <p className="mt-1 text-xs text-muted-foreground">A thought, question, or tip · @{currentUsername}</p>
         </div>
         <textarea value={draft} maxLength={5000} rows={3} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setDraft(event.target.value)} placeholder="Share a reflection, a storytelling tip, a question, or something you want to get better at…" className="mt-4 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         {publishError && <p className="mt-2 text-sm text-destructive" role="alert">{publishError}</p>}
@@ -777,7 +776,7 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
                   rows={2}
                   onChange={(event) => setReplyDraft(event.target.value)}
                   placeholder={replyingTo ? "Write a reply…" : "Add a thoughtful response…"}
-                  className="w-full resize-y bg-transparent px-1 py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
+                  className="community-reply-input w-full resize-y bg-transparent px-1 py-1 text-sm leading-6 outline-none placeholder:text-muted-foreground"
                 />
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <CharacterCount value={replyDraft.length} maximum={2000} warningAt={1800} />

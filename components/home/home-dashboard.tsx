@@ -59,22 +59,24 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
       <Celebration active={celebrateStreak} label={`${streaks.current} day streak`} onDone={() => setCelebrateStreak(false)} />
       {accountNotice && <AccountRestoredNotice message={accountNotice} updatedAt={accountNoticeUpdatedAt} />}
 
-      <header className="book-home-header flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <Eyebrow className="book-home-date text-[0.64rem] tracking-[0.2em]">{today(now)}</Eyebrow>
-          <h1 className="book-home-greeting mt-2 max-w-full break-words text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
-            {greeting(now)},<br />{displayName}.
-          </h1>
-          <p className="book-home-subtitle mt-2 max-w-[19rem] text-[0.77rem] leading-[1.42] text-muted-foreground text-pretty">
-            Learn the ideas, then apply them to stories of your own.
-          </p>
-        </div>
+      <header className="book-home-header">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <Eyebrow className="book-home-date text-[0.64rem] tracking-[0.2em]">{today(now)}</Eyebrow>
+            <h1 className="book-home-greeting mt-2 max-w-full break-words text-[1.72rem] font-semibold leading-[1.08] tracking-[-0.04em] text-balance">
+              {greeting(now)},<br />{displayName}.
+            </h1>
+          </div>
 
-        <div className="book-streak-card flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
-          <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
-          <span className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]">{streaks.current}</span>
-          <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">{streaks.current === 1 ? "day" : "days"}</span>
+          <div className="book-streak-card flex w-[4rem] shrink-0 flex-col items-center rounded-[1.45rem] bg-streak-soft/75 px-2 py-2.5">
+            <Flame className="h-[1.12rem] w-[1.12rem] text-streak" strokeWidth={2.1} />
+            <span className="mt-0.5 text-[1.3rem] font-semibold leading-none text-[#d87952]">{streaks.current}</span>
+            <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">{streaks.current === 1 ? "day" : "days"}</span>
+          </div>
         </div>
+        <p className="book-home-subtitle mt-2 whitespace-nowrap text-[0.72rem] leading-[1.35] text-muted-foreground">
+          Learn the ideas, then apply them to stories of your own.
+        </p>
       </header>
 
       <section className="book-course-card mt-4 rounded-[1.8rem] bg-[#2b2823] px-4.5 py-4 text-[#f8f7f2] shadow-[0_10px_30px_rgba(31,27,23,0.08)]">

@@ -13608,3 +13608,20 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   }
   .story-book-wrap.is-flipping .stf__item { box-shadow: none !important; }
 }
+
+
+/* Community reply composer: keep the textarea visually continuous with its
+   outer response field instead of rendering a second white input rectangle. */
+.book-app .community-reply-input {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.book-app .community-reply-input:focus {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.dark .book-app .community-reply-input {
+  background: transparent !important;
+}

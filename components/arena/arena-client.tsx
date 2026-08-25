@@ -932,7 +932,7 @@ export function ArenaClient() {
           <Eyebrow>Studio</Eyebrow>
           <Link href="/studio/recordings" className="studio-recordings-pill">{recordingCountLabel(savedRecordingCount)}</Link>
         </div>
-        <h1>Tell a story. Receive tailored, encouraging feedback.</h1>
+        <h1>Tell a story. Any story.</h1>
         <p className="studio-intro">Tell an unprompted story or choose a real-life scenario to practice.</p>
         {!state.premium && (
           <div className="studio-meta-row">
