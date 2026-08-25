@@ -131,7 +131,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
             <span className="font-mono text-[0.57rem] uppercase tracking-[0.14em] text-muted-foreground">{checkpoint.subtitle}</span>
           </div>
           <h2 className="mt-1 text-[0.98rem] font-semibold leading-snug text-foreground">{checkpoint.title}</h2>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{checkpoint.questions.length} questions · 1 challenge · ~{checkpoint.estimatedMinutes} min</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{checkpoint.questions.length} questions · 1 challenge</p>
         </div>
 
         <div className="shrink-0 text-right">

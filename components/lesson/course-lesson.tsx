@@ -14,7 +14,7 @@ import { getCheckpointAfterUnit } from "@/lib/checkpoints"
 import { cn } from "@/lib/utils"
 import { ReportAiOutput } from "@/components/ai/report-ai-output"
 
-type LessonFeedback = { pass: boolean; working: string; fix: string }
+type LessonFeedback = { pass: boolean; needsRedo: boolean; working: string; fix: string }
 
 function quizScoreTone(score: number) {
   if (score >= 80) return "is-green"
@@ -276,7 +276,7 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
         )}
       </section>
       <section className="rounded-3xl border border-border bg-card p-5">
-        <textarea value={response} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setResponse(event.target.value); setFeedback(null) }} rows={9} placeholder="Work through the exercise here…" className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-[0.95rem] leading-7 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
+        <textarea id="lesson-practice-response" value={response} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setResponse(event.target.value); setFeedback(null) }} rows={9} placeholder="Work through the exercise here…" className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-[0.95rem] leading-7 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-brand" />
         <div className="mt-2 flex items-center justify-between px-1 text-xs text-muted-foreground">
           <span>{response.trim() ? response.trim().split(/\s+/).length : 0} words</span>
           <span>Your response saves on this device.</span>
@@ -294,6 +294,14 @@ function DrillStage({ unit, response, setResponse, onFinish }: { unit: Curriculu
       {!feedback ? (
         <button type="button" disabled={!canSubmit || loading} onClick={getFeedback} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:opacity-40">
           {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Reading your response…</> : <><Sparkles className="h-4 w-4" /> Get focused feedback</>}
+        </button>
+      ) : feedback.needsRedo ? (
+        <button
+          type="button"
+          onClick={() => { setFeedback(null); window.setTimeout(() => document.getElementById("lesson-practice-response")?.focus(), 0) }}
+          className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-5 py-3.5 text-sm font-semibold text-foreground active:scale-[0.98]"
+        >
+          Revise and try again
         </button>
       ) : (
         <button type="button" onClick={() => onFinish(response, feedback.pass ? 35 : 30)} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98]">

@@ -272,7 +272,6 @@ export function CheckpointTest({ checkpoint }: { checkpoint: Checkpoint }) {
           </div>
           <div className="shrink-0 text-right">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted-foreground">{checkpoint.subtitle}</p>
-            <p className={cn("checkpoint-estimate mt-1 text-xs font-medium", isFoundations ? "text-[#6f5599]" : "text-[#956119]")}>~{checkpoint.estimatedMinutes} min</p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">

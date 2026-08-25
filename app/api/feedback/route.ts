@@ -15,10 +15,11 @@ const lessonSchema = {
   additionalProperties: false,
   properties: {
     pass: { type: "boolean" },
+    needsRedo: { type: "boolean" },
     working: { type: "string" },
     fix: { type: "string" },
   },
-  required: ["pass", "working", "fix"],
+  required: ["pass", "needsRedo", "working", "fix"],
 }
 
 
@@ -172,13 +173,13 @@ export async function POST(req: Request) {
       const lessonSpendBlocked = aiSpendRateResponse(lessonSpend, "Too many lesson feedback requests are arriving from this account. Wait and try again later.")
       if (lessonSpendBlocked) return lessonSpendBlocked
       const lessonFingerprint = requestFingerprint(user.id, "lesson", unitIndex, answer, technique, exercisePrompt)
-      const object = await runIdempotent(`lesson-feedback:${lessonFingerprint}`, () => openAIJson<{ pass: boolean; working: string; fix: string }>({
+      const object = await runIdempotent(`lesson-feedback-v2:${lessonFingerprint}`, () => openAIJson<{ pass: boolean; needsRedo: boolean; working: string; fix: string }>({
         name: "lesson_feedback",
         schema: lessonSchema,
         messages: [
           {
             role: "system",
-            content: `You are Parch, Tellwise's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Set pass=true only when the response clearly demonstrates that technique with enough specific detail to be genuinely successful; use pass=false for vague, incomplete, or off-technique responses. Refer to the student's actual wording. Give one genuine strength and one concrete revision. Never invent details. Keep the full answer under 100 words.\n\n${UNTRUSTED_REFERENCE_RULE}`,
+            content: `You are Parch, Tellwise's precise, warm storytelling coach. Be friendly but sophisticated. Evaluate only the named lesson technique. Set pass=true only when the response clearly demonstrates that technique with enough specific detail to be genuinely successful; use pass=false for a good-faith attempt that is vague, incomplete, or needs improvement. Set needsRedo=true only when the student has not made a meaningful attempt at the exercise, such as obvious nonsense or gibberish, a substantially unrelated response, placeholder/filler text, or an answer that clearly ignores the task. Do not set needsRedo=true merely because the storytelling is weak, imperfect, brief, or needs revision. A coherent good-faith attempt should be allowed to continue even when pass=false. Refer to the student's actual wording. Give one genuine strength when possible and one concrete revision. If needsRedo=true, explain plainly what must change before the exercise can be completed. Never invent details. Keep the full answer under 100 words.\n\n${UNTRUSTED_REFERENCE_RULE}`,
           },
           {
             role: "user",
