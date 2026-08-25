@@ -13139,3 +13139,261 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 .dark .lesson-score-highlight::before {
   opacity: .78 !important;
 }
+
+/* August 24: warm-dark consistency pass. Dark mode should still feel like a
+   book, not a black UI. These final overrides intentionally lift the darkest
+   surfaces, soften overly bright accents, and keep secondary text readable. */
+.dark {
+  --background: #24211d;
+  --foreground: #f1eadf;
+  --card: #302b25;
+  --card-foreground: #f1eadf;
+  --popover: #332e28;
+  --popover-foreground: #f1eadf;
+  --primary: #e8dfd1;
+  --primary-foreground: #2b2722;
+  --secondary: #39332c;
+  --secondary-foreground: #ece3d6;
+  --muted: #39332c;
+  --muted-foreground: #c1b5a5;
+  --accent: #39332c;
+  --accent-foreground: #ece3d6;
+  --border: #5a5146;
+  --input: #5a5146;
+}
+.dark body { background: #211f1b !important; }
+.dark .book-app,
+.dark .book-app-content {
+  background-color: #24211d !important;
+  color: #f1eadf !important;
+}
+.dark .book-bottom-nav {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,247,235,.026) 0 .5px, transparent .7px),
+    rgba(36,33,29,.97) !important;
+}
+.dark .book-app .story-card,
+.dark .book-app .app-surface,
+.dark .book-app :is(section,article,div)[class*="bg-card"],
+.dark .profile-page .story-card,
+.dark .progress-streak-card,
+.dark .studio-setup-card,
+.dark .studio-duration-card,
+.dark .studio-mode-card,
+.dark .planner-simple-saved,
+.dark .planner-simple-fields .planner-field-card,
+.dark .planner-library-card,
+.dark .membership-plan-choice,
+.dark .membership-benefits {
+  background:
+    radial-gradient(circle at 14% 22%, rgba(255,247,235,.024) 0 .5px, transparent .7px),
+    #302b25 !important;
+  border-color: #5a5146 !important;
+  color: #f1eadf !important;
+}
+.dark .book-app .text-muted-foreground,
+.dark .book-home-subtitle,
+.dark .studio-intro,
+.dark .planner-simple-fields .planner-field-help,
+.dark .planner-library-throughline,
+.dark .planner-library-heading p {
+  color: #c1b5a5 !important;
+}
+.dark .book-app :is(input,textarea,select) {
+  border-color: #5a5146 !important;
+  background: #332e28 !important;
+  color: #f1eadf !important;
+}
+.dark .book-app :is(input,textarea,select)::placeholder {
+  color: #a79b8c !important;
+}
+
+/* Curriculum checkpoint cards: the lavender UNIT TEST pill was glowing too
+   brightly against the dark paper. Keep the purple identity, but mute it. */
+.dark .checkpoint-list-card {
+  border-color: #5a5146 !important;
+  background: #302b25 !important;
+}
+.dark .checkpoint-list-badge,
+.dark .checkpoint-intro-badge {
+  background: #443a4f !important;
+  color: #c8b3db !important;
+  border-color: #5f506d !important;
+}
+.dark .checkpoint-list-card .bg-\[\#8b6fb2\] {
+  background: #8064a5 !important;
+}
+.dark .checkpoint-theme-icon {
+  background: #443a4f !important;
+  color: #c8b3db !important;
+}
+.dark .checkpoint-stat-chip,
+.dark .checkpoint-criterion-chip,
+.dark .checkpoint-option {
+  background: #332e28 !important;
+  border-color: #5a5146 !important;
+}
+
+/* Community audio controls should look like warm charcoal controls, never
+   black pills floating inside a brown card. */
+.dark .community-shared-audio {
+  border-color: #5a5146 !important;
+  background: #39332c !important;
+}
+.dark .community-audio-icon,
+.dark .community-audio-load,
+.dark .community-audio-player {
+  background: #454039 !important;
+  color: #eee5d8 !important;
+  border-color: #62594d !important;
+}
+.dark .community-audio-load:hover {
+  background: #4d463e !important;
+}
+
+/* Sharing dialog: unselected choices should be a visible neutral gray-brown,
+   while the selected choice keeps the restrained blue treatment. */
+.dark .share-recording-mode {
+  border-color: #5d5549 !important;
+  background: #39342d !important;
+  color: #f0e8dc !important;
+}
+.dark .share-recording-mode:not(.is-selected):hover {
+  border-color: #728aa4 !important;
+  background: #403a33 !important;
+}
+.dark .share-recording-mode.is-selected {
+  border-color: #789fc7 !important;
+  background: #334657 !important;
+}
+.dark .share-recording-mode .bg-secondary {
+  background: #4a433a !important;
+  color: #eee5d8 !important;
+}
+
+/* Past recordings: preserve positive/negative meaning without pasting bright
+   light-mode cards into the dark page. */
+.dark .recording-feedback-card {
+  border: 1px solid #5a5146 !important;
+  color: #e7dfd3 !important;
+}
+.dark .recording-feedback-card.is-positive {
+  background: #293831 !important;
+  border-color: #405a4c !important;
+}
+.dark .recording-feedback-card.is-positive .text-emerald-800 {
+  color: #9fd2b2 !important;
+}
+.dark .recording-feedback-card.is-negative {
+  background: #3b2d2b !important;
+  border-color: #644842 !important;
+}
+.dark .recording-feedback-card.is-negative .text-red-800 {
+  color: #e5a199 !important;
+}
+.dark .recording-feedback-card li {
+  color: #ddd3c6 !important;
+}
+.dark .book-app .bg-emerald-50 { background: #293831 !important; }
+.dark .book-app .bg-red-50 { background: #3b2d2b !important; }
+.dark .book-app .bg-amber-50 { background: #433a28 !important; }
+.dark .book-app .text-emerald-800 { color: #9fd2b2 !important; }
+.dark .book-app .text-red-800 { color: #e5a199 !important; }
+.dark .book-app .text-amber-900 { color: #e5c88f !important; }
+
+/* AI report and other text-entry dialogs get a lifted writing surface instead
+   of a near-black hole. */
+.dark .app-dialog-panel,
+.dark .confirm-dialog-panel {
+  background: #332e28 !important;
+  border-color: #5c5347 !important;
+  color: #f1eadf !important;
+}
+.dark .app-dialog-panel textarea,
+.dark .confirm-dialog-panel textarea {
+  background: #403a33 !important;
+  border-color: #62594d !important;
+  color: #f1eadf !important;
+}
+.dark .app-dialog-panel textarea::placeholder,
+.dark .confirm-dialog-panel textarea::placeholder {
+  color: #aaa092 !important;
+}
+.dark .app-dialog-secondary-button {
+  background: #403a33 !important;
+  border-color: #62594d !important;
+  color: #eee5d8 !important;
+}
+.dark .app-dialog-primary-button:not(.is-danger) {
+  background: #5f86ad !important;
+  color: #fff !important;
+}
+
+/* Journal full-screen pages and formatting controls use the same warm dark
+   paper. The toolbar should not turn into a bright cream island. */
+.dark .journal-page,
+.dark .journal-note-sheet-overlay,
+.dark .journal-media-detail-overlay,
+.dark .journal-media-editor-overlay,
+.dark .journal-capture-overlay,
+.dark .journal-note-sheet-overlay .journal-editor-notes,
+.dark .journal-note-sheet-overlay .journal-detail-notes,
+.dark .journal-capture-panel,
+.dark .journal-capture-panel.is-video,
+.dark .journal-capture-panel.is-audio {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,247,235,.026) 0 .5px, transparent .7px),
+    #24211d !important;
+  color: #f1eadf !important;
+}
+.dark .journal-editor-top-notes,
+.dark .journal-detail-top {
+  background: rgba(36,33,29,.96) !important;
+}
+.dark .journal-format-toolbar {
+  border-color: #5f574c !important;
+  background: #39342d !important;
+  color: #eee5d8 !important;
+  box-shadow: 0 8px 22px rgba(12,10,8,.18) !important;
+}
+.dark .journal-format-toolbar button {
+  color: #eee5d8 !important;
+}
+.dark .journal-format-toolbar button:hover {
+  background: #484139 !important;
+}
+.dark .journal-format-toolbar button.is-active,
+.dark .journal-format-toolbar button[aria-pressed="true"] {
+  background: #5f86ad !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* Previously saved notes always show Save. It is intentionally neutral and
+   inactive until a real edit is made, then the shared blue Save styling takes
+   over automatically. */
+.journal-detail-save-button .tellwise-save-button:disabled {
+  border-color: #c9c0b3 !important;
+  background: #ddd7ce !important;
+  color: #8b8276 !important;
+  box-shadow: none !important;
+}
+.journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-backdrop {
+  background: #ddd7ce !important;
+}
+.journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-content,
+.journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-content > span {
+  color: #8b8276 !important;
+}
+.dark .journal-detail-save-button .tellwise-save-button:disabled {
+  border-color: #5b544a !important;
+  background: #454039 !important;
+  color: #938a7f !important;
+}
+.dark .journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-backdrop {
+  background: #454039 !important;
+}
+.dark .journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-content,
+.dark .journal-detail-save-button .tellwise-save-button:disabled .tellwise-save-content > span {
+  color: #938a7f !important;
+}

@@ -86,7 +86,7 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
             const available = option.id === "transcript" ? hasTranscript : audioEligible
             const Icon = option.icon
             return (
-              <button key={option.id} type="button" disabled={!available || sharing} onClick={() => setMode(option.id)} className={cn("min-h-32 rounded-2xl border p-4 text-left transition-all duration-200", mode === option.id ? "border-brand bg-brand-soft/55 shadow-sm" : "border-border bg-card hover:border-brand/45", !available && "cursor-not-allowed opacity-45")}>
+              <button key={option.id} type="button" disabled={!available || sharing} onClick={() => setMode(option.id)} className={cn("share-recording-mode min-h-32 rounded-2xl border p-4 text-left transition-all duration-200", mode === option.id ? "is-selected border-brand bg-brand-soft/55 shadow-sm" : "border-border bg-card hover:border-brand/45", !available && "cursor-not-allowed opacity-45")}>
                 <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-secondary"><Icon className="h-4.5 w-4.5" /></span><span className="mt-3 block text-sm font-semibold">{option.title}</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">{option.description}</span>
               </button>
             )

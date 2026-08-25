@@ -88,13 +88,13 @@ export function RecordingsClient() {
                   <details className="mt-4">
                     <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">{hasGrade ? "Grade and revised story" : "Transcript"}</summary>
                     {hasGrade && strengths.length > 0 && (
-                      <div className="mt-3 rounded-2xl bg-emerald-50 p-4 text-sm leading-relaxed">
+                      <div className="recording-feedback-card is-positive mt-3 rounded-2xl bg-emerald-50 p-4 text-sm leading-relaxed">
                         <p className="font-semibold text-emerald-800">What worked</p>
                         <ul className="mt-2 space-y-1.5 pl-5">{strengths.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
                       </div>
                     )}
                     {hasGrade && improvements.length > 0 && (
-                      <div className="mt-3 rounded-2xl bg-red-50 p-4 text-sm leading-relaxed">
+                      <div className="recording-feedback-card is-negative mt-3 rounded-2xl bg-red-50 p-4 text-sm leading-relaxed">
                         <p className="font-semibold text-red-800">What to improve</p>
                         <ul className="mt-2 space-y-1.5 pl-5">{improvements.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
                       </div>

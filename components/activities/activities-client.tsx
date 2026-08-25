@@ -101,7 +101,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
 
   const card = (
     <article className={cn(
-      "group relative overflow-hidden rounded-[1.55rem] border px-4 py-3.5 transition-all",
+      "checkpoint-list-card group relative overflow-hidden rounded-[1.55rem] border px-4 py-3.5 transition-all",
       unlocked || complete
         ? isFoundations
           ? "border-[#c9b8e5] bg-[#f8f4fc] hover:-translate-y-px hover:border-[#a991cf] hover:shadow-[0_8px_22px_rgba(90,65,130,.07)]"
@@ -125,7 +125,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className={cn(
-              "rounded-full px-2 py-0.5 font-mono text-[0.55rem] font-semibold uppercase tracking-[0.15em]",
+              "checkpoint-list-badge rounded-full px-2 py-0.5 font-mono text-[0.55rem] font-semibold uppercase tracking-[0.15em]",
               unlocked || complete ? (isFoundations ? "bg-[#eee6f8] text-[#6f5599]" : "bg-[#fff0c7] text-[#956119]") : "bg-secondary text-muted-foreground",
             )}>Unit test</span>
             <span className="font-mono text-[0.57rem] uppercase tracking-[0.14em] text-muted-foreground">{checkpoint.subtitle}</span>

@@ -901,17 +901,17 @@ function CommunityAudioPlayer({ postId, durationSeconds, onMembershipRequired }:
   const progressPercent = displayDuration > 0 ? Math.min(100, Math.max(0, (safeCurrent / displayDuration) * 100)) : 0
 
   return (
-    <div className="rounded-2xl border border-border bg-secondary/35 p-3">
+    <div className="community-shared-audio rounded-2xl border border-border bg-secondary/35 p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background"><Headphones className="h-4 w-4" /></span>
+          <span className="community-audio-icon flex h-8 w-8 items-center justify-center rounded-full bg-background"><Headphones className="h-4 w-4" /></span>
           <div><p className="text-xs font-semibold">Shared audio</p>{displayDuration > 0 ? <p className="text-[0.68rem] text-muted-foreground">{formatCommunityDuration(displayDuration)}</p> : null}</div>
         </div>
-        {!url && <button type="button" onClick={() => void loadAudio()} disabled={loading} className="rounded-full bg-background px-3 py-2 text-xs font-semibold disabled:opacity-50">{loading ? "Loading…" : "Load audio"}</button>}
+        {!url && <button type="button" onClick={() => void loadAudio()} disabled={loading} className="community-audio-load rounded-full bg-background px-3 py-2 text-xs font-semibold disabled:opacity-50">{loading ? "Loading…" : "Load audio"}</button>}
       </div>
 
       {url && (
-        <div className="mt-3 rounded-2xl bg-background/80 px-3 py-3">
+        <div className="community-audio-player mt-3 rounded-2xl bg-background/80 px-3 py-3">
           <audio
             ref={audioRef}
             preload="metadata"

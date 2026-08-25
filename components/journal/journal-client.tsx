@@ -1158,7 +1158,6 @@ function EntryDetail({
   const [body, setBody] = useState(entry.body)
   const [editingField, setEditingField] = useState<"title" | "body" | null>(null)
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved")
-  const [showSave, setShowSave] = useState(false)
   const [error, setError] = useState("")
   const [mediaUrl, setMediaUrl] = useState("")
   const [mediaLoading, setMediaLoading] = useState(false)
@@ -1169,7 +1168,6 @@ function EntryDetail({
     setBody(entry.body)
     setEditingField(null)
     setSaveStatus("saved")
-    setShowSave(false)
     setError("")
   }, [entry.id, entry.title, entry.body])
 
@@ -1196,13 +1194,8 @@ function EntryDetail({
   const dirty = title.trim() !== entry.title.trim() || body.trim() !== entry.body.trim()
 
   useEffect(() => {
-    if (dirty) {
-      setShowSave(true)
-      setSaveStatus("saving")
-    } else if (!showSave) {
-      setSaveStatus("saved")
-    }
-  }, [dirty, showSave])
+    setSaveStatus(dirty ? "saving" : "saved")
+  }, [dirty])
 
   async function saveEdits(nextTitle = title, nextBody = body) {
     const cleanTitle = journalStoredTitle(entry.entry_type, nextTitle, nextBody)
@@ -1239,20 +1232,17 @@ function EntryDetail({
           <div className="journal-detail-top journal-editor-top-notes">
             <button type="button" className="journal-top-circle-button" onClick={onClose} aria-label="Back"><ArrowLeft /></button>
             <span className={`journal-save-status is-${saveStatus}`}>{saveStatus === "error" ? "Not saved" : saveStatus === "saved" ? "Saved" : "Editing"}</span>
-            {showSave ? (
-              <SaveButton
-                className="journal-detail-save-button"
-                disabled={!dirty}
-                onSave={async () => { await saveEdits(title, body) }}
-                onSaved={() => {
-                  const saved = savedEditRef.current
-                  if (saved) onUpdated(saved)
-                  savedEditRef.current = null
-                  setShowSave(false)
-                  setEditingField(null)
-                }}
-              />
-            ) : <span className="journal-detail-top-spacer" aria-hidden="true" />}
+            <SaveButton
+              className="journal-detail-save-button"
+              disabled={!dirty}
+              onSave={async () => { await saveEdits(title, body) }}
+              onSaved={() => {
+                const saved = savedEditRef.current
+                if (saved) onUpdated(saved)
+                savedEditRef.current = null
+                setEditingField(null)
+              }}
+            />
           </div>
           <p className="journal-entry-date">{journalLongDate(entry.updated_at)}</p>
 
