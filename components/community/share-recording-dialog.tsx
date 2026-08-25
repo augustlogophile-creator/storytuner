@@ -5,6 +5,7 @@ import { FileText, Headphones, LoaderCircle, Send, X } from "lucide-react"
 import type { Recording } from "@/lib/app-state"
 import type { CommunityFeedPost } from "@/lib/community/types"
 import { cn } from "@/lib/utils"
+import { recordingTranscriptLooksHeavilyEdited } from "@/lib/community/audio-share"
 
 type ShareMode = "transcript" | "audio"
 
@@ -25,7 +26,8 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
   const hasTranscript = Boolean(recording?.transcript?.trim())
   const hasCloudAudio = Boolean(recording?.cloudRecordingId && recording?.cloudStoragePath)
   const audioWithinDuration = Boolean(recording && recording.duration > 0 && recording.duration <= 1800)
-  const audioEligible = hasCloudAudio && audioWithinDuration && hasTranscript
+  const audioTranscriptMismatch = Boolean(recording && hasTranscript && recordingTranscriptLooksHeavilyEdited(recording.duration, recording.transcript))
+  const audioEligible = hasCloudAudio && audioWithinDuration && hasTranscript && !audioTranscriptMismatch
 
   useEffect(() => {
     if (!open) return
@@ -77,7 +79,10 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
     <div className="app-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="share-recording-title">
       <div className="app-dialog-panel rounded-[2rem] border border-border bg-background p-5 shadow-2xl" style={{ width: "calc(100% - 2.5rem)", maxWidth: "24rem" }}>
         <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0"><p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">Share a story</p><h2 id="share-recording-title" className="mt-1 text-lg font-semibold">Choose what people can see</h2><p className="mt-1 truncate text-xs text-muted-foreground">{activeRecording.title}</p></div>
+          <div className="min-w-0">
+            <h2 id="share-recording-title" className="text-lg font-semibold">Share a story</h2>
+            <p className="mt-1 truncate text-xs italic text-muted-foreground">{activeRecording.title}</p>
+          </div>
           <button type="button" onClick={onClose} disabled={sharing} className="rounded-full p-2 text-muted-foreground hover:bg-secondary" aria-label="Close sharing options"><X className="h-4 w-4" /></button>
         </div>
 
@@ -87,13 +92,23 @@ export function ShareRecordingDialog({ open, recording, onClose, onShared }: Pro
             const Icon = option.icon
             return (
               <button key={option.id} type="button" disabled={!available || sharing} onClick={() => setMode(option.id)} className={cn("share-recording-mode min-h-32 rounded-2xl border p-4 text-left transition-all duration-200", mode === option.id ? "is-selected border-brand bg-brand-soft/55 shadow-sm" : "border-border bg-card hover:border-brand/45", !available && "cursor-not-allowed opacity-45")}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-secondary"><Icon className="h-4.5 w-4.5" /></span><span className="mt-3 block text-sm font-semibold">{option.title}</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">{option.description}</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-secondary"><Icon className="h-4.5 w-4.5" /></span><span className="mt-3 block text-sm font-semibold">{option.title}</span><span className="mt-1 block text-[0.7rem] leading-[1.45] text-muted-foreground">{option.description}</span>
               </button>
             )
           })}
         </div>
 
-        {!audioEligible && <p className="mt-2 text-[0.68rem] leading-5 text-muted-foreground">{!hasCloudAudio ? "Audio is unavailable for older device-only recordings. You can still share the transcript." : !audioWithinDuration ? "Community audio can be shared up to 30 minutes. You can still share the transcript." : "Audio sharing requires a completed transcript for safety review."}</p>}
+        {!audioEligible && (
+          <p className="mt-2 text-[0.64rem] leading-4 text-muted-foreground">
+            {audioTranscriptMismatch
+              ? "Original audio is unavailable to share because you heavily edited your story after recording."
+              : !hasCloudAudio
+                ? "Audio is unavailable for older device-only recordings. You can still share the transcript."
+                : !audioWithinDuration
+                  ? "Community audio can be shared up to 30 minutes. You can still share the transcript."
+                  : "Audio sharing requires a completed transcript for safety review."}
+          </p>
+        )}
 
         <label className="mt-5 block">
           <span className="text-xs font-semibold">Add a message <span className="font-normal text-muted-foreground">optional</span></span>

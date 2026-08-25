@@ -5,7 +5,7 @@ import { COMMUNITY_AI_HOLD_MESSAGE, createAiModerationReport, moderateCommunityT
 import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, rejectLargeRequest } from "@/lib/request-protection"
 import { backendError } from "@/lib/backend-log"
 import { validateAudioSignature } from "@/lib/audio-upload-security"
-import { isVerifiedTellwiseUser } from "@/lib/community/verified"
+import { recordingTranscriptLooksHeavilyEdited } from "@/lib/community/audio-share"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -96,6 +96,9 @@ export async function POST(request: Request) {
     const trustedSourceTranscript = source?.transcript?.trim() || ""
     if (needsAudio && !trustedSourceTranscript) {
       return noStoreJson({ error: "Audio sharing requires the server-saved transcript so Tellwise can run its safety check." }, { status: 400 })
+    }
+    if (needsAudio && source && recordingTranscriptLooksHeavilyEdited(source.duration_seconds, trustedSourceTranscript)) {
+      return noStoreJson({ error: "Original audio is unavailable to share because you heavily edited your story after recording." }, { status: 400 })
     }
     const transcript = (trustedSourceTranscript || parsed.data.transcript).trim()
     if (!transcript) {
@@ -211,7 +214,6 @@ export async function POST(request: Request) {
         id: context.userId,
         displayName: context.profile.display_name,
         username: context.profile.username,
-        verified: isVerifiedTellwiseUser(context.userId),
       },
       likeCount: 0,
       replyCount: 0,

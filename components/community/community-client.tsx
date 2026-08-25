@@ -12,6 +12,7 @@ import {
 } from "react"
 import {
   Ban,
+  BadgeCheck,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -218,10 +219,7 @@ function MemberCommunity({ currentUsername }: { currentUsername: string }) {
             <CheckCircle2 className="h-3.5 w-3.5" /> Membership active
           </span>
         </div>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share stories. Help each other improve.</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground text-pretty">
-          Share a story. Respond to what landed.
-        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">Share stories and give constructive feedback to others.</h1>
       </header>
 
       <section className="rounded-[2rem] border border-brand/35 bg-brand-soft/45 p-5 shadow-sm">
@@ -630,7 +628,10 @@ function PostCard({ post, onUpdated, onDeleted, onMembershipRequired, onModerati
     <article id={post.id} className="app-surface scroll-mt-24 rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{publicAuthorLabel(post.author)}</p>
+          <p className="flex min-w-0 items-center gap-1 text-sm font-semibold">
+            <span className="truncate">{publicAuthorLabel(post.author)}</span>
+            {isOfficialTellwiseAuthor(post.author) && <VerifiedTellwiseBadge />}
+          </p>
           <p className="mt-0.5 text-[0.68rem] text-muted-foreground">
             {relativeDate(post.createdAt)}{post.editedAt ? " · edited" : ""}
           </p>
@@ -1216,7 +1217,10 @@ function ReplyCard({ reply, parentAuthor, onReply, onUpdated, onDeleted, onMembe
     <div className={cn("rounded-2xl bg-secondary/45 px-4 py-3 transition-colors", nested && "bg-secondary/30")}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold">{publicAuthorLabel(reply.author)}</p>
+          <p className="flex min-w-0 items-center gap-1 text-xs font-semibold">
+            <span className="truncate">{publicAuthorLabel(reply.author)}</span>
+            {isOfficialTellwiseAuthor(reply.author) && <VerifiedTellwiseBadge />}
+          </p>
           <p className="mt-0.5 text-[0.65rem] text-muted-foreground">
             {parentAuthor ? `Replying to ${parentAuthor} · ` : ""}{relativeDate(reply.createdAt)}{reply.editedAt ? " · edited" : ""}
           </p>
@@ -1397,6 +1401,22 @@ function publicAuthorLabel(author: CommunityAuthor) {
   const username = author.username?.trim()
   if (username && username !== "member") return `@${username}`
   return "Tellwise member"
+}
+
+function isOfficialTellwiseAuthor(author: CommunityAuthor) {
+  return author.username?.trim().toLowerCase() === "tellwise"
+}
+
+function VerifiedTellwiseBadge() {
+  return (
+    <span
+      className="inline-flex shrink-0 items-center justify-center"
+      title="Verified Tellwise account"
+      aria-label="Verified Tellwise account"
+    >
+      <BadgeCheck className="h-3.5 w-3.5 fill-[#48A3E6] text-white" strokeWidth={2.4} aria-hidden="true" />
+    </span>
+  )
 }
 
 function rankPosts(posts: CommunityFeedPost[]) {
