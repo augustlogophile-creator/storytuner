@@ -75,7 +75,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
       setPage(1)
       setCoverOpening(false)
       coverTimerRef.current = null
-    }, 810)
+    }, 690)
   }
 
   function nextPage() {
@@ -294,7 +294,7 @@ function ReadyPage({ preferences, onBack }: { preferences: OnboardingPreferences
           onClick={() => triggerIntroFeedback("page")}
           className="book-start-link"
         >
-          Start learning <span aria-hidden="true">→</span>
+          Start learning
         </Link>
       </div>
     </PaperLayout>
@@ -388,7 +388,7 @@ function PageTurnAction({
       data-book-no-turn="true"
       className="book-turn-action"
     >
-      {children} <span aria-hidden="true">→</span>
+      <span className="book-turn-action-label">{children}</span>
     </button>
   )
 }

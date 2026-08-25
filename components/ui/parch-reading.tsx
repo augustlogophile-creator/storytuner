@@ -1,12 +1,25 @@
 "use client"
 
+import { useState } from "react"
 import { preload } from "react-dom"
 
 export const ParchReading = () => {
+  const [ready, setReady] = useState(false)
+
   preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
+  preload("/parch-reading-poster.jpg", { as: "image" })
 
   return (
-    <div className="auth-parch mx-auto" style={{ maxWidth: 132 }}>
+    <div className="auth-parch mx-auto" style={{ maxWidth: 132, aspectRatio: "752 / 560" }}>
+      <img
+        src="/parch-reading-poster.jpg"
+        alt=""
+        aria-hidden="true"
+        className={`auth-parch-poster ${ready ? "is-hidden" : ""}`}
+        loading="eager"
+        fetchPriority="high"
+        draggable={false}
+      />
       <video
         src="/parch-reading.mp4"
         autoPlay
@@ -16,14 +29,9 @@ export const ParchReading = () => {
         preload="auto"
         poster="/parch-reading-poster.jpg"
         aria-label="Parch reading a book"
-        style={{
-          aspectRatio: "752 / 560",
-          WebkitMaskImage:
-            "radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%)",
-          maskImage:
-            "radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%)",
-        }}
-        className="auth-parch-video block w-full object-contain"
+        onLoadedData={() => setReady(true)}
+        onCanPlay={() => setReady(true)}
+        className={`auth-parch-video ${ready ? "is-ready" : ""}`}
       />
     </div>
   )

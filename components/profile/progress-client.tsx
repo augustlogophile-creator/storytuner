@@ -57,7 +57,6 @@ export function ProgressClient({ sharedStoryCount: _sharedStoryCount }: { shared
   const [weekOffset, setWeekOffset] = useState(0)
   const [weekDirection, setWeekDirection] = useState<"back" | "forward">("back")
   const week = getWeek(state.activityDates, weekOffset)
-  const activeDays = week.days.filter((day) => day.active).length
   const earliestWeekOffset = getEarliestWeekOffset(state.activityDates)
   const derivedStreaks = calculateStreaks(state.activityDates)
   const streaks = { current: derivedStreaks.current, longest: Math.max(derivedStreaks.longest, state.longestStreak) }
@@ -88,11 +87,10 @@ export function ProgressClient({ sharedStoryCount: _sharedStoryCount }: { shared
     <section className="progress-streak-card rounded-3xl border border-border bg-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <p className="text-base font-semibold">Streak</p>
-            <p className="text-[0.64rem] tabular-nums text-muted-foreground">{week.rangeLabel}</p>
+            <p className="progress-week-range tabular-nums">{week.rangeLabel}</p>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">Keep the habit moving, one active day at a time.</p>
         </div>
         <div className="flex shrink-0 items-center gap-1" aria-label="Browse weekly activity">
           <button
@@ -126,7 +124,6 @@ export function ProgressClient({ sharedStoryCount: _sharedStoryCount }: { shared
             </div>
           ))}
         </div>
-        <p className="mt-2 text-right text-[0.61rem] text-muted-foreground">{activeDays} active {activeDays === 1 ? "day" : "days"}</p>
       </div>
 
       <div className="progress-streak-summary mt-4 border-t border-border pt-4 text-center">
@@ -191,7 +188,7 @@ function getWeek(activityDates: string[], offset: number) {
 
   return {
     startKey: localDateKey(monday),
-    rangeLabel: `${shortDate(monday)}–${shortDate(sunday)}`,
+    rangeLabel: formatWeekRange(monday, sunday),
     days: Array.from({ length: 7 }, (_, index) => {
       const date = new Date(monday)
       date.setDate(monday.getDate() + index)
@@ -232,8 +229,15 @@ function parseLocalDateKey(value: string) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-function shortDate(date: Date) {
-  return date.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "2-digit" })
+function formatWeekRange(start: Date, end: Date) {
+  const sameYear = start.getFullYear() === end.getFullYear()
+  const sameMonth = sameYear && start.getMonth() === end.getMonth()
+  const startMonth = start.toLocaleDateString("en-US", { month: "short" })
+  const endMonth = end.toLocaleDateString("en-US", { month: "short" })
+
+  if (sameMonth) return `${startMonth} ${start.getDate()}–${end.getDate()}, ${end.getFullYear()}`
+  if (sameYear) return `${startMonth} ${start.getDate()}–${endMonth} ${end.getDate()}, ${end.getFullYear()}`
+  return `${startMonth} ${start.getDate()}, ${start.getFullYear()}–${endMonth} ${end.getDate()}, ${end.getFullYear()}`
 }
 
 function localDateKey(date: Date) {

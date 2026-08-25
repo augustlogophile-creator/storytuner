@@ -13442,3 +13442,169 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   background: #3a342e !important;
   color: #f0e8dc !important;
 }
+
+/* August 24 intro and streak refinement: reserve the mascot frame before video
+   decode, give page turns a more tactile shadow, and use one consistent bottom
+   action on every inside onboarding page. */
+.auth-parch {
+  position: relative !important;
+  aspect-ratio: 752 / 560 !important;
+  contain: layout paint;
+}
+.auth-parch-poster,
+.auth-parch-video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  -webkit-mask-image: radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 76% at 50% 50%, #000 0%, #000 66%, rgba(0,0,0,.92) 76%, rgba(0,0,0,.55) 87%, transparent 100%);
+}
+.auth-parch-poster {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 180ms ease;
+  pointer-events: none;
+}
+.auth-parch-poster.is-hidden { opacity: 0; }
+.auth-parch-video {
+  z-index: 2;
+  opacity: 0;
+  transform: translateZ(0) scale(.992);
+  transition: opacity 220ms ease, transform 300ms cubic-bezier(.2,.72,.2,1);
+  will-change: opacity, transform;
+}
+.auth-parch-video.is-ready {
+  opacity: 1;
+  transform: translateZ(0) scale(1);
+}
+
+/* The cover keeps its original text treatment. It simply opens a little more
+   decisively so the handoff to the first paper page feels continuous. */
+.book-standalone-cover {
+  transition-duration: 690ms !important;
+  transition-timing-function: cubic-bezier(.2,.78,.18,1) !important;
+}
+.book-standalone-cover.is-opening .book-cover-content::after {
+  opacity: .88 !important;
+  width: 3.15rem !important;
+  background: linear-gradient(90deg, rgba(35,29,23,.28), rgba(45,37,29,.12) 48%, transparent 100%) !important;
+  filter: blur(8px) !important;
+}
+
+/* A stronger moving edge makes the paper read as a real sheet without making
+   the stationary page look elevated. */
+.story-book-wrap.is-flipping .stf__item {
+  box-shadow: -12px 8px 24px rgba(44,36,28,.18);
+}
+.story-book-wrap.is-flipping .story-book-page-inner {
+  box-shadow:
+    inset 11px 0 22px rgba(57,45,34,.035),
+    inset -1px 0 0 rgba(70,57,44,.05),
+    0 8px 24px rgba(48,39,30,.10) !important;
+}
+
+.book-turn-action,
+.book-start-link {
+  position: relative !important;
+  inset: auto !important;
+  display: flex !important;
+  width: 100% !important;
+  min-height: 3.35rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  margin-top: auto !important;
+  padding: .82rem 1rem !important;
+  border: 1px solid rgba(54,92,132,.58) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #5f8fc1 0%, #4f7eaf 100%) !important;
+  color: #fff !important;
+  box-shadow:
+    0 4px 0 #345d87,
+    0 10px 18px rgba(46,79,111,.14) !important;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif !important;
+  font-size: .92rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .005em !important;
+  text-decoration: none !important;
+  text-align: center !important;
+  cursor: pointer;
+  transform: translateY(0);
+  transition:
+    transform 130ms ease,
+    box-shadow 130ms ease,
+    filter 160ms ease,
+    opacity 160ms ease !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.book-turn-action:not(:disabled):hover,
+.book-start-link:hover {
+  filter: brightness(1.025);
+}
+.book-turn-action:not(:disabled):active,
+.book-start-link:active {
+  transform: translateY(3px) scale(.995);
+  box-shadow:
+    0 1px 0 #345d87,
+    0 5px 12px rgba(46,79,111,.11) !important;
+}
+.book-turn-action:disabled {
+  opacity: .34 !important;
+  color: rgba(255,255,255,.92) !important;
+  box-shadow: 0 3px 0 rgba(83,93,102,.28) !important;
+  cursor: default !important;
+}
+.book-turn-action-label { display: inline-flex; align-items: center; justify-content: center; margin-left: 0 !important; }
+.book-paper-content.is-centered .book-turn-action {
+  position: static !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+.book-final-actions {
+  width: 100% !important;
+  padding-bottom: .12rem !important;
+  text-align: initial !important;
+}
+.book-paper-body {
+  padding-bottom: .2rem;
+}
+
+/* The weekly date is useful context, but it should read as metadata rather than
+   another sentence inside the streak card. */
+.progress-week-range {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: .18rem .48rem;
+  border: 1px solid color-mix(in oklch, var(--border) 82%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--secondary) 45%, var(--card));
+  color: var(--muted-foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-size: .61rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.dark .progress-week-range {
+  border-color: #51493f;
+  background: #302b26;
+  color: #c9beae;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-parch-poster,
+  .auth-parch-video,
+  .book-turn-action,
+  .book-start-link {
+    transition: none !important;
+  }
+  .story-book-wrap.is-flipping .stf__item { box-shadow: none !important; }
+}
