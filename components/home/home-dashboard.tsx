@@ -134,7 +134,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             href="/studio?mode=scenario"
             icon={<Shuffle className="h-4 w-4" strokeWidth={2} />}
             title="Choose a scenario"
-            description="Practice a real life storytelling situation."
+            description="Practice a real-life storytelling situation."
           />
         </div>
 

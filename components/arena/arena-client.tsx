@@ -44,6 +44,7 @@ import {
 import { cn } from "@/lib/utils"
 import { validateAudioSignature } from "@/lib/audio-upload-security"
 import { secondPersonDirection } from "@/lib/planner/voice"
+import { recordingHasGrade } from "@/lib/recordings"
 
 type Phase = "setup" | "ready" | "recording" | "review" | "scoring" | "result"
 type StoryMode = "free" | "scenario"
@@ -127,10 +128,10 @@ const scenarios: Scenario[] = [
   {
     id: "difficult",
     name: "Difficult conversations",
-    detail: "Use one honest moment to explain what happened and why it mattered.",
+    detail: "Use an honest story to explain what happened, why it mattered, and how it affected others.",
     prompts: [
-      "Tell someone about a specific moment when their actions affected you.",
-      "Explain a misunderstanding by telling the moment it first began.",
+      "Share a specific moment when someone's actions affected you personally.",
+      "Tell a story about a misunderstanding, where someone went wrong, or what they could have done better.",
       "Tell your own story or response.",
     ],
   },
@@ -147,15 +148,16 @@ const scenarios: Scenario[] = [
 ]
 
 export function ArenaClient() {
-  const { state, addRecording } = useApp()
+  const { state, addRecording, saveDraftRecording, deleteRecording } = useApp()
   const [phase, setPhase] = useState<Phase>("setup")
   const [storyMode, setStoryMode] = useState<StoryMode>("free")
   const [scenarioId, setScenarioId] = useState(scenarios[0].id)
   const scenario = scenarios.find((item) => item.id === scenarioId) ?? scenarios[0]
   const [promptIndex, setPromptIndex] = useState(0)
-  const prompt = storyMode === "free" ? "Tell a story of your choice." : scenario.prompts[promptIndex % scenario.prompts.length]
-  const isOpenResponse = storyMode === "scenario" && promptIndex % scenario.prompts.length === scenario.prompts.length - 1
-  const contextName = storyMode === "free" ? "Open story" : scenario.name
+  const [promptOverride, setPromptOverride] = useState("")
+  const prompt = storyMode === "free" ? "Tell a story of your choice." : (promptOverride || scenario.prompts[promptIndex % scenario.prompts.length])
+  const isOpenResponse = storyMode === "scenario" && !promptOverride && promptIndex % scenario.prompts.length === scenario.prompts.length - 1
+  const contextName = storyMode === "free" ? "Unprompted story" : scenario.name
   const localRemainingFreeStories = freeArenaRemaining(state)
   const [serverRemainingFreeStories, setServerRemainingFreeStories] = useState<number | null>(null)
   const remainingFreeStories = state.premium ? Number.POSITIVE_INFINITY : (serverRemainingFreeStories ?? localRemainingFreeStories)
@@ -199,7 +201,11 @@ export function ArenaClient() {
   const preparingRoomRef = useRef(false)
   const captureVersionRef = useRef(0)
   const reviewRequestKeyRef = useRef<string | null>(null)
+  const [draftId, setDraftId] = useState<string | null>(null)
+  const draftPersistedRef = useRef(false)
+  const draftCreatedAtRef = useRef<string | null>(null)
   const transcriptWordCount = meaningfulWordCount(transcript)
+  const savedRecordingCount = state.recordings.filter(recordingHasGrade).length
 
   async function refreshArenaUsage() {
     try {
@@ -219,6 +225,24 @@ export function ArenaClient() {
     const mode = params.get("mode")
     if (mode === "scenario") setStoryMode("scenario")
     if (mode === "free") setStoryMode("free")
+
+    const scenarioParam = params.get("scenario")
+    const scenarioFromParams = scenarioParam ? scenarios.find((item) => item.id === scenarioParam) : undefined
+    if (scenarioFromParams) setScenarioId(scenarioFromParams.id)
+
+    const promptParam = params.get("prompt")
+    const promptIndexParam = Number.parseInt(params.get("promptIndex") || "", 10)
+    const hasPromptIndex = Boolean(scenarioFromParams && Number.isFinite(promptIndexParam) && promptIndexParam >= 0 && promptIndexParam < scenarioFromParams.prompts.length)
+    if (hasPromptIndex) setPromptIndex(promptIndexParam)
+    if (promptParam && (!hasPromptIndex || scenarioFromParams?.prompts[promptIndexParam] !== promptParam)) setPromptOverride(promptParam)
+
+    const targetParam = Number.parseInt(params.get("target") || "", 10)
+    if (Number.isFinite(targetParam) && targetParam >= 60 && targetParam <= 1800) setTargetSeconds(targetParam)
+
+    const cameraParam = params.get("camera")
+    if (cameraParam === "0") setCameraOn(false)
+    if (cameraParam === "1") setCameraOn(true)
+
     if (params.get("planned") === "1") {
       try {
         const stored = window.sessionStorage.getItem("storytuner:planner-plan")
@@ -241,6 +265,38 @@ export function ArenaClient() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const requestedDraftId = params.get("draft")
+    if (!requestedDraftId || draftId === requestedDraftId) return
+    const recording = state.recordings.find((item) => item.id === requestedDraftId)
+    if (!recording || recordingHasGrade(recording) || !recording.transcript.trim()) return
+
+    setDraftId(recording.id)
+    draftPersistedRef.current = true
+    draftCreatedAtRef.current = recording.createdAt
+    setTitle(recording.title === "Untitled story" ? "" : recording.title)
+    setTranscript(recording.transcript)
+    setTranscriptionOutcome("success")
+    setSeconds(Math.max(1, recording.duration))
+    setTargetSeconds(recording.targetSeconds && recording.targetSeconds > 0 ? recording.targetSeconds : 90)
+    setCameraOn(recording.cameraOn ?? recording.mediaKind === "video")
+    setMediaKind(recording.mediaKind)
+    setMimeType(recording.mimeType)
+    setStoryMode(recording.storyMode ?? (recording.context === "Open story" || recording.context === "Unprompted story" || recording.context === "Draft" ? "free" : "scenario"))
+    if (recording.scenarioId && scenarios.some((item) => item.id === recording.scenarioId)) setScenarioId(recording.scenarioId)
+    if (typeof recording.promptIndex === "number") setPromptIndex(recording.promptIndex)
+    if (recording.prompt) setPromptOverride(recording.prompt)
+    if (recording.cloudRecordingId && recording.cloudStoragePath) {
+      cloudUploadRef.current = { id: recording.cloudRecordingId, storagePath: recording.cloudStoragePath }
+      reviewRequestKeyRef.current = recording.usageRequestKey || recording.cloudRecordingId
+    } else {
+      reviewRequestKeyRef.current = recording.usageRequestKey || recording.id
+    }
+    autoTranscriptionStartedRef.current = true
+    setPhase("review")
+  }, [draftId, state.recordings])
 
   useEffect(() => {
     if (phase !== "recording" || paused) return
@@ -298,7 +354,7 @@ export function ArenaClient() {
   useEffect(() => () => {
     const cloudUpload = cloudUploadRef.current
     cloudUploadRef.current = null
-    if (cloudUpload) void deleteCloudRecording(cloudUpload).catch(() => undefined)
+    if (cloudUpload && !draftPersistedRef.current) void deleteCloudRecording(cloudUpload).catch(() => undefined)
   }, [])
 
   async function cleanupDraftCloudUpload() {
@@ -308,9 +364,14 @@ export function ArenaClient() {
   }
 
   function reset() {
+    if (draftId) {
+      cloudUploadRef.current = null
+      void deleteRecording(draftId).catch(() => undefined)
+    } else {
+      void cleanupDraftCloudUpload()
+    }
     captureVersionRef.current += 1
     reviewRequestKeyRef.current = null
-    void cleanupDraftCloudUpload()
     streamRef.current?.getTracks().forEach((track) => track.stop())
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
@@ -333,6 +394,10 @@ export function ArenaClient() {
     setTranscribing(false)
     setTranscriptionStage("idle")
     setSavedId(null)
+    setDraftId(null)
+    draftPersistedRef.current = false
+    draftCreatedAtRef.current = null
+    setPromptOverride("")
     setError("")
     setShowCaptureCelebration(false)
     chunksRef.current = []
@@ -479,6 +544,9 @@ export function ArenaClient() {
       setExtraSeconds(0)
       setTranscript("")
       setTitle("")
+      setDraftId(null)
+      draftPersistedRef.current = false
+      draftCreatedAtRef.current = null
       setTranscriptionOutcome("idle")
       setPaused(false)
       setPhase("recording")
@@ -493,9 +561,17 @@ export function ArenaClient() {
   }
 
   function performRetakeRecording() {
+    if (draftId) {
+      cloudUploadRef.current = null
+      void deleteRecording(draftId).catch(() => undefined)
+    } else {
+      void cleanupDraftCloudUpload()
+    }
+    setDraftId(null)
+    draftPersistedRef.current = false
+    draftCreatedAtRef.current = null
     captureVersionRef.current += 1
     reviewRequestKeyRef.current = null
-    void cleanupDraftCloudUpload()
     const audioRecorder = audioRecorderRef.current
     if (audioRecorder && audioRecorder.state !== "inactive") audioRecorder.stop()
     const recorder = recorderRef.current
@@ -528,9 +604,17 @@ export function ArenaClient() {
   }
 
   function performRetakeFromReview() {
+    if (draftId) {
+      cloudUploadRef.current = null
+      void deleteRecording(draftId).catch(() => undefined)
+    } else {
+      void cleanupDraftCloudUpload()
+    }
+    setDraftId(null)
+    draftPersistedRef.current = false
+    draftCreatedAtRef.current = null
     captureVersionRef.current += 1
     reviewRequestKeyRef.current = null
-    void cleanupDraftCloudUpload()
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
     setSeconds(0)
     setExtraSeconds(0)
@@ -621,8 +705,33 @@ export function ArenaClient() {
         }
 
         cloudUploadRef.current = { id: result.id, storagePath: result.storagePath }
+        if (mediaBlob) await saveMedia(result.id, mediaBlob).catch(() => undefined)
+        const draftTitle = title.trim() || result.title
+        const createdAt = draftCreatedAtRef.current ?? new Date().toISOString()
+        draftCreatedAtRef.current = createdAt
         setTranscript(result.transcript)
-        setTitle((current) => current.trim() || result.title)
+        setTitle(draftTitle)
+        setDraftId(result.id)
+        draftPersistedRef.current = true
+        saveDraftRecording(makeDraftRecording({
+          id: result.id,
+          createdAt,
+          title: draftTitle,
+          transcript: result.transcript,
+          context: contextName,
+          prompt,
+          duration: Math.max(1, seconds),
+          mediaKind,
+          mimeType,
+          cloudRecordingId: result.id,
+          cloudStoragePath: result.storagePath,
+          storyMode,
+          scenarioId: storyMode === "scenario" ? scenario.id : undefined,
+          promptIndex: storyMode === "scenario" ? promptIndex : undefined,
+          targetSeconds,
+          cameraOn,
+          usageRequestKey: result.id,
+        }))
         setTranscriptionOutcome("success")
         await refreshArenaUsage()
         return result.transcript.trim()
@@ -645,8 +754,32 @@ export function ArenaClient() {
             const fallbackKey = reviewRequestKeyRef.current ?? crypto.randomUUID()
             reviewRequestKeyRef.current = fallbackKey
             const fallback = await transcribeThroughVercel(source, fallbackKey)
+            const localDraftId = draftId ?? crypto.randomUUID()
+            const draftTitle = title.trim() || fallback.title
+            const createdAt = draftCreatedAtRef.current ?? new Date().toISOString()
+            draftCreatedAtRef.current = createdAt
+            if (mediaBlob) await saveMedia(localDraftId, mediaBlob).catch(() => undefined)
             setTranscript(fallback.text)
-            setTitle((current) => current.trim() || fallback.title)
+            setTitle(draftTitle)
+            setDraftId(localDraftId)
+            draftPersistedRef.current = true
+            saveDraftRecording(makeDraftRecording({
+              id: localDraftId,
+              createdAt,
+              title: draftTitle,
+              transcript: fallback.text,
+              context: contextName,
+              prompt,
+              duration: Math.max(1, seconds),
+              mediaKind,
+              mimeType,
+              storyMode,
+              scenarioId: storyMode === "scenario" ? scenario.id : undefined,
+              promptIndex: storyMode === "scenario" ? promptIndex : undefined,
+              targetSeconds,
+              cameraOn,
+              usageRequestKey: fallbackKey,
+            }))
             setTranscriptionOutcome("success")
             await refreshArenaUsage()
             return fallback.text.trim()
@@ -727,7 +860,7 @@ export function ArenaClient() {
         if (data.code === "ARENA_LIMIT_REACHED") setServerRemainingFreeStories(0)
         throw new Error(data.error || "Parch could not grade this story.")
       }
-      const id = crypto.randomUUID()
+      const id = draftId ?? cloudUploadRef.current?.id ?? crypto.randomUUID()
       if (mediaBlob) await saveMedia(id, mediaBlob).catch(() => undefined)
       const cloudUpload = cloudUploadRef.current
       const aiTitle = data.title?.trim() || title.trim() || firstSentence(clean)
@@ -741,7 +874,7 @@ export function ArenaClient() {
       const scores: ArenaScores = { hook: data.hook, development: data.development, landing: data.landing }
       const recording: Recording = {
         id,
-        createdAt: new Date().toISOString(),
+        createdAt: draftCreatedAtRef.current ?? new Date().toISOString(),
         title: aiTitle,
         context: contextName,
         prompt,
@@ -760,6 +893,12 @@ export function ArenaClient() {
         nextTake: data.levelUp,
         mediaKind,
         mimeType,
+        storyMode,
+        scenarioId: storyMode === "scenario" ? scenario.id : undefined,
+        promptIndex: storyMode === "scenario" ? promptIndex : undefined,
+        targetSeconds,
+        cameraOn,
+        usageRequestKey: reviewRequestKeyRef.current ?? undefined,
         cloudRecordingId: cloudUpload?.id,
         cloudStoragePath: cloudUpload?.storagePath,
         shared: false,
@@ -769,6 +908,9 @@ export function ArenaClient() {
       reviewRequestKeyRef.current = null
       setFeedback(data)
       setSavedId(id)
+      setDraftId(null)
+      draftPersistedRef.current = false
+      draftCreatedAtRef.current = null
       setPhase("result")
       window.scrollTo({ top: 0, behavior: "auto" })
     } catch (caught) {
@@ -788,10 +930,10 @@ export function ArenaClient() {
       <header className="studio-hero">
         <div className="studio-kicker-row">
           <Eyebrow>Studio</Eyebrow>
-          <Link href="/studio/recordings" className="studio-recordings-pill">{recordingCountLabel(state.recordings.length)}</Link>
+          <Link href="/studio/recordings" className="studio-recordings-pill">{recordingCountLabel(savedRecordingCount)}</Link>
         </div>
-        <h1>Tell a story. See what lands.</h1>
-        <p className="studio-intro">Tell a story or choose a real-life scenario. Parch grades the craft.</p>
+        <h1>Tell a story. Receive tailored, encouraging feedback.</h1>
+        <p className="studio-intro">Tell an unprompted story or choose a real-life scenario to practice.</p>
         {!state.premium && (
           <div className="studio-meta-row">
             <span className="studio-free-badge">{remainingFreeStories} of {FREE_ARENA_LIMIT} free stories remaining</span>
@@ -804,15 +946,15 @@ export function ArenaClient() {
           <section className="studio-setup-card">
             <p className="studio-section-title">Choose how you want to practice</p>
             <div className="studio-mode-grid">
-              <button type="button" onClick={() => setStoryMode("free")} className={cn("studio-mode-card", storyMode === "free" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
+              <button type="button" onClick={() => { setStoryMode("free"); setPromptOverride("") }} className={cn("studio-mode-card", storyMode === "free" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "free" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Mic2 className="h-4 w-4" /></span>
-                <p className="mt-3 text-sm font-semibold">Tell any story</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt. Your story.</p>
+                <p className="mt-3 text-sm font-semibold">Tell your own story</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt, practice any story you've been working on.</p>
               </button>
-              <button type="button" onClick={() => setStoryMode("scenario")} className={cn("studio-mode-card", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
+              <button type="button" onClick={() => { setStoryMode("scenario"); setPromptOverride("") }} className={cn("studio-mode-card", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
                 <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a real situation.</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a real-life storytelling situation.</p>
               </button>
             </div>
           </section>
@@ -825,7 +967,7 @@ export function ArenaClient() {
                   {scenarios.map((item) => {
                     const selected = item.id === scenarioId
                     return (
-                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0) }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10)]" : "border-border bg-card hover:border-foreground/25")}>
+                      <button key={item.id} type="button" onClick={() => { setScenarioId(item.id); setPromptIndex(0); setPromptOverride("") }} className={cn("rounded-3xl border p-4 text-left transition-colors", selected ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10)]" : "border-border bg-card hover:border-foreground/25")}>
                         <p className="text-sm font-semibold leading-snug">{item.name}</p>
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</p>
                       </button>
@@ -834,7 +976,7 @@ export function ArenaClient() {
                 </div>
               </section>
               <section className="rounded-3xl border border-border bg-card p-5">
-                <div className="flex items-center justify-between gap-3"><Eyebrow>Your prompt</Eyebrow><button type="button" onClick={() => setPromptIndex((value) => (value + 1) % scenario.prompts.length)} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground"><RotateCcw className="h-3.5 w-3.5" />New prompt</button></div>
+                <div className="flex items-center justify-between gap-3"><Eyebrow>Your prompt</Eyebrow><button type="button" onClick={() => { setPromptOverride(""); setPromptIndex((value) => (value + 1) % scenario.prompts.length) }} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground"><RotateCcw className="h-3.5 w-3.5" />New prompt</button></div>
                 <p className="mt-3 text-base font-semibold leading-relaxed text-balance">{prompt}</p>
                 {isOpenResponse && <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Unprompted. Choose what you want to talk about.</p>}
               </section>
@@ -910,9 +1052,9 @@ export function ArenaClient() {
               )}
             >
               <span className="min-w-0">
-                <span className="block text-sm font-semibold">See other options</span>
+                <span className="block text-sm font-semibold">See other, longer options</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">
-                  {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "10, 15, or 20 minutes, or a custom target"}
+                  {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "Members can choose targets up to 30 minutes in length."}
                 </span>
               </span>
               <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
@@ -921,7 +1063,7 @@ export function ArenaClient() {
               </span>
             </button>
             <div className="mt-5 flex items-center justify-between gap-4 border-t border-border pt-5">
-              <div><p className="text-sm font-semibold">Camera</p><p className="mt-0.5 text-xs text-muted-foreground">Turn it off for an audio-only take.</p></div>
+              <div><p className="text-sm font-semibold">Camera</p><p className="mt-0.5 text-xs text-muted-foreground">Turn camera off for an audio-only take.</p></div>
               <button type="button" onClick={() => setCameraOn((value) => !value)} className={cn("flex h-10 w-16 items-center rounded-full p-1 transition-colors", cameraOn ? "justify-end bg-brand" : "justify-start bg-secondary")}><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">{cameraOn ? <Camera className="h-4 w-4 text-accent-foreground" /> : <CameraOff className="h-4 w-4 text-muted-foreground" />}</span></button>
             </div>
           </section>
@@ -954,10 +1096,8 @@ export function ArenaClient() {
             <p className="mt-5 font-mono text-[0.65rem] uppercase tracking-[0.16em] text-white/65">Ready when you are</p>
             <p className="mt-2 text-sm font-semibold tabular-nums">Target · {formatTime(limitSeconds)}</p>
           </div>
-          <div className="absolute inset-x-0 bottom-3 z-10 flex items-end justify-center gap-7 px-7 pb-4 text-white">
-            <Control label={cameraOn ? "Camera" : "Camera off"} onClick={toggleCamera} icon={cameraOn ? Camera : CameraOff} />
+          <div className="absolute inset-x-0 bottom-4 z-10 flex justify-center px-7 pb-4 text-white">
             <Control label="Start" onClick={startRecording} icon={Play} large tone="brand" />
-            <Control label="Setup" onClick={reset} icon={RotateCcw} />
           </div>
         </section>
       )}
@@ -998,19 +1138,19 @@ export function ArenaClient() {
           </section>
           <section className="rounded-3xl border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3">
-              <div><Eyebrow>Prepared by Parch</Eyebrow><h2 className="mt-1 text-base font-semibold">Title and clean transcript</h2></div>
+              <h2 className="text-base font-semibold">Clean transcript</h2>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Parch creates a readable transcript while preserving your voice and events. Edit anything before grading. Parch will name the story from the full transcript."}</p>
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <label className="block text-sm font-semibold" htmlFor="arena-transcript">Clean transcript</label>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{transcribing ? transcriptionStageLabel(transcriptionStage) : "Our AI quickly shapes your story into a readable, grammatically correct transcript before grading, while preserving your voice."}</p>
+            <div className="mt-5 flex justify-end">
               {transcriptWordCount >= MIN_STORY_WORDS ? (
                 <span className="text-xs font-semibold text-emerald-600">Minimum met</span>
               ) : (
                 <span className="text-xs font-medium tabular-nums text-muted-foreground">{transcriptWordCount} / {MIN_STORY_WORDS} words</span>
               )}
             </div>
-            <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} rows={10} placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
+            <label className="sr-only" htmlFor="arena-transcript">Clean transcript</label>
+            <textarea ref={transcriptRef} id="arena-transcript" value={transcript} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => { setTranscript(event.target.value); setTranscriptionOutcome("success"); if (error) setError("") }} onBlur={() => { if (draftId && transcript.trim()) saveDraftRecording(makeDraftRecording({ id: draftId, createdAt: draftCreatedAtRef.current ?? new Date().toISOString(), title: title.trim() || firstSentence(transcript), transcript, context: contextName, prompt, duration: Math.max(1, seconds), mediaKind, mimeType, cloudRecordingId: cloudUploadRef.current?.id, cloudStoragePath: cloudUploadRef.current?.storagePath, storyMode, scenarioId: storyMode === "scenario" ? scenario.id : undefined, promptIndex: storyMode === "scenario" ? promptIndex : undefined, targetSeconds, cameraOn, usageRequestKey: reviewRequestKeyRef.current ?? undefined })) }} rows={10} placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"} className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand" />
           </section>
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
             <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
@@ -1061,7 +1201,7 @@ export function ArenaClient() {
           if (action === "discard") reset()
           if (action === "leave" && pendingHref) {
             const href = pendingHref
-            void cleanupDraftCloudUpload().finally(() => window.location.assign(href))
+            window.location.assign(href)
           }
           setPendingHref("")
         }}
@@ -1072,6 +1212,55 @@ export function ArenaClient() {
       </ConfirmDialog>
     </div>
   )
+}
+
+
+function makeDraftRecording(values: {
+  id: string
+  createdAt: string
+  title: string
+  transcript: string
+  context: string
+  prompt: string
+  duration: number
+  mediaKind: "video" | "audio" | "none"
+  mimeType: string
+  cloudRecordingId?: string
+  cloudStoragePath?: string
+  storyMode: StoryMode
+  scenarioId?: string
+  promptIndex?: number
+  targetSeconds: number
+  cameraOn: boolean
+  usageRequestKey?: string
+}): Recording {
+  return {
+    id: values.id,
+    createdAt: values.createdAt,
+    title: values.title.trim() || "Untitled story",
+    context: values.context,
+    prompt: values.prompt,
+    duration: values.duration,
+    transcript: values.transcript.trim(),
+    scores: { hook: 0, development: 0, landing: 0 },
+    overall: 0,
+    praise: "",
+    strengths: [],
+    improvements: [],
+    fix: "",
+    nextTake: "",
+    mediaKind: values.mediaKind,
+    mimeType: values.mimeType,
+    storyMode: values.storyMode,
+    scenarioId: values.scenarioId,
+    promptIndex: values.promptIndex,
+    targetSeconds: values.targetSeconds,
+    cameraOn: values.cameraOn,
+    usageRequestKey: values.usageRequestKey,
+    cloudRecordingId: values.cloudRecordingId,
+    cloudStoragePath: values.cloudStoragePath,
+    shared: false,
+  }
 }
 
 function transcriptionStageLabel(stage: CloudTranscriptionStage | "idle") {
@@ -1142,7 +1331,7 @@ function DurationOptionsDialog({
           <div>
             <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em] text-muted-foreground">Target length</p>
             <h2 id="duration-options-title" className="mt-1.5 text-lg font-semibold tracking-[-0.025em]">Choose a longer time</h2>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">Member targets can run up to 30 minutes.</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Members can choose targets up to 30 minutes in length.</p>
           </div>
           <button type="button" onClick={onClose} className="app-dialog-close" aria-label="Close target length options">
             <X className="h-4 w-4" />

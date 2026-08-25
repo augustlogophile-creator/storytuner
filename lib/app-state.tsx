@@ -45,6 +45,12 @@ export type Recording = {
   nextTake: string
   mediaKind: "video" | "audio" | "none"
   mimeType: string
+  storyMode?: "free" | "scenario"
+  scenarioId?: string
+  promptIndex?: number
+  targetSeconds?: number
+  cameraOn?: boolean
+  usageRequestKey?: string
   cloudRecordingId?: string
   cloudStoragePath?: string
   shared: boolean
@@ -379,7 +385,7 @@ function recordingFromCloudRow(row: CloudRecordingRow): Recording {
     id: row.id,
     createdAt: row.created_at,
     title: row.title?.trim() || "Untitled story",
-    context: "Saved story",
+    context: "Draft",
     prompt: "",
     duration: row.duration_seconds,
     transcript,
@@ -504,6 +510,7 @@ type AppContextValue = {
   completeCheckpoint: (checkpointId: string, response: string, score: number, xp: number) => void
   saveResponse: (key: string, value: string) => void
   addRecording: (recording: Recording) => void
+  saveDraftRecording: (recording: Recording) => void
   deleteRecording: (id: string) => Promise<void>
   shareRecording: (id: string) => void
   removePost: (id: string) => void
@@ -844,6 +851,20 @@ export function AppProvider({
     })
   }, [])
 
+  const saveDraftRecording = useCallback((recording: Recording) => {
+    setState((current) => ({
+      ...current,
+      recordings: [
+        recording,
+        ...current.recordings.filter((item) => {
+          if (item.id === recording.id) return false
+          if (recording.cloudRecordingId && item.cloudRecordingId === recording.cloudRecordingId) return false
+          return true
+        }),
+      ],
+    }))
+  }, [])
+
   const deleteRecording = useCallback(async (id: string) => {
     const recording = state.recordings.find((item) => item.id === id)
     if (recording?.cloudRecordingId && recording.cloudStoragePath) {
@@ -1061,6 +1082,7 @@ export function AppProvider({
       completeCheckpoint,
       saveResponse,
       addRecording,
+      saveDraftRecording,
       deleteRecording,
       shareRecording,
       removePost,
@@ -1086,6 +1108,7 @@ export function AppProvider({
       completeCheckpoint,
       saveResponse,
       addRecording,
+      saveDraftRecording,
       deleteRecording,
       shareRecording,
       removePost,

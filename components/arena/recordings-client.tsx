@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { AlertCircle, ArrowLeft, MessageCircle, Mic2, RotateCcw, Share2, Trash2 } from "lucide-react"
+import { AlertCircle, ArrowLeft, ChevronRight, FileText, MessageCircle, Mic2, RotateCcw, Share2, Trash2 } from "lucide-react"
 import { MediaPlayer } from "@/components/arena/media-player"
 import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog, NoticeDialog } from "@/components/confirm-dialog"
 import { CountUp } from "@/components/ui/count-up"
 import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
 import { useApp, type Recording } from "@/lib/app-state"
+import { displayRecordingContext, formatRecordingDateTime, recordingHasGrade, recordingRedoHref } from "@/lib/recordings"
 
 export function RecordingsClient() {
   const { state, deleteRecording } = useApp()
@@ -18,6 +19,9 @@ export function RecordingsClient() {
   const [shareNotice, setShareNotice] = useState("")
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState("")
+
+  const recordings = state.recordings.filter(recordingHasGrade)
+  const draftCount = state.recordings.filter((recording) => !recordingHasGrade(recording) && recording.transcript.trim()).length
 
   async function confirmDelete() {
     if (!pendingDelete) return
@@ -41,9 +45,15 @@ export function RecordingsClient() {
         <header>
           <Link href="/studio" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><ArrowLeft className="h-4 w-4" /> Studio</Link>
           <div className="mt-4">
-            <div><Eyebrow>Private archive</Eyebrow><h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1></div>
+            <Eyebrow>Private archive</Eyebrow>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight">Your recordings</h1>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your private recordings, transcripts, and scores.</p>
+          <Link href="/studio/recordings/drafts" className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-accent-foreground transition-opacity hover:opacity-75 active:opacity-60">
+            <FileText className="h-3.5 w-3.5" />
+            Past drafts{draftCount > 0 ? ` (${draftCount})` : ""}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
         </header>
 
         {deleteError && (
@@ -53,61 +63,58 @@ export function RecordingsClient() {
           </p>
         )}
 
-        {state.recordings.length === 0 ? (
+        {recordings.length === 0 ? (
           <section className="rounded-3xl border border-dashed border-border p-8 text-center">
             <Mic2 className="mx-auto h-7 w-7 text-muted-foreground" />
-            <h2 className="mt-3 text-base font-semibold">No recordings yet</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Record a story and it will appear here.</p>
+            <h2 className="mt-3 text-base font-semibold">No graded recordings yet</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Finish grading a story and it will appear here.</p>
             <Link href="/studio" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Open Studio</Link>
           </section>
         ) : (
           <div className="flex flex-col gap-4">
-            {state.recordings.map((recording) => {
+            {recordings.map((recording) => {
               const derivedOverall = Math.round((recording.scores.hook + recording.scores.development + recording.scores.landing) / 3)
               const overall = recording.overall > 0 ? recording.overall : derivedOverall
-              const hasGrade = overall > 0 || recording.scores.hook > 0 || recording.scores.development > 0 || recording.scores.landing > 0
               const strengths = recording.strengths?.length ? recording.strengths : recording.praise ? [recording.praise] : []
               const improvements = recording.improvements?.length ? recording.improvements : recording.weakness || recording.fix ? [recording.weakness || recording.fix] : []
               return (
                 <article key={recording.id} className="rounded-3xl border border-border bg-card p-5">
                   <div className="flex items-start justify-between gap-4">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-semibold leading-snug">{recording.title}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{recording.context} · {new Date(recording.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} · {formatTime(recording.duration)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{displayRecordingContext(recording)} · {formatRecordingDateTime(recording.createdAt)}</p>
                     </div>
-                    <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{hasGrade ? overall : "Saved"}</span>
+                    <span className="rounded-2xl bg-brand-soft px-3 py-2 text-sm font-semibold text-accent-foreground">{overall}</span>
                   </div>
                   <MediaPlayer recordingId={recording.id} kind={recording.mediaKind} cloudStoragePath={recording.cloudStoragePath} durationSeconds={recording.duration} />
-                  {hasGrade && (
-                    <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                      <Score label="Hook" value={recording.scores.hook} />
-                      <Score label="Development" value={recording.scores.development} />
-                      <Score label="Landing" value={recording.scores.landing} />
-                    </div>
-                  )}
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                    <Score label="Hook" value={recording.scores.hook} />
+                    <Score label="Development" value={recording.scores.development} />
+                    <Score label="Landing" value={recording.scores.landing} />
+                  </div>
                   <details className="mt-4">
-                    <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">{hasGrade ? "Grade and revised story" : "Transcript"}</summary>
-                    {hasGrade && strengths.length > 0 && (
+                    <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">Grade and revised story</summary>
+                    {strengths.length > 0 && (
                       <div className="recording-feedback-card is-positive mt-3 rounded-2xl bg-emerald-50 p-4 text-sm leading-relaxed">
                         <p className="font-semibold text-emerald-800">What worked</p>
                         <ul className="mt-2 space-y-1.5 pl-5">{strengths.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
                       </div>
                     )}
-                    {hasGrade && improvements.length > 0 && (
+                    {improvements.length > 0 && (
                       <div className="recording-feedback-card is-negative mt-3 rounded-2xl bg-red-50 p-4 text-sm leading-relaxed">
                         <p className="font-semibold text-red-800">What to improve</p>
                         <ul className="mt-2 space-y-1.5 pl-5">{improvements.map((item, index) => <li key={index} className="list-disc">{item}</li>)}</ul>
                       </div>
                     )}
-                    {hasGrade && (recording.levelUp || recording.nextTake) && <div className="mt-3 rounded-2xl bg-brand-soft p-4 text-sm leading-relaxed"><strong>Try this next:</strong> {recording.levelUp || recording.nextTake}</div>}
+                    {(recording.levelUp || recording.nextTake) && <div className="mt-3 rounded-2xl bg-brand-soft p-4 text-sm leading-relaxed"><strong>Try this next:</strong> {recording.levelUp || recording.nextTake}</div>}
                     <div className="mt-3 rounded-2xl bg-secondary p-4">
-                      <p className="text-sm font-semibold">{hasGrade ? "Revised story" : "Transcript"}</p>
-                      <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{hasGrade ? recording.revisedStory || recording.transcript : recording.transcript}</p>
+                      <p className="text-sm font-semibold">Revised story</p>
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{recording.revisedStory || recording.transcript}</p>
                     </div>
                   </details>
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <Link href={`/coach?recording=${recording.id}`} className="flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-xs font-semibold text-brand-foreground"><MessageCircle className="h-3.5 w-3.5" />Ask Parch</Link>
-                    <Link href="/studio" className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Record again</Link>
+                    <Link href={recordingRedoHref(recording)} className="flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2.5 text-xs font-semibold"><RotateCcw className="h-3.5 w-3.5" />Redo</Link>
                     {sharedPosts[recording.id] ? (
                       <Link href={`/community#${sharedPosts[recording.id]}`} className="flex items-center justify-center gap-1.5 rounded-full border border-brand bg-brand-soft px-3 py-2.5 text-xs font-semibold text-accent-foreground"><Share2 className="h-3.5 w-3.5" />View shared</Link>
                     ) : state.premium ? (
@@ -157,4 +164,3 @@ export function RecordingsClient() {
 function Score({ label, value }: { label: string; value: number }) {
   return <div className="rounded-2xl bg-secondary px-2 py-3"><CountUp value={value} className="text-sm font-semibold" /><p className="mt-0.5 font-mono text-[0.5rem] uppercase tracking-wider text-muted-foreground">{label}</p></div>
 }
-function formatTime(seconds: number) { return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` }
