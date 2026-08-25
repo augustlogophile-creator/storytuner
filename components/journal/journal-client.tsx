@@ -177,6 +177,7 @@ export function JournalClient() {
       <label className="journal-search journal-search-top" data-book-no-turn="true">
         <Search aria-hidden="true" />
         <input
+          className="journal-search-input"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search entries"

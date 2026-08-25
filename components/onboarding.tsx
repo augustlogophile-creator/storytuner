@@ -26,11 +26,11 @@ type StoryBlockerChoice = Exclude<StoryBlocker, "">
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
-  // Warm the tiny poster and looping mascot video during onboarding so the
-  // authentication page can render Parch immediately instead of waiting for
-  // the navigation to begin the media request.
-  preload("/parch-reading-poster.jpg", { as: "image" })
+  // Warm the mascot video during onboarding so the authentication page can
+  // render Parch immediately instead of beginning the media request only after
+  // navigation.
   preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
+  preload("/parch-reading-poster.jpg", { as: "image" })
   const normalizedInitialPage = Math.max(0, Math.min(4, initialPage))
   const [page, setPage] = useState(normalizedInitialPage)
   const [coverOpening, setCoverOpening] = useState(false)
@@ -128,6 +128,16 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 
   return (
     <main className={page === 0 ? "book-intro-canvas is-cover" : "book-intro-canvas"}>
+      <video
+        className="intro-parch-preloader"
+        src="/parch-reading.mp4"
+        preload="auto"
+        autoPlay
+        muted
+        playsInline
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <div className="book-inside-pages" aria-hidden={page === 0 && !coverOpening ? "true" : undefined}>
         <BookSlider
           ref={bookRef}

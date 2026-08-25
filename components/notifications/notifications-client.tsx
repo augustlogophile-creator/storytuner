@@ -99,7 +99,6 @@ export function NotificationsClient() {
       <header>
         <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Updates for you</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Notifications</h1>
-        <p className="mt-1.5 text-sm leading-6 text-muted-foreground">Replies, likes, and streaks.</p>
       </header>
 
       <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Notification filters">

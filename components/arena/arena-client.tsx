@@ -128,7 +128,7 @@ const scenarios: Scenario[] = [
   {
     id: "difficult",
     name: "Difficult conversations",
-    detail: "Use an honest story to explain what happened, why it mattered, and how it affected others.",
+    detail: "Use an honest story to explain what happened, why it mattered, and the effect on others.",
     prompts: [
       "Share a specific moment when someone's actions affected you personally.",
       "Tell a story about a misunderstanding, where someone went wrong, or what they could have done better.",
@@ -188,6 +188,7 @@ export function ArenaClient() {
   const [showCaptureCelebration, setShowCaptureCelebration] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const transcriptRef = useRef<HTMLTextAreaElement | null>(null)
+  const latestTranscriptRef = useRef("")
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const audioRecorderRef = useRef<MediaRecorder | null>(null)
@@ -206,6 +207,7 @@ export function ArenaClient() {
   const draftIdRef = useRef<string | null>(null)
   const draftPersistedRef = useRef(false)
   const draftCreatedAtRef = useRef<string | null>(null)
+  const draftTitleRequestRef = useRef("")
   const transcriptWordCount = meaningfulWordCount(transcript)
   const savedRecordingCount = state.recordings.filter(recordingHasGrade).length
 
@@ -350,6 +352,38 @@ export function ArenaClient() {
     })
   }, [phase, mediaBlob])
 
+  useEffect(() => {
+    latestTranscriptRef.current = transcript
+  }, [transcript])
+
+  useEffect(() => {
+    if (phase !== "review" || title.trim() || transcript.trim().length < 24) return
+
+    const cleanTranscript = transcript.trim()
+    if (draftTitleRequestRef.current === cleanTranscript) return
+    const timer = window.setTimeout(async () => {
+      draftTitleRequestRef.current = cleanTranscript
+      try {
+        const response = await fetch("/api/story-title", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript: cleanTranscript }),
+        })
+        if (!response.ok) return
+        const data = (await response.json()) as { title?: string }
+        const generatedTitle = data.title?.trim()
+        if (!generatedTitle) return
+        // The title request may finish after the user has continued editing.
+        // Never let an older request write its older transcript back into Drafts.
+        if (latestTranscriptRef.current.trim() !== cleanTranscript) return
+        setTitle((current) => current.trim() ? current : generatedTitle)
+        persistTranscriptDraft(latestTranscriptRef.current, generatedTitle)
+      } catch {}
+    }, 500)
+
+    return () => window.clearTimeout(timer)
+  }, [phase, title, transcript])
+
   useEffect(() => () => {
     streamRef.current?.getTracks().forEach((track) => track.stop())
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
@@ -403,6 +437,7 @@ export function ArenaClient() {
     setOpenedFromDraft(false)
     draftPersistedRef.current = false
     draftCreatedAtRef.current = null
+    draftTitleRequestRef.current = ""
     setPromptOverride("")
     setError("")
     setShowCaptureCelebration(false)
@@ -555,6 +590,7 @@ export function ArenaClient() {
       setOpenedFromDraft(false)
       draftPersistedRef.current = false
       draftCreatedAtRef.current = null
+      draftTitleRequestRef.current = ""
       setTranscriptionOutcome("idle")
       setPaused(false)
       setPhase("recording")
@@ -580,6 +616,7 @@ export function ArenaClient() {
     setOpenedFromDraft(false)
     draftPersistedRef.current = false
     draftCreatedAtRef.current = null
+    draftTitleRequestRef.current = ""
     captureVersionRef.current += 1
     reviewRequestKeyRef.current = null
     const audioRecorder = audioRecorderRef.current
@@ -625,6 +662,7 @@ export function ArenaClient() {
     setOpenedFromDraft(false)
     draftPersistedRef.current = false
     draftCreatedAtRef.current = null
+    draftTitleRequestRef.current = ""
     captureVersionRef.current += 1
     reviewRequestKeyRef.current = null
     if (mediaUrl) URL.revokeObjectURL(mediaUrl)
@@ -683,7 +721,7 @@ export function ArenaClient() {
     setCameraOn(track.enabled)
   }
 
-  function persistTranscriptDraft(nextTranscript: string) {
+  function persistTranscriptDraft(nextTranscript: string, titleOverride?: string) {
     const cleanTranscript = nextTranscript.trim()
     if (!cleanTranscript || phase !== "review") return
 
@@ -697,7 +735,7 @@ export function ArenaClient() {
     draftCreatedAtRef.current = createdAt
     draftPersistedRef.current = true
 
-    const draftTitle = title.trim() || firstSentence(cleanTranscript)
+    const draftTitle = (titleOverride ?? title).trim() || "Untitled story"
     saveDraftRecording(makeDraftRecording({
       id,
       createdAt,
@@ -965,6 +1003,7 @@ export function ArenaClient() {
       setOpenedFromDraft(false)
       draftPersistedRef.current = false
       draftCreatedAtRef.current = null
+      draftTitleRequestRef.current = ""
       setPhase("result")
       window.scrollTo({ top: 0, behavior: "auto" })
     } catch (caught) {
@@ -1106,7 +1145,7 @@ export function ArenaClient() {
               )}
             >
               <span className="min-w-0">
-                <span className="block text-sm font-semibold">See other, longer options</span>
+                <span className="block text-sm font-semibold">See other options</span>
                 <span className="mt-0.5 block text-xs text-muted-foreground">
                   {!durationOptions.includes(targetSeconds) ? `${formatTime(targetSeconds)} target selected` : "Members can choose targets up to 30 minutes in length."}
                 </span>
@@ -1186,13 +1225,13 @@ export function ArenaClient() {
       {phase === "review" && (
         <>
           {!openedFromDraft && (
-            <section className="rounded-3xl border border-border bg-card p-5">
+            <section className="studio-review-card rounded-3xl border border-border bg-card p-5">
               <Eyebrow>Review your take</Eyebrow>
               {mediaUrl && mediaKind !== "none" && <ReviewMediaPlayer src={mediaUrl} kind={mediaKind} duration={Math.max(1, seconds)} />}
               {!mediaUrl && <div className="mt-4 flex h-28 items-center justify-center rounded-2xl bg-secondary text-sm text-muted-foreground">Text-only review</div>}
             </section>
           )}
-          <section className="rounded-3xl border border-border bg-card p-5">
+          <section className="studio-transcript-card rounded-3xl border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-semibold">Clean transcript</h2>
               {transcribing && <Loader2 className="h-5 w-5 animate-spin text-brand" />}
@@ -1220,16 +1259,16 @@ export function ArenaClient() {
               onBlur={() => persistTranscriptDraft(transcript)}
               rows={10}
               placeholder={transcribing ? "Your private audio is uploading and being transcribed…" : "Type or paste what you said here…"}
-              className="mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand"
+              className="studio-transcript-input mt-3 w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-7 outline-none focus:border-brand"
             />
           </section>
           {!transcribing && transcriptionOutcome !== "error" && (transcriptionOutcome !== "idle" || !mediaBlob) && transcriptWordCount < MIN_STORY_WORDS && (
-            <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5">
-              <p className="text-sm font-semibold text-amber-950">{transcriptWordCount === 0 ? "Parch could not hear a story." : "Your story needs a little more before grading."}</p>
-              <p className="mt-1 text-sm leading-relaxed text-amber-900/80">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `This story was under ${MIN_STORY_WORDS} words. Try telling a longer one, then grade it again. This will not use one of your free stories.`}</p>
+            <section className="studio-story-warning rounded-3xl border p-5">
+              <p className="studio-story-warning-title text-sm font-semibold">{transcriptWordCount === 0 ? "Parch could not hear a story." : "Your story needs a little more before grading."}</p>
+              <p className="studio-story-warning-copy mt-1 text-sm leading-relaxed">{transcriptWordCount === 0 ? "Check your microphone and try another take. This will not use one of your free stories." : `This story was under ${MIN_STORY_WORDS} words. Try telling a longer one, then grade it again. This will not use one of your free stories.`}</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
-                <button type="button" onClick={() => transcriptRef.current?.focus()} className="flex items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-semibold"><FileText className="h-4 w-4" />Review transcript</button>
+                <button type="button" onClick={retakeFromReview} className="flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-semibold text-brand-foreground"><RotateCcw className="h-4 w-4" />Retake</button>
+                <button type="button" onClick={() => transcriptRef.current?.focus()} className="studio-story-warning-secondary flex items-center justify-center gap-2 rounded-full border px-4 py-3 text-sm font-semibold"><FileText className="h-4 w-4" />Review transcript</button>
               </div>
             </section>
           )}
@@ -1419,8 +1458,8 @@ function DurationOptionsDialog({
                 disabled={!premium}
                 onClick={() => onSelect(duration)}
                 className={cn(
-                  "relative flex min-h-16 items-center justify-center rounded-2xl border px-2 text-center transition",
-                  selected ? "border-brand bg-brand-soft" : "border-border bg-background",
+                  "studio-duration-choice relative flex min-h-16 items-center justify-center rounded-2xl border px-2 text-center transition",
+                  selected ? "is-selected border-brand bg-brand-soft" : "border-border bg-card",
                   premium ? "hover:border-brand/50" : "cursor-not-allowed",
                 )}
               >
@@ -1430,7 +1469,7 @@ function DurationOptionsDialog({
           })}
         </div>
 
-        <div className={cn("mt-2.5 rounded-2xl border p-3.5", customSelected ? "border-brand bg-brand-soft/45" : "border-border bg-background")}>
+        <div className={cn("studio-duration-custom mt-2.5 rounded-2xl border p-3.5", customSelected ? "is-selected border-brand bg-brand-soft/45" : "border-border bg-card")}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">Custom time</p>
@@ -1470,7 +1509,7 @@ function DurationOptionsDialog({
               />
             </label>
             {premium && (
-              <button type="button" onClick={applyCustomTime} className="shrink-0 rounded-full bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground transition active:scale-[0.98]">
+              <button type="button" onClick={applyCustomTime} className="studio-duration-use shrink-0 rounded-full bg-brand px-4 py-2.5 text-xs font-semibold text-brand-foreground transition active:scale-[0.98]">
                 Use
               </button>
             )}
@@ -1479,15 +1518,15 @@ function DurationOptionsDialog({
         </div>
 
         {!premium && (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand-soft/45 px-3.5 py-3">
+          <div className="studio-duration-membership mt-3 flex items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand-soft/45 px-3.5 py-3">
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card text-accent-foreground"><LockKeyhole className="h-3.5 w-3.5" /></span>
+              <span className="studio-duration-membership-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-card text-accent-foreground"><LockKeyhole className="h-3.5 w-3.5" /></span>
               <div className="min-w-0">
                 <p className="text-xs font-semibold">Available with Membership</p>
                 <p className="mt-0.5 text-[0.68rem] text-muted-foreground">Unlock long and custom timers.</p>
               </div>
             </div>
-            <Link href="/membership?from=studio" className="shrink-0 rounded-full border border-brand/25 bg-card px-3 py-2 text-xs font-semibold text-accent-foreground">
+            <Link href="/membership?from=studio" className="studio-duration-membership-link shrink-0 rounded-full border border-brand/25 bg-card px-3 py-2 text-xs font-semibold text-accent-foreground">
               View
             </Link>
           </div>
@@ -1588,7 +1627,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
   return (
     <>
       <div className="flex flex-col gap-4">
-        <section className="rounded-[1.65rem] border border-border bg-card p-5 shadow-[0_1px_2px_rgba(32,28,24,0.025)]">
+        <section className="studio-result-card rounded-[1.65rem] border border-border bg-card p-5 shadow-[0_1px_2px_rgba(32,28,24,0.025)]">
           <Eyebrow>Story review</Eyebrow>
           <div className="mt-3 flex items-center justify-between gap-4">
             <div className="min-w-0">
@@ -1604,7 +1643,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
           </div>
         </section>
 
-        <section className="rounded-[1.55rem] border border-border bg-card p-5">
+        <section className="studio-result-feedback-card rounded-[1.55rem] border border-border bg-card p-5">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <h3 className="text-sm font-semibold">What landed</h3>
@@ -1619,7 +1658,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
           </ul>
         </section>
 
-        <section className="rounded-[1.55rem] border border-border bg-card p-5">
+        <section className="studio-result-feedback-card rounded-[1.55rem] border border-border bg-card p-5">
           <div className="flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-streak" />
             <h3 className="text-sm font-semibold">What to tighten</h3>
@@ -1634,7 +1673,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
           </ul>
         </section>
 
-        <section className="rounded-[1.55rem] bg-[#2b2823] p-5 text-[#f8f7f2] shadow-[0_10px_28px_rgba(31,27,23,0.08)]">
+        <section className="studio-result-quickfix rounded-[1.55rem] bg-[#2b2823] p-5 text-[#f8f7f2] shadow-[0_10px_28px_rgba(31,27,23,0.08)]">
           <div className="flex items-center gap-2 text-[#c9c3bb]">
             <Sparkles className="h-4 w-4" />
             <p className="font-mono text-[0.58rem] uppercase tracking-[0.16em]">Quickest fix</p>
@@ -1642,7 +1681,7 @@ function Result({ feedback, recording, onAgain, premium }: { feedback: Feedback;
           <p className="mt-2.5 text-sm font-medium leading-6">{feedback.levelUp}</p>
         </section>
 
-        <section className="rounded-[1.65rem] border border-[#e1ddd5] bg-[#f2f0e9] p-5">
+        <section className="studio-revised-card rounded-[1.65rem] border p-5">
           <Eyebrow>Revised story</Eyebrow>
           <h3 className="mt-1.5 text-base font-semibold tracking-[-0.015em]">A stronger version in your voice</h3>
           <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground/90">{feedback.revisedStory}</p>

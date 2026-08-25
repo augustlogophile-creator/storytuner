@@ -13814,3 +13814,376 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     filter: none !important;
   }
 }
+
+/* August 25 focused repair: keep the auth mascot geometry deterministic,
+   remove the Journal input's nested autofill rectangle, and make Studio review
+   states use the same warm dark-paper system as the rest of Tellwise. */
+.intro-parch-preloader {
+  position: fixed !important;
+  left: -4px !important;
+  top: -4px !important;
+  width: 2px !important;
+  height: 2px !important;
+  opacity: .001 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  z-index: -1 !important;
+}
+
+/* The mascot never changes dimensions after first paint. We intentionally do
+   not show a differently-cropped poster before the MP4, because that was the
+   visible small-to-large "pop" on the auth page. The video is warmed during
+   onboarding; on a direct visit it simply fades into this already-reserved
+   frame once its first real frame is ready. */
+@media (max-height: 720px) {
+  .auth-parch.auth-parch-stable {
+    width: 132px !important;
+    min-width: 132px !important;
+    max-width: 132px !important;
+    height: 98.3px !important;
+    min-height: 98.3px !important;
+    max-height: 98.3px !important;
+  }
+}
+.auth-parch.auth-parch-stable {
+  position: relative !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.3px !important;
+  min-height: 98.3px !important;
+  max-height: 98.3px !important;
+  aspect-ratio: 752 / 560 !important;
+  overflow: visible !important;
+  contain: layout paint size !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.3px !important;
+  min-height: 98.3px !important;
+  max-height: 98.3px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  opacity: 0 !important;
+  transform: none !important;
+  transition: opacity 170ms ease !important;
+  will-change: opacity;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-video {
+  opacity: 1 !important;
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-parch.auth-parch-stable .auth-parch-video { transition: none !important; }
+}
+
+/* Search is one continuous line on the paper. In particular, do not use the
+   WebKit autofill inset shadow here, because it paints exactly the dark inner
+   rectangle visible to the right of the magnifying glass. */
+.book-app .journal-search-top input,
+.book-app .journal-search-top input:hover,
+.book-app .journal-search-top input:active,
+.book-app .journal-search-top input:focus,
+.book-app .journal-search-top input:focus-visible,
+.book-app .journal-search-top input:-webkit-autofill,
+.book-app .journal-search-top input:-webkit-autofill:hover,
+.book-app .journal-search-top input:-webkit-autofill:focus,
+.journal-search-top input,
+.journal-search-top input:hover,
+.journal-search-top input:active,
+.journal-search-top input:focus,
+.journal-search-top input:focus-visible,
+.journal-search-top input:-webkit-autofill,
+.journal-search-top input:-webkit-autofill:hover,
+.journal-search-top input:-webkit-autofill:focus {
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+}
+.dark .book-app .journal-search-top input,
+.dark .book-app .journal-search-top input:hover,
+.dark .book-app .journal-search-top input:active,
+.dark .book-app .journal-search-top input:focus,
+.dark .book-app .journal-search-top input:focus-visible,
+.dark .book-app .journal-search-top input:-webkit-autofill,
+.dark .book-app .journal-search-top input:-webkit-autofill:hover,
+.dark .book-app .journal-search-top input:-webkit-autofill:focus,
+.dark .journal-search-top input,
+.dark .journal-search-top input:focus,
+.dark .journal-search-top input:-webkit-autofill {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-text-fill-color: #eee6da !important;
+  caret-color: #eee6da !important;
+  transition: background-color 999999s ease-out 0s !important;
+}
+
+/* Studio results: no light paper cards with light text, and no muddy warning
+   copy in dark mode. */
+.studio-revised-card {
+  border-color: #e1ddd5 !important;
+  background: #f2f0e9 !important;
+  color: var(--foreground) !important;
+}
+.studio-story-warning {
+  border-color: #e8d2a3 !important;
+  background: #fff7e7 !important;
+}
+.studio-story-warning-title { color: #6b4b12 !important; }
+.studio-story-warning-copy { color: #7b6339 !important; }
+.studio-story-warning-secondary {
+  border-color: #dfcda8 !important;
+  background: #fffaf0 !important;
+  color: #44382a !important;
+}
+.dark .studio-revised-card {
+  border-color: #5c5347 !important;
+  background: #332e28 !important;
+  color: #f1eadf !important;
+}
+.dark .studio-revised-card > h3,
+.dark .studio-revised-card > p,
+.dark .studio-revised-card .eyebrow {
+  color: #f1eadf !important;
+}
+.dark .studio-story-warning {
+  border-color: #7d6844 !important;
+  background: #493f2f !important;
+}
+.dark .studio-story-warning-title { color: #f5d59b !important; }
+.dark .studio-story-warning-copy { color: #dec9a1 !important; }
+.dark .studio-story-warning-secondary {
+  border-color: #665a49 !important;
+  background: #3b352f !important;
+  color: #f0e7db !important;
+}
+
+/* The longer-time dialog uses warm charcoal paper rather than black controls. */
+.dark .studio-duration-choice,
+.dark .studio-duration-custom {
+  border-color: #5b5247 !important;
+  background: #3a352f !important;
+  color: #eee6da !important;
+}
+.dark .studio-duration-choice:hover {
+  border-color: #708eaa !important;
+  background: #403a33 !important;
+}
+.dark .studio-duration-choice.is-selected,
+.dark .studio-duration-custom.is-selected {
+  border-color: #7299bf !important;
+  background: #334555 !important;
+  color: #f4eee5 !important;
+}
+.dark .studio-duration-custom input,
+.dark .studio-duration-custom input:focus,
+.dark .studio-duration-custom input:focus-visible {
+  border-color: #62584c !important;
+  background: #443d35 !important;
+  color: #f2eadf !important;
+  box-shadow: none !important;
+}
+.dark .studio-duration-use {
+  background: #5f86ad !important;
+  color: #fff !important;
+}
+
+/* Collection pagination markers stay subdued on dark paper. */
+.dark .parch-marker-dot {
+  background: #625b52 !important;
+  box-shadow: none !important;
+}
+.dark .group:hover .parch-marker-dot { background: #7b7268 !important; }
+.dark .parch-marker-dot.is-selected {
+  background: #6f97bf !important;
+  box-shadow: 0 0 0 3px rgba(111,151,191,.14) !important;
+}
+.dark .studio-duration-membership {
+  border-color: #53677a !important;
+  background: #313b43 !important;
+}
+.dark .studio-duration-membership-icon,
+.dark .studio-duration-membership-link {
+  border-color: #665c50 !important;
+  background: #423b34 !important;
+  color: #eee6da !important;
+}
+
+
+/* August 25 final requested pass: instant auth mascot, seamless Journal search,
+   and explicit Studio dark-mode surfaces. Keep these at the end of the cascade. */
+.auth-parch.auth-parch-stable {
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.297872px !important;
+  min-height: 98.297872px !important;
+  max-height: 98.297872px !important;
+  aspect-ratio: 752 / 560 !important;
+  contain: layout paint size !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-poster,
+.auth-parch.auth-parch-stable .auth-parch-video {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.297872px !important;
+  min-height: 98.297872px !important;
+  max-height: 98.297872px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  transform: none !important;
+  scale: 1 !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-poster {
+  z-index: 1 !important;
+  opacity: 1 !important;
+  transition: opacity 120ms linear !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-poster { opacity: 0 !important; }
+.auth-parch.auth-parch-stable .auth-parch-video {
+  z-index: 2 !important;
+  opacity: 0 !important;
+  transition: opacity 120ms linear !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-video { opacity: 1 !important; }
+@media (max-height: 720px) {
+  .auth-parch.auth-parch-stable,
+  .auth-parch.auth-parch-stable .auth-parch-poster,
+  .auth-parch.auth-parch-stable .auth-parch-video {
+    width: 132px !important;
+    min-width: 132px !important;
+    max-width: 132px !important;
+    height: 98.297872px !important;
+    min-height: 98.297872px !important;
+    max-height: 98.297872px !important;
+  }
+}
+
+/* One visual surface for Journal search. The input itself never paints a box. */
+.book-app .journal-search-top .journal-search-input,
+.book-app .journal-search-top .journal-search-input:hover,
+.book-app .journal-search-top .journal-search-input:active,
+.book-app .journal-search-top .journal-search-input:focus,
+.book-app .journal-search-top .journal-search-input:focus-visible,
+.book-app .journal-search-top .journal-search-input:-webkit-autofill,
+.book-app .journal-search-top .journal-search-input:-webkit-autofill:hover,
+.book-app .journal-search-top .journal-search-input:-webkit-autofill:focus {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  filter: none !important;
+}
+.dark .book-app .journal-search-top .journal-search-input,
+.dark .book-app .journal-search-top .journal-search-input:hover,
+.dark .book-app .journal-search-top .journal-search-input:active,
+.dark .book-app .journal-search-top .journal-search-input:focus,
+.dark .book-app .journal-search-top .journal-search-input:focus-visible,
+.dark .book-app .journal-search-top .journal-search-input:-webkit-autofill {
+  color: #eee6da !important;
+  caret-color: #eee6da !important;
+  -webkit-text-fill-color: #eee6da !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* Studio review and results always use Tellwise paper colors in dark mode. */
+.dark .studio-page .studio-review-card,
+.dark .studio-page .studio-transcript-card,
+.dark .studio-page .studio-result-card,
+.dark .studio-page .studio-result-feedback-card {
+  border-color: #5b5247 !important;
+  background: #332e28 !important;
+  color: #f2eadf !important;
+}
+.dark .studio-page .studio-transcript-input {
+  border-color: #62584c !important;
+  background: #403a33 !important;
+  color: #f2eadf !important;
+  box-shadow: none !important;
+}
+.dark .studio-page .studio-transcript-input::placeholder { color: #a79c8e !important; }
+.dark .studio-page .studio-result-card :is(h1,h2,h3,p,li,span),
+.dark .studio-page .studio-result-feedback-card :is(h1,h2,h3,p,li,span),
+.dark .studio-page .studio-revised-card :is(h1,h2,h3,p,li,span) {
+  color: inherit;
+}
+.dark .studio-page .studio-result-card .text-muted-foreground,
+.dark .studio-page .studio-result-feedback-card .text-muted-foreground,
+.dark .studio-page .studio-revised-card .text-muted-foreground { color: #bdb2a3 !important; }
+.dark .studio-page .studio-result-quickfix {
+  background: #3a342e !important;
+  color: #f2eadf !important;
+  box-shadow: none !important;
+}
+.dark .studio-page .studio-revised-card {
+  border-color: #5b5247 !important;
+  background: #39332c !important;
+  color: #f2eadf !important;
+}
+.dark .studio-page .studio-story-warning {
+  border-color: #7a6848 !important;
+  background: #443b2e !important;
+}
+.dark .studio-page .studio-story-warning-title { color: #f2d39a !important; }
+.dark .studio-page .studio-story-warning-copy { color: #dcc6a2 !important; }
+.dark .studio-page .studio-story-warning-secondary {
+  border-color: #665b4d !important;
+  background: #3a342e !important;
+  color: #f0e7dc !important;
+}
+
+/* Longer target controls should never fall back to pitch black. */
+.dark .app-dialog-panel .studio-duration-choice,
+.dark .app-dialog-panel .studio-duration-custom {
+  border-color: #5b5247 !important;
+  background: #3a352f !important;
+  color: #eee6da !important;
+}
+.dark .app-dialog-panel .studio-duration-choice.is-selected,
+.dark .app-dialog-panel .studio-duration-custom.is-selected {
+  border-color: #7299bf !important;
+  background: #334555 !important;
+  color: #f4eee5 !important;
+}
+.dark .app-dialog-panel .studio-duration-custom input {
+  border-color: #62584c !important;
+  background: #443d35 !important;
+  color: #f2eadf !important;
+}
+.dark .app-dialog-panel .studio-duration-use {
+  border: 0 !important;
+  background: #5f86ad !important;
+  color: #fff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-parch.auth-parch-stable .auth-parch-poster,
+  .auth-parch.auth-parch-stable .auth-parch-video { transition: none !important; }
+}
