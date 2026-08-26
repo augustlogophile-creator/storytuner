@@ -36,12 +36,11 @@ type TypewriterTag = "h1" | "p" | "span"
 
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
 const LAST_PAGE = 4
-const PAGE_EXIT_MS = 170
-const PAGE_ENTER_MS = 480
+const PAGE_EXIT_MS = 140
+const PAGE_ENTER_MS = 410
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
-  preload("/parch-reading-poster.jpg", { as: "image" })
 
   const normalizedInitialPage = Math.max(0, Math.min(LAST_PAGE, initialPage))
   const [page, setPage] = useState(normalizedInitialPage)
@@ -213,15 +212,15 @@ function WelcomePage({ onNext }: { onNext: () => void }) {
           tag="h1"
           className="intro-welcome-title"
           text="Welcome to Tellwise."
-          delay={300}
-          speed={31}
+          delay={260}
+          speed={68}
         />
         <TypewriterText
           tag="p"
           className="intro-welcome-subtitle"
           text="Learn to tell stories people actually want to hear."
-          delay={980}
-          speed={18}
+          delay={1720}
+          speed={54}
         />
       </div>
 
@@ -250,8 +249,8 @@ function GoalPage({
         <TypewriterText
           tag="h1"
           text="What do you want to get better at?"
-          delay={180}
-          speed={20}
+          delay={240}
+          speed={62}
         />
         <p className="intro-reveal intro-hint" style={introOrder(9)}>Choose as many as you want.</p>
       </div>
@@ -295,8 +294,8 @@ function BlockerPage({
         <TypewriterText
           tag="h1"
           text="What usually gets in your way?"
-          delay={180}
-          speed={21}
+          delay={240}
+          speed={62}
         />
         <p className="intro-reveal intro-hint" style={introOrder(9)}>Choose as many as you want.</p>
       </div>
@@ -341,8 +340,8 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
           tag="h1"
           className="intro-secret-title"
           text="Great stories aren’t about having an extraordinary life."
-          delay={390}
-          speed={19}
+          delay={420}
+          speed={52}
         />
         <p className="intro-secret-copy intro-reveal" style={introOrder(17)}>
           They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
@@ -371,19 +370,19 @@ function ReadyPage({ onBack }: { onBack: () => void }) {
         <TypewriterText
           tag="h1"
           text="Tellwise is ready."
-          delay={190}
-          speed={25}
+          delay={240}
+          speed={64}
         />
         <p className="intro-reveal" style={introOrder(8)}>
           You’ll learn one idea at a time, then implement those ideas in stories of your own.
         </p>
       </div>
 
-      <div className="intro-ready-list">
+      <div className="intro-summary-list">
         {items.map((item, index) => (
-          <div key={item.numeral} className="intro-ready-line intro-reveal" style={introOrder(10 + index * 2)}>
-            <span className="intro-ready-roman">{item.numeral}</span>
-            <div className="intro-ready-copy">
+          <div key={item.numeral} className="intro-summary-row intro-reveal" style={introOrder(10 + index * 2)}>
+            <span className="intro-summary-roman">{item.numeral}</span>
+            <div className="intro-summary-copy">
               <strong>{item.title}</strong>
               <p>{item.detail}</p>
             </div>
@@ -397,6 +396,7 @@ function ReadyPage({ onBack }: { onBack: () => void }) {
           prefetch
           onClick={() => triggerIntroFeedback("action")}
           className="tellwise-press-button"
+          data-no-global-tap="true"
         >
           <span>Start learning</span>
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -429,7 +429,7 @@ function IntroLayout({
   return (
     <section className={`intro-flow-page${compact ? " is-compact" : ""}${centered ? " is-centered" : ""}${ready ? " is-ready" : ""}`}>
       <header className="intro-topbar intro-reveal" style={introOrder(0)}>
-        <button type="button" onClick={onBack} aria-label="Go back" className="intro-back-button">
+        <button type="button" onClick={onBack} aria-label="Go back" className="intro-back-button" data-no-global-tap="true">
           <ChevronLeft aria-hidden="true" />
         </button>
         <div className="intro-progress" aria-label={`Step ${page} of ${LAST_PAGE}`}>
@@ -488,6 +488,7 @@ function IntroAction({
         onClick()
       }}
       disabled={disabled}
+      data-no-global-tap="true"
     >
       {children}
     </TellwisePressButton>
@@ -498,8 +499,8 @@ function TypewriterText({
   tag = "span",
   text,
   className = "",
-  delay = 120,
-  speed = 22,
+  delay = 160,
+  speed = 58,
 }: {
   tag?: TypewriterTag
   text: string
@@ -541,12 +542,53 @@ function TypewriterText({
     }
   }, [delay, speed, text])
 
+  let characterIndex = 0
+  const tokens = text.split(/(\s+)/)
+  const caret = (key: string) => (
+    <span key={key} className={`intro-typewriter-caret${done ? " is-done" : ""}`} />
+  )
+
   return (
     <Tag className={`intro-typewriter ${className}`.trim()} aria-label={text}>
-      <span className="intro-typewriter-measure" aria-hidden="true">{text}</span>
-      <span className="intro-typewriter-live" aria-hidden="true">
-        {text.slice(0, visibleCharacters)}
-        <span className={`intro-typewriter-caret${done ? " is-done" : ""}`} />
+      <span className="intro-typewriter-stable" aria-hidden="true">
+        {visibleCharacters === 0 ? caret("caret-start") : null}
+        {tokens.map((token, tokenIndex) => {
+          if (/^\s+$/.test(token)) {
+            return Array.from(token).map((character, index) => {
+              const currentIndex = characterIndex++
+              return (
+                <span key={`space-${tokenIndex}-${index}`}>
+                  <span
+                    className="intro-typewriter-character"
+                    style={{ visibility: currentIndex < visibleCharacters ? "visible" : "hidden" }}
+                  >
+                    {character}
+                  </span>
+                  {currentIndex + 1 === visibleCharacters ? caret(`caret-space-${tokenIndex}-${index}`) : null}
+                </span>
+              )
+            })
+          }
+
+          return (
+            <span className="intro-typewriter-word" key={`${token}-${tokenIndex}`}>
+              {Array.from(token).map((character, index) => {
+                const currentIndex = characterIndex++
+                return (
+                  <span key={`${tokenIndex}-${index}`}>
+                    <span
+                      className="intro-typewriter-character"
+                      style={{ visibility: currentIndex < visibleCharacters ? "visible" : "hidden" }}
+                    >
+                      {character}
+                    </span>
+                    {currentIndex + 1 === visibleCharacters ? caret(`caret-${tokenIndex}-${index}`) : null}
+                  </span>
+                )
+              })}
+            </span>
+          )
+        })}
       </span>
     </Tag>
   )
@@ -554,46 +596,43 @@ function TypewriterText({
 
 function IntroBookSketch() {
   return (
-    <svg className="intro-book-sketch" viewBox="0 0 260 190" fill="none" aria-hidden="true">
+    <svg className="intro-book-sketch" viewBox="0 0 280 190" fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id="intro-page-left" x1="44" y1="40" x2="122" y2="151" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fffdf8" />
-          <stop offset="1" stopColor="#eee8dd" />
+        <linearGradient id="intro-book-paper-left" x1="55" y1="42" x2="130" y2="150" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#fffaf0" />
+          <stop offset=".72" stopColor="#eee4d4" />
+          <stop offset="1" stopColor="#ddd0bd" />
         </linearGradient>
-        <linearGradient id="intro-page-right" x1="212" y1="41" x2="138" y2="151" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fffdf8" />
-          <stop offset="1" stopColor="#efe9de" />
+        <linearGradient id="intro-book-paper-right" x1="225" y1="42" x2="150" y2="150" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#fffaf0" />
+          <stop offset=".72" stopColor="#eee4d4" />
+          <stop offset="1" stopColor="#ddd0bd" />
         </linearGradient>
-        <linearGradient id="intro-book-edge" x1="130" y1="138" x2="130" y2="161" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#d9d1c4" />
-          <stop offset="1" stopColor="#bdb2a2" />
+        <linearGradient id="intro-book-cover" x1="140" y1="132" x2="140" y2="165" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#617fa1" />
+          <stop offset="1" stopColor="#3f6388" />
         </linearGradient>
-        <filter id="intro-book-shadow" x="-35%" y="-35%" width="170%" height="190%">
-          <feDropShadow dx="0" dy="8" stdDeviation="7" floodColor="#5f5548" floodOpacity=".2" />
+        <filter id="intro-book-shadow" x="-35%" y="-45%" width="170%" height="220%">
+          <feDropShadow dx="0" dy="9" stdDeviation="7" floodColor="#43392f" floodOpacity=".22" />
         </filter>
       </defs>
 
-      <ellipse className="intro-book-ground" cx="130" cy="160" rx="94" ry="13" fill="#6e6458" fillOpacity=".11" />
+      <ellipse className="intro-book-ground" cx="140" cy="160" rx="91" ry="10" fill="#5f5548" fillOpacity=".13" />
       <g className="intro-book-object" filter="url(#intro-book-shadow)">
-        <path className="intro-book-edge" d="M31 58c34-11 67-8 99 11 32-19 65-22 99-11v91c-33-9-66-6-99 13-33-19-66-22-99-13V58Z" fill="url(#intro-book-edge)" />
-        <path className="intro-book-page intro-book-page-left" d="M29 48c33-12 66-9 101 12v91c-34-20-67-23-101-11V48Z" fill="url(#intro-page-left)" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
-        <path className="intro-book-page intro-book-page-right" d="M231 48c-33-12-66-9-101 12v91c34-20 67-23 101-11V48Z" fill="url(#intro-page-right)" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
-        <path className="intro-book-gutter" d="M130 60c-4 27-4 59 0 91" stroke="#8f684b" strokeWidth="2" strokeLinecap="round" />
-        <path className="intro-book-highlight" d="M127 63c-20-11-45-15-76-8" stroke="#fff" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
-        <path className="intro-book-highlight" d="M133 63c20-11 45-15 76-8" stroke="#fff" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
-
-        <g className="intro-book-copy" stroke="#b6ada0" strokeWidth="2" strokeLinecap="round">
-          <path d="M48 75c20-5 40-3 59 4" />
-          <path d="M48 91c19-4 38-2 56 4" />
-          <path d="M48 107c18-4 36-2 53 4" />
-          <path d="M48 123c17-3 34-1 49 4" />
-          <path d="M212 75c-20-5-40-3-59 4" />
-          <path d="M212 91c-19-4-38-2-56 4" />
-          <path d="M212 107c-18-4-36-2-53 4" />
-          <path d="M212 123c-17-3-34-1-49 4" />
+        <path d="M40 57c35-10 68-6 100 11 32-17 65-21 100-11v94c-34-8-67-4-100 13-33-17-66-21-100-13V57Z" fill="url(#intro-book-cover)" stroke="#3b516b" strokeWidth="2.8" strokeLinejoin="round" />
+        <path className="intro-book-page intro-book-page-left" d="M46 49c31-11 62-7 94 12v87c-31-17-62-20-94-10V49Z" fill="url(#intro-book-paper-left)" stroke="#776c60" strokeWidth="2.4" strokeLinejoin="round" />
+        <path className="intro-book-page intro-book-page-right" d="M234 49c-31-11-62-7-94 12v87c31-17 62-20 94-10V49Z" fill="url(#intro-book-paper-right)" stroke="#776c60" strokeWidth="2.4" strokeLinejoin="round" />
+        <path className="intro-book-gutter" d="M140 61c-3.5 27-3.5 58 0 87" stroke="#7c5b45" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M49 142c31-9 61-5 91 11 30-16 60-20 91-11" stroke="#d7c8b2" strokeWidth="2" strokeLinecap="round" opacity=".9" />
+        <g className="intro-book-copy" stroke="#aaa091" strokeWidth="2.2" strokeLinecap="round">
+          <path d="M62 77c18-4 36-2 53 4" />
+          <path d="M62 94c17-4 34-2 50 4" />
+          <path d="M62 111c16-3 32-1 47 4" />
+          <path d="M218 77c-18-4-36-2-53 4" />
+          <path d="M218 94c-17-4-34-2-50 4" />
+          <path d="M218 111c-16-3-32-1-47 4" />
         </g>
-
-        <path className="intro-book-accent" d="M117 143c5 2 9 5 13 8 4-3 8-6 13-8" stroke="#9c6949" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path className="intro-book-accent" d="M127 137c5 2 9 5 13 8 4-3 8-6 13-8" stroke="#a16c48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
       </g>
     </svg>
   )
@@ -603,6 +642,34 @@ function introOrder(order: number): CSSProperties {
   return { "--intro-order": order } as CSSProperties
 }
 
+let introAudioContext: AudioContext | null = null
+
+function playIntroFeedbackTone(kind: IntroFeedback) {
+  try {
+    const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioContextConstructor) return
+    if (!introAudioContext) introAudioContext = new AudioContextConstructor()
+    const context = introAudioContext
+    if (context.state === "suspended") void context.resume()
+
+    const now = context.currentTime
+    const gain = context.createGain()
+    const oscillator = context.createOscillator()
+    oscillator.type = "sine"
+    oscillator.frequency.setValueAtTime(kind === "selection" ? 510 : kind === "back" ? 390 : 570, now)
+    if (kind === "page" || kind === "action") {
+      oscillator.frequency.exponentialRampToValueAtTime(kind === "page" ? 690 : 760, now + .045)
+    }
+    gain.gain.setValueAtTime(.0001, now)
+    gain.gain.exponentialRampToValueAtTime(kind === "selection" ? .018 : .024, now + .006)
+    gain.gain.exponentialRampToValueAtTime(.0001, now + (kind === "selection" ? .045 : .07))
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start(now)
+    oscillator.stop(now + .08)
+  } catch {}
+}
+
 function triggerIntroFeedback(kind: IntroFeedback) {
   if (typeof window === "undefined") return
 
@@ -610,15 +677,18 @@ function triggerIntroFeedback(kind: IntroFeedback) {
     window.dispatchEvent(new CustomEvent("tellwise:haptic", { detail: { kind } }))
   } catch {}
 
+  playIntroFeedbackTone(kind)
+
   if (!("vibrate" in window.navigator)) return
   try {
     const pattern = kind === "selection"
-      ? 7
+      ? 12
       : kind === "action"
-        ? 10
+        ? [14, 18, 10]
         : kind === "back"
-          ? 7
-          : [8, 16, 8]
+          ? 10
+          : [10, 18, 10]
     window.navigator.vibrate(pattern)
   } catch {}
 }
+

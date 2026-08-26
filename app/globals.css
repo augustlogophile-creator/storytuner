@@ -15083,3 +15083,238 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     transform: none;
   }
 }
+
+/* August 26 intro refinement: stable slow typewriter, cleaner final page,
+   stronger welcome composition, and a fade-only auth mascot handoff. */
+.intro-flow-stage.is-enter.is-next,
+.intro-flow-stage.is-enter.is-back {
+  animation: intro-editorial-refined-in 390ms cubic-bezier(.18,.76,.2,1) both !important;
+}
+.intro-flow-stage.is-exit.is-next,
+.intro-flow-stage.is-exit.is-back {
+  animation: intro-editorial-refined-out 135ms cubic-bezier(.4,0,.8,.2) both !important;
+}
+@keyframes intro-editorial-refined-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes intro-editorial-refined-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to { opacity: 0; transform: translate3d(0, -2px, 0); }
+}
+
+/* Each hidden character still occupies its final position. This means a line
+   is chosen once, before typing begins, and can never reflow mid-animation. */
+.intro-typewriter {
+  position: relative !important;
+  display: block !important;
+}
+.intro-typewriter-stable {
+  display: block;
+  white-space: normal;
+}
+.intro-typewriter-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.intro-typewriter-character {
+  display: inline;
+}
+.intro-typewriter-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: .86em;
+  margin-left: .055em;
+  margin-right: -.055em;
+  vertical-align: -.03em;
+  border-radius: 999px;
+  background: var(--intro-blue);
+  animation: intro-typewriter-blink 880ms steps(1, end) infinite;
+}
+.intro-typewriter-caret.is-done {
+  animation: intro-typewriter-finish 480ms ease forwards;
+}
+
+/* Welcome art is intentionally smaller and denser. There is no illustration
+   card or white container around it, only the book itself. */
+.intro-welcome-wash {
+  left: -16% !important;
+  width: 132% !important;
+  height: 57% !important;
+  border-radius: 0 0 50% 50% / 0 0 10% 10% !important;
+  background:
+    radial-gradient(circle at 50% 23%, rgba(255,255,255,.5), transparent 45%),
+    linear-gradient(180deg, #e8e6e1 0%, #e4e2dc 100%) !important;
+  box-shadow:
+    inset 0 -1px 0 rgba(105, 94, 80, .1),
+    0 13px 30px rgba(74, 64, 52, .055) !important;
+}
+.intro-welcome-main {
+  margin-top: clamp(3rem, 7.2svh, 4.35rem) !important;
+}
+.intro-welcome-art {
+  width: 8.8rem !important;
+  height: 6rem !important;
+  margin-bottom: .82rem !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+.intro-book-sketch {
+  overflow: visible !important;
+  filter: saturate(.98) contrast(1.015);
+}
+.intro-book-object {
+  animation: intro-book-refined-settle 620ms cubic-bezier(.16,.8,.22,1) both !important;
+}
+.intro-book-page-left {
+  animation: intro-book-refined-left 600ms cubic-bezier(.18,.8,.24,1) 35ms both !important;
+}
+.intro-book-page-right {
+  animation: intro-book-refined-right 600ms cubic-bezier(.18,.8,.24,1) 50ms both !important;
+}
+@keyframes intro-book-refined-settle {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes intro-book-refined-left {
+  from { opacity: .55; transform: rotate(1.6deg) translateY(2px); }
+  to { opacity: 1; transform: rotate(0) translateY(0); }
+}
+@keyframes intro-book-refined-right {
+  from { opacity: .55; transform: rotate(-1.6deg) translateY(2px); }
+  to { opacity: 1; transform: rotate(0) translateY(0); }
+}
+
+/* New names avoid the legacy intro-ready-line rule, which was an absolutely
+   positioned timeline stroke and caused the final-page text pile-up. */
+.intro-summary-list {
+  display: grid;
+  margin-top: .62rem;
+  border-top: 1px solid var(--intro-line-soft);
+}
+.intro-summary-row {
+  position: relative;
+  min-height: 4.55rem;
+  display: grid;
+  grid-template-columns: 2.65rem minmax(0, 1fr);
+  align-items: start;
+  gap: .45rem;
+  padding: .78rem .15rem .72rem;
+  border-bottom: 1px solid var(--intro-line-soft);
+  color: var(--intro-ink);
+}
+.intro-summary-roman {
+  display: block;
+  padding-top: .12rem;
+  color: var(--intro-blue);
+  font-family: var(--font-book-serif), "Iowan Old Style", Georgia, serif;
+  font-size: .96rem;
+  font-weight: 700;
+  letter-spacing: .025em;
+}
+.intro-summary-copy {
+  min-width: 0;
+}
+.intro-summary-copy strong {
+  display: block;
+  color: var(--intro-ink);
+  font-family: var(--font-book-serif), "Iowan Old Style", Georgia, serif;
+  font-size: 1.02rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+.intro-summary-copy p {
+  max-width: 18rem;
+  margin: .22rem 0 0;
+  color: var(--intro-ink-soft);
+  font-family: var(--font-book-serif), "Iowan Old Style", Georgia, serif;
+  font-size: .77rem;
+  font-style: italic;
+  line-height: 1.38;
+}
+
+/* Do not swap a differently-scaled poster into the auth mascot frame. The
+   physical slot is reserved immediately and the real video only fades upward
+   by a few pixels after it has a decoded frame. There is never any scaling. */
+.auth-parch.auth-parch-stable {
+  position: relative !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.297872px !important;
+  min-height: 98.297872px !important;
+  max-height: 98.297872px !important;
+  aspect-ratio: 752 / 560 !important;
+  contain: layout paint size !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-loading-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 68%;
+  height: 13px;
+  border-radius: 999px;
+  background: rgba(86, 77, 64, .09);
+  filter: blur(9px);
+  opacity: .38;
+  transform: translateX(-50%);
+  transition: opacity 300ms ease;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-loading-glow {
+  opacity: 0;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.297872px !important;
+  min-height: 98.297872px !important;
+  max-height: 98.297872px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  opacity: 0 !important;
+  transform: translate3d(0, 4px, 0) !important;
+  scale: 1 !important;
+  transition: opacity 340ms cubic-bezier(.2,.72,.2,1), transform 340ms cubic-bezier(.2,.72,.2,1) !important;
+  will-change: opacity, transform;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-video {
+  opacity: 1 !important;
+  transform: translate3d(0, 0, 0) !important;
+  scale: 1 !important;
+}
+
+@media (max-height: 740px) {
+  .intro-welcome-main { margin-top: 2.2rem !important; }
+  .intro-welcome-art {
+    width: 7.5rem !important;
+    height: 5.15rem !important;
+  }
+  .intro-summary-row {
+    min-height: 3.5rem;
+    padding-block: .45rem;
+  }
+  .intro-summary-copy strong { font-size: .93rem; }
+  .intro-summary-copy p { font-size: .68rem; line-height: 1.28; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-parch.auth-parch-stable .auth-parch-video {
+    transition: opacity .01ms linear !important;
+    transform: none !important;
+  }
+}
+
+/* Caret overlays the reserved text instead of contributing extra width. */
+.intro-typewriter-stable { text-wrap: inherit; }
+.intro-typewriter-caret {
+  margin-left: .05em !important;
+  margin-right: calc(-1.5px - .05em) !important;
+}
