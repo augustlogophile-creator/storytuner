@@ -1,7 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent } from "react"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type TouchEvent,
+} from "react"
 import { preload } from "react-dom"
 import { Check, ChevronLeft } from "lucide-react"
 import { TellwisePressButton } from "@/components/ui/tellwise-press-button"
@@ -24,6 +32,7 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 type StoryBlockerChoice = Exclude<StoryBlocker, "">
 type IntroDirection = "next" | "back"
 type IntroFeedback = "selection" | "action" | "page" | "back"
+type TypewriterTag = "h1" | "p" | "span"
 
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
 const LAST_PAGE = 4
@@ -193,20 +202,30 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 function WelcomePage({ onNext }: { onNext: () => void }) {
   return (
     <section className="intro-flow-page intro-welcome-page">
-      <div className="intro-welcome-brand intro-reveal" style={introOrder(0)}>Tellwise</div>
+      <div className="intro-welcome-wash" aria-hidden="true" />
 
       <div className="intro-welcome-main">
-        <div className="intro-welcome-art intro-reveal" style={introOrder(1)} aria-hidden="true">
+        <div className="intro-welcome-art intro-reveal" style={introOrder(0)} aria-hidden="true">
           <IntroBookSketch />
         </div>
-        <p className="intro-eyebrow intro-reveal" style={introOrder(2)}>A storytelling practice</p>
-        <h1 className="intro-welcome-title intro-reveal" style={introOrder(3)}>Welcome to Tellwise.</h1>
-        <p className="intro-welcome-subtitle intro-reveal" style={introOrder(4)}>
-          Learn to tell stories people actually want to hear.
-        </p>
+        <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Tellwise</p>
+        <TypewriterText
+          tag="h1"
+          className="intro-welcome-title"
+          text="Welcome to Tellwise."
+          delay={300}
+          speed={31}
+        />
+        <TypewriterText
+          tag="p"
+          className="intro-welcome-subtitle"
+          text="Learn to tell stories people actually want to hear."
+          delay={980}
+          speed={18}
+        />
       </div>
 
-      <div className="intro-welcome-action intro-reveal" style={introOrder(5)}>
+      <div className="intro-welcome-action intro-reveal" style={introOrder(15)}>
         <IntroAction onClick={onNext}>Let’s start</IntroAction>
       </div>
     </section>
@@ -228,8 +247,13 @@ function GoalPage({
     <IntroLayout page={1} onBack={onBack}>
       <div className="intro-heading">
         <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>A note about you</p>
-        <h1 className="intro-reveal" style={introOrder(2)}>What do you want to get better at?</h1>
-        <p className="intro-reveal intro-hint" style={introOrder(3)}>Choose as many as you want.</p>
+        <TypewriterText
+          tag="h1"
+          text="What do you want to get better at?"
+          delay={180}
+          speed={20}
+        />
+        <p className="intro-reveal intro-hint" style={introOrder(9)}>Choose as many as you want.</p>
       </div>
 
       <div className="intro-choice-list">
@@ -238,7 +262,7 @@ function GoalPage({
             key={option.value}
             selected={values.includes(option.value)}
             onClick={() => onToggle(option.value)}
-            order={4 + index}
+            order={10 + index}
           >
             <span className="intro-choice-title">{option.title}</span>
             <span className="intro-choice-detail">{option.detail}</span>
@@ -246,7 +270,7 @@ function GoalPage({
         ))}
       </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(9)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(15)}>
         <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
       </div>
     </IntroLayout>
@@ -268,8 +292,13 @@ function BlockerPage({
     <IntroLayout page={2} onBack={onBack} compact>
       <div className="intro-heading is-compact">
         <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Be honest</p>
-        <h1 className="intro-reveal" style={introOrder(2)}>What usually gets in your way?</h1>
-        <p className="intro-reveal intro-hint" style={introOrder(3)}>Choose as many as you want.</p>
+        <TypewriterText
+          tag="h1"
+          text="What usually gets in your way?"
+          delay={180}
+          speed={21}
+        />
+        <p className="intro-reveal intro-hint" style={introOrder(9)}>Choose as many as you want.</p>
       </div>
 
       <div className="intro-choice-list is-compact">
@@ -279,14 +308,14 @@ function BlockerPage({
             selected={values.includes(blocker)}
             compact
             onClick={() => onToggle(blocker)}
-            order={4 + index}
+            order={10 + index}
           >
             <span className="intro-choice-title">{blockerLabels[blocker]}</span>
           </IntroChoice>
         ))}
       </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(11)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(17)}>
         <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
       </div>
     </IntroLayout>
@@ -295,27 +324,32 @@ function BlockerPage({
 
 function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   return (
-    <IntroLayout page={3} onBack={onBack} centered>
+    <IntroLayout page={3} onBack={onBack}>
       <div className="intro-secret-reveal">
-        <div className="intro-secret-art intro-reveal" style={introOrder(1)}>
+        <div className="intro-secret-art intro-reveal" style={introOrder(1)} aria-hidden="true">
+          <span className="intro-secret-art-wash" />
           <img
             src="/magnifying-glass-sketch.png"
             alt=""
-            aria-hidden="true"
             className="intro-secret-magnifier"
             draggable={false}
           />
+          <span className="intro-secret-shadow" />
         </div>
-        <p className="intro-eyebrow intro-reveal" style={introOrder(2)}>Here’s the secret.</p>
-        <h1 className="intro-secret-title intro-reveal" style={introOrder(3)}>
-          Great stories aren’t about having an extraordinary life.
-        </h1>
-        <p className="intro-secret-copy intro-reveal" style={introOrder(4)}>
+        <p className="intro-eyebrow intro-reveal" style={introOrder(3)}>Here’s the secret.</p>
+        <TypewriterText
+          tag="h1"
+          className="intro-secret-title"
+          text="Great stories aren’t about having an extraordinary life."
+          delay={390}
+          speed={19}
+        />
+        <p className="intro-secret-copy intro-reveal" style={introOrder(17)}>
           They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
         </p>
       </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(5)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(19)}>
         <IntroAction onClick={onNext}>Continue</IntroAction>
       </div>
     </IntroLayout>
@@ -323,28 +357,41 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
 }
 
 function ReadyPage({ onBack }: { onBack: () => void }) {
-  const items = ["Learn", "Practice", "Get feedback", "Improve"]
+  const items = [
+    { numeral: "I", title: "Learn", detail: "Build your instincts with short lessons on real storytelling craft." },
+    { numeral: "II", title: "Practice", detail: "Apply each idea to your own stories or a real-life scenario." },
+    { numeral: "III", title: "Get feedback", detail: "See what landed, what could improve, and why." },
+    { numeral: "IV", title: "Improve", detail: "Keep practicing and watch your storytelling get stronger." },
+  ]
 
   return (
-    <IntroLayout page={4} onBack={onBack}>
+    <IntroLayout page={4} onBack={onBack} ready>
       <div className="intro-heading intro-ready-heading">
         <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Your next chapter</p>
-        <h1 className="intro-reveal" style={introOrder(2)}>Tellwise is ready.</h1>
-        <p className="intro-reveal" style={introOrder(3)}>
+        <TypewriterText
+          tag="h1"
+          text="Tellwise is ready."
+          delay={190}
+          speed={25}
+        />
+        <p className="intro-reveal" style={introOrder(8)}>
           You’ll learn one idea at a time, then implement those ideas in stories of your own.
         </p>
       </div>
 
-      <div className="intro-ready-list intro-reveal" style={introOrder(4)}>
+      <div className="intro-ready-list">
         {items.map((item, index) => (
-          <div key={item} className="intro-ready-line">
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <strong>{item}</strong>
+          <div key={item.numeral} className="intro-ready-line intro-reveal" style={introOrder(10 + index * 2)}>
+            <span className="intro-ready-roman">{item.numeral}</span>
+            <div className="intro-ready-copy">
+              <strong>{item.title}</strong>
+              <p>{item.detail}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(5)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(19)}>
         <Link
           href="/sign-up"
           prefetch
@@ -367,18 +414,20 @@ function IntroLayout({
   onBack,
   compact = false,
   centered = false,
+  ready = false,
   children,
 }: {
   page: number
   onBack: () => void
   compact?: boolean
   centered?: boolean
+  ready?: boolean
   children: ReactNode
 }) {
   const progress = `${Math.round((page / LAST_PAGE) * 100)}%`
 
   return (
-    <section className={`intro-flow-page${compact ? " is-compact" : ""}${centered ? " is-centered" : ""}`}>
+    <section className={`intro-flow-page${compact ? " is-compact" : ""}${centered ? " is-centered" : ""}${ready ? " is-ready" : ""}`}>
       <header className="intro-topbar intro-reveal" style={introOrder(0)}>
         <button type="button" onClick={onBack} aria-label="Go back" className="intro-back-button">
           <ChevronLeft aria-hidden="true" />
@@ -386,7 +435,6 @@ function IntroLayout({
         <div className="intro-progress" aria-label={`Step ${page} of ${LAST_PAGE}`}>
           <span style={{ width: progress }} />
         </div>
-        <span className="intro-brand">Tellwise</span>
       </header>
 
       <div className="intro-flow-body">{children}</div>
@@ -446,19 +494,107 @@ function IntroAction({
   )
 }
 
+function TypewriterText({
+  tag = "span",
+  text,
+  className = "",
+  delay = 120,
+  speed = 22,
+}: {
+  tag?: TypewriterTag
+  text: string
+  className?: string
+  delay?: number
+  speed?: number
+}) {
+  const [visibleCharacters, setVisibleCharacters] = useState(0)
+  const [done, setDone] = useState(false)
+  const Tag = tag
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    if (reduce) {
+      setVisibleCharacters(text.length)
+      setDone(true)
+      return
+    }
+
+    setVisibleCharacters(0)
+    setDone(false)
+    let interval: ReturnType<typeof setInterval> | null = null
+    const startTimer = setTimeout(() => {
+      let index = 0
+      interval = setInterval(() => {
+        index += 1
+        setVisibleCharacters(index)
+        if (index >= text.length) {
+          if (interval) clearInterval(interval)
+          interval = null
+          setDone(true)
+        }
+      }, speed)
+    }, delay)
+
+    return () => {
+      clearTimeout(startTimer)
+      if (interval) clearInterval(interval)
+    }
+  }, [delay, speed, text])
+
+  return (
+    <Tag className={`intro-typewriter ${className}`.trim()} aria-label={text}>
+      <span className="intro-typewriter-measure" aria-hidden="true">{text}</span>
+      <span className="intro-typewriter-live" aria-hidden="true">
+        {text.slice(0, visibleCharacters)}
+        <span className={`intro-typewriter-caret${done ? " is-done" : ""}`} />
+      </span>
+    </Tag>
+  )
+}
+
 function IntroBookSketch() {
   return (
-    <svg className="intro-book-sketch" viewBox="0 0 220 160" fill="none" aria-hidden="true">
-      <path className="intro-draw-line" pathLength="1" d="M110 39C82 25 51 25 25 38v86c26-13 57-13 85 1" />
-      <path className="intro-draw-line" pathLength="1" d="M110 39c28-14 59-14 85-1v86c-26-13-57-13-85 1" />
-      <path className="intro-draw-line" pathLength="1" d="M110 39v86" />
-      <path className="intro-draw-line is-soft" pathLength="1" d="M40 56c17-6 36-6 54 0" />
-      <path className="intro-draw-line is-soft" pathLength="1" d="M40 73c17-6 36-6 54 0" />
-      <path className="intro-draw-line is-soft" pathLength="1" d="M40 90c17-6 36-6 54 0" />
-      <path className="intro-draw-line is-soft" pathLength="1" d="M126 56c18-6 37-6 54 0" />
-      <path className="intro-draw-line is-soft" pathLength="1" d="M126 73c18-6 37-6 54 0" />
-      <path className="intro-draw-line is-soft" pathLength="1" d="M126 90c18-6 37-6 54 0" />
-      <path className="intro-draw-line is-accent" pathLength="1" d="M99 118c4 2 8 4 11 7 4-3 8-5 12-7" />
+    <svg className="intro-book-sketch" viewBox="0 0 260 190" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="intro-page-left" x1="44" y1="40" x2="122" y2="151" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#fffdf8" />
+          <stop offset="1" stopColor="#eee8dd" />
+        </linearGradient>
+        <linearGradient id="intro-page-right" x1="212" y1="41" x2="138" y2="151" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#fffdf8" />
+          <stop offset="1" stopColor="#efe9de" />
+        </linearGradient>
+        <linearGradient id="intro-book-edge" x1="130" y1="138" x2="130" y2="161" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#d9d1c4" />
+          <stop offset="1" stopColor="#bdb2a2" />
+        </linearGradient>
+        <filter id="intro-book-shadow" x="-35%" y="-35%" width="170%" height="190%">
+          <feDropShadow dx="0" dy="8" stdDeviation="7" floodColor="#5f5548" floodOpacity=".2" />
+        </filter>
+      </defs>
+
+      <ellipse className="intro-book-ground" cx="130" cy="160" rx="94" ry="13" fill="#6e6458" fillOpacity=".11" />
+      <g className="intro-book-object" filter="url(#intro-book-shadow)">
+        <path className="intro-book-edge" d="M31 58c34-11 67-8 99 11 32-19 65-22 99-11v91c-33-9-66-6-99 13-33-19-66-22-99-13V58Z" fill="url(#intro-book-edge)" />
+        <path className="intro-book-page intro-book-page-left" d="M29 48c33-12 66-9 101 12v91c-34-20-67-23-101-11V48Z" fill="url(#intro-page-left)" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+        <path className="intro-book-page intro-book-page-right" d="M231 48c-33-12-66-9-101 12v91c34-20 67-23 101-11V48Z" fill="url(#intro-page-right)" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+        <path className="intro-book-gutter" d="M130 60c-4 27-4 59 0 91" stroke="#8f684b" strokeWidth="2" strokeLinecap="round" />
+        <path className="intro-book-highlight" d="M127 63c-20-11-45-15-76-8" stroke="#fff" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
+        <path className="intro-book-highlight" d="M133 63c20-11 45-15 76-8" stroke="#fff" strokeOpacity=".7" strokeWidth="2" strokeLinecap="round" />
+
+        <g className="intro-book-copy" stroke="#b6ada0" strokeWidth="2" strokeLinecap="round">
+          <path d="M48 75c20-5 40-3 59 4" />
+          <path d="M48 91c19-4 38-2 56 4" />
+          <path d="M48 107c18-4 36-2 53 4" />
+          <path d="M48 123c17-3 34-1 49 4" />
+          <path d="M212 75c-20-5-40-3-59 4" />
+          <path d="M212 91c-19-4-38-2-56 4" />
+          <path d="M212 107c-18-4-36-2-53 4" />
+          <path d="M212 123c-17-3-34-1-49 4" />
+        </g>
+
+        <path className="intro-book-accent" d="M117 143c5 2 9 5 13 8 4-3 8-6 13-8" stroke="#9c6949" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
     </svg>
   )
 }
