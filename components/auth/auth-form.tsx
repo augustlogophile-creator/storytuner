@@ -54,10 +54,9 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   return (
     <div className="auth-simple-flow w-full">
       <div className="text-center">
-        <p className="auth-eyebrow">Your Tellwise account</p>
         <h1 className="auth-title">Keep your stories with you.</h1>
         <p className="auth-subtitle mx-auto max-w-[19rem]">
-          Save your progress, recordings, streaks, and Parch across devices.
+          Save your progress, recordings, streaks, and account data across devices.
         </p>
       </div>
 

@@ -15318,3 +15318,325 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   margin-left: .05em !important;
   margin-right: calc(-1.5px - .05em) !important;
 }
+
+/* August 26 evening intro refinement: warmer neutral opening wash, deliberately
+   staged onboarding content, calmer dimensional motion, and one paper tone
+   shared by onboarding, authentication, and the light app canvas. */
+:root {
+  --background: #f8f4ec;
+  --sidebar: #f8f4ec;
+}
+.dark {
+  --background: #24211d;
+  --sidebar: #302b25;
+}
+
+.book-app {
+  background-color: #f8f4ec !important;
+}
+
+.auth-canvas.auth-canvas-polished {
+  background-color: #f8f4ec !important;
+  background-image:
+    radial-gradient(circle at 24% 18%, rgba(87, 72, 52, .038) 0 .52px, transparent .72px),
+    radial-gradient(circle at 73% 69%, rgba(87, 72, 52, .026) 0 .48px, transparent .7px) !important;
+  background-size: 23px 23px, 29px 29px !important;
+}
+
+/* The welcome shape is a warm, dull gray rather than a blue-gray. Its lower
+   edge dissolves into the paper instead of ending at a hard oval boundary. */
+.intro-welcome-wash {
+  left: -18% !important;
+  width: 136% !important;
+  height: 61% !important;
+  border-radius: 0 0 48% 48% / 0 0 9% 9% !important;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255,255,255,.30), transparent 43%),
+    linear-gradient(180deg, #dad9d5 0%, #dfddd8 50%, #e6e3dd 74%, rgba(232,228,220,.15) 96%, transparent 100%) !important;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 70%, rgba(0,0,0,.92) 79%, rgba(0,0,0,.52) 90%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 70%, rgba(0,0,0,.92) 79%, rgba(0,0,0,.52) 90%, transparent 100%);
+  box-shadow: none !important;
+}
+
+/* A smaller, narrower book keeps the opening page editorial rather than
+   illustration-heavy. The SVG itself now carries denser page rules. */
+.intro-welcome-art {
+  width: 7.65rem !important;
+  height: 5.45rem !important;
+  margin-bottom: .72rem !important;
+}
+
+.intro-book-sketch {
+  filter: saturate(.9) contrast(1.035) !important;
+}
+
+.intro-book-object {
+  transform-origin: 140px 112px;
+}
+
+/* Typewritten text keeps its complete final geometry reserved, while the
+   cadence itself is handled in React with punctuation pauses and tiny haptics. */
+.intro-typewriter-character {
+  transition: visibility 0s linear;
+}
+
+.intro-typewriter-caret {
+  width: 1.35px !important;
+  background: color-mix(in srgb, var(--intro-blue) 82%, #6f685f) !important;
+  box-shadow: 0 0 0 .35px rgba(69, 95, 123, .08);
+}
+
+/* Content after a typed headline waits for the headline to finish, then
+   arrives in a restrained sequence. This is intentionally slower than the
+   old all-at-once quiz reveal. */
+.intro-after-typing {
+  pointer-events: none;
+}
+
+.intro-after-typing.is-visible,
+.intro-after-typing.is-static {
+  pointer-events: auto;
+}
+
+
+.intro-after-typing > .intro-hint {
+  margin: 0 0 .72rem !important;
+}
+
+.intro-flow-body > .intro-after-typing:not(.intro-action-slot):not(.intro-secret-copy-sequence):not(.intro-ready-sequence) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.intro-follow-reveal {
+  opacity: 0;
+  transform: perspective(720px) translate3d(0, 9px, 0) rotateX(2.2deg);
+  transform-origin: 50% 0%;
+  will-change: opacity, transform;
+}
+
+.intro-after-typing.is-visible .intro-follow-reveal {
+  animation: intro-follow-in 430ms cubic-bezier(.18,.78,.22,1) forwards;
+  animation-delay: calc(170ms + var(--intro-follow-order, 0) * 105ms);
+}
+
+@keyframes intro-follow-in {
+  0% {
+    opacity: 0;
+    transform: perspective(720px) translate3d(0, 9px, 0) rotateX(2.2deg);
+  }
+  72% {
+    opacity: 1;
+    transform: perspective(720px) translate3d(0, -1px, 0) rotateX(-.15deg);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(720px) translate3d(0, 0, 0) rotateX(0);
+  }
+}
+
+/* Returning to a page shows its completed composition immediately. Only the
+   route/page handoff remains, no repeated typewriter, card entrances, or art
+   assembly. */
+.intro-flow-page.is-static .intro-reveal,
+.intro-after-typing.is-static .intro-follow-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.intro-flow-page.is-static .intro-book-ground,
+.intro-flow-page.is-static .intro-book-object,
+.intro-flow-page.is-static .intro-book-page-left,
+.intro-flow-page.is-static .intro-book-page-right,
+.intro-flow-page.is-static .intro-book-copy,
+.intro-flow-page.is-static .intro-book-gutter,
+.intro-flow-page.is-static .intro-book-highlight,
+.intro-flow-page.is-static .intro-book-accent,
+.intro-flow-page.is-static .intro-secret-art-wash,
+.intro-flow-page.is-static .intro-secret-magnifier,
+.intro-flow-page.is-static .intro-secret-shadow {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Choice rows keep the book-paper visual language but gain a little tactile
+   depth. The pressed state compresses the lower edge like a physical control. */
+.intro-choice {
+  border-bottom-width: 3px !important;
+  box-shadow:
+    0 8px 17px rgba(61, 49, 33, .035),
+    inset 0 1px 0 rgba(255,255,255,.62) !important;
+  transform-origin: 50% 100%;
+}
+
+.intro-choice:active {
+  transform: translateY(2px) scale(.994) !important;
+  border-bottom-width: 1px !important;
+  box-shadow: 0 3px 9px rgba(61, 49, 33, .025) !important;
+}
+
+.intro-choice.is-selected {
+  box-shadow:
+    0 8px 18px rgba(67, 91, 118, .065),
+    inset 0 1px 0 rgba(255,255,255,.72) !important;
+}
+
+/* The secret sentence now unfolds as three editorial beats after the headline
+   finishes rather than appearing as one dense paragraph. */
+.intro-secret-copy-sequence {
+  margin-top: .92rem;
+}
+
+.intro-secret-copy-lead {
+  margin: 0 0 .46rem;
+  color: var(--intro-ink-soft);
+  font-family: var(--font-book-serif), "Iowan Old Style", Georgia, serif;
+  font-size: .91rem;
+  line-height: 1.45;
+}
+
+.intro-secret-points {
+  display: grid;
+  gap: .34rem;
+}
+
+.intro-secret-point {
+  display: block;
+  width: fit-content;
+  max-width: 21rem;
+  padding: .33rem .6rem .38rem;
+  border-left: 2px solid color-mix(in srgb, var(--intro-blue) 58%, var(--intro-line));
+  border-radius: 0 .55rem .55rem 0;
+  background: color-mix(in srgb, var(--intro-card) 74%, transparent);
+  color: var(--intro-ink);
+  font-family: var(--font-book-serif), "Iowan Old Style", Georgia, serif;
+  font-size: .91rem;
+  font-weight: 625;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(63,52,38,.022);
+}
+
+/* The final summary reads like four raised paper strips. Roman numerals remain
+   understated, while the stagger gives the page a clear narrative order. */
+.intro-ready-intro {
+  max-width: 21.4rem;
+  margin: 0 0 .72rem;
+  color: var(--intro-ink-soft);
+  font-family: var(--font-book-serif), "Iowan Old Style", Georgia, serif;
+  font-size: .86rem;
+  line-height: 1.5;
+}
+
+.intro-summary-list {
+  gap: .46rem !important;
+  border-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+.intro-summary-row {
+  min-height: 4.15rem !important;
+  grid-template-columns: 2.45rem minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: .42rem !important;
+  padding: .62rem .68rem .62rem .72rem !important;
+  border: 1px solid var(--intro-line-soft) !important;
+  border-bottom: 3px solid color-mix(in srgb, var(--intro-line) 78%, #bfb3a2) !important;
+  border-radius: .9rem !important;
+  background: rgba(255,253,248,.62);
+  box-shadow:
+    0 7px 14px rgba(61,49,33,.028),
+    inset 0 1px 0 rgba(255,255,255,.6);
+}
+
+.intro-summary-roman {
+  width: 1.95rem;
+  height: 1.95rem;
+  display: grid !important;
+  place-items: center;
+  padding-top: 0 !important;
+  border: 1px solid color-mix(in srgb, var(--intro-blue) 34%, var(--intro-line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--intro-blue-tint) 68%, var(--intro-card));
+  font-size: .82rem !important;
+}
+
+.intro-summary-copy strong {
+  font-size: .98rem !important;
+}
+
+.intro-summary-copy p {
+  margin-top: .12rem !important;
+  font-size: .7rem !important;
+  line-height: 1.32 !important;
+}
+
+/* Slightly calmer page movement, with just enough perspective to make the
+   transition feel dimensional without becoming a card-slider animation. */
+.intro-flow-canvas {
+  perspective: 1100px;
+}
+
+.intro-flow-stage.is-enter.is-next,
+.intro-flow-stage.is-enter.is-back {
+  animation: intro-editorial-depth-in 420ms cubic-bezier(.18,.76,.2,1) both !important;
+}
+
+@keyframes intro-editorial-depth-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, -5px) rotateX(.7deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateX(0);
+  }
+}
+
+@media (max-height: 740px) {
+  .intro-welcome-art {
+    width: 6.95rem !important;
+    height: 4.95rem !important;
+  }
+
+  .intro-secret-copy-sequence {
+    margin-top: .62rem;
+  }
+
+  .intro-secret-points {
+    gap: .23rem;
+  }
+
+  .intro-secret-point {
+    padding-block: .24rem .28rem;
+    font-size: .8rem;
+  }
+
+  .intro-ready-intro {
+    margin-bottom: .45rem;
+    font-size: .75rem;
+    line-height: 1.35;
+  }
+
+  .intro-summary-list {
+    gap: .3rem !important;
+  }
+
+  .intro-summary-row {
+    min-height: 3.28rem !important;
+    padding-block: .4rem !important;
+    border-bottom-width: 2px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-follow-reveal,
+  .intro-after-typing.is-visible .intro-follow-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

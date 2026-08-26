@@ -31,7 +31,7 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 
 type StoryBlockerChoice = Exclude<StoryBlocker, "">
 type IntroDirection = "next" | "back"
-type IntroFeedback = "selection" | "action" | "page" | "back"
+type IntroFeedback = "selection" | "action" | "page" | "back" | "typing"
 type TypewriterTag = "h1" | "p" | "span"
 
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
@@ -50,6 +50,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const transitionTimers = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const pageRef = useRef(normalizedInitialPage)
+  const playedPages = useRef<Set<number>>(new Set())
 
   useEffect(() => {
     setPreferences(readOnboardingPreferences())
@@ -103,6 +104,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     if (safeTarget === current || phase !== "idle") return
     if (nextDirection === "next" && !canAdvance) return
 
+    playedPages.current.add(current)
     triggerIntroFeedback(nextDirection === "next" ? "page" : "back")
     setDirection(nextDirection)
     setPhase("exit")
@@ -156,6 +158,8 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     }
   }
 
+  const animatePage = !playedPages.current.has(page)
+
   return (
     <main className="intro-flow-canvas" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <video
@@ -174,13 +178,14 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
         className={`intro-flow-stage is-${phase} is-${direction}`}
         aria-live="polite"
       >
-        {page === 0 && <WelcomePage onNext={nextPage} />}
+        {page === 0 && <WelcomePage onNext={nextPage} animate={animatePage} />}
         {page === 1 && (
           <GoalPage
             values={selectedGoals}
             onToggle={toggleGoal}
             onNext={nextPage}
             onBack={previousPage}
+            animate={animatePage}
           />
         )}
         {page === 2 && (
@@ -189,18 +194,29 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
             onToggle={toggleBlocker}
             onNext={nextPage}
             onBack={previousPage}
+            animate={animatePage}
           />
         )}
-        {page === 3 && <SecretPage onNext={nextPage} onBack={previousPage} />}
-        {page === 4 && <ReadyPage onBack={previousPage} />}
+        {page === 3 && <SecretPage onNext={nextPage} onBack={previousPage} animate={animatePage} />}
+        {page === 4 && <ReadyPage onBack={previousPage} animate={animatePage} />}
       </div>
     </main>
   )
 }
 
-function WelcomePage({ onNext }: { onNext: () => void }) {
+function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean }) {
+  const [titleDone, setTitleDone] = useState(!animate)
+  const [subtitleDone, setSubtitleDone] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) {
+      setTitleDone(true)
+      setSubtitleDone(true)
+    }
+  }, [animate])
+
   return (
-    <section className="intro-flow-page intro-welcome-page">
+    <section className={`intro-flow-page intro-welcome-page${animate ? "" : " is-static"}`}>
       <div className="intro-welcome-wash" aria-hidden="true" />
 
       <div className="intro-welcome-main">
@@ -212,20 +228,27 @@ function WelcomePage({ onNext }: { onNext: () => void }) {
           tag="h1"
           className="intro-welcome-title"
           text="Welcome to Tellwise."
-          delay={260}
-          speed={68}
+          delay={300}
+          speed={72}
+          animate={animate}
+          onComplete={() => setTitleDone(true)}
         />
         <TypewriterText
           tag="p"
           className="intro-welcome-subtitle"
           text="Learn to tell stories people actually want to hear."
-          delay={1720}
-          speed={54}
+          delay={210}
+          speed={60}
+          animate={animate}
+          start={!animate || titleDone}
+          onComplete={() => setSubtitleDone(true)}
         />
       </div>
 
-      <div className="intro-welcome-action intro-reveal" style={introOrder(15)}>
-        <IntroAction onClick={onNext}>Let’s start</IntroAction>
+      <div className={`intro-welcome-action intro-after-typing${subtitleDone ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+        <div className="intro-follow-reveal" style={introFollowOrder(0)}>
+          <IntroAction onClick={onNext}>Let’s start</IntroAction>
+        </div>
       </div>
     </section>
   )
@@ -236,41 +259,53 @@ function GoalPage({
   onToggle,
   onNext,
   onBack,
+  animate,
 }: {
   values: StoryGoalChoice[]
   onToggle: (value: StoryGoalChoice) => void
   onNext: () => void
   onBack: () => void
+  animate: boolean
 }) {
+  const [typed, setTyped] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) setTyped(true)
+  }, [animate])
+
   return (
-    <IntroLayout page={1} onBack={onBack}>
+    <IntroLayout page={1} onBack={onBack} animate={animate}>
       <div className="intro-heading">
         <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>A note about you</p>
         <TypewriterText
           tag="h1"
           text="What do you want to get better at?"
-          delay={240}
-          speed={62}
+          delay={300}
+          speed={64}
+          animate={animate}
+          onComplete={() => setTyped(true)}
         />
-        <p className="intro-reveal intro-hint" style={introOrder(9)}>Choose as many as you want.</p>
       </div>
 
-      <div className="intro-choice-list">
-        {goalDetails.map((option, index) => (
-          <IntroChoice
-            key={option.value}
-            selected={values.includes(option.value)}
-            onClick={() => onToggle(option.value)}
-            order={10 + index}
-          >
-            <span className="intro-choice-title">{option.title}</span>
-            <span className="intro-choice-detail">{option.detail}</span>
-          </IntroChoice>
-        ))}
-      </div>
+      <div className={`intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+        <p className="intro-hint intro-follow-reveal" style={introFollowOrder(0)}>Choose as many as you want.</p>
+        <div className="intro-choice-list">
+          {goalDetails.map((option, index) => (
+            <IntroChoice
+              key={option.value}
+              selected={values.includes(option.value)}
+              onClick={() => onToggle(option.value)}
+              followOrder={index + 1}
+            >
+              <span className="intro-choice-title">{option.title}</span>
+              <span className="intro-choice-detail">{option.detail}</span>
+            </IntroChoice>
+          ))}
+        </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(15)}>
-        <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
+        <div className="intro-action-slot intro-follow-reveal" style={introFollowOrder(goalDetails.length + 1)}>
+          <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
+        </div>
       </div>
     </IntroLayout>
   )
@@ -281,49 +316,67 @@ function BlockerPage({
   onToggle,
   onNext,
   onBack,
+  animate,
 }: {
   values: StoryBlockerChoice[]
   onToggle: (value: StoryBlockerChoice) => void
   onNext: () => void
   onBack: () => void
+  animate: boolean
 }) {
+  const [typed, setTyped] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) setTyped(true)
+  }, [animate])
+
   return (
-    <IntroLayout page={2} onBack={onBack} compact>
+    <IntroLayout page={2} onBack={onBack} compact animate={animate}>
       <div className="intro-heading is-compact">
         <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Be honest</p>
         <TypewriterText
           tag="h1"
           text="What usually gets in your way?"
-          delay={240}
-          speed={62}
+          delay={300}
+          speed={64}
+          animate={animate}
+          onComplete={() => setTyped(true)}
         />
-        <p className="intro-reveal intro-hint" style={introOrder(9)}>Choose as many as you want.</p>
       </div>
 
-      <div className="intro-choice-list is-compact">
-        {blockers.map((blocker, index) => (
-          <IntroChoice
-            key={blocker}
-            selected={values.includes(blocker)}
-            compact
-            onClick={() => onToggle(blocker)}
-            order={10 + index}
-          >
-            <span className="intro-choice-title">{blockerLabels[blocker]}</span>
-          </IntroChoice>
-        ))}
-      </div>
+      <div className={`intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+        <p className="intro-hint intro-follow-reveal" style={introFollowOrder(0)}>Choose as many as you want.</p>
+        <div className="intro-choice-list is-compact">
+          {blockers.map((blocker, index) => (
+            <IntroChoice
+              key={blocker}
+              selected={values.includes(blocker)}
+              compact
+              onClick={() => onToggle(blocker)}
+              followOrder={index + 1}
+            >
+              <span className="intro-choice-title">{blockerLabels[blocker]}</span>
+            </IntroChoice>
+          ))}
+        </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(17)}>
-        <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
+        <div className="intro-action-slot intro-follow-reveal" style={introFollowOrder(blockers.length + 1)}>
+          <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
+        </div>
       </div>
     </IntroLayout>
   )
 }
 
-function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: () => void; animate: boolean }) {
+  const [typed, setTyped] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) setTyped(true)
+  }, [animate])
+
   return (
-    <IntroLayout page={3} onBack={onBack}>
+    <IntroLayout page={3} onBack={onBack} animate={animate}>
       <div className="intro-secret-reveal">
         <div className="intro-secret-art intro-reveal" style={introOrder(1)} aria-hidden="true">
           <span className="intro-secret-art-wash" />
@@ -341,21 +394,32 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
           className="intro-secret-title"
           text="Great stories aren’t about having an extraordinary life."
           delay={420}
-          speed={52}
+          speed={56}
+          animate={animate}
+          onComplete={() => setTyped(true)}
         />
-        <p className="intro-secret-copy intro-reveal" style={introOrder(17)}>
-          They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
-        </p>
+
+        <div className={`intro-secret-copy-sequence intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+          <p className="intro-secret-copy-lead intro-follow-reveal" style={introFollowOrder(0)}>They’re about knowing</p>
+          <div className="intro-secret-points">
+            <span className="intro-secret-point intro-follow-reveal" style={introFollowOrder(1)}>what to notice,</span>
+            <span className="intro-secret-point intro-follow-reveal" style={introFollowOrder(2)}>what to leave out,</span>
+            <span className="intro-secret-point intro-follow-reveal" style={introFollowOrder(3)}>and what to make people care about.</span>
+          </div>
+        </div>
       </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(19)}>
-        <IntroAction onClick={onNext}>Continue</IntroAction>
+      <div className={`intro-action-slot intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+        <div className="intro-follow-reveal" style={introFollowOrder(5)}>
+          <IntroAction onClick={onNext}>Continue</IntroAction>
+        </div>
       </div>
     </IntroLayout>
   )
 }
 
-function ReadyPage({ onBack }: { onBack: () => void }) {
+function ReadyPage({ onBack, animate }: { onBack: () => void; animate: boolean }) {
+  const [typed, setTyped] = useState(!animate)
   const items = [
     { numeral: "I", title: "Learn", detail: "Build your instincts with short lessons on real storytelling craft." },
     { numeral: "II", title: "Practice", detail: "Apply each idea to your own stories or a real-life scenario." },
@@ -363,47 +427,58 @@ function ReadyPage({ onBack }: { onBack: () => void }) {
     { numeral: "IV", title: "Improve", detail: "Keep practicing and watch your storytelling get stronger." },
   ]
 
+  useEffect(() => {
+    if (!animate) setTyped(true)
+  }, [animate])
+
   return (
-    <IntroLayout page={4} onBack={onBack} ready>
+    <IntroLayout page={4} onBack={onBack} ready animate={animate}>
       <div className="intro-heading intro-ready-heading">
         <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Your next chapter</p>
         <TypewriterText
           tag="h1"
           text="Tellwise is ready."
-          delay={240}
-          speed={64}
+          delay={300}
+          speed={68}
+          animate={animate}
+          onComplete={() => setTyped(true)}
         />
-        <p className="intro-reveal" style={introOrder(8)}>
+      </div>
+
+      <div className={`intro-ready-sequence intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+        <p className="intro-ready-intro intro-follow-reveal" style={introFollowOrder(0)}>
           You’ll learn one idea at a time, then implement those ideas in stories of your own.
         </p>
-      </div>
 
-      <div className="intro-summary-list">
-        {items.map((item, index) => (
-          <div key={item.numeral} className="intro-summary-row intro-reveal" style={introOrder(10 + index * 2)}>
-            <span className="intro-summary-roman">{item.numeral}</span>
-            <div className="intro-summary-copy">
-              <strong>{item.title}</strong>
-              <p>{item.detail}</p>
+        <div className="intro-summary-list">
+          {items.map((item, index) => (
+            <div key={item.numeral} className="intro-summary-row intro-follow-reveal" style={introFollowOrder(index + 1)}>
+              <span className="intro-summary-roman">{item.numeral}</span>
+              <div className="intro-summary-copy">
+                <strong>{item.title}</strong>
+                <p>{item.detail}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="intro-action-slot intro-reveal" style={introOrder(19)}>
-        <Link
-          href="/sign-up"
-          prefetch
-          onClick={() => triggerIntroFeedback("action")}
-          className="tellwise-press-button"
-          data-no-global-tap="true"
-        >
-          <span>Start learning</span>
-          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14" />
-            <path d="m13 6 6 6-6 6" />
-          </svg>
-        </Link>
+      <div className={`intro-action-slot intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+        <div className="intro-follow-reveal" style={introFollowOrder(items.length + 2)}>
+          <Link
+            href="/sign-up"
+            prefetch
+            onClick={() => triggerIntroFeedback("action")}
+            className="tellwise-press-button"
+            data-no-global-tap="true"
+          >
+            <span>Start learning</span>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" />
+              <path d="m13 6 6 6-6 6" />
+            </svg>
+          </Link>
+        </div>
       </div>
     </IntroLayout>
   )
@@ -415,6 +490,7 @@ function IntroLayout({
   compact = false,
   centered = false,
   ready = false,
+  animate = true,
   children,
 }: {
   page: number
@@ -422,12 +498,13 @@ function IntroLayout({
   compact?: boolean
   centered?: boolean
   ready?: boolean
+  animate?: boolean
   children: ReactNode
 }) {
   const progress = `${Math.round((page / LAST_PAGE) * 100)}%`
 
   return (
-    <section className={`intro-flow-page${compact ? " is-compact" : ""}${centered ? " is-centered" : ""}${ready ? " is-ready" : ""}`}>
+    <section className={`intro-flow-page${compact ? " is-compact" : ""}${centered ? " is-centered" : ""}${ready ? " is-ready" : ""}${animate ? "" : " is-static"}`}>
       <header className="intro-topbar intro-reveal" style={introOrder(0)}>
         <button type="button" onClick={onBack} aria-label="Go back" className="intro-back-button" data-no-global-tap="true">
           <ChevronLeft aria-hidden="true" />
@@ -446,13 +523,13 @@ function IntroChoice({
   selected,
   compact = false,
   onClick,
-  order,
+  followOrder = 0,
   children,
 }: {
   selected: boolean
   compact?: boolean
   onClick: () => void
-  order: number
+  followOrder?: number
   children: ReactNode
 }) {
   return (
@@ -461,8 +538,8 @@ function IntroChoice({
       onClick={onClick}
       aria-pressed={selected}
       data-no-global-tap="true"
-      className={`intro-choice intro-reveal${compact ? " is-compact" : ""}${selected ? " is-selected" : ""}`}
-      style={introOrder(order)}
+      className={`intro-choice intro-follow-reveal${compact ? " is-compact" : ""}${selected ? " is-selected" : ""}`}
+      style={introFollowOrder(followOrder)}
     >
       <span className="intro-choice-copy">{children}</span>
       <span className="intro-choice-check" aria-hidden="true">
@@ -501,52 +578,84 @@ function TypewriterText({
   className = "",
   delay = 160,
   speed = 58,
+  animate = true,
+  start = true,
+  onComplete,
 }: {
   tag?: TypewriterTag
   text: string
   className?: string
   delay?: number
   speed?: number
+  animate?: boolean
+  start?: boolean
+  onComplete?: () => void
 }) {
-  const [visibleCharacters, setVisibleCharacters] = useState(0)
-  const [done, setDone] = useState(false)
+  const [visibleCharacters, setVisibleCharacters] = useState(animate ? 0 : text.length)
+  const [done, setDone] = useState(!animate)
+  const onCompleteRef = useRef(onComplete)
   const Tag = tag
 
   useEffect(() => {
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
-    if (reduce) {
-      setVisibleCharacters(text.length)
-      setDone(true)
+    onCompleteRef.current = onComplete
+  }, [onComplete])
+
+  useEffect(() => {
+    if (!start) {
+      setVisibleCharacters(0)
+      setDone(false)
       return
     }
 
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    if (!animate || reduce) {
+      setVisibleCharacters(text.length)
+      setDone(true)
+      queueMicrotask(() => onCompleteRef.current?.())
+      return
+    }
+
+    let cancelled = false
+    let characterTimer: ReturnType<typeof setTimeout> | null = null
+    let index = 0
+
     setVisibleCharacters(0)
     setDone(false)
-    let interval: ReturnType<typeof setInterval> | null = null
-    const startTimer = setTimeout(() => {
-      let index = 0
-      interval = setInterval(() => {
-        index += 1
-        setVisibleCharacters(index)
-        if (index >= text.length) {
-          if (interval) clearInterval(interval)
-          interval = null
-          setDone(true)
-        }
-      }, speed)
-    }, delay)
+
+    const typeNext = () => {
+      if (cancelled) return
+      index += 1
+      setVisibleCharacters(index)
+
+      const character = text[index - 1] ?? ""
+      if (character && !/\s/.test(character) && index % 2 === 0) {
+        triggerIntroFeedback("typing")
+      }
+
+      if (index >= text.length) {
+        setDone(true)
+        onCompleteRef.current?.()
+        return
+      }
+
+      characterTimer = setTimeout(typeNext, typewriterCharacterDelay(character, speed, index))
+    }
+
+    const startTimer = setTimeout(typeNext, delay)
 
     return () => {
+      cancelled = true
       clearTimeout(startTimer)
-      if (interval) clearInterval(interval)
+      if (characterTimer) clearTimeout(characterTimer)
     }
-  }, [delay, speed, text])
+  }, [animate, delay, speed, start, text])
 
   let characterIndex = 0
   const tokens = text.split(/(\s+)/)
-  const caret = (key: string) => (
-    <span key={key} className={`intro-typewriter-caret${done ? " is-done" : ""}`} />
-  )
+  const caret = (key: string) => {
+    if (!animate || !start) return null
+    return <span key={key} className={`intro-typewriter-caret${done ? " is-done" : ""}`} />
+  }
 
   return (
     <Tag className={`intro-typewriter ${className}`.trim()} aria-label={text}>
@@ -594,45 +703,60 @@ function TypewriterText({
   )
 }
 
+function typewriterCharacterDelay(character: string, speed: number, index: number) {
+  if (/[.!?]/.test(character)) return Math.round(speed * 2.7)
+  if (/[,;:]/.test(character)) return Math.round(speed * 1.65)
+  if (/\s/.test(character)) return Math.max(24, Math.round(speed * .55))
+  const cadence = [0, 5, -2, 3, 1, -1][index % 6]
+  return Math.max(34, speed + cadence)
+}
+
 function IntroBookSketch() {
   return (
     <svg className="intro-book-sketch" viewBox="0 0 280 190" fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id="intro-book-paper-left" x1="55" y1="42" x2="130" y2="150" gradientUnits="userSpaceOnUse">
+        <linearGradient id="intro-book-paper-left" x1="66" y1="48" x2="136" y2="145" gradientUnits="userSpaceOnUse">
           <stop stopColor="#fffaf0" />
-          <stop offset=".72" stopColor="#eee4d4" />
+          <stop offset=".7" stopColor="#eee4d4" />
           <stop offset="1" stopColor="#ddd0bd" />
         </linearGradient>
-        <linearGradient id="intro-book-paper-right" x1="225" y1="42" x2="150" y2="150" gradientUnits="userSpaceOnUse">
+        <linearGradient id="intro-book-paper-right" x1="214" y1="48" x2="144" y2="145" gradientUnits="userSpaceOnUse">
           <stop stopColor="#fffaf0" />
-          <stop offset=".72" stopColor="#eee4d4" />
+          <stop offset=".7" stopColor="#eee4d4" />
           <stop offset="1" stopColor="#ddd0bd" />
         </linearGradient>
-        <linearGradient id="intro-book-cover" x1="140" y1="132" x2="140" y2="165" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#617fa1" />
+        <linearGradient id="intro-book-cover" x1="140" y1="129" x2="140" y2="164" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#627f9f" />
           <stop offset="1" stopColor="#3f6388" />
         </linearGradient>
         <filter id="intro-book-shadow" x="-35%" y="-45%" width="170%" height="220%">
-          <feDropShadow dx="0" dy="9" stdDeviation="7" floodColor="#43392f" floodOpacity=".22" />
+          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#43392f" floodOpacity=".2" />
         </filter>
       </defs>
 
-      <ellipse className="intro-book-ground" cx="140" cy="160" rx="91" ry="10" fill="#5f5548" fillOpacity=".13" />
+      <ellipse className="intro-book-ground" cx="140" cy="158" rx="76" ry="8" fill="#5f5548" fillOpacity=".13" />
       <g className="intro-book-object" filter="url(#intro-book-shadow)">
-        <path d="M40 57c35-10 68-6 100 11 32-17 65-21 100-11v94c-34-8-67-4-100 13-33-17-66-21-100-13V57Z" fill="url(#intro-book-cover)" stroke="#3b516b" strokeWidth="2.8" strokeLinejoin="round" />
-        <path className="intro-book-page intro-book-page-left" d="M46 49c31-11 62-7 94 12v87c-31-17-62-20-94-10V49Z" fill="url(#intro-book-paper-left)" stroke="#776c60" strokeWidth="2.4" strokeLinejoin="round" />
-        <path className="intro-book-page intro-book-page-right" d="M234 49c-31-11-62-7-94 12v87c31-17 62-20 94-10V49Z" fill="url(#intro-book-paper-right)" stroke="#776c60" strokeWidth="2.4" strokeLinejoin="round" />
-        <path className="intro-book-gutter" d="M140 61c-3.5 27-3.5 58 0 87" stroke="#7c5b45" strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M49 142c31-9 61-5 91 11 30-16 60-20 91-11" stroke="#d7c8b2" strokeWidth="2" strokeLinecap="round" opacity=".9" />
-        <g className="intro-book-copy" stroke="#aaa091" strokeWidth="2.2" strokeLinecap="round">
-          <path d="M62 77c18-4 36-2 53 4" />
-          <path d="M62 94c17-4 34-2 50 4" />
-          <path d="M62 111c16-3 32-1 47 4" />
-          <path d="M218 77c-18-4-36-2-53 4" />
-          <path d="M218 94c-17-4-34-2-50 4" />
-          <path d="M218 111c-16-3-32-1-47 4" />
+        <path d="M55 61c29-9 57-5 85 10 28-15 56-19 85-10v86c-29-7-57-4-85 11-28-15-56-18-85-11V61Z" fill="url(#intro-book-cover)" stroke="#3b516b" strokeWidth="3" strokeLinejoin="round" />
+        <path className="intro-book-page intro-book-page-left" d="M62 54c27-9 53-5 78 11v78c-25-14-51-17-78-9V54Z" fill="url(#intro-book-paper-left)" stroke="#776c60" strokeWidth="2.45" strokeLinejoin="round" />
+        <path className="intro-book-page intro-book-page-right" d="M218 54c-27-9-53-5-78 11v78c25-14 51-17 78-9V54Z" fill="url(#intro-book-paper-right)" stroke="#776c60" strokeWidth="2.45" strokeLinejoin="round" />
+        <path className="intro-book-gutter" d="M140 65c-3.2 23-3.2 52 0 78" stroke="#7c5b45" strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M65 137c26-7 51-4 75 9 24-13 49-16 75-9" stroke="#d7c8b2" strokeWidth="1.8" strokeLinecap="round" opacity=".92" />
+        <path d="M68 141c24-5 48-2 72 10 24-12 48-15 72-10" stroke="#c8b9a5" strokeWidth="1.15" strokeLinecap="round" opacity=".72" />
+        <g className="intro-book-copy" stroke="#aaa091" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M76 74c15-3 29-1 43 3" />
+          <path d="M75 85c16-3 31-1 45 3" />
+          <path d="M75 96c15-3 29-1 43 3" />
+          <path d="M75 107c14-2 28-1 41 3" />
+          <path d="M76 118c13-2 26-1 38 3" />
+          <path d="M204 74c-15-3-29-1-43 3" />
+          <path d="M205 85c-16-3-31-1-45 3" />
+          <path d="M205 96c-15-3-29-1-43 3" />
+          <path d="M205 107c-14-2-28-1-41 3" />
+          <path d="M204 118c-13-2-26-1-38 3" />
         </g>
-        <path className="intro-book-accent" d="M127 137c5 2 9 5 13 8 4-3 8-6 13-8" stroke="#a16c48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path className="intro-book-highlight" d="M69 61c22-5 43-2 62 8" stroke="#fffaf0" strokeWidth="1.35" strokeLinecap="round" opacity=".7" />
+        <path className="intro-book-highlight" d="M211 61c-22-5-43-2-62 8" stroke="#fffaf0" strokeWidth="1.35" strokeLinecap="round" opacity=".7" />
+        <path className="intro-book-accent" d="M128 134c4.5 1.8 8.5 4.5 12 7.3 3.5-2.8 7.5-5.5 12-7.3" stroke="#a16c48" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
       </g>
     </svg>
   )
@@ -642,12 +766,21 @@ function introOrder(order: number): CSSProperties {
   return { "--intro-order": order } as CSSProperties
 }
 
+function introFollowOrder(order: number): CSSProperties {
+  return { "--intro-follow-order": order } as CSSProperties
+}
+
 let introAudioContext: AudioContext | null = null
 
 function playIntroFeedbackTone(kind: IntroFeedback) {
   try {
     const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioContextConstructor) return
+
+    // Browsers will not unlock Web Audio before a real user gesture. Typing
+    // feedback therefore waits until one of the user's first taps creates the
+    // context, while native/browser vibration can still be attempted.
+    if (kind === "typing" && !introAudioContext) return
     if (!introAudioContext) introAudioContext = new AudioContextConstructor()
     const context = introAudioContext
     if (context.state === "suspended") void context.resume()
@@ -655,18 +788,32 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
     const now = context.currentTime
     const gain = context.createGain()
     const oscillator = context.createOscillator()
+
+    if (kind === "typing") {
+      oscillator.type = "triangle"
+      oscillator.frequency.setValueAtTime(690, now)
+      gain.gain.setValueAtTime(.0001, now)
+      gain.gain.exponentialRampToValueAtTime(.0065, now + .003)
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .018)
+      oscillator.connect(gain)
+      gain.connect(context.destination)
+      oscillator.start(now)
+      oscillator.stop(now + .022)
+      return
+    }
+
     oscillator.type = "sine"
-    oscillator.frequency.setValueAtTime(kind === "selection" ? 510 : kind === "back" ? 390 : 570, now)
+    oscillator.frequency.setValueAtTime(kind === "selection" ? 520 : kind === "back" ? 405 : 585, now)
     if (kind === "page" || kind === "action") {
-      oscillator.frequency.exponentialRampToValueAtTime(kind === "page" ? 690 : 760, now + .045)
+      oscillator.frequency.exponentialRampToValueAtTime(kind === "page" ? 720 : 790, now + .052)
     }
     gain.gain.setValueAtTime(.0001, now)
-    gain.gain.exponentialRampToValueAtTime(kind === "selection" ? .018 : .024, now + .006)
-    gain.gain.exponentialRampToValueAtTime(.0001, now + (kind === "selection" ? .045 : .07))
+    gain.gain.exponentialRampToValueAtTime(kind === "selection" ? .022 : .028, now + .006)
+    gain.gain.exponentialRampToValueAtTime(.0001, now + (kind === "selection" ? .052 : .082))
     oscillator.connect(gain)
     gain.connect(context.destination)
     oscillator.start(now)
-    oscillator.stop(now + .08)
+    oscillator.stop(now + .09)
   } catch {}
 }
 
@@ -681,13 +828,15 @@ function triggerIntroFeedback(kind: IntroFeedback) {
 
   if (!("vibrate" in window.navigator)) return
   try {
-    const pattern = kind === "selection"
-      ? 12
-      : kind === "action"
-        ? [14, 18, 10]
-        : kind === "back"
-          ? 10
-          : [10, 18, 10]
+    const pattern = kind === "typing"
+      ? 4
+      : kind === "selection"
+        ? 16
+        : kind === "action"
+          ? [18, 22, 12]
+          : kind === "back"
+            ? 12
+            : [13, 18, 11]
     window.navigator.vibrate(pattern)
   } catch {}
 }
