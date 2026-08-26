@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode, type TouchEvent } from "react"
 import { preload } from "react-dom"
-import { ArrowRight, BookOpen, Check, ChevronLeft } from "lucide-react"
+import { Check, ChevronLeft } from "lucide-react"
+import { TellwisePressButton } from "@/components/ui/tellwise-press-button"
 import {
   blockerLabels,
   readOnboardingPreferences,
@@ -21,14 +22,13 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 ]
 
 type StoryBlockerChoice = Exclude<StoryBlocker, "">
-
 type IntroDirection = "next" | "back"
 type IntroFeedback = "selection" | "action" | "page" | "back"
 
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
 const LAST_PAGE = 4
-const PAGE_EXIT_MS = 150
-const PAGE_ENTER_MS = 430
+const PAGE_EXIT_MS = 170
+const PAGE_ENTER_MS = 480
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
@@ -139,7 +139,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 
     const dx = touch.clientX - start.x
     const dy = touch.clientY - start.y
-    if (Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 1.25) return
+    if (Math.abs(dx) < 68 || Math.abs(dx) < Math.abs(dy) * 1.3) return
 
     if (dx < 0 && pageRef.current < LAST_PAGE && canAdvance) {
       nextPage()
@@ -193,22 +193,20 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 function WelcomePage({ onNext }: { onNext: () => void }) {
   return (
     <section className="intro-flow-page intro-welcome-page">
-      <div className="intro-welcome-brand intro-animate" style={introOrder(0)}>Tellwise</div>
+      <div className="intro-welcome-brand intro-reveal" style={introOrder(0)}>Tellwise</div>
 
       <div className="intro-welcome-main">
-        <div className="intro-welcome-mark intro-animate" style={introOrder(1)} aria-hidden="true">
-          <span className="intro-welcome-mark-glow" />
-          <BookOpen strokeWidth={1.6} />
+        <div className="intro-welcome-art intro-reveal" style={introOrder(1)} aria-hidden="true">
+          <IntroBookSketch />
         </div>
-
-        <p className="intro-eyebrow intro-animate" style={introOrder(2)}>TELLWISE</p>
-        <h1 className="intro-welcome-title intro-animate" style={introOrder(3)}>Welcome to Tellwise.</h1>
-        <p className="intro-welcome-subtitle intro-animate" style={introOrder(4)}>
+        <p className="intro-eyebrow intro-reveal" style={introOrder(2)}>A storytelling practice</p>
+        <h1 className="intro-welcome-title intro-reveal" style={introOrder(3)}>Welcome to Tellwise.</h1>
+        <p className="intro-welcome-subtitle intro-reveal" style={introOrder(4)}>
           Learn to tell stories people actually want to hear.
         </p>
       </div>
 
-      <div className="intro-welcome-action intro-animate" style={introOrder(5)}>
+      <div className="intro-welcome-action intro-reveal" style={introOrder(5)}>
         <IntroAction onClick={onNext}>Let’s start</IntroAction>
       </div>
     </section>
@@ -229,9 +227,9 @@ function GoalPage({
   return (
     <IntroLayout page={1} onBack={onBack}>
       <div className="intro-heading">
-        <p className="intro-eyebrow intro-animate" style={introOrder(1)}>A note about you</p>
-        <h1 className="intro-animate" style={introOrder(2)}>What do you want to get better at?</h1>
-        <p className="intro-animate" style={introOrder(3)}>Choose as many as you want.</p>
+        <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>A note about you</p>
+        <h1 className="intro-reveal" style={introOrder(2)}>What do you want to get better at?</h1>
+        <p className="intro-reveal intro-hint" style={introOrder(3)}>Choose as many as you want.</p>
       </div>
 
       <div className="intro-choice-list">
@@ -248,7 +246,7 @@ function GoalPage({
         ))}
       </div>
 
-      <div className="intro-action-slot intro-animate" style={introOrder(9)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(9)}>
         <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
       </div>
     </IntroLayout>
@@ -269,9 +267,9 @@ function BlockerPage({
   return (
     <IntroLayout page={2} onBack={onBack} compact>
       <div className="intro-heading is-compact">
-        <p className="intro-eyebrow intro-animate" style={introOrder(1)}>Be honest</p>
-        <h1 className="intro-animate" style={introOrder(2)}>What usually gets in your way?</h1>
-        <p className="intro-animate" style={introOrder(3)}>Choose as many as you want.</p>
+        <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Be honest</p>
+        <h1 className="intro-reveal" style={introOrder(2)}>What usually gets in your way?</h1>
+        <p className="intro-reveal intro-hint" style={introOrder(3)}>Choose as many as you want.</p>
       </div>
 
       <div className="intro-choice-list is-compact">
@@ -288,7 +286,7 @@ function BlockerPage({
         ))}
       </div>
 
-      <div className="intro-action-slot intro-animate" style={introOrder(11)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(11)}>
         <IntroAction onClick={onNext} disabled={values.length === 0}>Continue</IntroAction>
       </div>
     </IntroLayout>
@@ -299,14 +297,7 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
   return (
     <IntroLayout page={3} onBack={onBack} centered>
       <div className="intro-secret-reveal">
-        <p className="intro-eyebrow intro-animate" style={introOrder(1)}>Here’s the secret.</p>
-        <h1 className="intro-secret-title intro-animate" style={introOrder(2)}>
-          Great stories aren’t about having an extraordinary life.
-        </h1>
-        <p className="intro-secret-copy intro-animate" style={introOrder(3)}>
-          They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
-        </p>
-        <div className="intro-secret-art intro-animate" style={introOrder(4)}>
+        <div className="intro-secret-art intro-reveal" style={introOrder(1)}>
           <img
             src="/magnifying-glass-sketch.png"
             alt=""
@@ -315,9 +306,16 @@ function SecretPage({ onNext, onBack }: { onNext: () => void; onBack: () => void
             draggable={false}
           />
         </div>
+        <p className="intro-eyebrow intro-reveal" style={introOrder(2)}>Here’s the secret.</p>
+        <h1 className="intro-secret-title intro-reveal" style={introOrder(3)}>
+          Great stories aren’t about having an extraordinary life.
+        </h1>
+        <p className="intro-secret-copy intro-reveal" style={introOrder(4)}>
+          They’re about knowing <strong>what to notice, what to leave out, and what to make people care about.</strong>
+        </p>
       </div>
 
-      <div className="intro-action-slot intro-animate" style={introOrder(5)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(5)}>
         <IntroAction onClick={onNext}>Continue</IntroAction>
       </div>
     </IntroLayout>
@@ -329,32 +327,35 @@ function ReadyPage({ onBack }: { onBack: () => void }) {
 
   return (
     <IntroLayout page={4} onBack={onBack}>
-      <div className="intro-heading">
-        <p className="intro-eyebrow intro-animate" style={introOrder(1)}>Your next chapter</p>
-        <h1 className="intro-animate" style={introOrder(2)}>Tellwise is ready.</h1>
-        <p className="intro-animate" style={introOrder(3)}>
+      <div className="intro-heading intro-ready-heading">
+        <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Your next chapter</p>
+        <h1 className="intro-reveal" style={introOrder(2)}>Tellwise is ready.</h1>
+        <p className="intro-reveal" style={introOrder(3)}>
           You’ll learn one idea at a time, then implement those ideas in stories of your own.
         </p>
       </div>
 
-      <div className="intro-ready-list">
+      <div className="intro-ready-list intro-reveal" style={introOrder(4)}>
         {items.map((item, index) => (
-          <div key={item} className="intro-ready-line intro-animate" style={introOrder(4 + index)}>
-            <span>{index + 1}.</span>
+          <div key={item} className="intro-ready-line">
+            <span>{String(index + 1).padStart(2, "0")}</span>
             <strong>{item}</strong>
           </div>
         ))}
       </div>
 
-      <div className="intro-action-slot intro-animate" style={introOrder(8)}>
+      <div className="intro-action-slot intro-reveal" style={introOrder(5)}>
         <Link
           href="/sign-up"
           prefetch
           onClick={() => triggerIntroFeedback("action")}
-          className="intro-primary-action"
+          className="tellwise-press-button"
         >
           <span>Start learning</span>
-          <ArrowRight aria-hidden="true" />
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
         </Link>
       </div>
     </IntroLayout>
@@ -374,16 +375,16 @@ function IntroLayout({
   centered?: boolean
   children: ReactNode
 }) {
+  const progress = `${Math.round((page / LAST_PAGE) * 100)}%`
+
   return (
     <section className={`intro-flow-page${compact ? " is-compact" : ""}${centered ? " is-centered" : ""}`}>
-      <header className="intro-topbar intro-animate" style={introOrder(0)}>
+      <header className="intro-topbar intro-reveal" style={introOrder(0)}>
         <button type="button" onClick={onBack} aria-label="Go back" className="intro-back-button">
           <ChevronLeft aria-hidden="true" />
         </button>
-        <div className="intro-progress" aria-label={`Step ${page} of 4`}>
-          {[1, 2, 3, 4].map((step) => (
-            <span key={step} className={step <= page ? "is-active" : undefined} />
-          ))}
+        <div className="intro-progress" aria-label={`Step ${page} of ${LAST_PAGE}`}>
+          <span style={{ width: progress }} />
         </div>
         <span className="intro-brand">Tellwise</span>
       </header>
@@ -412,7 +413,7 @@ function IntroChoice({
       onClick={onClick}
       aria-pressed={selected}
       data-no-global-tap="true"
-      className={`intro-choice intro-animate${compact ? " is-compact" : ""}${selected ? " is-selected" : ""}`}
+      className={`intro-choice intro-reveal${compact ? " is-compact" : ""}${selected ? " is-selected" : ""}`}
       style={introOrder(order)}
     >
       <span className="intro-choice-copy">{children}</span>
@@ -433,18 +434,32 @@ function IntroAction({
   children: ReactNode
 }) {
   return (
-    <button
-      type="button"
+    <TellwisePressButton
       onClick={() => {
         if (disabled) return
         onClick()
       }}
       disabled={disabled}
-      className="intro-primary-action"
     >
-      <span>{children}</span>
-      <ArrowRight aria-hidden="true" />
-    </button>
+      {children}
+    </TellwisePressButton>
+  )
+}
+
+function IntroBookSketch() {
+  return (
+    <svg className="intro-book-sketch" viewBox="0 0 220 160" fill="none" aria-hidden="true">
+      <path className="intro-draw-line" pathLength="1" d="M110 39C82 25 51 25 25 38v86c26-13 57-13 85 1" />
+      <path className="intro-draw-line" pathLength="1" d="M110 39c28-14 59-14 85-1v86c-26-13-57-13-85 1" />
+      <path className="intro-draw-line" pathLength="1" d="M110 39v86" />
+      <path className="intro-draw-line is-soft" pathLength="1" d="M40 56c17-6 36-6 54 0" />
+      <path className="intro-draw-line is-soft" pathLength="1" d="M40 73c17-6 36-6 54 0" />
+      <path className="intro-draw-line is-soft" pathLength="1" d="M40 90c17-6 36-6 54 0" />
+      <path className="intro-draw-line is-soft" pathLength="1" d="M126 56c18-6 37-6 54 0" />
+      <path className="intro-draw-line is-soft" pathLength="1" d="M126 73c18-6 37-6 54 0" />
+      <path className="intro-draw-line is-soft" pathLength="1" d="M126 90c18-6 37-6 54 0" />
+      <path className="intro-draw-line is-accent" pathLength="1" d="M99 118c4 2 8 4 11 7 4-3 8-5 12-7" />
+    </svg>
   )
 }
 
@@ -462,12 +477,12 @@ function triggerIntroFeedback(kind: IntroFeedback) {
   if (!("vibrate" in window.navigator)) return
   try {
     const pattern = kind === "selection"
-      ? 8
+      ? 7
       : kind === "action"
-        ? 12
+        ? 10
         : kind === "back"
-          ? 8
-          : [9, 18, 9]
+          ? 7
+          : [8, 16, 8]
     window.navigator.vibrate(pattern)
   } catch {}
 }
