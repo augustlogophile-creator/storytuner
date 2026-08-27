@@ -709,11 +709,18 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
     }
 
     let lastAngle: number | null = null
-    const placePencil = (x: number, y: number, pathAngle: number, opacity = 1) => {
-      // The SVG pencil is drawn with its body extending to the right of the
-      // graphite point. Rotate it 180 degrees from the path tangent so the
-      // graphite point leads the motion and the body trails behind the line.
-      let angle = pathAngle + 180
+    const placePencil = (
+      x: number,
+      y: number,
+      pathAngle: number,
+      opacity = 1,
+      section: "body" | "head" = "head",
+    ) => {
+      // The main arrow body looked most natural with the pencil orientation used
+      // before the arrowhead correction. Keep that orientation for the body only,
+      // while retaining the corrected reversed orientation for both arrowhead wings.
+      // In every case the graphite apex itself stays pinned to the live path end.
+      let angle = section === "body" ? pathAngle : pathAngle + 180
       if (lastAngle !== null) {
         let delta = angle - lastAngle
         while (delta > 180) delta -= 360
@@ -721,9 +728,8 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
         angle = lastAngle + delta
       }
       lastAngle = angle
-      // The graphite apex is local (0, 9). That exact coordinate is translated
-      // onto the current path endpoint every frame. A slightly smaller scale
-      // keeps the point visually centered on the narrow graphite stroke.
+      // Local (0, 9) is the graphite apex. This exact point is placed on the
+      // current end of the stroke so the line finishes at the tip, never beside it.
       pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) scale(.62) translate(0 -9)`)
       pencil.style.opacity = String(opacity)
     }
@@ -746,7 +752,7 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
         setHeadUpperProgress(0)
         setHeadLowerProgress(0)
         const point = pointOn(mainPath, mainLength * p)
-        placePencil(point.x, point.y, point.angle)
+        placePencil(point.x, point.y, point.angle, 1, "body")
       } else if (t <= upperEnd) {
         // Both arrowhead strokes begin at the exact tip of the main line.
         const p = easeInOutCubic((t - mainEnd) / (upperEnd - mainEnd))
