@@ -16349,3 +16349,248 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 .intro-pencil-arrow-head {
   stroke-width: 2px !important;
 }
+
+/* August 27 app-wide motion polish. These interactions are deliberately short,
+   tactile, and quiet so Tellwise feels more alive without becoming busy. */
+@keyframes tellwise-route-soft-in {
+  from { opacity: .78; }
+  to { opacity: 1; }
+}
+@keyframes tellwise-control-press {
+  0% { scale: 1; }
+  34% { scale: .962; }
+  68% { scale: 1.014; }
+  100% { scale: 1; }
+}
+@keyframes tellwise-icon-kick {
+  0% { scale: 1; rotate: 0deg; }
+  35% { scale: .9; rotate: -2deg; }
+  70% { scale: 1.07; rotate: 1deg; }
+  100% { scale: 1; rotate: 0deg; }
+}
+@keyframes tellwise-surface-touch {
+  0% { scale: 1; }
+  42% { scale: .992; }
+  100% { scale: 1; }
+}
+@keyframes tellwise-choice-settle {
+  0% { scale: .975; }
+  48% { scale: 1.025; }
+  100% { scale: 1; }
+}
+@keyframes tellwise-tap-bloom-in {
+  0% { opacity: .18; scale: .22; }
+  54% { opacity: .11; }
+  100% { opacity: 0; scale: 2.45; }
+}
+@keyframes tellwise-nav-arrive {
+  0% { transform: translateY(2px) scale(.88); }
+  55% { transform: translateY(-2px) scale(1.075); }
+  100% { transform: translateY(-1px) scale(1.025); }
+}
+@keyframes tellwise-nav-icon-arrive {
+  0% { scale: .76; rotate: -5deg; }
+  58% { scale: 1.12; rotate: 2deg; }
+  100% { scale: 1; rotate: 0deg; }
+}
+@keyframes tellwise-dialog-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tellwise-dialog-spring-in {
+  0% { opacity: 0; transform: translateY(10px) scale(.965); }
+  62% { opacity: 1; transform: translateY(-1px) scale(1.008); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes tellwise-detail-reveal {
+  from { opacity: 0; translate: 0 4px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes tellwise-check-pop {
+  0% { scale: .72; }
+  62% { scale: 1.16; }
+  100% { scale: 1; }
+}
+
+.tellwise-route-enter {
+  animation: tellwise-route-soft-in 260ms cubic-bezier(.2,.72,.22,1) both !important;
+}
+
+/* A tiny paper-like bloom appears exactly under a tap. It is fixed to the
+   viewport so it never changes control layout or gets clipped by card edges. */
+.tellwise-tap-bloom {
+  position: fixed;
+  z-index: 450;
+  width: 1.6rem;
+  height: 1.6rem;
+  left: -4rem;
+  top: -4rem;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  translate: -50% -50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 34%, transparent) 0 24%, color-mix(in srgb, var(--brand) 12%, transparent) 42%, transparent 72%);
+}
+.tellwise-tap-bloom.is-active {
+  animation: tellwise-tap-bloom-in 330ms cubic-bezier(.16,.72,.22,1) both;
+}
+
+/* Preserve each component's own transforms by animating the independent scale
+   property for taps. This matters for the nav, arrows, and positioned controls. */
+.tellwise-tap {
+  animation: tellwise-control-press 265ms cubic-bezier(.18,.86,.24,1) !important;
+}
+.tellwise-tap :is(svg, .lucide):not(.tellwise-save-spinner) {
+  animation: tellwise-icon-kick 285ms cubic-bezier(.18,.86,.24,1) both;
+  transform-origin: center;
+}
+.tellwise-surface-tap {
+  animation: tellwise-surface-touch 285ms cubic-bezier(.18,.86,.24,1) both;
+}
+.tellwise-choice-pop {
+  animation: tellwise-choice-settle 330ms cubic-bezier(.18,.9,.22,1) both !important;
+}
+
+/* Cards feel lightly physical on desktop and touch, without floating so much
+   that the printed-book aesthetic turns into a dashboard aesthetic. */
+.book-app :is(
+  .story-card-interactive,
+  .journal-row,
+  .planner-field-card,
+  .membership-plan-choice,
+  .book-choice,
+  .home-library-book,
+  section[class*="rounded"][class*="border"],
+  article[class*="rounded"][class*="border"]
+) {
+  transition: translate 180ms cubic-bezier(.2,.8,.22,1), scale 180ms cubic-bezier(.2,.8,.22,1), border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .book-app :is(
+    .story-card-interactive,
+    .planner-field-card,
+    .membership-plan-choice,
+    .book-choice,
+    .home-library-book
+  ):hover {
+    translate: 0 -2px;
+    box-shadow: 0 9px 24px rgba(48, 41, 34, .055) !important;
+  }
+  .dark .book-app :is(
+    .story-card-interactive,
+    .planner-field-card,
+    .membership-plan-choice,
+    .book-choice,
+    .home-library-book
+  ):hover {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .15) !important;
+  }
+}
+
+/* Form controls get a soft focus halo instead of abruptly changing border. */
+.book-app :is(input, textarea, select, [contenteditable="true"]) {
+  transition: border-color 170ms ease, background-color 170ms ease, box-shadow 190ms ease, opacity 170ms ease !important;
+}
+.book-app :is(input, textarea, select, [contenteditable="true"]):focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 13%, transparent) !important;
+}
+.book-app :is(input[type="checkbox"], input[type="radio"]):checked {
+  animation: tellwise-check-pop 280ms cubic-bezier(.18,.88,.22,1) both;
+}
+.book-app [role="switch"][aria-checked="true"].tellwise-choice-pop {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+/* Opening expandable content now has a tiny settle instead of simply appearing. */
+.book-app details[open] > :not(summary) {
+  animation: tellwise-detail-reveal 190ms ease-out both;
+}
+
+/* Navigation is one of the most repeated interactions, so the newly active
+   destination gets a small spring and icon settle every time the route changes. */
+.book-nav-item[aria-current="page"] .book-nav-pill {
+  animation: tellwise-nav-arrive 350ms cubic-bezier(.2,.92,.22,1) both;
+}
+.book-nav-item[aria-current="page"] .book-nav-pill svg {
+  animation: tellwise-nav-icon-arrive 390ms cubic-bezier(.18,.92,.22,1) both;
+  transform-origin: center;
+}
+.book-nav-item .book-nav-label {
+  transition: color 170ms ease, opacity 170ms ease, translate 190ms cubic-bezier(.2,.8,.22,1) !important;
+}
+.book-nav-item[aria-current="page"] .book-nav-label {
+  translate: 0 -1px;
+}
+
+/* Dialogs still arrive quickly, but now have a more deliberate spring finish. */
+.app-dialog-overlay,
+.confirm-dialog-overlay,
+.journal-entry-menu-overlay {
+  animation: tellwise-dialog-overlay-in 155ms ease-out both !important;
+}
+.app-dialog-panel,
+.confirm-dialog-panel,
+.journal-entry-menu {
+  animation: tellwise-dialog-spring-in 245ms cubic-bezier(.2,.82,.22,1) both !important;
+}
+
+/* Width changes already carry meaning in progress UI. Keep them smooth enough
+   to read while making the movement feel a little less mechanical. */
+[role="progressbar"] > div,
+.intro-progress-fill,
+.planner-simple-progress-fill,
+.journal-inline-audio-progress,
+.journal-video-review-progress {
+  transition-timing-function: cubic-bezier(.2,.78,.22,1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tellwise-route-enter,
+  .tellwise-tap,
+  .tellwise-tap :is(svg, .lucide),
+  .tellwise-surface-tap,
+  .tellwise-choice-pop,
+  .tellwise-tap-bloom.is-active,
+  .book-nav-item[aria-current="page"] .book-nav-pill,
+  .book-nav-item[aria-current="page"] .book-nav-pill svg,
+  .book-app :is(input[type="checkbox"], input[type="radio"]):checked,
+  .book-app details[open] > :not(summary),
+  .app-dialog-overlay,
+  .confirm-dialog-overlay,
+  .journal-entry-menu-overlay,
+  .app-dialog-panel,
+  .confirm-dialog-panel,
+  .journal-entry-menu {
+    animation: none !important;
+  }
+  .book-app :is(
+    .story-card-interactive,
+    .journal-row,
+    .planner-field-card,
+    .membership-plan-choice,
+    .book-choice,
+    .home-library-book,
+    section[class*="rounded"][class*="border"],
+    article[class*="rounded"][class*="border"],
+    input,
+    textarea,
+    select,
+    [contenteditable="true"]
+  ),
+  .book-nav-item .book-nav-label {
+    transition: none !important;
+  }
+}
+
+/* Repeated content settles in as it reaches the viewport. The elements are
+   never pre-hidden, so slower devices do not get blank cards while JS starts. */
+@keyframes tellwise-surface-reveal {
+  from { opacity: .82; translate: 0 5px; }
+  to { opacity: 1; translate: 0 0; }
+}
+.tellwise-reveal-in {
+  animation: tellwise-surface-reveal 310ms cubic-bezier(.2,.76,.22,1) var(--tellwise-reveal-delay, 0ms) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tellwise-reveal-in { animation: none !important; }
+}
