@@ -1,9 +1,12 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { preload } from "react-dom"
 import { ArrowLeft } from "lucide-react"
 import { ParchReading } from "@/components/ui/parch-reading"
 
 export function AuthShell({ children }: { children: ReactNode }) {
+  preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
+
   return (
     <main className="entry-shell auth-entry-shell">
       <section className="auth-canvas auth-canvas-polished">

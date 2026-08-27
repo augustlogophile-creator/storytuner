@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { preload } from "react-dom"
 
 const PARCH_WIDTH = 132
 const PARCH_HEIGHT = (PARCH_WIDTH * 560) / 752
@@ -10,28 +9,48 @@ export const ParchReading = () => {
   const [ready, setReady] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
-
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
+    let cancelled = false
+    let frameHandle: number | null = null
+
+    const revealOnDecodedFrame = () => {
+      if (cancelled) return
+      video.removeEventListener("loadeddata", revealOnDecodedFrame)
+      video.removeEventListener("canplay", revealOnDecodedFrame)
+      const candidate = video as HTMLVideoElement & {
+        requestVideoFrameCallback?: (callback: () => void) => number
+        cancelVideoFrameCallback?: (handle: number) => void
+      }
+
+      if (candidate.requestVideoFrameCallback) {
+        frameHandle = candidate.requestVideoFrameCallback(() => {
+          if (!cancelled) setReady(true)
+        })
+      } else {
+        setReady(true)
+      }
+      void video.play().catch(() => {})
+    }
+
     if (video.readyState >= 2) {
-      setReady(true)
-      void video.play().catch(() => {})
-      return
+      revealOnDecodedFrame()
+    } else {
+      video.addEventListener("loadeddata", revealOnDecodedFrame, { once: true })
+      video.addEventListener("canplay", revealOnDecodedFrame, { once: true })
+      video.load()
     }
 
-    const markReady = () => {
-      setReady(true)
-      void video.play().catch(() => {})
-    }
-
-    video.addEventListener("loadeddata", markReady, { once: true })
-    video.addEventListener("canplay", markReady, { once: true })
     return () => {
-      video.removeEventListener("loadeddata", markReady)
-      video.removeEventListener("canplay", markReady)
+      cancelled = true
+      video.removeEventListener("loadeddata", revealOnDecodedFrame)
+      video.removeEventListener("canplay", revealOnDecodedFrame)
+      const candidate = video as HTMLVideoElement & {
+        cancelVideoFrameCallback?: (handle: number) => void
+      }
+      if (frameHandle !== null) candidate.cancelVideoFrameCallback?.(frameHandle)
     }
   }, [])
 
@@ -48,15 +67,6 @@ export const ParchReading = () => {
         background: "transparent",
       }}
     >
-      <img
-        src="/parch-reading-poster.jpg"
-        width={752}
-        height={560}
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-        className="auth-parch-poster"
-      />
       <video
         ref={videoRef}
         src="/parch-reading.mp4"

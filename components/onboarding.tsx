@@ -31,7 +31,7 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 
 type StoryBlockerChoice = Exclude<StoryBlocker, "">
 type IntroDirection = "next" | "back"
-type IntroFeedback = "selection" | "action" | "page" | "back" | "typing"
+type IntroFeedback = "selection" | "action" | "page" | "back" | "typing" | "pencil"
 type TypewriterTag = "h1" | "p" | "span"
 
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
@@ -205,23 +205,36 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 }
 
 function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean }) {
+  const [titleStarted, setTitleStarted] = useState(!animate)
   const [titleDone, setTitleDone] = useState(!animate)
-  const [subtitleDone, setSubtitleDone] = useState(!animate)
+  const [subtitleVisible, setSubtitleVisible] = useState(!animate)
+  const [sequenceDone, setSequenceDone] = useState(!animate)
 
   useEffect(() => {
     if (!animate) {
+      setTitleStarted(true)
       setTitleDone(true)
-      setSubtitleDone(true)
+      setSubtitleVisible(true)
+      setSequenceDone(true)
       return
     }
 
-    if (!titleDone) {
-      setSubtitleDone(false)
-      return
-    }
-
-    const timer = window.setTimeout(() => setSubtitleDone(true), 620)
+    setTitleStarted(false)
+    setTitleDone(false)
+    setSubtitleVisible(false)
+    setSequenceDone(false)
+    const timer = window.setTimeout(() => setTitleStarted(true), 820)
     return () => window.clearTimeout(timer)
+  }, [animate])
+
+  useEffect(() => {
+    if (!animate || !titleDone) return
+    const subtitleTimer = window.setTimeout(() => setSubtitleVisible(true), 460)
+    const doneTimer = window.setTimeout(() => setSequenceDone(true), 1120)
+    return () => {
+      window.clearTimeout(subtitleTimer)
+      window.clearTimeout(doneTimer)
+    }
   }, [animate, titleDone])
 
   return (
@@ -232,27 +245,25 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
         <div className="intro-welcome-art intro-reveal" style={introOrder(0)} aria-hidden="true">
           <IntroBookSketch />
         </div>
-        <p className="intro-eyebrow intro-reveal" style={introOrder(1)}>Tellwise</p>
         <TypewriterText
           tag="h1"
           className="intro-welcome-title"
           text="Welcome to Tellwise."
-          delay={300}
+          delay={0}
           speed={72}
           animate={animate}
+          start={titleStarted}
           onComplete={() => setTitleDone(true)}
         />
         <p
-          className={`intro-welcome-subtitle intro-welcome-subtitle-reveal${titleDone ? " is-visible" : ""}${animate ? "" : " is-static"}`}
+          className={`intro-welcome-subtitle intro-welcome-subtitle-reveal${subtitleVisible ? " is-visible" : ""}${animate ? "" : " is-static"}`}
         >
           Learn to tell stories people actually want to hear.
         </p>
       </div>
 
-      <div className={`intro-welcome-action intro-after-typing${subtitleDone ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
-        <div className="intro-follow-reveal" style={introFollowOrder(0)}>
-          <IntroAction onClick={onNext}>Let’s start</IntroAction>
-        </div>
+      <div className="intro-welcome-action">
+        <IntroAction onClick={onNext} disabled={!sequenceDone}>Let’s start</IntroAction>
       </div>
     </section>
   )
@@ -397,7 +408,8 @@ function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: (
           tag="h1"
           className="intro-secret-title"
           text="Great stories aren’t about having an extraordinary life."
-          delay={420}
+          accentText="aren’t"
+          delay={560}
           speed={56}
           animate={animate}
           onComplete={() => setTyped(true)}
@@ -465,6 +477,7 @@ function ReadyPage({ onBack, animate }: { onBack: () => void; animate: boolean }
             </div>
           ))}
         </div>
+        <PencilArrowMoment active={typed} animate={animate} />
       </div>
 
       <div className={`intro-action-slot intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
@@ -576,10 +589,64 @@ function IntroAction({
   )
 }
 
+function PencilArrowMoment({ active, animate }: { active: boolean; animate: boolean }) {
+  const [drawing, setDrawing] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) {
+      setDrawing(true)
+      return
+    }
+    if (!active) {
+      setDrawing(false)
+      return
+    }
+
+    const startTimer = window.setTimeout(() => setDrawing(true), 1320)
+    return () => window.clearTimeout(startTimer)
+  }, [active, animate])
+
+  useEffect(() => {
+    if (!drawing || !animate) return
+    triggerIntroFeedback("pencil")
+
+    const ticks = [260, 610, 980, 1380, 1760, 2140].map((delay) =>
+      window.setTimeout(() => {
+        try {
+          window.dispatchEvent(new CustomEvent("tellwise:haptic", { detail: { kind: "typing" } }))
+          window.navigator.vibrate?.(3)
+        } catch {}
+      }, delay),
+    )
+
+    return () => ticks.forEach((timer) => window.clearTimeout(timer))
+  }, [drawing, animate])
+
+  return (
+    <div className={`intro-pencil-moment${drawing ? " is-drawing" : ""}${animate ? "" : " is-static"}`} aria-hidden="true">
+      <svg className="intro-pencil-arrow" viewBox="0 0 240 132" fill="none">
+        <path className="intro-pencil-arrow-shadow" d="M24 108 L88 68 L137 94 L216 27" />
+        <path className="intro-pencil-arrow-line" pathLength="1" d="M24 108 L88 68 L137 94 L216 27" />
+        <path className="intro-pencil-arrow-head" pathLength="1" d="M187 31 L216 27 L208 55" />
+      </svg>
+      <span className="intro-pencil-tool">
+        <svg viewBox="0 0 64 18" fill="none">
+          <path d="M7 9.2 16.5 3.3h37.2c2.4 0 4.3 1.9 4.3 4.3v2.8c0 2.4-1.9 4.3-4.3 4.3H16.5L7 9.2Z" fill="#26231f" />
+          <path d="m7 9.2 9.5-5.9v11.4L7 9.2Z" fill="#171512" />
+          <path d="m4 9.2 4.7-2.8v5.6L4 9.2Z" fill="#24211d" />
+          <path d="M18.5 5.2h31.2" stroke="#fffaf1" strokeOpacity=".24" strokeWidth="1.15" strokeLinecap="round" />
+          <path d="M53.7 3.3h3.2c1.7 0 3.1 1.4 3.1 3.1v5.2c0 1.7-1.4 3.1-3.1 3.1h-3.2V3.3Z" fill="#49443d" />
+        </svg>
+      </span>
+    </div>
+  )
+}
+
 function TypewriterText({
   tag = "span",
   text,
   className = "",
+  accentText,
   delay = 160,
   speed = 58,
   animate = true,
@@ -589,6 +656,7 @@ function TypewriterText({
   tag?: TypewriterTag
   text: string
   className?: string
+  accentText?: string
   delay?: number
   speed?: number
   animate?: boolean
@@ -688,8 +756,9 @@ function TypewriterText({
             })
           }
 
+          const isAccent = accentText ? token === accentText : false
           return (
-            <span className="intro-typewriter-word" key={`${token}-${tokenIndex}`}>
+            <span className={`intro-typewriter-word${isAccent ? " is-accent" : ""}`} key={`${token}-${tokenIndex}`}>
               {Array.from(token).map((character, index) => {
                 const currentIndex = characterIndex++
                 return (
@@ -795,6 +864,35 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
     if (context.state === "suspended") void context.resume()
 
     const now = context.currentTime
+
+    if (kind === "pencil") {
+      const duration = 2.45
+      const frameCount = Math.max(1, Math.floor(context.sampleRate * duration))
+      const buffer = context.createBuffer(1, frameCount, context.sampleRate)
+      const data = buffer.getChannelData(0)
+      for (let i = 0; i < frameCount; i += 1) {
+        const flutter = .42 + .58 * Math.abs(Math.sin(i / 118))
+        const fade = Math.min(1, i / 900) * Math.min(1, (frameCount - i) / 1600)
+        data[i] = (Math.random() * 2 - 1) * flutter * fade
+      }
+      const source = context.createBufferSource()
+      const filter = context.createBiquadFilter()
+      const gain = context.createGain()
+      filter.type = "bandpass"
+      filter.frequency.setValueAtTime(1450, now)
+      filter.Q.setValueAtTime(.72, now)
+      gain.gain.setValueAtTime(.0001, now)
+      gain.gain.exponentialRampToValueAtTime(.012, now + .05)
+      gain.gain.setValueAtTime(.009, now + 2.08)
+      gain.gain.exponentialRampToValueAtTime(.0001, now + duration)
+      source.connect(filter)
+      filter.connect(gain)
+      gain.connect(context.destination)
+      source.buffer = buffer
+      source.start(now)
+      return
+    }
+
     const gain = context.createGain()
     const oscillator = context.createOscillator()
 
@@ -839,13 +937,15 @@ function triggerIntroFeedback(kind: IntroFeedback) {
   try {
     const pattern = kind === "typing"
       ? 4
-      : kind === "selection"
-        ? 16
-        : kind === "action"
-          ? [18, 22, 12]
-          : kind === "back"
-            ? 12
-            : [13, 18, 11]
+      : kind === "pencil"
+        ? [4, 120, 4, 140, 4, 120, 4]
+        : kind === "selection"
+          ? 16
+          : kind === "action"
+            ? [18, 22, 12]
+            : kind === "back"
+              ? 12
+              : [13, 18, 11]
     window.navigator.vibrate(pattern)
   } catch {}
 }

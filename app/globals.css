@@ -15779,3 +15779,253 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     transition-duration: .01ms !important;
   }
 }
+
+/* August 26 final intro timing and mascot polish. */
+
+/* The opening composition follows a deliberate three-beat sequence: artwork,
+   typed welcome, then the supporting sentence. The action stays visible from
+   frame one, but remains physically disabled until the sequence is finished. */
+.intro-welcome-main {
+  margin-top: clamp(4.35rem, 10svh, 6rem) !important;
+}
+.intro-welcome-art {
+  margin-bottom: 2rem !important;
+}
+.intro-welcome-action {
+  opacity: 1 !important;
+  transform: none !important;
+}
+.intro-welcome-action .tellwise-press-button:disabled {
+  opacity: 1 !important;
+  border-color: #c8c1b7 !important;
+  border-bottom-color: #bdb5aa !important;
+  background: linear-gradient(180deg, #d8d4cd 0%, #cec9c1 100%) !important;
+  color: #8c857b !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.48) !important;
+}
+.intro-welcome-action .tellwise-press-button:not(:disabled) {
+  transition:
+    background 280ms ease,
+    color 240ms ease,
+    border-color 240ms ease,
+    border-bottom-color 240ms ease,
+    box-shadow 260ms ease,
+    transform 120ms ease !important;
+}
+
+/* The emphasized word types in the app's restrained red/rust accent rather
+   than introducing a bright warning red. */
+.intro-typewriter-word.is-accent .intro-typewriter-character {
+  color: #a64f43 !important;
+}
+
+/* The magnifier waits a beat after the page arrives, then fades in without a
+   noticeable scale pop or rotational snap. */
+.intro-secret-art.intro-reveal {
+  opacity: 0;
+  transform: translate3d(0, 5px, 0);
+  animation: intro-secret-art-soft-in 680ms cubic-bezier(.2,.72,.2,1) 300ms forwards !important;
+}
+.intro-secret-magnifier {
+  opacity: 0 !important;
+  transform: translate3d(0, 4px, 0) !important;
+  animation: intro-secret-magnifier-fade 760ms cubic-bezier(.2,.72,.2,1) 360ms forwards !important;
+}
+.intro-secret-shadow {
+  animation-delay: 560ms !important;
+}
+@keyframes intro-secret-art-soft-in {
+  from { opacity: 0; transform: translate3d(0, 5px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes intro-secret-magnifier-fade {
+  from { opacity: 0; transform: translate3d(0, 4px, 0); }
+  to { opacity: .88; transform: translate3d(0, 0, 0); }
+}
+
+/* The lead-in and each of the three secret beats are separated by 1.2 seconds.
+   This keeps each thought distinct instead of stacking them in one burst. */
+.intro-secret-copy-sequence.intro-after-typing.is-visible .intro-follow-reveal {
+  animation-duration: 560ms !important;
+  animation-timing-function: cubic-bezier(.18,.74,.22,1) !important;
+  animation-delay: calc(420ms + var(--intro-follow-order, 0) * 1200ms) !important;
+}
+
+/* Pencil-drawn progress mark on the final intro page. */
+.intro-pencil-moment {
+  position: relative;
+  width: min(100%, 17rem);
+  height: 7.35rem;
+  margin: .7rem auto .15rem;
+  opacity: 0;
+  transform: translateY(5px);
+  pointer-events: none;
+}
+.intro-pencil-moment.is-drawing,
+.intro-pencil-moment.is-static {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 360ms ease, transform 420ms cubic-bezier(.2,.72,.2,1);
+}
+.intro-pencil-arrow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.intro-pencil-arrow-shadow,
+.intro-pencil-arrow-line,
+.intro-pencil-arrow-head {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.intro-pencil-arrow-shadow {
+  stroke: rgba(62, 56, 49, .11);
+  stroke-width: 5.4;
+  transform: translateY(1.5px);
+}
+.intro-pencil-arrow-line,
+.intro-pencil-arrow-head {
+  stroke: #302d28;
+  stroke-width: 3.15;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 .7px 0 rgba(255,255,255,.52));
+}
+.intro-pencil-moment.is-drawing .intro-pencil-arrow-line {
+  animation: intro-pencil-draw-main 2.18s cubic-bezier(.22,.58,.28,1) 80ms forwards;
+}
+.intro-pencil-moment.is-drawing .intro-pencil-arrow-head {
+  animation: intro-pencil-draw-head .62s cubic-bezier(.2,.72,.2,1) 2.08s forwards;
+}
+.intro-pencil-moment.is-static .intro-pencil-arrow-line,
+.intro-pencil-moment.is-static .intro-pencil-arrow-head {
+  stroke-dashoffset: 0;
+}
+.intro-pencil-tool {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  top: 0;
+  width: 3.15rem;
+  height: .9rem;
+  opacity: 0;
+  transform-origin: 8% 50%;
+}
+.intro-pencil-tool svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 2px rgba(47,41,34,.14));
+}
+.intro-pencil-moment.is-drawing .intro-pencil-tool {
+  animation: intro-pencil-travel 2.72s cubic-bezier(.22,.58,.28,1) 60ms forwards;
+}
+.intro-pencil-moment.is-static .intro-pencil-tool {
+  display: none;
+}
+@keyframes intro-pencil-draw-main {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes intro-pencil-draw-head {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes intro-pencil-travel {
+  0% { opacity: 0; transform: translate(19px, 103px) rotate(-32deg); }
+  5% { opacity: 1; }
+  31% { opacity: 1; transform: translate(83px, 63px) rotate(-32deg); }
+  52% { opacity: 1; transform: translate(132px, 89px) rotate(28deg); }
+  82% { opacity: 1; transform: translate(208px, 22px) rotate(-40deg); }
+  91% { opacity: 1; transform: translate(181px, 26px) rotate(6deg); }
+  97% { opacity: 1; transform: translate(209px, 49px) rotate(43deg); }
+  100% { opacity: 0; transform: translate(209px, 49px) rotate(43deg); }
+}
+
+/* Authentication mascot: keep one immutable layout slot and reveal only a
+   decoded video frame. The MP4 blends into the paper instead of painting a
+   rectangular white canvas, so there is no mismatched poster-to-video resize. */
+.auth-parch.auth-parch-stable {
+  contain: none !important;
+  isolation: auto !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-poster,
+.auth-parch.auth-parch-stable .auth-parch-video {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  scale: 1 !important;
+  -webkit-mask-image: radial-gradient(ellipse 72% 92% at 50% 50%, #000 66%, rgba(0,0,0,.96) 76%, rgba(0,0,0,.55) 89%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 92% at 50% 50%, #000 66%, rgba(0,0,0,.96) 76%, rgba(0,0,0,.55) 89%, transparent 100%);
+}
+.auth-parch.auth-parch-stable .auth-parch-poster {
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  transition: opacity 165ms ease !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  mix-blend-mode: multiply !important;
+  opacity: 0 !important;
+  filter: saturate(.985) contrast(1.012);
+  transition: opacity 165ms cubic-bezier(.2,.72,.2,1) !important;
+  will-change: opacity;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-poster {
+  opacity: 0 !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-video {
+  opacity: 1 !important;
+}
+
+@media (max-height: 740px) {
+  .intro-welcome-main {
+    margin-top: 2.8rem !important;
+  }
+  .intro-welcome-art {
+    margin-bottom: 1.25rem !important;
+  }
+  .intro-pencil-moment {
+    width: 13rem;
+    height: 4.7rem;
+    margin-top: .32rem;
+  }
+  .intro-pencil-arrow {
+    transform: scale(.78);
+    transform-origin: 50% 50%;
+  }
+  .intro-pencil-tool {
+    transform: scale(.78);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-secret-art.intro-reveal,
+  .intro-secret-magnifier,
+  .intro-pencil-moment,
+  .intro-pencil-arrow-line,
+  .intro-pencil-arrow-head,
+  .intro-pencil-tool {
+    animation: none !important;
+    transition: none !important;
+  }
+  .intro-secret-art.intro-reveal,
+  .intro-secret-magnifier,
+  .intro-pencil-moment {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .intro-pencil-arrow-line,
+  .intro-pencil-arrow-head {
+    stroke-dashoffset: 0 !important;
+  }
+  .intro-pencil-tool {
+    display: none !important;
+  }
+}
