@@ -16287,3 +16287,65 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   visibility: visible !important;
   transition: none !important;
 }
+
+
+/* August 26 round 2: keep the secret-page emphasis red, eliminate the auth
+   mascot's baked white media rectangle, and keep the arrowhead pencil exact. */
+.intro-secret-title .intro-typewriter-word.is-accent .intro-typewriter-character {
+  color: #b54d4d !important;
+}
+
+/* The visible auth mascot is now a chroma-keyed canvas. The source video stays
+   offscreen, so its rectangular white canvas can never be painted into the UI. */
+.auth-parch.auth-parch-stable {
+  contain: none !important;
+  isolation: auto !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-transparent-poster,
+.auth-parch.auth-parch-stable .auth-parch-transparent-canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 132px !important;
+  height: 98.297872px !important;
+  border: 0 !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-transparent-poster {
+  z-index: 1 !important;
+  opacity: 1 !important;
+  pointer-events: none !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-transparent-canvas {
+  z-index: 2 !important;
+  opacity: 0 !important;
+  transition: none !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-transparent-poster {
+  opacity: 0 !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-transparent-canvas {
+  opacity: 1 !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video-source {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* The secondary graphite texture on the arrowhead sits on the exact same path.
+   No translated duplicate stroke can appear beside the pencil point. */
+.intro-pencil-arrow-head-texture {
+  transform: none !important;
+}
+.intro-pencil-arrow-head {
+  stroke-width: 2px !important;
+}

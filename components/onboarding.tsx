@@ -709,7 +709,11 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
     }
 
     let lastAngle: number | null = null
-    const placePencil = (x: number, y: number, angle: number, opacity = 1) => {
+    const placePencil = (x: number, y: number, pathAngle: number, opacity = 1) => {
+      // The SVG pencil is drawn with its body extending to the right of the
+      // graphite point. Rotate it 180 degrees from the path tangent so the
+      // graphite point leads the motion and the body trails behind the line.
+      let angle = pathAngle + 180
       if (lastAngle !== null) {
         let delta = angle - lastAngle
         while (delta > 180) delta -= 360
@@ -717,9 +721,10 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
         angle = lastAngle + delta
       }
       lastAngle = angle
-      // The graphite tip is local (0, 9). Move that exact point onto the path,
-      // then scale the pencil down without introducing any tip offset.
-      pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) scale(.72) translate(0 -9)`)
+      // The graphite apex is local (0, 9). That exact coordinate is translated
+      // onto the current path endpoint every frame. A slightly smaller scale
+      // keeps the point visually centered on the narrow graphite stroke.
+      pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) scale(.62) translate(0 -9)`)
       pencil.style.opacity = String(opacity)
     }
 
