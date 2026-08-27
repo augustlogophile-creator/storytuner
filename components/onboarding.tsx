@@ -593,7 +593,9 @@ function IntroAction({
 function PencilArrowMoment({ active, animate }: { active: boolean; animate: boolean }) {
   const [drawing, setDrawing] = useState(!animate)
   const mainPathRef = useRef<SVGPathElement>(null)
+  const mainTextureRef = useRef<SVGPathElement>(null)
   const headPathRef = useRef<SVGPathElement>(null)
+  const headTextureRef = useRef<SVGPathElement>(null)
   const pencilRef = useRef<SVGGElement>(null)
   const frameRef = useRef<number | null>(null)
 
@@ -613,80 +615,101 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
 
   useEffect(() => {
     const mainPath = mainPathRef.current
+    const mainTexture = mainTextureRef.current
     const headPath = headPathRef.current
+    const headTexture = headTextureRef.current
     const pencil = pencilRef.current
-    if (!mainPath || !headPath || !pencil) return
+    if (!mainPath || !mainTexture || !headPath || !headTexture || !pencil) return
 
     const mainLength = mainPath.getTotalLength()
     const headLength = headPath.getTotalLength()
+    const mainPaths = [mainPath, mainTexture]
+    const headPaths = [headPath, headTexture]
 
-    mainPath.style.strokeDasharray = `${mainLength}`
-    headPath.style.strokeDasharray = `${headLength}`
+    mainPaths.forEach((path) => {
+      path.style.strokeDasharray = `${mainLength}`
+    })
+    headPaths.forEach((path) => {
+      path.style.strokeDasharray = `${headLength}`
+    })
+
+    const setMainProgress = (progress: number) => {
+      const offset = `${mainLength * (1 - progress)}`
+      mainPaths.forEach((path) => { path.style.strokeDashoffset = offset })
+    }
+    const setHeadProgress = (progress: number) => {
+      const offset = `${headLength * (1 - progress)}`
+      headPaths.forEach((path) => { path.style.strokeDashoffset = offset })
+    }
 
     if (!animate) {
-      mainPath.style.strokeDashoffset = "0"
-      headPath.style.strokeDashoffset = "0"
+      setMainProgress(1)
+      setHeadProgress(1)
       pencil.style.opacity = "0"
       return
     }
 
     if (!drawing) {
-      mainPath.style.strokeDashoffset = `${mainLength}`
-      headPath.style.strokeDashoffset = `${headLength}`
+      setMainProgress(0)
+      setHeadProgress(0)
       pencil.style.opacity = "0"
       return
     }
 
-    const start = performance.now()
-    const duration = 2700
-    const mainEnd = 0.76
-    const liftEnd = 0.84
-
     const pointOn = (path: SVGPathElement, distance: number) => {
-      const bounded = Math.max(0, Math.min(path.getTotalLength(), distance))
+      const length = path.getTotalLength()
+      const bounded = Math.max(0, Math.min(length, distance))
       const point = path.getPointAtLength(bounded)
-      const ahead = path.getPointAtLength(Math.min(path.getTotalLength(), bounded + 1.4))
+      const before = path.getPointAtLength(Math.max(0, bounded - 1.5))
+      const ahead = path.getPointAtLength(Math.min(length, bounded + 1.5))
       return {
         x: point.x,
         y: point.y,
-        angle: Math.atan2(ahead.y - point.y, ahead.x - point.x) * 180 / Math.PI,
+        angle: Math.atan2(ahead.y - before.y, ahead.x - before.x) * 180 / Math.PI,
       }
     }
 
+    let lastAngle: number | null = null
     const placePencil = (x: number, y: number, angle: number, opacity = 1) => {
-      pencil.setAttribute("transform", `translate(${x} ${y}) rotate(${angle}) translate(-5 -9)`)
+      if (lastAngle !== null) {
+        let delta = angle - lastAngle
+        while (delta > 180) delta -= 360
+        while (delta < -180) delta += 360
+        angle = lastAngle + delta
+      }
+      lastAngle = angle
+      pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) translate(-1 -9)`)
       pencil.style.opacity = String(opacity)
     }
 
     const mainEndPoint = pointOn(mainPath, mainLength)
     const headStartPoint = pointOn(headPath, 0)
-
-    try { window.navigator.vibrate?.(4) } catch {}
+    const start = performance.now()
+    const duration = 3050
+    const mainEnd = 0.79
+    const liftEnd = 0.865
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration)
 
       if (t <= mainEnd) {
         const p = easeInOutCubic(t / mainEnd)
-        mainPath.style.strokeDashoffset = `${mainLength * (1 - p)}`
-        headPath.style.strokeDashoffset = `${headLength}`
+        setMainProgress(p)
+        setHeadProgress(0)
         const point = pointOn(mainPath, mainLength * p)
         placePencil(point.x, point.y, point.angle)
       } else if (t <= liftEnd) {
-        mainPath.style.strokeDashoffset = "0"
-        headPath.style.strokeDashoffset = `${headLength}`
-        const p = (t - mainEnd) / (liftEnd - mainEnd)
-        const eased = easeInOutCubic(p)
-        placePencil(
-          mainEndPoint.x + (headStartPoint.x - mainEndPoint.x) * eased,
-          mainEndPoint.y + (headStartPoint.y - mainEndPoint.y) * eased,
-          -8,
-          Math.max(.28, 1 - Math.sin(Math.PI * p) * .72),
-        )
+        setMainProgress(1)
+        setHeadProgress(0)
+        const p = easeInOutCubic((t - mainEnd) / (liftEnd - mainEnd))
+        const x = mainEndPoint.x + (headStartPoint.x - mainEndPoint.x) * p
+        const y = mainEndPoint.y + (headStartPoint.y - mainEndPoint.y) * p - Math.sin(Math.PI * p) * 3.2
+        const angle = mainEndPoint.angle + (headStartPoint.angle - mainEndPoint.angle) * p
+        placePencil(x, y, angle, .82 - Math.sin(Math.PI * p) * .42)
       } else {
         const p = easeInOutCubic((t - liftEnd) / (1 - liftEnd))
-        mainPath.style.strokeDashoffset = "0"
-        headPath.style.strokeDashoffset = `${headLength * (1 - p)}`
+        setMainProgress(1)
+        setHeadProgress(p)
         const point = pointOn(headPath, headLength * p)
         placePencil(point.x, point.y, point.angle)
       }
@@ -694,10 +717,9 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
       if (t < 1) {
         frameRef.current = window.requestAnimationFrame(tick)
       } else {
+        setMainProgress(1)
+        setHeadProgress(1)
         pencil.style.opacity = "0"
-        mainPath.style.strokeDashoffset = "0"
-        headPath.style.strokeDashoffset = "0"
-        try { window.navigator.vibrate?.(3) } catch {}
       }
     }
 
@@ -711,17 +733,23 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
     }
   }, [drawing, animate])
 
+  const mainPath = "M26 106 C52 97 70 77 90 69 C108 62 124 90 143 87 C168 83 187 48 216 27"
+  const headPath = "M188 31 C198 30 207 29 216 27 C214 37 211 46 207 54"
+
   return (
     <div className={`intro-pencil-moment${drawing ? " is-drawing" : ""}${animate ? "" : " is-static"}`} aria-hidden="true">
       <svg className="intro-pencil-arrow" viewBox="0 0 240 132" fill="none">
-        <path className="intro-pencil-arrow-shadow" d="M24 108 L88 68 L137 94 L216 27" />
-        <path ref={mainPathRef} className="intro-pencil-arrow-line" d="M24 108 L88 68 L137 94 L216 27" />
-        <path ref={headPathRef} className="intro-pencil-arrow-head" d="M187 31 L216 27 L208 55" />
+        <path ref={mainPathRef} className="intro-pencil-arrow-line" d={mainPath} />
+        <path ref={mainTextureRef} className="intro-pencil-arrow-texture" d={mainPath} />
+        <path ref={headPathRef} className="intro-pencil-arrow-head" d={headPath} />
+        <path ref={headTextureRef} className="intro-pencil-arrow-head-texture" d={headPath} />
         <g ref={pencilRef} className="intro-pencil-svg-tool">
-          <path d="M0 9 10.5 2.6h39.2c2.3 0 4.1 1.8 4.1 4.1v4.6c0 2.3-1.8 4.1-4.1 4.1H10.5L0 9Z" fill="#28241f" />
-          <path d="m0 9 10.5-6.4v12.8L0 9Z" fill="#171512" />
-          <path d="M12.2 4.7h33" stroke="#fffaf1" strokeOpacity=".24" strokeWidth="1.15" strokeLinecap="round" />
-          <path d="M49.7 2.6h3.4c2 0 3.6 1.6 3.6 3.6v5.6c0 2-1.6 3.6-3.6 3.6h-3.4V2.6Z" fill="#4b4640" />
+          <path d="M0 9 8.8 4.25 8.8 13.75 0 9Z" fill="#c6a57c" />
+          <path d="M0 9 3.25 7.25 3.25 10.75 0 9Z" fill="#514b44" />
+          <path d="M8.5 4.25h38.4c2.15 0 3.9 1.75 3.9 3.9v1.7c0 2.15-1.75 3.9-3.9 3.9H8.5V4.25Z" fill="#766d62" />
+          <path d="M10.4 5.65h35.3" stroke="#b9aea0" strokeOpacity=".62" strokeWidth="1" strokeLinecap="round" />
+          <path d="M46.9 4.25h4.1c1.7 0 3.1 1.4 3.1 3.1v3.3c0 1.7-1.4 3.1-3.1 3.1h-4.1V4.25Z" fill="#5d5750" />
+          <path d="M49.8 5.2v7.6" stroke="#8d857b" strokeWidth=".8" opacity=".7" />
         </g>
       </svg>
     </div>
@@ -816,20 +844,16 @@ function TypewriterText({
 
   let characterIndex = 0
   const tokens = text.split(/(\s+)/)
-  const caret = (key: string, atStart = false) => {
-    if (!animate || !start) return null
-    return (
-      <span
-        key={key}
-        className={`intro-typewriter-caret${atStart ? " is-start" : ""}${done ? " is-done" : ""}`}
-      />
-    )
+  const caret = (key: string) => {
+    const activelyTyping = animate && start && !done && visibleCharacters > 0 && visibleCharacters < text.length
+    if (!activelyTyping) return null
+    return <span key={key} className="intro-typewriter-caret" />
   }
 
   return (
     <Tag className={`intro-typewriter ${className}`.trim()} aria-label={text}>
       <span className="intro-typewriter-stable" aria-hidden="true">
-        {visibleCharacters === 0 ? caret("caret-start", true) : null}
+        
         {tokens.map((token, tokenIndex) => {
           if (/^\s+$/.test(token)) {
             return Array.from(token).map((character, index) => {
