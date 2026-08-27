@@ -32,13 +32,17 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
 
 type StoryBlockerChoice = Exclude<StoryBlocker, "">
 type IntroDirection = "next" | "back"
-type IntroFeedback = "selection" | "action" | "page" | "back" | "typing"
+type IntroFeedback = "selection" | "action" | "page" | "back" | "typing" | "reveal"
 type TypewriterTag = "h1" | "p" | "span"
 
 const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "other"]
 const LAST_PAGE = 4
 const PAGE_EXIT_MS = 140
 const PAGE_ENTER_MS = 410
+
+// Keep track of pages already experienced during this client session so using
+// Back never replays the authored typewriter/reveal sequences.
+const playedIntroPagesSession = new Set<number>()
 
 export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   preload("/parch-reading.mp4", { as: "video", type: "video/mp4" })
@@ -51,7 +55,9 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const transitionTimers = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const pageRef = useRef(normalizedInitialPage)
-  const playedPages = useRef<Set<number>>(new Set(normalizedInitialPage > 0 ? [normalizedInitialPage] : []))
+  const initialPlayedPages = new Set(playedIntroPagesSession)
+  if (normalizedInitialPage > 0) initialPlayedPages.add(normalizedInitialPage)
+  const playedPages = useRef<Set<number>>(initialPlayedPages)
 
   useEffect(() => {
     setPreferences(readOnboardingPreferences())
@@ -106,6 +112,13 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
     if (nextDirection === "next" && !canAdvance) return
 
     playedPages.current.add(current)
+    playedIntroPagesSession.add(current)
+    if (nextDirection === "back") {
+      // A back target has, by definition, already been seen. Mark it before the
+      // render so its internal animations are immediately shown in final state.
+      playedPages.current.add(safeTarget)
+      playedIntroPagesSession.add(safeTarget)
+    }
     triggerIntroFeedback(nextDirection === "next" ? "page" : "back")
     setDirection(nextDirection)
     setPhase("exit")
@@ -391,6 +404,17 @@ function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: (
     if (!animate) setTyped(true)
   }, [animate])
 
+  useEffect(() => {
+    if (!animate || !typed) return
+
+    // Match the three editorial reveal beats below. Each one gets a restrained
+    // paper-like tick so the sequence feels deliberate without becoming noisy.
+    const timers = [1600, 2400, 3200].map((delay) =>
+      window.setTimeout(() => triggerIntroFeedback("reveal"), delay),
+    )
+    return () => timers.forEach(window.clearTimeout)
+  }, [animate, typed])
+
   return (
     <IntroLayout page={3} onBack={onBack} animate={animate}>
       <div className="intro-secret-reveal">
@@ -410,7 +434,7 @@ function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: (
           className="intro-secret-title"
           text="Great stories aren’t about having an extraordinary life."
           accentText="aren’t"
-          delay={2200}
+          delay={1150}
           speed={56}
           animate={animate}
           onComplete={() => setTyped(true)}
@@ -744,12 +768,19 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
         <path ref={headPathRef} className="intro-pencil-arrow-head" d={headPath} />
         <path ref={headTextureRef} className="intro-pencil-arrow-head-texture" d={headPath} />
         <g ref={pencilRef} className="intro-pencil-svg-tool">
-          <path d="M0 9 8.8 4.25 8.8 13.75 0 9Z" fill="#c6a57c" />
-          <path d="M0 9 3.25 7.25 3.25 10.75 0 9Z" fill="#514b44" />
-          <path d="M8.5 4.25h38.4c2.15 0 3.9 1.75 3.9 3.9v1.7c0 2.15-1.75 3.9-3.9 3.9H8.5V4.25Z" fill="#766d62" />
-          <path d="M10.4 5.65h35.3" stroke="#b9aea0" strokeOpacity=".62" strokeWidth="1" strokeLinecap="round" />
-          <path d="M46.9 4.25h4.1c1.7 0 3.1 1.4 3.1 3.1v3.3c0 1.7-1.4 3.1-3.1 3.1h-4.1V4.25Z" fill="#5d5750" />
-          <path d="M49.8 5.2v7.6" stroke="#8d857b" strokeWidth=".8" opacity=".7" />
+          {/* A compact, familiar yellow school pencil, based on the supplied
+              reference. The graphite point sits at x=0 so it stays locked to
+              the exact path position while the pencil rotates. */}
+          <path d="M0 9 10.2 3.1 10.2 14.9 0 9Z" fill="#e7a58e" stroke="#38342f" strokeWidth="1.05" strokeLinejoin="round" />
+          <path d="M0 9 3.8 6.8 3.8 11.2 0 9Z" fill="#282725" />
+          <path d="M9.7 3.1H45.2V14.9H9.7Z" fill="#ffd12c" stroke="#38342f" strokeWidth="1.05" />
+          <path d="M10.2 3.7H44.7V7.05H10.2Z" fill="#ffe166" opacity=".95" />
+          <path d="M10.2 11.15H44.7V14.35H10.2Z" fill="#efb819" opacity=".78" />
+          <path d="M10.6 4.1 44.4 4.1" stroke="#fff0a3" strokeWidth=".9" strokeLinecap="round" opacity=".74" />
+          <path d="M45.2 3.1H52.4V14.9H45.2Z" fill="#63d7d2" stroke="#38342f" strokeWidth="1.05" />
+          <path d="M46.8 3.4V14.6M50.5 3.4V14.6" stroke="#2f7778" strokeWidth=".65" opacity=".55" />
+          <path d="M52.4 3.1H58.4C60.5 3.1 62.2 4.8 62.2 6.9V11.1C62.2 13.2 60.5 14.9 58.4 14.9H52.4Z" fill="#ff6868" stroke="#38342f" strokeWidth="1.05" />
+          <path d="M54 4.15H58.2C59.55 4.15 60.65 5.25 60.65 6.6" stroke="#ff9b9b" strokeWidth=".95" strokeLinecap="round" opacity=".72" />
         </g>
       </svg>
     </div>
@@ -997,6 +1028,20 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
       return
     }
 
+    if (kind === "reveal") {
+      oscillator.type = "triangle"
+      oscillator.frequency.setValueAtTime(465, now)
+      oscillator.frequency.exponentialRampToValueAtTime(520, now + .034)
+      gain.gain.setValueAtTime(.0001, now)
+      gain.gain.exponentialRampToValueAtTime(.012, now + .004)
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .045)
+      oscillator.connect(gain)
+      gain.connect(context.destination)
+      oscillator.start(now)
+      oscillator.stop(now + .052)
+      return
+    }
+
     oscillator.type = "sine"
     oscillator.frequency.setValueAtTime(kind === "selection" ? 520 : kind === "back" ? 405 : 585, now)
     if (kind === "page" || kind === "action") {
@@ -1025,6 +1070,8 @@ function triggerIntroFeedback(kind: IntroFeedback) {
   try {
     const pattern = kind === "typing"
       ? 4
+      : kind === "reveal"
+        ? 7
       : kind === "selection"
         ? 16
         : kind === "action"

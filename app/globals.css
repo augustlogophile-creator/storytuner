@@ -16205,3 +16205,48 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     transition: opacity 120ms linear !important;
   }
 }
+
+/* August 26 final requested intro refinements. Keep these last in the cascade. */
+
+/* On the penultimate page, keep the magnifier as the first beat but bring the
+   editorial copy in sooner so the page never feels like it is waiting. */
+.intro-secret-art-entrance {
+  animation-delay: 300ms !important;
+}
+.intro-secret-eyebrow {
+  animation-delay: 760ms !important;
+}
+
+/* The supplied pencil reference is a bright, familiar school pencil. The
+   moving SVG now carries those colors, while the mark it leaves is neutral
+   graphite, thin and slightly doubled like a real pencil line on paper. */
+.intro-pencil-arrow-line,
+.intro-pencil-arrow-head {
+  stroke: #44423f !important;
+  stroke-width: 2.2 !important;
+  opacity: .9 !important;
+}
+.intro-pencil-arrow-texture,
+.intro-pencil-arrow-head-texture {
+  stroke: #6f6c67 !important;
+  stroke-width: .72 !important;
+  opacity: .42 !important;
+  transform: translate(.24px, -.18px) !important;
+}
+.intro-pencil-svg-tool {
+  filter: drop-shadow(0 1.2px 1.4px rgba(48, 44, 39, .14)) !important;
+}
+
+/* The source video has a pale baked-in background. `darken` is intentional:
+   every pale background pixel resolves to the page's exact paper color at all
+   stages of the opacity fade, so a brighter square can never flash around Parch. */
+.auth-parch.auth-parch-stable {
+  background: #f8f4ec !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  background: transparent !important;
+  mix-blend-mode: darken !important;
+  filter: none !important;
+  -webkit-mask-image: radial-gradient(ellipse 74% 90% at 50% 50%, #000 0%, #000 68%, rgba(0,0,0,.96) 78%, rgba(0,0,0,.6) 90%, transparent 100%) !important;
+  mask-image: radial-gradient(ellipse 74% 90% at 50% 50%, #000 0%, #000 68%, rgba(0,0,0,.96) 78%, rgba(0,0,0,.6) 90%, transparent 100%) !important;
+}

@@ -79,7 +79,7 @@ export const ParchReading = () => {
         preload="auto"
         aria-label="Parch reading a book"
         className="auth-parch-video"
-        style={{ background: "#F8F4EC", mixBlendMode: "multiply" }}
+        style={{ background: "transparent", mixBlendMode: "darken" }}
       />
     </div>
   )
