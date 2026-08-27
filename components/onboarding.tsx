@@ -618,8 +618,10 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
   const [drawing, setDrawing] = useState(!animate)
   const mainPathRef = useRef<SVGPathElement>(null)
   const mainTextureRef = useRef<SVGPathElement>(null)
-  const headPathRef = useRef<SVGPathElement>(null)
-  const headTextureRef = useRef<SVGPathElement>(null)
+  const headUpperPathRef = useRef<SVGPathElement>(null)
+  const headUpperTextureRef = useRef<SVGPathElement>(null)
+  const headLowerPathRef = useRef<SVGPathElement>(null)
+  const headLowerTextureRef = useRef<SVGPathElement>(null)
   const pencilRef = useRef<SVGGElement>(null)
   const frameRef = useRef<number | null>(null)
 
@@ -640,42 +642,55 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
   useEffect(() => {
     const mainPath = mainPathRef.current
     const mainTexture = mainTextureRef.current
-    const headPath = headPathRef.current
-    const headTexture = headTextureRef.current
+    const headUpperPath = headUpperPathRef.current
+    const headUpperTexture = headUpperTextureRef.current
+    const headLowerPath = headLowerPathRef.current
+    const headLowerTexture = headLowerTextureRef.current
     const pencil = pencilRef.current
-    if (!mainPath || !mainTexture || !headPath || !headTexture || !pencil) return
+    if (!mainPath || !mainTexture || !headUpperPath || !headUpperTexture || !headLowerPath || !headLowerTexture || !pencil) return
 
     const mainLength = mainPath.getTotalLength()
-    const headLength = headPath.getTotalLength()
+    const headUpperLength = headUpperPath.getTotalLength()
+    const headLowerLength = headLowerPath.getTotalLength()
     const mainPaths = [mainPath, mainTexture]
-    const headPaths = [headPath, headTexture]
+    const headUpperPaths = [headUpperPath, headUpperTexture]
+    const headLowerPaths = [headLowerPath, headLowerTexture]
 
     mainPaths.forEach((path) => {
       path.style.strokeDasharray = `${mainLength}`
     })
-    headPaths.forEach((path) => {
-      path.style.strokeDasharray = `${headLength}`
+    headUpperPaths.forEach((path) => {
+      path.style.strokeDasharray = `${headUpperLength}`
+    })
+    headLowerPaths.forEach((path) => {
+      path.style.strokeDasharray = `${headLowerLength}`
     })
 
     const setMainProgress = (progress: number) => {
       const offset = `${mainLength * (1 - progress)}`
       mainPaths.forEach((path) => { path.style.strokeDashoffset = offset })
     }
-    const setHeadProgress = (progress: number) => {
-      const offset = `${headLength * (1 - progress)}`
-      headPaths.forEach((path) => { path.style.strokeDashoffset = offset })
+    const setHeadUpperProgress = (progress: number) => {
+      const offset = `${headUpperLength * (1 - progress)}`
+      headUpperPaths.forEach((path) => { path.style.strokeDashoffset = offset })
+    }
+    const setHeadLowerProgress = (progress: number) => {
+      const offset = `${headLowerLength * (1 - progress)}`
+      headLowerPaths.forEach((path) => { path.style.strokeDashoffset = offset })
     }
 
     if (!animate) {
       setMainProgress(1)
-      setHeadProgress(1)
+      setHeadUpperProgress(1)
+      setHeadLowerProgress(1)
       pencil.style.opacity = "0"
       return
     }
 
     if (!drawing) {
       setMainProgress(0)
-      setHeadProgress(0)
+      setHeadUpperProgress(0)
+      setHeadLowerProgress(0)
       pencil.style.opacity = "0"
       return
     }
@@ -702,16 +717,20 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
         angle = lastAngle + delta
       }
       lastAngle = angle
-      pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) translate(-1 -9)`)
+      // The graphite tip is local (0, 9). Move that exact point onto the path,
+      // then scale the pencil down without introducing any tip offset.
+      pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) scale(.72) translate(0 -9)`)
       pencil.style.opacity = String(opacity)
     }
 
-    const mainEndPoint = pointOn(mainPath, mainLength)
-    const headStartPoint = pointOn(headPath, 0)
+    const arrowTip = pointOn(mainPath, mainLength)
+    const upperEndPoint = pointOn(headUpperPath, headUpperLength)
+    const lowerStartPoint = pointOn(headLowerPath, 0)
     const start = performance.now()
-    const duration = 3050
-    const mainEnd = 0.79
-    const liftEnd = 0.865
+    const duration = 3220
+    const mainEnd = 0.76
+    const upperEnd = 0.86
+    const returnToTipEnd = 0.905
 
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration)
@@ -719,22 +738,34 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
       if (t <= mainEnd) {
         const p = easeInOutCubic(t / mainEnd)
         setMainProgress(p)
-        setHeadProgress(0)
+        setHeadUpperProgress(0)
+        setHeadLowerProgress(0)
         const point = pointOn(mainPath, mainLength * p)
         placePencil(point.x, point.y, point.angle)
-      } else if (t <= liftEnd) {
+      } else if (t <= upperEnd) {
+        // Both arrowhead strokes begin at the exact tip of the main line.
+        const p = easeInOutCubic((t - mainEnd) / (upperEnd - mainEnd))
         setMainProgress(1)
-        setHeadProgress(0)
-        const p = easeInOutCubic((t - mainEnd) / (liftEnd - mainEnd))
-        const x = mainEndPoint.x + (headStartPoint.x - mainEndPoint.x) * p
-        const y = mainEndPoint.y + (headStartPoint.y - mainEndPoint.y) * p - Math.sin(Math.PI * p) * 3.2
-        const angle = mainEndPoint.angle + (headStartPoint.angle - mainEndPoint.angle) * p
-        placePencil(x, y, angle, .82 - Math.sin(Math.PI * p) * .42)
+        setHeadUpperProgress(p)
+        setHeadLowerProgress(0)
+        const point = pointOn(headUpperPath, headUpperLength * p)
+        placePencil(point.x, point.y, point.angle)
+      } else if (t <= returnToTipEnd) {
+        // Lift briefly and return to the same tip before drawing the second wing.
+        setMainProgress(1)
+        setHeadUpperProgress(1)
+        setHeadLowerProgress(0)
+        const p = easeInOutCubic((t - upperEnd) / (returnToTipEnd - upperEnd))
+        const x = upperEndPoint.x + (arrowTip.x - upperEndPoint.x) * p
+        const y = upperEndPoint.y + (arrowTip.y - upperEndPoint.y) * p - Math.sin(Math.PI * p) * 2.4
+        const angle = upperEndPoint.angle + (lowerStartPoint.angle - upperEndPoint.angle) * p
+        placePencil(x, y, angle, .78 - Math.sin(Math.PI * p) * .38)
       } else {
-        const p = easeInOutCubic((t - liftEnd) / (1 - liftEnd))
+        const p = easeInOutCubic((t - returnToTipEnd) / (1 - returnToTipEnd))
         setMainProgress(1)
-        setHeadProgress(p)
-        const point = pointOn(headPath, headLength * p)
+        setHeadUpperProgress(1)
+        setHeadLowerProgress(p)
+        const point = pointOn(headLowerPath, headLowerLength * p)
         placePencil(point.x, point.y, point.angle)
       }
 
@@ -742,7 +773,8 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
         frameRef.current = window.requestAnimationFrame(tick)
       } else {
         setMainProgress(1)
-        setHeadProgress(1)
+        setHeadUpperProgress(1)
+        setHeadLowerProgress(1)
         pencil.style.opacity = "0"
       }
     }
@@ -758,15 +790,18 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
   }, [drawing, animate])
 
   const mainPath = "M26 106 C52 97 70 77 90 69 C108 62 124 90 143 87 C168 83 187 48 216 27"
-  const headPath = "M188 31 C198 30 207 29 216 27 C214 37 211 46 207 54"
+  const headUpperPath = "M216 27 C207 29 198 30 188 31"
+  const headLowerPath = "M216 27 C214 37 211 46 207 54"
 
   return (
     <div className={`intro-pencil-moment${drawing ? " is-drawing" : ""}${animate ? "" : " is-static"}`} aria-hidden="true">
       <svg className="intro-pencil-arrow" viewBox="0 0 240 132" fill="none">
         <path ref={mainPathRef} className="intro-pencil-arrow-line" d={mainPath} />
         <path ref={mainTextureRef} className="intro-pencil-arrow-texture" d={mainPath} />
-        <path ref={headPathRef} className="intro-pencil-arrow-head" d={headPath} />
-        <path ref={headTextureRef} className="intro-pencil-arrow-head-texture" d={headPath} />
+        <path ref={headUpperPathRef} className="intro-pencil-arrow-head" d={headUpperPath} />
+        <path ref={headUpperTextureRef} className="intro-pencil-arrow-head-texture" d={headUpperPath} />
+        <path ref={headLowerPathRef} className="intro-pencil-arrow-head" d={headLowerPath} />
+        <path ref={headLowerTextureRef} className="intro-pencil-arrow-head-texture" d={headLowerPath} />
         <g ref={pencilRef} className="intro-pencil-svg-tool">
           {/* A compact, familiar yellow school pencil, based on the supplied
               reference. The graphite point sits at x=0 so it stays locked to
@@ -981,7 +1016,7 @@ function IntroBookSketch() {
         </g>
         <path className="intro-book-highlight" d="M69 61c22-5 43-2 62 8" stroke="#fffaf0" strokeWidth="1.35" strokeLinecap="round" opacity=".7" />
         <path className="intro-book-highlight" d="M211 61c-22-5-43-2-62 8" stroke="#fffaf0" strokeWidth="1.35" strokeLinecap="round" opacity=".7" />
-        <path className="intro-book-accent" d="M128 134c4.5 1.8 8.5 4.5 12 7.3 3.5-2.8 7.5-5.5 12-7.3" stroke="#a16c48" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <path className="intro-book-accent" d="M128 134c4.5 1.8 8.5 4.5 12 7.3 3.5-2.8 7.5-5.5 12-7.3" stroke="#5f84ad" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
       </g>
     </svg>
   )
@@ -1002,10 +1037,9 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
     const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioContextConstructor) return
 
-    // Browsers will not unlock Web Audio before a real user gesture. Typing
-    // feedback therefore waits until one of the user's first taps creates the
-    // context, while native/browser vibration can still be attempted.
-    if (kind === "typing" && !introAudioContext) return
+    // Route opening-page typing through the exact same Web Audio path as the
+    // later intro pages. Browsers that permit it can now play the first-page
+    // ticks immediately, while haptics are still attempted independently.
     if (!introAudioContext) introAudioContext = new AudioContextConstructor()
     const context = introAudioContext
     if (context.state === "suspended") void context.resume()

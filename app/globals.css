@@ -16250,3 +16250,40 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   -webkit-mask-image: radial-gradient(ellipse 74% 90% at 50% 50%, #000 0%, #000 68%, rgba(0,0,0,.96) 78%, rgba(0,0,0,.6) 90%, transparent 100%) !important;
   mask-image: radial-gradient(ellipse 74% 90% at 50% 50%, #000 0%, #000 68%, rgba(0,0,0,.96) 78%, rgba(0,0,0,.6) 90%, transparent 100%) !important;
 }
+
+/* August 26 round: unify the intro accent, keep the pencil exactly on its mark,
+   and prevent the auth video's baked-in pale canvas from flashing on load. */
+.intro-flow-canvas {
+  --intro-rust: var(--intro-blue);
+}
+.intro-typewriter-word.is-accent .intro-typewriter-character {
+  color: var(--intro-blue-dark) !important;
+}
+
+/* The pencil itself is scaled in SVG around its graphite point. Keep CSS from
+   adding any extra transform that could pull the point away from the path. */
+.intro-pencil-svg-tool {
+  transform-origin: 0 9px !important;
+  transform-box: fill-box;
+}
+
+/* Never crossfade a pale rectangular video frame over the auth paper. Keep the
+   reserved slot on the exact page color, then reveal the first decoded frame
+   in one step with darken blending so its light background resolves to paper. */
+.auth-parch.auth-parch-stable {
+  background: transparent !important;
+  isolation: auto !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  background: transparent !important;
+  mix-blend-mode: darken !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: none !important;
+  will-change: auto !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-video {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: none !important;
+}
