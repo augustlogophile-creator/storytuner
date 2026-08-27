@@ -50,7 +50,7 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
   const transitionTimers = useRef<Array<ReturnType<typeof setTimeout>>>([])
   const touchStart = useRef<{ x: number; y: number } | null>(null)
   const pageRef = useRef(normalizedInitialPage)
-  const playedPages = useRef<Set<number>>(new Set())
+  const playedPages = useRef<Set<number>>(new Set(normalizedInitialPage > 0 ? [normalizedInitialPage] : []))
 
   useEffect(() => {
     setPreferences(readOnboardingPreferences())
@@ -212,8 +212,17 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
     if (!animate) {
       setTitleDone(true)
       setSubtitleDone(true)
+      return
     }
-  }, [animate])
+
+    if (!titleDone) {
+      setSubtitleDone(false)
+      return
+    }
+
+    const timer = window.setTimeout(() => setSubtitleDone(true), 620)
+    return () => window.clearTimeout(timer)
+  }, [animate, titleDone])
 
   return (
     <section className={`intro-flow-page intro-welcome-page${animate ? "" : " is-static"}`}>
@@ -233,16 +242,11 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
           animate={animate}
           onComplete={() => setTitleDone(true)}
         />
-        <TypewriterText
-          tag="p"
-          className="intro-welcome-subtitle"
-          text="Learn to tell stories people actually want to hear."
-          delay={210}
-          speed={60}
-          animate={animate}
-          start={!animate || titleDone}
-          onComplete={() => setSubtitleDone(true)}
-        />
+        <p
+          className={`intro-welcome-subtitle intro-welcome-subtitle-reveal${titleDone ? " is-visible" : ""}${animate ? "" : " is-static"}`}
+        >
+          Learn to tell stories people actually want to hear.
+        </p>
       </div>
 
       <div className={`intro-welcome-action intro-after-typing${subtitleDone ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
@@ -652,21 +656,26 @@ function TypewriterText({
 
   let characterIndex = 0
   const tokens = text.split(/(\s+)/)
-  const caret = (key: string) => {
+  const caret = (key: string, atStart = false) => {
     if (!animate || !start) return null
-    return <span key={key} className={`intro-typewriter-caret${done ? " is-done" : ""}`} />
+    return (
+      <span
+        key={key}
+        className={`intro-typewriter-caret${atStart ? " is-start" : ""}${done ? " is-done" : ""}`}
+      />
+    )
   }
 
   return (
     <Tag className={`intro-typewriter ${className}`.trim()} aria-label={text}>
       <span className="intro-typewriter-stable" aria-hidden="true">
-        {visibleCharacters === 0 ? caret("caret-start") : null}
+        {visibleCharacters === 0 ? caret("caret-start", true) : null}
         {tokens.map((token, tokenIndex) => {
           if (/^\s+$/.test(token)) {
             return Array.from(token).map((character, index) => {
               const currentIndex = characterIndex++
               return (
-                <span key={`space-${tokenIndex}-${index}`}>
+                <span className="intro-typewriter-slot" key={`space-${tokenIndex}-${index}`}>
                   <span
                     className="intro-typewriter-character"
                     style={{ visibility: currentIndex < visibleCharacters ? "visible" : "hidden" }}
@@ -684,7 +693,7 @@ function TypewriterText({
               {Array.from(token).map((character, index) => {
                 const currentIndex = characterIndex++
                 return (
-                  <span key={`${tokenIndex}-${index}`}>
+                  <span className="intro-typewriter-slot" key={`${tokenIndex}-${index}`}>
                     <span
                       className="intro-typewriter-character"
                       style={{ visibility: currentIndex < visibleCharacters ? "visible" : "hidden" }}

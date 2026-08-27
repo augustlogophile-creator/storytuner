@@ -45,9 +45,18 @@ export const ParchReading = () => {
         height: PARCH_HEIGHT,
         minHeight: PARCH_HEIGHT,
         maxHeight: PARCH_HEIGHT,
+        background: "transparent",
       }}
     >
-      <span className="auth-parch-loading-glow" aria-hidden="true" />
+      <img
+        src="/parch-reading-poster.jpg"
+        width={752}
+        height={560}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="auth-parch-poster"
+      />
       <video
         ref={videoRef}
         src="/parch-reading.mp4"

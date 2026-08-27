@@ -15640,3 +15640,142 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     animation: none !important;
   }
 }
+
+/* August 26 late intro polish: no blurred welcome treatment, stable typewriter
+   geometry, calmer secret-page staging, and a seamless auth mascot handoff. */
+
+/* Keep the opening wash soft through color only. Nothing on the first page is
+   blurred or backdrop-filtered. */
+.intro-welcome-page,
+.intro-welcome-wash,
+.intro-welcome-main,
+.intro-welcome-art,
+.intro-book-sketch {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.intro-welcome-wash {
+  filter: none !important;
+}
+
+/* The second welcome line is a quiet reveal after the headline finishes, not a
+   second typewriter. */
+.intro-welcome-subtitle-reveal {
+  opacity: 0;
+  transform: translate3d(0, 7px, 0);
+  transition:
+    opacity 520ms cubic-bezier(.2,.72,.2,1),
+    transform 520ms cubic-bezier(.2,.72,.2,1);
+}
+.intro-welcome-subtitle-reveal.is-visible,
+.intro-welcome-subtitle-reveal.is-static {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.intro-flow-page.is-static .intro-welcome-subtitle-reveal {
+  transition: none !important;
+}
+
+/* Every glyph reserves its final position before typing begins. The caret is
+   absolutely overlaid on the active glyph, so it can never change a word's
+   width or push a word onto another line midway through typing. */
+.intro-typewriter-stable {
+  position: relative;
+  display: block;
+  white-space: normal;
+}
+.intro-typewriter-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.intro-typewriter-slot {
+  position: relative;
+  display: inline;
+}
+.intro-typewriter-caret {
+  position: absolute !important;
+  z-index: 2;
+  left: calc(100% + .045em);
+  top: .08em;
+  width: 1.35px !important;
+  height: .86em;
+  margin: 0 !important;
+  pointer-events: none;
+}
+.intro-typewriter-caret.is-start {
+  left: 0;
+  top: .08em;
+}
+
+/* Let the three "what to..." beats breathe. They appear distinctly and more
+   slowly than quiz choices or routine supporting copy. */
+.intro-secret-copy-sequence.intro-after-typing.is-visible .intro-follow-reveal {
+  animation-duration: 650ms !important;
+  animation-timing-function: cubic-bezier(.18,.74,.22,1) !important;
+  animation-delay: calc(280ms + var(--intro-follow-order, 0) * 245ms) !important;
+}
+.intro-secret-copy-sequence .intro-secret-copy-lead {
+  margin-bottom: .56rem;
+}
+.intro-secret-points {
+  gap: .42rem;
+}
+
+/* Authentication mascot: the poster is available immediately, then the video
+   crossfades into the exact same fixed box. Darken blending lets the warm paper
+   show through the source's pale background instead of exposing a white video
+   rectangle. */
+.auth-stage-paper {
+  display: none !important;
+}
+.auth-parch.auth-parch-stable {
+  background: transparent !important;
+  isolation: auto !important;
+  overflow: visible !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-poster,
+.auth-parch.auth-parch-stable .auth-parch-video {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 98.297872px !important;
+  min-height: 98.297872px !important;
+  max-height: 98.297872px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  mix-blend-mode: darken !important;
+  transform: none !important;
+  scale: 1 !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-poster {
+  z-index: 1 !important;
+  opacity: 1 !important;
+  transition: opacity 260ms ease !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  z-index: 2 !important;
+  opacity: 0 !important;
+  transition: opacity 300ms cubic-bezier(.2,.72,.2,1) !important;
+  will-change: opacity;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-poster {
+  opacity: 0 !important;
+}
+.auth-parch.auth-parch-stable.is-ready .auth-parch-video {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-welcome-subtitle-reveal,
+  .auth-parch.auth-parch-stable .auth-parch-poster,
+  .auth-parch.auth-parch-stable .auth-parch-video {
+    transition-duration: .01ms !important;
+  }
+}
