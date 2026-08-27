@@ -64,7 +64,7 @@ export const ParchReading = () => {
         height: PARCH_HEIGHT,
         minHeight: PARCH_HEIGHT,
         maxHeight: PARCH_HEIGHT,
-        background: "transparent",
+        background: "#F8F4EC",
       }}
     >
       <video
@@ -79,6 +79,7 @@ export const ParchReading = () => {
         preload="auto"
         aria-label="Parch reading a book"
         className="auth-parch-video"
+        style={{ background: "#F8F4EC", mixBlendMode: "multiply" }}
       />
     </div>
   )

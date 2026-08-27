@@ -16029,3 +16029,128 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
     display: none !important;
   }
 }
+
+/* August 26 late intro timing and interaction polish. Keep this last so the
+   sequence is deterministic across the older onboarding experiments above. */
+
+/* Center the opening composition a little lower without changing its compact,
+   editorial proportions. */
+.intro-welcome-main {
+  margin-top: clamp(5.2rem, 12.5svh, 7rem) !important;
+}
+
+/* Secret page sequence: the magnifier is the first authored beat, appearing
+   after a short pause. "Here's the thing" follows, then the typed statement. */
+.intro-secret-art-entrance {
+  opacity: 0;
+  transform: translate3d(0, 5px, 0);
+  animation: intro-secret-art-first 520ms cubic-bezier(.2,.72,.2,1) 350ms forwards;
+}
+.intro-secret-art-entrance .intro-secret-magnifier {
+  opacity: .88 !important;
+  transform: none !important;
+  animation: none !important;
+}
+.intro-secret-art-entrance .intro-secret-art-wash,
+.intro-secret-art-entrance .intro-secret-shadow {
+  animation-delay: 0ms !important;
+}
+.intro-secret-eyebrow {
+  opacity: 0;
+  transform: translate3d(0, 5px, 0);
+  animation: intro-secret-copy-beat 420ms cubic-bezier(.2,.72,.2,1) 1000ms forwards;
+}
+@keyframes intro-secret-art-first {
+  from { opacity: 0; transform: translate3d(0, 5px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes intro-secret-copy-beat {
+  from { opacity: 0; transform: translate3d(0, 5px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.intro-flow-page.is-static .intro-secret-art-entrance,
+.intro-flow-page.is-static .intro-secret-eyebrow {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Once the typed sentence finishes, the lead and each of its three points
+   arrive 0.8 seconds apart. The continue action waits until the final beat. */
+.intro-secret-copy-sequence.intro-after-typing.is-visible .intro-follow-reveal {
+  animation-duration: 520ms !important;
+  animation-timing-function: cubic-bezier(.18,.74,.22,1) !important;
+  animation-delay: calc(800ms + var(--intro-follow-order, 0) * 800ms) !important;
+}
+.intro-secret-action.intro-after-typing.is-visible .intro-follow-reveal {
+  animation-delay: 4.05s !important;
+}
+.intro-secret-copy-sequence.intro-after-typing.is-static .intro-follow-reveal,
+.intro-secret-action.intro-after-typing.is-static .intro-follow-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Pencil arrow: JS drives both the line reveal and the pencil position from
+   the exact same path progress. There is no independent CSS travel animation,
+   so the pencil cannot get ahead of or lag behind the line it is drawing. */
+.intro-pencil-arrow-shadow {
+  display: none !important;
+}
+.intro-pencil-moment.is-drawing .intro-pencil-arrow-line,
+.intro-pencil-moment.is-drawing .intro-pencil-arrow-head,
+.intro-pencil-moment.is-drawing .intro-pencil-tool,
+.intro-pencil-moment.is-drawing .intro-pencil-svg-tool {
+  animation: none !important;
+}
+.intro-pencil-arrow-line,
+.intro-pencil-arrow-head {
+  stroke: #2f2b26 !important;
+  stroke-width: 3.15 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  filter: none !important;
+}
+.intro-pencil-svg-tool {
+  opacity: 0;
+  transform-origin: 5px 9px;
+  transform-box: fill-box;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 1.5px 1.5px rgba(47,41,34,.15));
+}
+.intro-pencil-moment.is-static .intro-pencil-arrow-line,
+.intro-pencil-moment.is-static .intro-pencil-arrow-head {
+  stroke-dashoffset: 0 !important;
+}
+.intro-pencil-moment.is-static .intro-pencil-svg-tool {
+  display: none !important;
+}
+
+/* The source MP4 is intentionally non-alpha for iOS Safari. Match its backing
+   surface to the new Tellwise paper and multiply the video into that paper so
+   a near-white encoded background does not read as a separate white square. */
+.auth-stage,
+.auth-parch.auth-parch-stable {
+  background: #f8f4ec !important;
+}
+.auth-parch.auth-parch-stable .auth-parch-video {
+  background: #f8f4ec !important;
+  mix-blend-mode: multiply !important;
+  filter: saturate(.985) contrast(1.012) brightness(.995) !important;
+}
+
+@media (max-height: 740px) {
+  .intro-welcome-main {
+    margin-top: 3.55rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-secret-art-entrance,
+  .intro-secret-eyebrow {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

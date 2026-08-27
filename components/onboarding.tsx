@@ -27,14 +27,15 @@ const goalDetails: Array<{ value: StoryGoalChoice; title: string; detail: string
   { value: "speaking", title: "Interviews & speaking", detail: "Answer clearly and confidently." },
   { value: "writing", title: "Writing", detail: "Turn experiences into stronger stories." },
   { value: "confidence", title: "Confidence", detail: "Feel better when people are listening." },
+  { value: "other", title: "Other", detail: "Something else you want to work on." },
 ]
 
 type StoryBlockerChoice = Exclude<StoryBlocker, "">
 type IntroDirection = "next" | "back"
-type IntroFeedback = "selection" | "action" | "page" | "back" | "typing" | "pencil"
+type IntroFeedback = "selection" | "action" | "page" | "back" | "typing"
 type TypewriterTag = "h1" | "p" | "span"
 
-const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "confident"]
+const blockers: StoryBlockerChoice[] = ["ramble", "start", "boring", "details", "nervous", "other"]
 const LAST_PAGE = 4
 const PAGE_EXIT_MS = 140
 const PAGE_ENTER_MS = 410
@@ -393,7 +394,7 @@ function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: (
   return (
     <IntroLayout page={3} onBack={onBack} animate={animate}>
       <div className="intro-secret-reveal">
-        <div className="intro-secret-art intro-reveal" style={introOrder(1)} aria-hidden="true">
+        <div className="intro-secret-art intro-secret-art-entrance" aria-hidden="true">
           <span className="intro-secret-art-wash" />
           <img
             src="/magnifying-glass-sketch.png"
@@ -403,13 +404,13 @@ function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: (
           />
           <span className="intro-secret-shadow" />
         </div>
-        <p className="intro-eyebrow intro-reveal" style={introOrder(3)}>Here’s the secret.</p>
+        <p className="intro-eyebrow intro-secret-eyebrow">Here’s the thing.</p>
         <TypewriterText
           tag="h1"
           className="intro-secret-title"
           text="Great stories aren’t about having an extraordinary life."
           accentText="aren’t"
-          delay={560}
+          delay={2200}
           speed={56}
           animate={animate}
           onComplete={() => setTyped(true)}
@@ -425,7 +426,7 @@ function SecretPage({ onNext, onBack, animate }: { onNext: () => void; onBack: (
         </div>
       </div>
 
-      <div className={`intro-action-slot intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
+      <div className={`intro-action-slot intro-secret-action intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
         <div className="intro-follow-reveal" style={introFollowOrder(5)}>
           <IntroAction onClick={onNext}>Continue</IntroAction>
         </div>
@@ -591,6 +592,10 @@ function IntroAction({
 
 function PencilArrowMoment({ active, animate }: { active: boolean; animate: boolean }) {
   const [drawing, setDrawing] = useState(!animate)
+  const mainPathRef = useRef<SVGPathElement>(null)
+  const headPathRef = useRef<SVGPathElement>(null)
+  const pencilRef = useRef<SVGGElement>(null)
+  const frameRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (!animate) {
@@ -607,39 +612,126 @@ function PencilArrowMoment({ active, animate }: { active: boolean; animate: bool
   }, [active, animate])
 
   useEffect(() => {
-    if (!drawing || !animate) return
-    triggerIntroFeedback("pencil")
+    const mainPath = mainPathRef.current
+    const headPath = headPathRef.current
+    const pencil = pencilRef.current
+    if (!mainPath || !headPath || !pencil) return
 
-    const ticks = [260, 610, 980, 1380, 1760, 2140].map((delay) =>
-      window.setTimeout(() => {
-        try {
-          window.dispatchEvent(new CustomEvent("tellwise:haptic", { detail: { kind: "typing" } }))
-          window.navigator.vibrate?.(3)
-        } catch {}
-      }, delay),
-    )
+    const mainLength = mainPath.getTotalLength()
+    const headLength = headPath.getTotalLength()
 
-    return () => ticks.forEach((timer) => window.clearTimeout(timer))
+    mainPath.style.strokeDasharray = `${mainLength}`
+    headPath.style.strokeDasharray = `${headLength}`
+
+    if (!animate) {
+      mainPath.style.strokeDashoffset = "0"
+      headPath.style.strokeDashoffset = "0"
+      pencil.style.opacity = "0"
+      return
+    }
+
+    if (!drawing) {
+      mainPath.style.strokeDashoffset = `${mainLength}`
+      headPath.style.strokeDashoffset = `${headLength}`
+      pencil.style.opacity = "0"
+      return
+    }
+
+    const start = performance.now()
+    const duration = 2700
+    const mainEnd = 0.76
+    const liftEnd = 0.84
+
+    const pointOn = (path: SVGPathElement, distance: number) => {
+      const bounded = Math.max(0, Math.min(path.getTotalLength(), distance))
+      const point = path.getPointAtLength(bounded)
+      const ahead = path.getPointAtLength(Math.min(path.getTotalLength(), bounded + 1.4))
+      return {
+        x: point.x,
+        y: point.y,
+        angle: Math.atan2(ahead.y - point.y, ahead.x - point.x) * 180 / Math.PI,
+      }
+    }
+
+    const placePencil = (x: number, y: number, angle: number, opacity = 1) => {
+      pencil.setAttribute("transform", `translate(${x} ${y}) rotate(${angle}) translate(-5 -9)`)
+      pencil.style.opacity = String(opacity)
+    }
+
+    const mainEndPoint = pointOn(mainPath, mainLength)
+    const headStartPoint = pointOn(headPath, 0)
+
+    try { window.navigator.vibrate?.(4) } catch {}
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration)
+
+      if (t <= mainEnd) {
+        const p = easeInOutCubic(t / mainEnd)
+        mainPath.style.strokeDashoffset = `${mainLength * (1 - p)}`
+        headPath.style.strokeDashoffset = `${headLength}`
+        const point = pointOn(mainPath, mainLength * p)
+        placePencil(point.x, point.y, point.angle)
+      } else if (t <= liftEnd) {
+        mainPath.style.strokeDashoffset = "0"
+        headPath.style.strokeDashoffset = `${headLength}`
+        const p = (t - mainEnd) / (liftEnd - mainEnd)
+        const eased = easeInOutCubic(p)
+        placePencil(
+          mainEndPoint.x + (headStartPoint.x - mainEndPoint.x) * eased,
+          mainEndPoint.y + (headStartPoint.y - mainEndPoint.y) * eased,
+          -8,
+          Math.max(.28, 1 - Math.sin(Math.PI * p) * .72),
+        )
+      } else {
+        const p = easeInOutCubic((t - liftEnd) / (1 - liftEnd))
+        mainPath.style.strokeDashoffset = "0"
+        headPath.style.strokeDashoffset = `${headLength * (1 - p)}`
+        const point = pointOn(headPath, headLength * p)
+        placePencil(point.x, point.y, point.angle)
+      }
+
+      if (t < 1) {
+        frameRef.current = window.requestAnimationFrame(tick)
+      } else {
+        pencil.style.opacity = "0"
+        mainPath.style.strokeDashoffset = "0"
+        headPath.style.strokeDashoffset = "0"
+        try { window.navigator.vibrate?.(3) } catch {}
+      }
+    }
+
+    frameRef.current = window.requestAnimationFrame(tick)
+
+    return () => {
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current)
+        frameRef.current = null
+      }
+    }
   }, [drawing, animate])
 
   return (
     <div className={`intro-pencil-moment${drawing ? " is-drawing" : ""}${animate ? "" : " is-static"}`} aria-hidden="true">
       <svg className="intro-pencil-arrow" viewBox="0 0 240 132" fill="none">
         <path className="intro-pencil-arrow-shadow" d="M24 108 L88 68 L137 94 L216 27" />
-        <path className="intro-pencil-arrow-line" pathLength="1" d="M24 108 L88 68 L137 94 L216 27" />
-        <path className="intro-pencil-arrow-head" pathLength="1" d="M187 31 L216 27 L208 55" />
+        <path ref={mainPathRef} className="intro-pencil-arrow-line" d="M24 108 L88 68 L137 94 L216 27" />
+        <path ref={headPathRef} className="intro-pencil-arrow-head" d="M187 31 L216 27 L208 55" />
+        <g ref={pencilRef} className="intro-pencil-svg-tool">
+          <path d="M0 9 10.5 2.6h39.2c2.3 0 4.1 1.8 4.1 4.1v4.6c0 2.3-1.8 4.1-4.1 4.1H10.5L0 9Z" fill="#28241f" />
+          <path d="m0 9 10.5-6.4v12.8L0 9Z" fill="#171512" />
+          <path d="M12.2 4.7h33" stroke="#fffaf1" strokeOpacity=".24" strokeWidth="1.15" strokeLinecap="round" />
+          <path d="M49.7 2.6h3.4c2 0 3.6 1.6 3.6 3.6v5.6c0 2-1.6 3.6-3.6 3.6h-3.4V2.6Z" fill="#4b4640" />
+        </g>
       </svg>
-      <span className="intro-pencil-tool">
-        <svg viewBox="0 0 64 18" fill="none">
-          <path d="M7 9.2 16.5 3.3h37.2c2.4 0 4.3 1.9 4.3 4.3v2.8c0 2.4-1.9 4.3-4.3 4.3H16.5L7 9.2Z" fill="#26231f" />
-          <path d="m7 9.2 9.5-5.9v11.4L7 9.2Z" fill="#171512" />
-          <path d="m4 9.2 4.7-2.8v5.6L4 9.2Z" fill="#24211d" />
-          <path d="M18.5 5.2h31.2" stroke="#fffaf1" strokeOpacity=".24" strokeWidth="1.15" strokeLinecap="round" />
-          <path d="M53.7 3.3h3.2c1.7 0 3.1 1.4 3.1 3.1v5.2c0 1.7-1.4 3.1-3.1 3.1h-3.2V3.3Z" fill="#49443d" />
-        </svg>
-      </span>
     </div>
   )
+}
+
+function easeInOutCubic(value: number) {
+  return value < .5
+    ? 4 * value * value * value
+    : 1 - Math.pow(-2 * value + 2, 3) / 2
 }
 
 function TypewriterText({
@@ -865,34 +957,6 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
 
     const now = context.currentTime
 
-    if (kind === "pencil") {
-      const duration = 2.45
-      const frameCount = Math.max(1, Math.floor(context.sampleRate * duration))
-      const buffer = context.createBuffer(1, frameCount, context.sampleRate)
-      const data = buffer.getChannelData(0)
-      for (let i = 0; i < frameCount; i += 1) {
-        const flutter = .42 + .58 * Math.abs(Math.sin(i / 118))
-        const fade = Math.min(1, i / 900) * Math.min(1, (frameCount - i) / 1600)
-        data[i] = (Math.random() * 2 - 1) * flutter * fade
-      }
-      const source = context.createBufferSource()
-      const filter = context.createBiquadFilter()
-      const gain = context.createGain()
-      filter.type = "bandpass"
-      filter.frequency.setValueAtTime(1450, now)
-      filter.Q.setValueAtTime(.72, now)
-      gain.gain.setValueAtTime(.0001, now)
-      gain.gain.exponentialRampToValueAtTime(.012, now + .05)
-      gain.gain.setValueAtTime(.009, now + 2.08)
-      gain.gain.exponentialRampToValueAtTime(.0001, now + duration)
-      source.connect(filter)
-      filter.connect(gain)
-      gain.connect(context.destination)
-      source.buffer = buffer
-      source.start(now)
-      return
-    }
-
     const gain = context.createGain()
     const oscillator = context.createOscillator()
 
@@ -937,15 +1001,13 @@ function triggerIntroFeedback(kind: IntroFeedback) {
   try {
     const pattern = kind === "typing"
       ? 4
-      : kind === "pencil"
-        ? [4, 120, 4, 140, 4, 120, 4]
-        : kind === "selection"
-          ? 16
-          : kind === "action"
-            ? [18, 22, 12]
-            : kind === "back"
-              ? 12
-              : [13, 18, 11]
+      : kind === "selection"
+        ? 16
+        : kind === "action"
+          ? [18, 22, 12]
+          : kind === "back"
+            ? 12
+            : [13, 18, 11]
     window.navigator.vibrate(pattern)
   } catch {}
 }

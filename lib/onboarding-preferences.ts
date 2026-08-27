@@ -1,8 +1,8 @@
 export const ONBOARDING_PREFERENCES_KEY = "storytuner-onboarding-preferences-v1"
 
-export type StoryGoal = "everyday" | "speaking" | "writing" | "confidence" | "everything" | ""
+export type StoryGoal = "everyday" | "speaking" | "writing" | "confidence" | "other" | "everything" | ""
 export type StoryGoalChoice = Exclude<StoryGoal, "" | "everything">
-export type StoryBlocker = "ramble" | "start" | "boring" | "details" | "nervous" | "confident" | ""
+export type StoryBlocker = "ramble" | "start" | "boring" | "details" | "nervous" | "confident" | "other" | ""
 
 export type OnboardingPreferences = {
   // `goal` stays for backwards compatibility with the rest of StoryTuner.
@@ -18,6 +18,7 @@ export const goalLabels: Record<Exclude<StoryGoal, "">, string> = {
   speaking: "Interviews & speaking",
   writing: "Writing",
   confidence: "Confidence",
+  other: "Other",
   everything: "Everything",
 }
 
@@ -28,6 +29,7 @@ export const blockerLabels: Record<Exclude<StoryBlocker, "">, string> = {
   details: "I leave out important details",
   nervous: "I get nervous",
   confident: "I’m already pretty confident",
+  other: "Other",
 }
 
 export function readOnboardingPreferences(): OnboardingPreferences {
@@ -86,17 +88,17 @@ export function writeOnboardingPreferences(value: OnboardingPreferences) {
 }
 
 function isGoal(value: unknown): value is StoryGoal {
-  return ["", "everyday", "speaking", "writing", "confidence", "everything"].includes(String(value))
+  return ["", "everyday", "speaking", "writing", "confidence", "other", "everything"].includes(String(value))
 }
 
 function isGoalChoice(value: unknown): value is StoryGoalChoice {
-  return ["everyday", "speaking", "writing", "confidence"].includes(String(value))
+  return ["everyday", "speaking", "writing", "confidence", "other"].includes(String(value))
 }
 
 function isBlocker(value: unknown): value is StoryBlocker {
-  return ["", "ramble", "start", "boring", "details", "nervous", "confident"].includes(String(value))
+  return ["", "ramble", "start", "boring", "details", "nervous", "confident", "other"].includes(String(value))
 }
 
 function isBlockerChoice(value: unknown): value is Exclude<StoryBlocker, ""> {
-  return ["ramble", "start", "boring", "details", "nervous", "confident"].includes(String(value))
+  return ["ramble", "start", "boring", "details", "nervous", "confident", "other"].includes(String(value))
 }
