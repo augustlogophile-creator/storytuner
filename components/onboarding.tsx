@@ -13,6 +13,7 @@ import {
 import { preload } from "react-dom"
 import { Check, ChevronLeft } from "lucide-react"
 import { TellwisePressButton } from "@/components/ui/tellwise-press-button"
+import { isIntroAudioUnlocked, playIntroFeedbackTone, unlockIntroAudio } from "@/lib/intro-audio"
 import {
   blockerLabels,
   readOnboardingPreferences,
@@ -219,10 +220,44 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 }
 
 function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean }) {
+  const [audioReady, setAudioReady] = useState(!animate)
+  const [needsAudioGesture, setNeedsAudioGesture] = useState(false)
   const [titleStarted, setTitleStarted] = useState(!animate)
   const [titleDone, setTitleDone] = useState(!animate)
   const [subtitleVisible, setSubtitleVisible] = useState(!animate)
   const [sequenceDone, setSequenceDone] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) {
+      setAudioReady(true)
+      setNeedsAudioGesture(false)
+      return
+    }
+
+    let cancelled = false
+    if (isIntroAudioUnlocked()) {
+      setAudioReady(true)
+      setNeedsAudioGesture(false)
+      return
+    }
+
+    const hasPriorGesture = typeof navigator !== "undefined" && Boolean(navigator.userActivation?.hasBeenActive)
+    if (!hasPriorGesture) {
+      setAudioReady(false)
+      setNeedsAudioGesture(true)
+      return
+    }
+
+    void unlockIntroAudio().then((ready) => {
+      if (cancelled) return
+      setAudioReady(ready)
+      setNeedsAudioGesture(!ready)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [animate])
 
   useEffect(() => {
     if (!animate) {
@@ -237,9 +272,11 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
     setTitleDone(false)
     setSubtitleVisible(false)
     setSequenceDone(false)
+    if (!audioReady) return
+
     const timer = window.setTimeout(() => setTitleStarted(true), 820)
     return () => window.clearTimeout(timer)
-  }, [animate])
+  }, [animate, audioReady])
 
   useEffect(() => {
     if (!animate || !titleDone) return
@@ -250,6 +287,13 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
       window.clearTimeout(doneTimer)
     }
   }, [animate, titleDone])
+
+  async function beginOpeningWithSound() {
+    const ready = await unlockIntroAudio()
+    if (!ready) return
+    setNeedsAudioGesture(false)
+    setAudioReady(true)
+  }
 
   return (
     <section className={`intro-flow-page intro-welcome-page${animate ? "" : " is-static"}`}>
@@ -277,7 +321,11 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
       </div>
 
       <div className="intro-welcome-action">
-        <IntroAction onClick={onNext} disabled={!sequenceDone}>Let’s start</IntroAction>
+        {needsAudioGesture ? (
+          <IntroAction onClick={() => void beginOpeningWithSound()}>Tap to begin</IntroAction>
+        ) : (
+          <IntroAction onClick={onNext} disabled={!sequenceDone}>Let’s start</IntroAction>
+        )}
       </div>
     </section>
   )
@@ -813,82 +861,6 @@ function introOrder(order: number): CSSProperties {
 
 function introFollowOrder(order: number): CSSProperties {
   return { "--intro-follow-order": order } as CSSProperties
-}
-
-let introAudioContext: AudioContext | null = null
-
-function playIntroFeedbackTone(kind: IntroFeedback) {
-  try {
-    const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!AudioContextConstructor) return
-
-    // Every intro typewriter, including the opening "Welcome to Tellwise."
-    // line, goes through this exact same audio path. We still discard a tick if
-    // a browser delays audio unlock until a later gesture, so old ticks never
-    // pile up on the first button press.
-    const requestedAt = performance.now()
-    if (!introAudioContext) introAudioContext = new AudioContextConstructor()
-    const context = introAudioContext
-
-    const play = () => {
-      if (context.state !== "running") return
-      const now = context.currentTime
-      const gain = context.createGain()
-      const oscillator = context.createOscillator()
-
-      if (kind === "typing") {
-        oscillator.type = "triangle"
-        oscillator.frequency.setValueAtTime(690, now)
-        gain.gain.setValueAtTime(.0001, now)
-        gain.gain.exponentialRampToValueAtTime(.0065, now + .003)
-        gain.gain.exponentialRampToValueAtTime(.0001, now + .018)
-        oscillator.connect(gain)
-        gain.connect(context.destination)
-        oscillator.start(now)
-        oscillator.stop(now + .022)
-        return
-      }
-
-      if (kind === "reveal") {
-        oscillator.type = "triangle"
-        oscillator.frequency.setValueAtTime(465, now)
-        oscillator.frequency.exponentialRampToValueAtTime(520, now + .034)
-        gain.gain.setValueAtTime(.0001, now)
-        gain.gain.exponentialRampToValueAtTime(.012, now + .004)
-        gain.gain.exponentialRampToValueAtTime(.0001, now + .045)
-        oscillator.connect(gain)
-        gain.connect(context.destination)
-        oscillator.start(now)
-        oscillator.stop(now + .052)
-        return
-      }
-
-      oscillator.type = "sine"
-      oscillator.frequency.setValueAtTime(kind === "selection" ? 520 : kind === "back" ? 405 : 585, now)
-      if (kind === "page" || kind === "action") {
-        oscillator.frequency.exponentialRampToValueAtTime(kind === "page" ? 720 : 790, now + .052)
-      }
-      gain.gain.setValueAtTime(.0001, now)
-      gain.gain.exponentialRampToValueAtTime(kind === "selection" ? .022 : .028, now + .006)
-      gain.gain.exponentialRampToValueAtTime(.0001, now + (kind === "selection" ? .052 : .082))
-      oscillator.connect(gain)
-      gain.connect(context.destination)
-      oscillator.start(now)
-      oscillator.stop(now + .09)
-    }
-
-    if (context.state === "suspended") {
-      void context.resume().then(() => {
-        // If a browser held this resume request until a much later interaction,
-        // do not replay stale typing ticks. Immediate resumes play normally.
-        if (kind === "typing" && performance.now() - requestedAt > 140) return
-        play()
-      }).catch(() => {})
-      return
-    }
-
-    play()
-  } catch {}
 }
 
 function triggerIntroFeedback(kind: IntroFeedback) {

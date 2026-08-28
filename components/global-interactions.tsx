@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
+import { unlockIntroAudio } from "@/lib/intro-audio"
 
 const INTERACTIVE_SELECTOR = [
   "button",
@@ -36,6 +37,11 @@ export function GlobalInteractions() {
   useEffect(() => {
     function onPointerDown(event: PointerEvent) {
       if (event.pointerType === "mouse" && event.button !== 0) return
+
+      // Prime the shared intro audio context from any real user gesture before
+      // route changes. This lets the opening onboarding typewriter make the same
+      // sound as later typewriters instead of being blocked by autoplay rules.
+      void unlockIntroAudio()
       if (!(event.target instanceof Element)) return
 
       const interactive = event.target.closest<HTMLElement>(INTERACTIVE_SELECTOR)
@@ -49,8 +55,17 @@ export function GlobalInteractions() {
       replayClass(interactive, "tellwise-subtle-press", 120)
     }
 
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.repeat) return
+      void unlockIntroAudio()
+    }
+
     document.addEventListener("pointerdown", onPointerDown, { capture: true, passive: true })
-    return () => document.removeEventListener("pointerdown", onPointerDown, true)
+    document.addEventListener("keydown", onKeyDown, { capture: true })
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true)
+      document.removeEventListener("keydown", onKeyDown, true)
+    }
   }, [])
 
   return null
