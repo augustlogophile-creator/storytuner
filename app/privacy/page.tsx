@@ -17,9 +17,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
     <LegalPage
       backHref={back.href}
       backLabel={back.label}
-      eyebrow="Privacy"
       title="Privacy Policy"
-      summary="This policy explains what information Tellwise collects, why it’s used, which services process it, and how you can access or delete it."
+      summary="This policy explains what information Tellwise collects, why it&apos;s used, which services process it, and how you can access or delete it."
     >
       <LegalSection title="Information Tellwise Collects">
         <p><strong className="text-foreground">Account information.</strong> If you create an account, Tellwise receives your email address and authentication identifiers from your sign-in provider, plus your required public username and any display name used for personal greetings.</p>
@@ -37,23 +36,23 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       </LegalSection>
 
       <LegalSection title="AI Features">
-        <p>When you use AI-powered features, relevant text, transcripts, instructions, and other necessary context may be sent to OpenAI to generate transcription, feedback, moderation, planning, or coaching results. Tellwise limits what it sends to only what’s reasonably needed for the feature you’re using.</p>
+        <p>When you use AI-powered features, relevant text, transcripts, instructions, and other necessary context may be sent to OpenAI to generate transcription, feedback, moderation, planning, or coaching results. Tellwise limits what it sends to only what&apos;s reasonably needed for the feature you&apos;re using.</p>
         <p>If personalization from past recordings is enabled for your account, Tellwise may use patterns from prior transcripts, scores, strengths, and revisions as coaching context. Raw video is not used as long-term personalization context.</p>
       </LegalSection>
 
       <LegalSection title="Service Providers">
         <p>Tellwise relies on the following service providers, each processing information subject to their own applicable terms and safeguards:</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li><strong className="text-foreground">Supabase</strong>: authentication, database, and storage</li>
-          <li><strong className="text-foreground">OpenAI</strong>: AI features</li>
-          <li><strong className="text-foreground">Stripe</strong>: billing</li>
-          <li><strong className="text-foreground">Vercel</strong>: hosting and delivery</li>
+          <li><strong className="text-foreground">Supabase</strong> — authentication, database, and storage</li>
+          <li><strong className="text-foreground">OpenAI</strong> — AI features</li>
+          <li><strong className="text-foreground">Stripe</strong> — billing</li>
+          <li><strong className="text-foreground">Vercel</strong> — hosting and delivery</li>
         </ul>
       </LegalSection>
 
       <LegalSection title="Community and Public Information">
         <p>Your private recordings are not automatically posted to Community. Content becomes visible to other members only when you intentionally share or publish it. Your public @username appears alongside any shared Community content.</p>
-        <p>Community content may be automatically screened and may also be reviewed by moderators when it’s reported or flagged for safety.</p>
+        <p>Community content may be automatically screened and may also be reviewed by moderators when it&apos;s reported or flagged for safety.</p>
       </LegalSection>
 
       <LegalSection title="Retention and Deletion">
@@ -62,8 +61,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams?: Leg
       </LegalSection>
 
       <LegalSection title="Your Choices and Requests">
-        <p>You can update your display name, delete recordings, erase app data, or permanently delete your account from Settings. If you can’t access the app, email <a className="underline underline-offset-4" href="mailto:tellwiseapp@gmail.com">tellwiseapp@gmail.com</a> to request deletion.</p>
-        <p>If you withdraw permission for a browser or device feature such as microphone or camera access, you can continue using the parts of Tellwise that don’t require that permission.</p>
+        <p>You can update your display name, delete recordings, erase app data, or permanently delete your account from Settings. If you can&apos;t access the app, email <a className="underline underline-offset-4" href="mailto:tellwiseapp@gmail.com">tellwiseapp@gmail.com</a> to request deletion.</p>
+        <p>If you withdraw permission for a browser or device feature such as microphone or camera access, you can continue using the parts of Tellwise that don&apos;t require that permission.</p>
       </LegalSection>
 
       <LegalSection title="Age">

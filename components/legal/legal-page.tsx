@@ -9,7 +9,7 @@ export function LegalPage({
   backHref = "/",
   backLabel = "Tellwise",
 }: {
-  eyebrow: string
+  eyebrow?: string
   title: string
   summary: string
   children: ReactNode
@@ -25,8 +25,8 @@ export function LegalPage({
         </div>
 
         <header className="border-b border-border pb-6">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#8e6849]">{eyebrow}</p>
-          <h1 className="mt-2.5 text-[clamp(1.8rem,7vw,2.55rem)] leading-[1.02] tracking-[-0.03em]">{title}</h1>
+          {eyebrow ? <p className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-[#8e6849]">{eyebrow}</p> : null}
+          <h1 className={eyebrow ? "mt-2.5 text-[clamp(1.8rem,7vw,2.55rem)] leading-[1.02] tracking-[-0.03em]" : "text-[clamp(1.8rem,7vw,2.55rem)] leading-[1.02] tracking-[-0.03em]"}>{title}</h1>
           <p className="mt-3 max-w-xl text-[0.9rem] leading-6 text-muted-foreground">{summary}</p>
           <p className="mt-3 text-[0.7rem] text-muted-foreground">Last updated August 14, 2026</p>
         </header>

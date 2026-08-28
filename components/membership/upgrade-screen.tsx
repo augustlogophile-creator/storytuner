@@ -43,6 +43,10 @@ const comparison = [
   { feature: "Community", free: "Locked", paid: "Full access" },
 ]
 
+function formatFreeValue(value: string) {
+  return /^\d+$/.test(value) ? `Limited to ${value}` : value
+}
+
 export function UpgradeScreen({
   reason = "general",
   backHref,
@@ -110,7 +114,7 @@ export function UpgradeScreen({
         {comparison.map((item) => (
           <div key={item.feature} className="membership-comparison-row">
             <span className="membership-comparison-feature">{item.feature}</span>
-            <span className="membership-plan-value membership-plan-value-free">{item.free}</span>
+            <span className="membership-plan-value membership-plan-value-free">{formatFreeValue(item.free)}</span>
             <span className="membership-plan-value membership-plan-value-member">{item.paid}</span>
           </div>
         ))}

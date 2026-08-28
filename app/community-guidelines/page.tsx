@@ -17,7 +17,6 @@ export default async function CommunityGuidelinesPage({ searchParams }: { search
     <LegalPage
       backHref={back.href}
       backLabel={back.label}
-      eyebrow="Community"
       title="Community Guidelines"
       summary="Share stories, not harm. These rules apply to Community posts, transcripts, audio, replies, profile names, and other member-visible content."
     >
@@ -34,7 +33,8 @@ export default async function CommunityGuidelinesPage({ searchParams }: { search
         <p>You can report offensive content and block another member from Community controls. Tellwise may use automated safety screening and human review. Content can be held, removed, or restored after review, and accounts may be restricted for serious or repeated violations.</p>
       </LegalSection>
       <LegalSection title="Contact">
-        <p>For safety concerns that cannot be handled with the in-app report tool, contact tellwiseapp@gmail.com.</p>
+        <p>For safety concerns that cannot be handled with the in-app report tool, contact <a className="underline underline-offset-4" href="mailto:tellwiseapp@gmail.com">tellwiseapp@gmail.com</a>.</p>
+        <p>Questions or requests: <a className="underline underline-offset-4" href="mailto:tellwiseapp@gmail.com">tellwiseapp@gmail.com</a></p>
       </LegalSection>
     </LegalPage>
   )
