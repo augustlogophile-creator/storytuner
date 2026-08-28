@@ -13,7 +13,7 @@ import {
 import { preload } from "react-dom"
 import { Check, ChevronLeft } from "lucide-react"
 import { TellwisePressButton } from "@/components/ui/tellwise-press-button"
-import { isIntroAudioUnlocked, playIntroFeedbackTone, unlockIntroAudio } from "@/lib/intro-audio"
+import { playIntroFeedbackTone } from "@/lib/intro-audio"
 import { markIntroSeen } from "@/lib/intro-history"
 import {
   blockerLabels,
@@ -221,44 +221,10 @@ export function Onboarding({ initialPage = 0 }: { initialPage?: number }) {
 }
 
 function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean }) {
-  const [audioReady, setAudioReady] = useState(!animate)
-  const [needsAudioGesture, setNeedsAudioGesture] = useState(false)
   const [titleStarted, setTitleStarted] = useState(!animate)
   const [titleDone, setTitleDone] = useState(!animate)
   const [subtitleVisible, setSubtitleVisible] = useState(!animate)
   const [sequenceDone, setSequenceDone] = useState(!animate)
-
-  useEffect(() => {
-    if (!animate) {
-      setAudioReady(true)
-      setNeedsAudioGesture(false)
-      return
-    }
-
-    let cancelled = false
-    if (isIntroAudioUnlocked()) {
-      setAudioReady(true)
-      setNeedsAudioGesture(false)
-      return
-    }
-
-    const hasPriorGesture = typeof navigator !== "undefined" && Boolean(navigator.userActivation?.hasBeenActive)
-    if (!hasPriorGesture) {
-      setAudioReady(false)
-      setNeedsAudioGesture(true)
-      return
-    }
-
-    void unlockIntroAudio().then((ready) => {
-      if (cancelled) return
-      setAudioReady(ready)
-      setNeedsAudioGesture(!ready)
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [animate])
 
   useEffect(() => {
     if (!animate) {
@@ -269,15 +235,18 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
       return
     }
 
+    // The opening sequence should always begin naturally on page load. Audio is
+    // opportunistic: if a prior navigation gesture already unlocked Web Audio,
+    // the typewriter ticks are audible; otherwise the visual sequence still
+    // runs instead of blocking behind an extra "Tap to begin" gate.
     setTitleStarted(false)
     setTitleDone(false)
     setSubtitleVisible(false)
     setSequenceDone(false)
-    if (!audioReady) return
 
     const timer = window.setTimeout(() => setTitleStarted(true), 820)
     return () => window.clearTimeout(timer)
-  }, [animate, audioReady])
+  }, [animate])
 
   useEffect(() => {
     if (!animate || !titleDone) return
@@ -288,13 +257,6 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
       window.clearTimeout(doneTimer)
     }
   }, [animate, titleDone])
-
-  async function beginOpeningWithSound() {
-    const ready = await unlockIntroAudio()
-    if (!ready) return
-    setNeedsAudioGesture(false)
-    setAudioReady(true)
-  }
 
   return (
     <section className={`intro-flow-page intro-welcome-page${animate ? "" : " is-static"}`}>
@@ -322,11 +284,7 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
       </div>
 
       <div className="intro-welcome-action">
-        {needsAudioGesture ? (
-          <IntroAction onClick={() => void beginOpeningWithSound()}>Tap to begin</IntroAction>
-        ) : (
-          <IntroAction onClick={onNext} disabled={!sequenceDone}>Let’s start</IntroAction>
-        )}
+        <IntroAction onClick={onNext} disabled={!sequenceDone}>Let’s start</IntroAction>
       </div>
     </section>
   )
