@@ -267,7 +267,6 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
           speed={72}
           animate={animate}
           start={titleStarted}
-          feedbackEveryCharacter
           onComplete={() => setTitleDone(true)}
         />
         <p
@@ -849,7 +848,6 @@ function TypewriterText({
   speed = 58,
   animate = true,
   start = true,
-  feedbackEveryCharacter = false,
   onComplete,
 }: {
   tag?: TypewriterTag
@@ -860,7 +858,6 @@ function TypewriterText({
   speed?: number
   animate?: boolean
   start?: boolean
-  feedbackEveryCharacter?: boolean
   onComplete?: () => void
 }) {
   const [visibleCharacters, setVisibleCharacters] = useState(animate ? 0 : text.length)
@@ -900,7 +897,7 @@ function TypewriterText({
       setVisibleCharacters(index)
 
       const character = text[index - 1] ?? ""
-      if (character && !/\s/.test(character) && (feedbackEveryCharacter || index % 2 === 0)) {
+      if (character && !/\s/.test(character) && index % 2 === 0) {
         triggerIntroFeedback("typing")
       }
 
@@ -920,7 +917,7 @@ function TypewriterText({
       clearTimeout(startTimer)
       if (characterTimer) clearTimeout(characterTimer)
     }
-  }, [animate, delay, feedbackEveryCharacter, speed, start, text])
+  }, [animate, delay, speed, start, text])
 
   let characterIndex = 0
   const tokens = text.split(/(\s+)/)
@@ -1051,57 +1048,72 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
     const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioContextConstructor) return
 
-    // Route opening-page typing through the exact same Web Audio path as the
-    // later intro pages. Browsers that permit it can now play the first-page
-    // ticks immediately, while haptics are still attempted independently.
+    // Do not queue opening-page typing ticks while the browser is still
+    // blocking audio. Queued ticks can all release on the first button press
+    // and make that tap sound harsh. Once audio has been unlocked, the welcome
+    // typewriter uses this exact same tone path and cadence as every later one.
+    const userActivation = window.navigator.userActivation
+    if (kind === "typing" && !introAudioContext && !userActivation?.hasBeenActive) return
+
     if (!introAudioContext) introAudioContext = new AudioContextConstructor()
     const context = introAudioContext
-    if (context.state === "suspended") void context.resume()
 
-    const now = context.currentTime
+    const play = () => {
+      if (context.state !== "running") return
+      const now = context.currentTime
+      const gain = context.createGain()
+      const oscillator = context.createOscillator()
 
-    const gain = context.createGain()
-    const oscillator = context.createOscillator()
+      if (kind === "typing") {
+        oscillator.type = "triangle"
+        oscillator.frequency.setValueAtTime(690, now)
+        gain.gain.setValueAtTime(.0001, now)
+        gain.gain.exponentialRampToValueAtTime(.0065, now + .003)
+        gain.gain.exponentialRampToValueAtTime(.0001, now + .018)
+        oscillator.connect(gain)
+        gain.connect(context.destination)
+        oscillator.start(now)
+        oscillator.stop(now + .022)
+        return
+      }
 
-    if (kind === "typing") {
-      oscillator.type = "triangle"
-      oscillator.frequency.setValueAtTime(690, now)
+      if (kind === "reveal") {
+        oscillator.type = "triangle"
+        oscillator.frequency.setValueAtTime(465, now)
+        oscillator.frequency.exponentialRampToValueAtTime(520, now + .034)
+        gain.gain.setValueAtTime(.0001, now)
+        gain.gain.exponentialRampToValueAtTime(.012, now + .004)
+        gain.gain.exponentialRampToValueAtTime(.0001, now + .045)
+        oscillator.connect(gain)
+        gain.connect(context.destination)
+        oscillator.start(now)
+        oscillator.stop(now + .052)
+        return
+      }
+
+      oscillator.type = "sine"
+      oscillator.frequency.setValueAtTime(kind === "selection" ? 520 : kind === "back" ? 405 : 585, now)
+      if (kind === "page" || kind === "action") {
+        oscillator.frequency.exponentialRampToValueAtTime(kind === "page" ? 720 : 790, now + .052)
+      }
       gain.gain.setValueAtTime(.0001, now)
-      gain.gain.exponentialRampToValueAtTime(.0065, now + .003)
-      gain.gain.exponentialRampToValueAtTime(.0001, now + .018)
+      gain.gain.exponentialRampToValueAtTime(kind === "selection" ? .022 : .028, now + .006)
+      gain.gain.exponentialRampToValueAtTime(.0001, now + (kind === "selection" ? .052 : .082))
       oscillator.connect(gain)
       gain.connect(context.destination)
       oscillator.start(now)
-      oscillator.stop(now + .022)
+      oscillator.stop(now + .09)
+    }
+
+    if (context.state === "suspended") {
+      // Typing should never wait in a queue for a future gesture. Page/action
+      // feedback occurs inside a real tap, so it can safely resume then play.
+      if (kind === "typing" && !userActivation?.isActive && !userActivation?.hasBeenActive) return
+      void context.resume().then(play).catch(() => {})
       return
     }
 
-    if (kind === "reveal") {
-      oscillator.type = "triangle"
-      oscillator.frequency.setValueAtTime(465, now)
-      oscillator.frequency.exponentialRampToValueAtTime(520, now + .034)
-      gain.gain.setValueAtTime(.0001, now)
-      gain.gain.exponentialRampToValueAtTime(.012, now + .004)
-      gain.gain.exponentialRampToValueAtTime(.0001, now + .045)
-      oscillator.connect(gain)
-      gain.connect(context.destination)
-      oscillator.start(now)
-      oscillator.stop(now + .052)
-      return
-    }
-
-    oscillator.type = "sine"
-    oscillator.frequency.setValueAtTime(kind === "selection" ? 520 : kind === "back" ? 405 : 585, now)
-    if (kind === "page" || kind === "action") {
-      oscillator.frequency.exponentialRampToValueAtTime(kind === "page" ? 720 : 790, now + .052)
-    }
-    gain.gain.setValueAtTime(.0001, now)
-    gain.gain.exponentialRampToValueAtTime(kind === "selection" ? .022 : .028, now + .006)
-    gain.gain.exponentialRampToValueAtTime(.0001, now + (kind === "selection" ? .052 : .082))
-    oscillator.connect(gain)
-    gain.connect(context.destination)
-    oscillator.start(now)
-    oscillator.stop(now + .09)
+    play()
   } catch {}
 }
 
