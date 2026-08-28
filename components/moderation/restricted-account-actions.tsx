@@ -6,6 +6,7 @@ import { Mail, Trash2 } from "lucide-react"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { SwitchAccountButton } from "@/components/auth/switch-account-button"
 import { clearMedia } from "@/lib/media-store"
+import { markIntroSeen } from "@/lib/intro-history"
 import { createClient } from "@/lib/supabase/client"
 
 export function RestrictedAccountActions() {
@@ -32,9 +33,10 @@ export function RestrictedAccountActions() {
         sessionStorage.clear()
       } catch {}
       await createClient().auth.signOut().catch(() => undefined)
+      markIntroSeen()
       document.documentElement.classList.remove("dark")
       document.documentElement.classList.add("light")
-      router.replace("/?accountDeleted=1")
+      router.replace("/sign-up?mode=sign-in&accountDeleted=1")
       router.refresh()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Tellwise could not delete this account.")

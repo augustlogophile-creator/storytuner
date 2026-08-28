@@ -46,7 +46,7 @@ export async function PATCH(request: Request) {
     const moderation = await moderateCommunityText(`Public display name: ${displayName}`)
     if (moderation.flagged) {
       return Response.json(
-        { error: "Choose a different display name. Vulgar, sexual, hateful, or harassing terms are not allowed." },
+        { error: "Tellwise doesn't allow display names with hateful, racist, sexual, vulgar, threatening, or harassing content." },
         { status: 400, headers: { "Cache-Control": "no-store" } },
       )
     }

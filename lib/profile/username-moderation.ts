@@ -24,7 +24,7 @@ export async function checkUsernameSafety(
   try {
     const moderation = await moderateCommunityText(`Public username: ${username}`)
     if (moderation.flagged) {
-      return { ok: false, code: "INVALID", message: "That username isn't available. Try another one." }
+      return { ok: false, code: "INVALID", message: "Tellwise doesn't allow usernames with hateful, racist, sexual, vulgar, threatening, or harassing content." }
     }
   } catch (error) {
     // Fail closed during account creation so a temporary moderation outage can

@@ -12,6 +12,7 @@ type StaleRecording = { id: string; storage_path: string }
 type FailedCommunityAudio = { id: string; storage_path: string }
 type DeletedCommunityPost = { id: string }
 type CommunityAudioForPost = { post_id: string; storage_path: string }
+type ExpiredDeletionCooldown = { email_hash: string }
 type ModerationStatus = {
   user_id: string
   account_status: "active" | "suspended" | "banned"
@@ -28,6 +29,7 @@ export type MaintenanceResult = {
   expiredAccountSuspensionsCleared: number
   expiredCommunitySuspensionsCleared: number
   deletedCommunityPostsPurged: number
+  expiredDeletionCooldownsPurged: number
 }
 
 export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
@@ -40,6 +42,7 @@ export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
     expiredAccountSuspensionsCleared: 0,
     expiredCommunitySuspensionsCleared: 0,
     deletedCommunityPostsPurged: 0,
+    expiredDeletionCooldownsPurged: 0,
   }
 
   try {
@@ -152,6 +155,27 @@ export async function runStoryTunerMaintenance(): Promise<MaintenanceResult> {
     }
   } catch (error) {
     backendError("maintenance_deleted_community_purge_failed", error)
+  }
+
+  try {
+    const { data, error } = await admin
+      .from("account_deletion_cooldowns")
+      .select("email_hash")
+      .lte("eligible_at", now.toISOString())
+      .limit(500)
+      .returns<ExpiredDeletionCooldown[]>()
+    if (error) throw error
+    const hashes = (data ?? []).map((row) => row.email_hash)
+    if (hashes.length) {
+      const { error: deleteError } = await admin
+        .from("account_deletion_cooldowns")
+        .delete()
+        .in("email_hash", hashes)
+      if (deleteError) throw deleteError
+      result.expiredDeletionCooldownsPurged = hashes.length
+    }
+  } catch (error) {
+    backendError("maintenance_deletion_cooldown_cleanup_failed", error)
   }
 
   try {

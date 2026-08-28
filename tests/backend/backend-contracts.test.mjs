@@ -71,6 +71,7 @@ test("account data reset self-identifies the failing cleanup stage", () => {
   assert.match(source, /let failedStep = "starting"/)
   assert.match(source, /failedStep = "community_content"/)
   assert.match(source, /failedStep,\n\s*error:/)
-  assert.match(source, /safeListUserStoragePaths/)
+  assert.match(source, /listUserStoragePaths\(admin, RECORDINGS_BUCKET, userId\)/)
+  assert.doesNotMatch(source, /safeListUserStoragePaths/)
   assert.match(source, /account_data_profile_reset_skipped/)
 })

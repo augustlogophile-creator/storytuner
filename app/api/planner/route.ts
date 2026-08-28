@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { z } from "zod"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { openAIJson } from "@/lib/openai-server"
@@ -8,6 +9,7 @@ import { readJsonBody, requireSameOrigin, rateLimitResponse, rateLimitUser, reje
 import { backendError } from "@/lib/backend-log"
 import { UNTRUSTED_REFERENCE_RULE, untrustedReference } from "@/lib/ai/untrusted"
 import { aiSpendRateResponse, reserveAiSpend } from "@/lib/ai/spend-guard"
+import { getUsageStatus, releaseUsage, reserveUsage, type UsageReservation } from "@/lib/usage-server"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -76,8 +78,6 @@ function toRecord(row: PlanRow): StoryPlanRecord {
   }
 }
 
-const FREE_STORY_PLAN_LIMIT = 1
-
 async function plannerAccess() {
   const auth = await getActiveAuthenticatedUser()
   if (!auth.ok) return auth
@@ -108,7 +108,17 @@ export async function GET() {
     return Response.json({ error: "Your saved plans could not be loaded. Run the newest Supabase migration if this is the first time opening Story Planner." }, { status: 500 })
   }
 
-  return Response.json({ plans: (data ?? []).map(toRecord), membershipActive: auth.membershipActive, freeStoryPlansRemaining: auth.membershipActive ? null : Math.max(0, FREE_STORY_PLAN_LIMIT - (data?.length ?? 0)) }, { headers: { "Cache-Control": "private, no-store" } })
+  let freeStoryPlansRemaining: number | null = null
+  if (!auth.membershipActive) {
+    try {
+      freeStoryPlansRemaining = (await getUsageStatus(auth.user.id, "story_planner")).remaining
+    } catch (usageError) {
+      backendError("planner_usage_lookup_failed", usageError, { userId: auth.user.id })
+      return Response.json({ error: "Story Planner could not verify your free-plan usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
+    }
+  }
+
+  return Response.json({ plans: (data ?? []).map(toRecord), membershipActive: auth.membershipActive, freeStoryPlansRemaining }, { headers: { "Cache-Control": "private, no-store" } })
 }
 
 export async function POST(request: Request) {
@@ -157,18 +167,18 @@ export async function POST(request: Request) {
     return Response.json({ plan: toRecord(recentDuplicate), replayed: true }, { headers: { "Cache-Control": "no-store" } })
   }
 
+  let plannerReservation: UsageReservation | null = null
+  let plannerRequestKey: string | null = null
   if (!auth.membershipActive) {
-    const { count, error: freePlanCountError } = await admin
-      .from("story_plans")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", auth.user.id)
-
-    if (freePlanCountError) {
-      backendError("planner_usage_lookup_failed", freePlanCountError, { userId: auth.user.id })
-      return Response.json({ error: "Story Planner could not verify usage right now." }, { status: 500 })
+    plannerRequestKey = randomUUID()
+    try {
+      plannerReservation = await reserveUsage(auth.user.id, "story_planner", plannerRequestKey)
+    } catch (usageError) {
+      backendError("planner_usage_reservation_failed", usageError, { userId: auth.user.id })
+      return Response.json({ code: "PLANNER_USAGE_UNAVAILABLE", error: "Story Planner could not safely verify your free-plan usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
     }
-    if ((count ?? 0) >= FREE_STORY_PLAN_LIMIT) {
-      return Response.json({ code: "PLANNER_MEMBERSHIP_REQUIRED", error: "The free plan includes 1 Story Planner. Membership unlocks unlimited story plans." }, { status: 403 })
+    if (!plannerReservation.allowed) {
+      return Response.json({ code: "PLANNER_MEMBERSHIP_REQUIRED", error: "The free plan includes 1 Story Planner. Membership unlocks unlimited story plans." }, { status: 403, headers: { "Cache-Control": "no-store" } })
     }
   } else {
     const today = new Date()
@@ -192,11 +202,23 @@ export async function POST(request: Request) {
   try {
     plannerSpend = await reserveAiSpend(auth.user.id, "story_planner", { minute: 3, hour: 10, day: 20 })
   } catch (error) {
+    if (plannerReservation && !plannerReservation.alreadyReserved && plannerRequestKey) {
+      await releaseUsage(auth.user.id, "story_planner", plannerRequestKey).catch((releaseError) =>
+        backendError("planner_usage_rollback_failed", releaseError, { userId: auth.user.id, plannerRequestKey }),
+      )
+    }
     backendError("planner_spend_guard_failed", error, { userId: auth.user.id })
     return Response.json({ code: "AI_USAGE_GUARD_UNAVAILABLE", error: "Story Planner could not safely verify AI usage right now. Try again in a moment." }, { status: 503, headers: { "Cache-Control": "no-store" } })
   }
   const plannerSpendBlocked = aiSpendRateResponse(plannerSpend, "Story Planner has received too many generation requests from this account. Wait and try again later.")
-  if (plannerSpendBlocked) return plannerSpendBlocked
+  if (plannerSpendBlocked) {
+    if (plannerReservation && !plannerReservation.alreadyReserved && plannerRequestKey) {
+      await releaseUsage(auth.user.id, "story_planner", plannerRequestKey).catch((releaseError) =>
+        backendError("planner_usage_rollback_failed", releaseError, { userId: auth.user.id, plannerRequestKey }),
+      )
+    }
+    return plannerSpendBlocked
+  }
 
   try {
     const plannerFingerprint = requestFingerprint(auth.user.id, input.audienceContext, input.goal, input.roughPlan, input.mustInclude, input.nervousAbout)
@@ -246,6 +268,11 @@ ${UNTRUSTED_REFERENCE_RULE}`,
     if (insertError) throw insertError
     return Response.json({ plan: toRecord(inserted) }, { status: 201, headers: { "Cache-Control": "no-store" } })
   } catch (error) {
+    if (plannerReservation && !plannerReservation.alreadyReserved && plannerRequestKey) {
+      await releaseUsage(auth.user.id, "story_planner", plannerRequestKey).catch((releaseError) =>
+        backendError("planner_usage_rollback_failed", releaseError, { userId: auth.user.id, plannerRequestKey }),
+      )
+    }
     backendError("planner_route_failed", error, { userId: auth.user.id })
     const message = error instanceof Error && error.message.includes("OPENAI_API_KEY")
       ? "Parch's AI connection is not configured yet."

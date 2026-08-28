@@ -6,6 +6,7 @@ import { Bell, Check, ChevronDown, ChevronRight, Cloud, CloudOff, LoaderCircle, 
 import { BackLink } from "@/components/page-header"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useApp } from "@/lib/app-state"
+import { markIntroSeen } from "@/lib/intro-history"
 import { useNotificationUnread } from "@/components/notifications/use-notification-unread"
 import { validateDisplayName } from "@/lib/profile/public-name"
 import { createClient } from "@/lib/supabase/client"
@@ -70,7 +71,7 @@ export function SettingsClient({ username }: { username: string }) {
     }
     if (dialog === "delete-account") return {
       title: "Permanently delete your account?",
-      body: <>This permanently deletes your Tellwise login, profile, progress, recordings, Community activity, Planner history, usage history, and linked billing customer. Any active Tellwise subscription is canceled immediately. <strong className="font-semibold text-foreground">This cannot be undone.</strong></>,
+      body: <>This permanently deletes your Tellwise login, profile, progress, recordings, Community activity, Planner history, usage history, and linked billing customer. Any active Tellwise subscription is canceled immediately. For security, this email cannot create a new Tellwise account for 14 days. <strong className="font-semibold text-foreground">Deleted data cannot be restored.</strong></>,
       confirm: "Delete account permanently",
       tone: "danger" as const,
     }
@@ -108,6 +109,7 @@ export function SettingsClient({ username }: { username: string }) {
     setBusy(true)
     const supabase = createClient()
     await supabase.auth.signOut()
+    markIntroSeen()
     document.documentElement.classList.remove("dark")
     document.documentElement.classList.add("light")
     router.replace("/sign-up?mode=sign-in")
@@ -148,7 +150,7 @@ export function SettingsClient({ username }: { username: string }) {
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ confirmation: "DELETE" }),
         })
-        const payload = await response.json() as { deleted?: boolean; error?: string }
+        const payload = await response.json() as { deleted?: boolean; reRegistrationAvailableAt?: string; error?: string }
         if (!response.ok || !payload.deleted) throw new Error(payload.error || "Tellwise could not delete the account.")
 
         await clearMedia().catch(() => undefined)
@@ -160,8 +162,10 @@ export function SettingsClient({ username }: { username: string }) {
         } catch {}
         const supabase = createClient()
         await supabase.auth.signOut().catch(() => undefined)
+        markIntroSeen()
         setDialog(null)
-        router.replace("/?accountDeleted=1")
+        const availableAt = payload.reRegistrationAvailableAt ? `&availableAt=${encodeURIComponent(payload.reRegistrationAvailableAt)}` : ""
+        router.replace(`/sign-up?mode=sign-in&accountDeleted=1${availableAt}`)
         router.refresh()
         return
       }

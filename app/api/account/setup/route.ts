@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { backendError } from "@/lib/backend-log"
+import { moderateCommunityText } from "@/lib/community/ai-moderation"
 import { checkUsernameSafety } from "@/lib/profile/username-moderation"
 import { validateDisplayName } from "@/lib/profile/public-name"
 import { getAuthenticatedUser } from "@/lib/require-auth"
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic"
 
 const setupSchema = z.object({
   username: z.string().trim().max(20).optional(),
+  displayName: z.string().trim().max(15).optional(),
   confirmedAge13Plus: z.literal(true),
 }).strict()
 
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
       { limit: 10, windowMs: 60_000, label: "10/min" },
       { limit: 40, windowMs: 60 * 60 * 1000, label: "40/hour" },
     ]),
-    "Too many username attempts. Wait a moment and try again.",
+    "Too many profile setup attempts. Wait a moment and try again.",
   )
   if (blocked) return blocked
 
@@ -68,8 +70,16 @@ export async function POST(request: Request) {
   }
 
   // Existing users keep the username they already own. The recovery path only
-  // completes the age/onboarding flags and never asks them to claim it again.
+  // completes the age/onboarding flags and never exposes a username-change path.
   if (existingProfile?.username?.trim()) {
+    const requestedUsername = typeof body.username === "string" ? body.username.trim().toLowerCase() : ""
+    if (requestedUsername && requestedUsername !== existingProfile.username.trim().toLowerCase()) {
+      return Response.json(
+        { code: "USERNAME_IMMUTABLE", error: "Your Tellwise username is permanent and cannot be changed. You can change your display name in Settings." },
+        { status: 409, headers: { "Cache-Control": "no-store" } },
+      )
+    }
+
     const { error } = await admin
       .from("profiles")
       .update({ confirmed_age_13_plus: true, onboarding_completed: true })
@@ -89,9 +99,23 @@ export async function POST(request: Request) {
     )
   }
 
-  const username = typeof body.username === "string"
-    ? body.username.trim().toLowerCase()
-    : ""
+  const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : ""
+  const displayName = typeof body.displayName === "string" ? body.displayName.trim() : ""
+
+  if (!username || !displayName) {
+    return Response.json(
+      { code: "PROFILE_FIELDS_REQUIRED", error: "Choose both a username and a display name to continue." },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    )
+  }
+
+  const displayNameError = validateDisplayName(displayName)
+  if (displayNameError) {
+    return Response.json(
+      { code: "DISPLAY_NAME_INVALID", error: displayNameError },
+      { status: 400, headers: { "Cache-Control": "no-store" } },
+    )
+  }
 
   const { data: userData, error: userError } = await auth.supabase.auth.getUser()
   if (userError || !userData.user) {
@@ -102,7 +126,40 @@ export async function POST(request: Request) {
   }
 
   const verifiedEmail = userData.user.email?.trim().toLowerCase() ?? ""
+  if (!verifiedEmail || !userData.user.email_confirmed_at) {
+    return Response.json(
+      { code: "VERIFIED_EMAIL_REQUIRED", error: "Tellwise could not verify the email on this account. Sign in with a verified Google account and try again." },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    )
+  }
   const allowOfficialTellwiseHandle = verifiedEmail === "tellwiseapp@gmail.com" && username === "tellwise"
+
+  // Safety is checked before availability so prohibited handles always receive
+  // the safety explanation rather than leaking a different response if one was
+  // ever present in legacy data.
+  const usernameSafety = await checkUsernameSafety(username, { allowReserved: allowOfficialTellwiseHandle })
+  if (!usernameSafety.ok) {
+    return Response.json(
+      { code: usernameSafety.code === "UNAVAILABLE" ? "USERNAME_CHECK_UNAVAILABLE" : "USERNAME_NOT_ALLOWED", error: usernameSafety.message },
+      { status: usernameSafety.code === "UNAVAILABLE" ? 503 : 400, headers: { "Cache-Control": "no-store" } },
+    )
+  }
+
+  try {
+    const displayModeration = await moderateCommunityText(`Public display name: ${displayName}`)
+    if (displayModeration.flagged) {
+      return Response.json(
+        { code: "DISPLAY_NAME_NOT_ALLOWED", error: "Tellwise doesn't allow display names with hateful, racist, sexual, vulgar, threatening, or harassing content." },
+        { status: 400, headers: { "Cache-Control": "no-store" } },
+      )
+    }
+  } catch (error) {
+    backendError("display_name_ai_moderation_failed_during_setup", error, { userId: auth.id, displayNameLength: displayName.length })
+    return Response.json(
+      { code: "DISPLAY_NAME_CHECK_UNAVAILABLE", error: "Tellwise couldn't verify that display name right now. Try again in a moment." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    )
+  }
 
   const { data: taken, error: takenError } = await admin
     .from("profiles")
@@ -120,24 +177,10 @@ export async function POST(request: Request) {
   }
   if (taken) {
     return Response.json(
-      { code: "USERNAME_TAKEN", error: "That username is already taken. Try another one." },
+      { code: "USERNAME_TAKEN", error: "That username is already taken. Choose another one." },
       { status: 409, headers: { "Cache-Control": "no-store" } },
     )
   }
-
-  const safety = await checkUsernameSafety(username, { allowReserved: allowOfficialTellwiseHandle })
-  if (!safety.ok) {
-    return Response.json(
-      { code: safety.code === "UNAVAILABLE" ? "USERNAME_CHECK_UNAVAILABLE" : "USERNAME_NOT_AVAILABLE", error: safety.message },
-      { status: safety.code === "UNAVAILABLE" ? 503 : 400, headers: { "Cache-Control": "no-store" } },
-    )
-  }
-
-  const metadata = userData.user.user_metadata ?? {}
-  const metadataName = [metadata.given_name, metadata.name, metadata.full_name]
-    .find((value) => typeof value === "string" && value.trim())
-  const firstName = typeof metadataName === "string" ? metadataName.trim().split(/\s+/)[0]?.slice(0, 15) ?? "" : ""
-  const displayName = firstName && !validateDisplayName(firstName) ? firstName : "Storyteller"
 
   const { error: saveError } = await admin.from("profiles").upsert({
     id: auth.id,
@@ -154,18 +197,18 @@ export async function POST(request: Request) {
     })
     if (saveError.code === "23505") {
       return Response.json(
-        { code: "USERNAME_TAKEN", error: "That username is already taken. Try another one." },
+        { code: "USERNAME_TAKEN", error: "That username is already taken. Choose another one." },
         { status: 409, headers: { "Cache-Control": "no-store" } },
       )
     }
     if (saveError.code === "23514") {
       return Response.json(
-        { code: "USERNAME_NOT_AVAILABLE", error: "That username isn't available. Try another one." },
+        { code: "USERNAME_NOT_ALLOWED", error: "Tellwise doesn't allow usernames with hateful, racist, sexual, vulgar, threatening, harassing, or reserved content." },
         { status: 400, headers: { "Cache-Control": "no-store" } },
       )
     }
     return Response.json(
-      { code: "PROFILE_SAVE_FAILED", error: "Tellwise couldn't save that username right now." },
+      { code: "PROFILE_SAVE_FAILED", error: "Tellwise couldn't save your profile right now." },
       { status: 500, headers: { "Cache-Control": "no-store" } },
     )
   }

@@ -50,6 +50,15 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
   }
 
   const preferredMode: Mode = searchParams.get("mode") === "sign-in" ? "sign-in" : initialMode
+  const deletionNotice = useMemo(() => {
+    if (searchParams.get("accountDeleted") !== "1") return ""
+    const raw = searchParams.get("availableAt")
+    if (!raw) return "Your Tellwise account was deleted. For security, the same email cannot be used to create a new account for 14 days. Deleted data cannot be restored."
+    const date = new Date(raw)
+    if (!Number.isFinite(date.getTime())) return "Your Tellwise account was deleted. For security, the same email cannot be used to create a new account for 14 days. Deleted data cannot be restored."
+    const formatted = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date)
+    return `Your Tellwise account was deleted. For security, the same email can create a new account again on ${formatted}. Deleted data cannot be restored.`
+  }, [searchParams])
 
   return (
     <div className="auth-simple-flow w-full">
@@ -91,6 +100,12 @@ export function AuthForm({ initialMode = "sign-up" }: { initialMode?: Mode }) {
       {error && (
         <p role="alert" className="auth-error-message">
           {error}
+        </p>
+      )}
+
+      {deletionNotice && (
+        <p role="status" className="rounded-2xl border border-border bg-secondary/55 px-4 py-3 text-center text-xs leading-5 text-muted-foreground">
+          {deletionNotice}
         </p>
       )}
 

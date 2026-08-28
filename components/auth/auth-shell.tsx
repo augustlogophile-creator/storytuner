@@ -12,7 +12,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
       <section className="auth-canvas auth-canvas-polished">
         <div className="auth-canvas-inner">
           <header className="auth-header-row">
-            <Link prefetch href="/?introPage=4" className="auth-back-link">
+            <Link prefetch href="/?introPage=4&replay=1" className="auth-back-link">
               <ArrowLeft className="h-4 w-4" strokeWidth={1.7} />
               <span>Introduction</span>
             </Link>

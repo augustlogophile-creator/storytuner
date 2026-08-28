@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { LogIn, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { markIntroSeen } from "@/lib/intro-history"
 import { createClient } from "@/lib/supabase/client"
 
 export function SwitchAccountButton() {
@@ -15,6 +16,7 @@ export function SwitchAccountButton() {
     try {
       const supabase = createClient()
       await supabase.auth.signOut()
+      markIntroSeen()
       document.documentElement.classList.remove("dark")
       document.documentElement.classList.add("light")
     } finally {

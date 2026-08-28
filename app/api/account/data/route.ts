@@ -60,8 +60,8 @@ export async function POST(request: Request) {
     // one retry before the request fails rather than silently leaving user files.
     failedStep = "storage_listing"
     const [recordingFolderPaths, communityFolderPaths] = await Promise.all([
-      safeListUserStoragePaths(admin, RECORDINGS_BUCKET, userId),
-      safeListUserStoragePaths(admin, COMMUNITY_AUDIO_BUCKET, userId),
+      listUserStoragePaths(admin, RECORDINGS_BUCKET, userId),
+      listUserStoragePaths(admin, COMMUNITY_AUDIO_BUCKET, userId),
     ])
 
     failedStep = "recording_storage_cleanup"
@@ -219,15 +219,6 @@ async function removeStorage(admin: ReturnType<typeof createAdminClient>, bucket
     if (!batch.length) continue
     const { error } = await admin.storage.from(bucket).remove(batch)
     if (error && !isMissingBucketError(error)) throw error
-  }
-}
-
-async function safeListUserStoragePaths(admin: ReturnType<typeof createAdminClient>, bucket: string, userId: string) {
-  try {
-    return await listUserStoragePaths(admin, bucket, userId)
-  } catch (error) {
-    backendError("account_data_storage_enumeration_skipped", error, { userId, bucket })
-    return []
   }
 }
 

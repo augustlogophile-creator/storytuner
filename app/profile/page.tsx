@@ -1,38 +1,18 @@
 import { MobileShell } from "@/components/mobile-shell"
 import { ProfileClient } from "@/components/profile/profile-client"
 import { verifiedModeratorRole } from "@/lib/community/moderation"
-import { validateDisplayName } from "@/lib/profile/public-name"
 import { requireStoryTunerUser } from "@/lib/require-auth"
-import { createAdminClient } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
-
-const GENERIC_PROFILE_NAMES = new Set(["tellwise member", "storytuner member", "storyteller"])
 
 export default async function ProfilePage() {
   const user = await requireStoryTunerUser("/profile")
   const moderatorRole = await verifiedModeratorRole(user)
-  let displayName = user.profile?.display_name?.trim().slice(0, 15) || "Storyteller"
+  const displayName = user.profile?.display_name?.trim().slice(0, 15) || "Storyteller"
 
-  // Older moderation/test migrations could replace an unsafe public name with
-  // the generic placeholder "Tellwise member". If Google already provides a
-  // safe real name, heal the profile once so the same name appears everywhere.
-  if (GENERIC_PROFILE_NAMES.has(displayName.toLowerCase())) {
-    const { data } = await user.supabase.auth.getUser()
-    const metadata = data.user?.user_metadata
-    const candidate = typeof metadata?.full_name === "string"
-      ? metadata.full_name.trim().slice(0, 15)
-      : typeof metadata?.name === "string"
-        ? metadata.name.trim().slice(0, 15)
-        : ""
-
-    if (candidate && !GENERIC_PROFILE_NAMES.has(candidate.toLowerCase()) && !validateDisplayName(candidate)) {
-      const admin = createAdminClient()
-      const { error } = await admin.from("profiles").update({ display_name: candidate }).eq("id", user.id)
-      if (!error) displayName = candidate
-    }
-  }
-
+  // Display names are changed only through the moderated profile endpoint. Do
+  // not silently copy mutable Google profile metadata into Tellwise, because
+  // that would create a second path around Tellwise's public-name moderation.
   return (
     <MobileShell fitViewport scrollable>
       <ProfileClient

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { createAccountDeletionCooldown, removeAccountDeletionCooldown } from "@/lib/account-deletion-cooldown"
 import { backendError, backendLog } from "@/lib/backend-log"
 import { matchesConfiguredOwner } from "@/lib/community/moderation"
 import { getAccountRestriction, getAuthenticatedUser } from "@/lib/require-auth"
@@ -52,8 +53,28 @@ export async function POST(request: Request) {
     return Response.json({ error: "The Tellwise owner account cannot be deleted from inside the app." }, { status: 403 })
   }
 
+  const { data: verifiedUserData, error: verifiedUserError } = await authenticated.supabase.auth.getUser()
+  const verifiedEmail = verifiedUserData.user?.email?.trim() ?? ""
+  if (verifiedUserError || !verifiedUserData.user || !verifiedEmail) {
+    return Response.json(
+      { code: "VERIFIED_EMAIL_REQUIRED", error: "Tellwise could not verify the email on this account, so permanent deletion was stopped for security." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    )
+  }
+
   const admin = createAdminClient()
+  let cooldownRecorded = false
+  let authDeleted = false
+  let reRegistrationAvailableAt = ""
+
   try {
+    // Record the security tombstone before any destructive work. If a later step
+    // fails while the auth account still exists, the catch block rolls it back.
+    // Once deletion succeeds, the HMAC digest remains for 14 days so the same
+    // mailbox cannot immediately recreate a fresh account and bypass safeguards.
+    reRegistrationAvailableAt = await createAccountDeletionCooldown(admin, verifiedEmail)
+    cooldownRecorded = true
+
     const [subscriptionResult, recordingsResult, communityAudioResult] = await Promise.all([
       admin.from("subscriptions").select("stripe_customer_id").eq("user_id", authenticated.id).maybeSingle<SubscriptionRow>(),
       admin.from("recording_uploads").select("storage_path").eq("user_id", authenticated.id).returns<StorageRow[]>(),
@@ -67,7 +88,7 @@ export async function POST(request: Request) {
     const stripeCustomerId = subscriptionResult.data?.stripe_customer_id?.trim() || ""
     if (stripeCustomerId) {
       if (!process.env.STRIPE_SECRET_KEY) {
-        return Response.json({ error: "Tellwise could not safely cancel billing before deleting this account. Contact support." }, { status: 503 })
+        throw new Error("Tellwise could not safely cancel billing before deleting this account.")
       }
       try {
         await stripeDelete<{ id: string; deleted?: boolean }>(`/customers/${encodeURIComponent(stripeCustomerId)}`)
@@ -75,7 +96,7 @@ export async function POST(request: Request) {
         const message = error instanceof Error ? error.message.toLowerCase() : ""
         if (!message.includes("no such customer") && !message.includes("resource_missing")) {
           backendError("account_delete_stripe_failed", error, { userId: authenticated.id })
-          return Response.json({ error: "Tellwise could not cancel the linked billing account. Nothing else was deleted. Try again or contact support." }, { status: 502, headers: { "Cache-Control": "no-store" } })
+          throw error
         }
         backendLog("info", "account_delete_stripe_already_removed", { userId: authenticated.id })
       }
@@ -105,21 +126,31 @@ export async function POST(request: Request) {
 
     const { error: deleteUserError } = await admin.auth.admin.deleteUser(authenticated.id)
     if (deleteUserError) throw deleteUserError
+    authDeleted = true
 
     backendLog("info", "account_deleted", {
       userId: authenticated.id,
       recordingObjects: recordingPaths.length,
       communityAudioObjects: communityPaths.length,
       stripeCustomerDeleted: Boolean(stripeCustomerId),
+      reRegistrationCooldownDays: 14,
     })
 
-    return Response.json({ deleted: true }, { headers: { "Cache-Control": "no-store" } })
+    return Response.json(
+      { deleted: true, reRegistrationAvailableAt },
+      { headers: { "Cache-Control": "no-store" } },
+    )
   } catch (error) {
+    if (cooldownRecorded && !authDeleted) {
+      await removeAccountDeletionCooldown(admin, verifiedEmail)
+    }
     backendError("account_delete_failed", error, { userId: authenticated.id })
-    return Response.json({ error: "Tellwise could not completely finish account deletion. Billing may already have been canceled if that step succeeded. Retry once, then contact support if the problem continues." }, { status: 500 })
+    return Response.json(
+      { error: "Tellwise could not completely finish account deletion. Nothing should be retried rapidly. Try once more, then contact support if the problem continues." },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    )
   }
 }
-
 
 function uniquePaths(paths: Array<string | null | undefined>) {
   return [...new Set(paths.map((value) => value?.trim()).filter((value): value is string => Boolean(value)))]

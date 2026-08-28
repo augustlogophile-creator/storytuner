@@ -17,14 +17,16 @@ test("Progress focuses on course, XP, stories, average Studio score, and recalcu
   assert.doesNotMatch(source, />This week</)
 })
 
-test("Membership limit surfaces use the shared premium upgrade screen", () => {
+test("Membership limit surfaces preserve the intended upgrade behavior", () => {
   const arena = read("components/arena/arena-client.tsx")
   const community = read("components/community/community-client.tsx")
   const membership = read("components/profile/membership-client.tsx")
   const pricing = read("components/ui/pricing-interaction.tsx")
-  assert.match(arena, /UpgradeScreen reason="studio"/)
+  assert.match(arena, /studio-limit-notice/)
+  assert.match(arena, /disabled=\{!canRecord\}/)
+  assert.doesNotMatch(arena, /UpgradeScreen reason="studio"/)
   assert.match(community, /UpgradeScreen reason="community"/)
-  assert.match(membership, /<UpgradeScreen reason=\{reason\}/)
+  assert.match(membership, /<UpgradeScreen[\s\S]*reason=\{reason\}/)
   assert.match(pricing, /\$60/)
   assert.match(pricing, /\$5\.99/)
 })

@@ -16,7 +16,8 @@ const blockedFragments = [
   // separators, leetspeak and suffixes do not make them usable as public handles.
   "nigger", "nigga", "faggot", "kike", "chink", "spic", "wetback", "gook",
   "raghead", "tranny", "retard", "heilhitler", "whitepower", "whitepride88",
-  "naziparty", "kkk", "1488",
+  "naziparty", "neonazi", "nazism", "fascist", "fascism", "whitesuprem", "supremacist",
+  "aryanpride", "antisemitic", "homophobic", "racist", "racism", "sexist", "kkk", "1488",
 
   // Threats / self-harm bait
   "killyourself", "killurself", "suicidebait", "godie", "dieyou",
@@ -27,6 +28,8 @@ const blockedExact = new Set([
   "whore", "slut", "bastard", "sex", "rape", "rapist", "stfu", "cunt", "twat",
   "wanker", "pedo", "nonce", "porn", "nazi", "hitler", "kkk",
   "nigger", "nigga", "faggot", "kike", "chink", "spic", "gook", "tranny", "retard",
+  "fascist", "fascism", "nazism", "neonazi", "supremacist", "racist", "racism", "sexist",
+  "homophobe", "homophobic", "antisemite", "antisemitic",
 ])
 
 const suspiciousCombination = /(?:ass|dick|dih|cock|penis|cum|sex|boob|tit|pussy|fuck|shit|bitch|slut|whore|rape)(?:man|guy|boy|girl|kid|king|queen|lord|master|lover|face|head|69|420)$/
@@ -125,8 +128,11 @@ export function validateUsername(value: string, options: { allowReserved?: boole
   if (!/^[a-z0-9][a-z0-9_]*[a-z0-9]$/.test(clean) || clean.includes("__")) {
     return "Use only lowercase letters, numbers, or underscores. Do not start or end with an underscore."
   }
-  if ((!options.allowReserved && isReservedUsername(clean)) || !isPublicNameAppropriate(clean)) {
-    return "That username isn't available. Try another one."
+  if (!options.allowReserved && isReservedUsername(clean)) {
+    return "That username is reserved by Tellwise. Choose another one."
+  }
+  if (!isPublicNameAppropriate(clean)) {
+    return "Tellwise doesn't allow usernames with hateful, racist, sexual, vulgar, threatening, or harassing content."
   }
   return ""
 }
@@ -138,7 +144,7 @@ export function validateDisplayName(value: string) {
   if (letterCount < 3) return "Display names must contain at least 3 letters."
   if (clean.length > 15) return "Display names can be no longer than 15 characters."
   if (!isPublicNameAppropriate(clean)) {
-    return "Choose a different display name. Vulgar, sexual, hateful, or harassing terms are not allowed."
+    return "Tellwise doesn't allow display names with hateful, racist, sexual, vulgar, threatening, or harassing content."
   }
   return ""
 }

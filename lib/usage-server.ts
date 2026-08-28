@@ -1,11 +1,12 @@
 import "server-only"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-export type UsageFeature = "coach_message" | "arena_review"
+export type UsageFeature = "coach_message" | "arena_review" | "story_planner"
 
 export const USAGE_LIMITS: Record<UsageFeature, number> = {
   coach_message: 5,
   arena_review: 2,
+  story_planner: 1,
 }
 
 export type UsageStatus = {

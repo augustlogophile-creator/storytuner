@@ -14,6 +14,7 @@ import { preload } from "react-dom"
 import { Check, ChevronLeft } from "lucide-react"
 import { TellwisePressButton } from "@/components/ui/tellwise-press-button"
 import { isIntroAudioUnlocked, playIntroFeedbackTone, unlockIntroAudio } from "@/lib/intro-audio"
+import { markIntroSeen } from "@/lib/intro-history"
 import {
   blockerLabels,
   readOnboardingPreferences,
@@ -557,7 +558,10 @@ function ReadyPage({ onBack, animate }: { onBack: () => void; animate: boolean }
           <Link
             href="/sign-up"
             prefetch
-            onClick={() => triggerIntroFeedback("action")}
+            onClick={() => {
+              markIntroSeen()
+              triggerIntroFeedback("action")
+            }}
             className="tellwise-press-button"
             data-no-global-tap="true"
           >
