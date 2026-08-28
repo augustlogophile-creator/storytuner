@@ -16537,7 +16537,6 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 /* Width changes already carry meaning in progress UI. Keep them smooth enough
    to read while making the movement feel a little less mechanical. */
 [role="progressbar"] > div,
-.intro-progress-fill,
 .planner-simple-progress-fill,
 .journal-inline-audio-progress,
 .journal-video-review-progress {
@@ -16593,4 +16592,17 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
 }
 @media (prefers-reduced-motion: reduce) {
   .tellwise-reveal-in { animation: none !important; }
+}
+
+
+/* August 27 onboarding isolation. The app-wide motion polish must never alter
+   the authored introduction or its signup/login entry flow. Keep the original
+   pre-polish tap response there and suppress the newer icon kick. */
+.intro-flow-canvas .tellwise-tap,
+.entry-shell .tellwise-tap {
+  animation: tellwise-tap-pop 220ms cubic-bezier(.2,.9,.24,1) !important;
+}
+.intro-flow-canvas .tellwise-tap :is(svg, .lucide),
+.entry-shell .tellwise-tap :is(svg, .lucide) {
+  animation: none !important;
 }

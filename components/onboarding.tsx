@@ -267,6 +267,7 @@ function WelcomePage({ onNext, animate }: { onNext: () => void; animate: boolean
           speed={72}
           animate={animate}
           start={titleStarted}
+          feedbackEveryCharacter
           onComplete={() => setTitleDone(true)}
         />
         <p
@@ -848,6 +849,7 @@ function TypewriterText({
   speed = 58,
   animate = true,
   start = true,
+  feedbackEveryCharacter = false,
   onComplete,
 }: {
   tag?: TypewriterTag
@@ -858,6 +860,7 @@ function TypewriterText({
   speed?: number
   animate?: boolean
   start?: boolean
+  feedbackEveryCharacter?: boolean
   onComplete?: () => void
 }) {
   const [visibleCharacters, setVisibleCharacters] = useState(animate ? 0 : text.length)
@@ -897,7 +900,7 @@ function TypewriterText({
       setVisibleCharacters(index)
 
       const character = text[index - 1] ?? ""
-      if (character && !/\s/.test(character) && index % 2 === 0) {
+      if (character && !/\s/.test(character) && (feedbackEveryCharacter || index % 2 === 0)) {
         triggerIntroFeedback("typing")
       }
 
@@ -917,7 +920,7 @@ function TypewriterText({
       clearTimeout(startTimer)
       if (characterTimer) clearTimeout(characterTimer)
     }
-  }, [animate, delay, speed, start, text])
+  }, [animate, delay, feedbackEveryCharacter, speed, start, text])
 
   let characterIndex = 0
   const tokens = text.split(/(\s+)/)

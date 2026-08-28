@@ -37,6 +37,8 @@ const REVEAL_SELECTOR = [
   ".studio-transcript-card",
 ].join(",")
 
+const LEGACY_FLOW_SELECTOR = ".intro-flow-canvas, .entry-shell"
+
 const SELECTED_SELECTOR = [
   "[data-selected='true']",
   "[aria-selected='true']",
@@ -125,9 +127,16 @@ export function GlobalInteractions() {
       const interactive = event.target.closest<HTMLElement>(INTERACTIVE_SELECTOR)
       if (!interactive || interactive.matches(":disabled") || interactive.getAttribute("aria-disabled") === "true" || interactive.dataset.noGlobalTap === "true") return
 
-      replayClass(interactive, "tellwise-tap", 280)
-      replayClass(interactive.closest<HTMLElement>(SURFACE_SELECTOR), "tellwise-surface-tap", 300)
-      showBloom(event, interactive)
+      // The introduction and auth entry flow have their own authored motion.
+      // Keep their pre-polish tap response exactly as it was and do not layer
+      // the app-wide bloom/surface/selection effects on top of onboarding.
+      if (interactive.closest(LEGACY_FLOW_SELECTOR)) {
+        replayClass(interactive, "tellwise-tap", 240)
+      } else {
+        replayClass(interactive, "tellwise-tap", 280)
+        replayClass(interactive.closest<HTMLElement>(SURFACE_SELECTOR), "tellwise-surface-tap", 300)
+        showBloom(event, interactive)
+      }
 
       if (coarsePointer?.matches && "vibrate" in navigator) {
         try { navigator.vibrate(interactive.dataset.haptic === "strong" ? 12 : 6) } catch {}
@@ -136,6 +145,12 @@ export function GlobalInteractions() {
 
     function celebrateSelection(target: EventTarget | null) {
       if (!(target instanceof Element)) return
+      // Onboarding choices already animate themselves. Applying the global
+      // selected-state spring here caused the selected option to flash away.
+      if (target.closest(LEGACY_FLOW_SELECTOR)) return
+      const interactiveTarget = target.closest<HTMLElement>(INTERACTIVE_SELECTOR)
+      if (interactiveTarget?.dataset.noGlobalTap === "true") return
+
       window.setTimeout(() => {
         const interactive = target.closest<HTMLElement>(INTERACTIVE_SELECTOR)
         const selected = target.closest<HTMLElement>(SELECTED_SELECTOR)
