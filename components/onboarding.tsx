@@ -502,7 +502,6 @@ function ReadyPage({ onBack, animate }: { onBack: () => void; animate: boolean }
             </div>
           ))}
         </div>
-        <PencilArrowMoment active={typed} animate={animate} />
       </div>
 
       <div className={`intro-action-slot intro-after-typing${typed ? " is-visible" : ""}${animate ? "" : " is-static"}`}>
@@ -612,231 +611,6 @@ function IntroAction({
       {children}
     </TellwisePressButton>
   )
-}
-
-function PencilArrowMoment({ active, animate }: { active: boolean; animate: boolean }) {
-  const [drawing, setDrawing] = useState(!animate)
-  const mainPathRef = useRef<SVGPathElement>(null)
-  const mainTextureRef = useRef<SVGPathElement>(null)
-  const headUpperPathRef = useRef<SVGPathElement>(null)
-  const headUpperTextureRef = useRef<SVGPathElement>(null)
-  const headLowerPathRef = useRef<SVGPathElement>(null)
-  const headLowerTextureRef = useRef<SVGPathElement>(null)
-  const pencilRef = useRef<SVGGElement>(null)
-  const frameRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (!animate) {
-      setDrawing(true)
-      return
-    }
-    if (!active) {
-      setDrawing(false)
-      return
-    }
-
-    const startTimer = window.setTimeout(() => setDrawing(true), 1320)
-    return () => window.clearTimeout(startTimer)
-  }, [active, animate])
-
-  useEffect(() => {
-    const mainPath = mainPathRef.current
-    const mainTexture = mainTextureRef.current
-    const headUpperPath = headUpperPathRef.current
-    const headUpperTexture = headUpperTextureRef.current
-    const headLowerPath = headLowerPathRef.current
-    const headLowerTexture = headLowerTextureRef.current
-    const pencil = pencilRef.current
-    if (!mainPath || !mainTexture || !headUpperPath || !headUpperTexture || !headLowerPath || !headLowerTexture || !pencil) return
-
-    const mainLength = mainPath.getTotalLength()
-    const headUpperLength = headUpperPath.getTotalLength()
-    const headLowerLength = headLowerPath.getTotalLength()
-    const mainPaths = [mainPath, mainTexture]
-    const headUpperPaths = [headUpperPath, headUpperTexture]
-    const headLowerPaths = [headLowerPath, headLowerTexture]
-
-    mainPaths.forEach((path) => {
-      path.style.strokeDasharray = `${mainLength}`
-    })
-    headUpperPaths.forEach((path) => {
-      path.style.strokeDasharray = `${headUpperLength}`
-    })
-    headLowerPaths.forEach((path) => {
-      path.style.strokeDasharray = `${headLowerLength}`
-    })
-
-    const setMainProgress = (progress: number) => {
-      const offset = `${mainLength * (1 - progress)}`
-      mainPaths.forEach((path) => { path.style.strokeDashoffset = offset })
-    }
-    const setHeadUpperProgress = (progress: number) => {
-      const offset = `${headUpperLength * (1 - progress)}`
-      headUpperPaths.forEach((path) => { path.style.strokeDashoffset = offset })
-    }
-    const setHeadLowerProgress = (progress: number) => {
-      const offset = `${headLowerLength * (1 - progress)}`
-      headLowerPaths.forEach((path) => { path.style.strokeDashoffset = offset })
-    }
-
-    if (!animate) {
-      setMainProgress(1)
-      setHeadUpperProgress(1)
-      setHeadLowerProgress(1)
-      pencil.style.opacity = "0"
-      return
-    }
-
-    if (!drawing) {
-      setMainProgress(0)
-      setHeadUpperProgress(0)
-      setHeadLowerProgress(0)
-      pencil.style.opacity = "0"
-      return
-    }
-
-    const pointOn = (path: SVGPathElement, distance: number) => {
-      const length = path.getTotalLength()
-      const bounded = Math.max(0, Math.min(length, distance))
-      const point = path.getPointAtLength(bounded)
-      const before = path.getPointAtLength(Math.max(0, bounded - 1.5))
-      const ahead = path.getPointAtLength(Math.min(length, bounded + 1.5))
-      return {
-        x: point.x,
-        y: point.y,
-        angle: Math.atan2(ahead.y - before.y, ahead.x - before.x) * 180 / Math.PI,
-      }
-    }
-
-    let lastAngle: number | null = null
-    const placePencil = (
-      x: number,
-      y: number,
-      pathAngle: number,
-      opacity = 1,
-      section: "body" | "head" = "head",
-    ) => {
-      // The main arrow body looked most natural with the pencil orientation used
-      // before the arrowhead correction. Keep that orientation for the body only,
-      // while retaining the corrected reversed orientation for both arrowhead wings.
-      // In every case the graphite apex itself stays pinned to the live path end.
-      let angle = section === "body" ? pathAngle : pathAngle + 180
-      if (lastAngle !== null) {
-        let delta = angle - lastAngle
-        while (delta > 180) delta -= 360
-        while (delta < -180) delta += 360
-        angle = lastAngle + delta
-      }
-      lastAngle = angle
-      // Local (0, 9) is the graphite apex. This exact point is placed on the
-      // current end of the stroke so the line finishes at the tip, never beside it.
-      pencil.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle.toFixed(2)}) scale(.62) translate(0 -9)`)
-      pencil.style.opacity = String(opacity)
-    }
-
-    const arrowTip = pointOn(mainPath, mainLength)
-    const upperEndPoint = pointOn(headUpperPath, headUpperLength)
-    const lowerStartPoint = pointOn(headLowerPath, 0)
-    const start = performance.now()
-    const duration = 3220
-    const mainEnd = 0.76
-    const upperEnd = 0.86
-    const returnToTipEnd = 0.905
-
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration)
-
-      if (t <= mainEnd) {
-        const p = easeInOutCubic(t / mainEnd)
-        setMainProgress(p)
-        setHeadUpperProgress(0)
-        setHeadLowerProgress(0)
-        const point = pointOn(mainPath, mainLength * p)
-        placePencil(point.x, point.y, point.angle, 1, "body")
-      } else if (t <= upperEnd) {
-        // Both arrowhead strokes begin at the exact tip of the main line.
-        const p = easeInOutCubic((t - mainEnd) / (upperEnd - mainEnd))
-        setMainProgress(1)
-        setHeadUpperProgress(p)
-        setHeadLowerProgress(0)
-        const point = pointOn(headUpperPath, headUpperLength * p)
-        placePencil(point.x, point.y, point.angle)
-      } else if (t <= returnToTipEnd) {
-        // Lift briefly and return to the same tip before drawing the second wing.
-        setMainProgress(1)
-        setHeadUpperProgress(1)
-        setHeadLowerProgress(0)
-        const p = easeInOutCubic((t - upperEnd) / (returnToTipEnd - upperEnd))
-        const x = upperEndPoint.x + (arrowTip.x - upperEndPoint.x) * p
-        const y = upperEndPoint.y + (arrowTip.y - upperEndPoint.y) * p - Math.sin(Math.PI * p) * 2.4
-        const angle = upperEndPoint.angle + (lowerStartPoint.angle - upperEndPoint.angle) * p
-        placePencil(x, y, angle, .78 - Math.sin(Math.PI * p) * .38)
-      } else {
-        const p = easeInOutCubic((t - returnToTipEnd) / (1 - returnToTipEnd))
-        setMainProgress(1)
-        setHeadUpperProgress(1)
-        setHeadLowerProgress(p)
-        const point = pointOn(headLowerPath, headLowerLength * p)
-        placePencil(point.x, point.y, point.angle)
-      }
-
-      if (t < 1) {
-        frameRef.current = window.requestAnimationFrame(tick)
-      } else {
-        setMainProgress(1)
-        setHeadUpperProgress(1)
-        setHeadLowerProgress(1)
-        pencil.style.opacity = "0"
-      }
-    }
-
-    frameRef.current = window.requestAnimationFrame(tick)
-
-    return () => {
-      if (frameRef.current !== null) {
-        window.cancelAnimationFrame(frameRef.current)
-        frameRef.current = null
-      }
-    }
-  }, [drawing, animate])
-
-  const mainPath = "M26 106 C52 97 70 77 90 69 C108 62 124 90 143 87 C168 83 187 48 216 27"
-  const headUpperPath = "M216 27 C207 29 198 30 188 31"
-  const headLowerPath = "M216 27 C214 37 211 46 207 54"
-
-  return (
-    <div className={`intro-pencil-moment${drawing ? " is-drawing" : ""}${animate ? "" : " is-static"}`} aria-hidden="true">
-      <svg className="intro-pencil-arrow" viewBox="0 0 240 132" fill="none">
-        <path ref={mainPathRef} className="intro-pencil-arrow-line" d={mainPath} />
-        <path ref={mainTextureRef} className="intro-pencil-arrow-texture" d={mainPath} />
-        <path ref={headUpperPathRef} className="intro-pencil-arrow-head" d={headUpperPath} />
-        <path ref={headUpperTextureRef} className="intro-pencil-arrow-head-texture" d={headUpperPath} />
-        <path ref={headLowerPathRef} className="intro-pencil-arrow-head" d={headLowerPath} />
-        <path ref={headLowerTextureRef} className="intro-pencil-arrow-head-texture" d={headLowerPath} />
-        <g ref={pencilRef} className="intro-pencil-svg-tool">
-          {/* A compact, familiar yellow school pencil, based on the supplied
-              reference. The graphite point sits at x=0 so it stays locked to
-              the exact path position while the pencil rotates. */}
-          <path d="M0 9 10.2 3.1 10.2 14.9 0 9Z" fill="#e7a58e" stroke="#38342f" strokeWidth="1.05" strokeLinejoin="round" />
-          <path d="M0 9 3.8 6.8 3.8 11.2 0 9Z" fill="#282725" />
-          <path d="M9.7 3.1H45.2V14.9H9.7Z" fill="#ffd12c" stroke="#38342f" strokeWidth="1.05" />
-          <path d="M10.2 3.7H44.7V7.05H10.2Z" fill="#ffe166" opacity=".95" />
-          <path d="M10.2 11.15H44.7V14.35H10.2Z" fill="#efb819" opacity=".78" />
-          <path d="M10.6 4.1 44.4 4.1" stroke="#fff0a3" strokeWidth=".9" strokeLinecap="round" opacity=".74" />
-          <path d="M45.2 3.1H52.4V14.9H45.2Z" fill="#63d7d2" stroke="#38342f" strokeWidth="1.05" />
-          <path d="M46.8 3.4V14.6M50.5 3.4V14.6" stroke="#2f7778" strokeWidth=".65" opacity=".55" />
-          <path d="M52.4 3.1H58.4C60.5 3.1 62.2 4.8 62.2 6.9V11.1C62.2 13.2 60.5 14.9 58.4 14.9H52.4Z" fill="#ff6868" stroke="#38342f" strokeWidth="1.05" />
-          <path d="M54 4.15H58.2C59.55 4.15 60.65 5.25 60.65 6.6" stroke="#ff9b9b" strokeWidth=".95" strokeLinecap="round" opacity=".72" />
-        </g>
-      </svg>
-    </div>
-  )
-}
-
-function easeInOutCubic(value: number) {
-  return value < .5
-    ? 4 * value * value * value
-    : 1 - Math.pow(-2 * value + 2, 3) / 2
 }
 
 function TypewriterText({
@@ -1048,13 +822,11 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
     const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!AudioContextConstructor) return
 
-    // Do not queue opening-page typing ticks while the browser is still
-    // blocking audio. Queued ticks can all release on the first button press
-    // and make that tap sound harsh. Once audio has been unlocked, the welcome
-    // typewriter uses this exact same tone path and cadence as every later one.
-    const userActivation = window.navigator.userActivation
-    if (kind === "typing" && !introAudioContext && !userActivation?.hasBeenActive) return
-
+    // Every intro typewriter, including the opening "Welcome to Tellwise."
+    // line, goes through this exact same audio path. We still discard a tick if
+    // a browser delays audio unlock until a later gesture, so old ticks never
+    // pile up on the first button press.
+    const requestedAt = performance.now()
     if (!introAudioContext) introAudioContext = new AudioContextConstructor()
     const context = introAudioContext
 
@@ -1106,10 +878,12 @@ function playIntroFeedbackTone(kind: IntroFeedback) {
     }
 
     if (context.state === "suspended") {
-      // Typing should never wait in a queue for a future gesture. Page/action
-      // feedback occurs inside a real tap, so it can safely resume then play.
-      if (kind === "typing" && !userActivation?.isActive && !userActivation?.hasBeenActive) return
-      void context.resume().then(play).catch(() => {})
+      void context.resume().then(() => {
+        // If a browser held this resume request until a much later interaction,
+        // do not replay stale typing ticks. Immediate resumes play normally.
+        if (kind === "typing" && performance.now() - requestedAt > 140) return
+        play()
+      }).catch(() => {})
       return
     }
 
