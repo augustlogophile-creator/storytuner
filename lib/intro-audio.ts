@@ -33,7 +33,10 @@ export async function unlockIntroAudio() {
 
   try {
     await context.resume()
-    return context.state === "running"
+    // Re-read through the shared context accessor after resume(). TypeScript
+    // otherwise keeps the pre-await state narrowing even though AudioContext
+    // state changes asynchronously in the browser.
+    return isIntroAudioUnlocked()
   } catch {
     return false
   }
