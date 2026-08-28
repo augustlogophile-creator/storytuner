@@ -79,15 +79,15 @@ export type WeaverColor = {
 }
 
 export const weaverColors: WeaverColor[] = [
-  { id: "classic", name: "Classic Parch", cost: 0, image: "/parch-classic.png", description: "The original scroll, clean, simple, and ready to tell." },
-  { id: "scholar", name: "Scholar Parch", cost: 125, image: "/parch-scholar.png", description: "Round glasses and a thoughtful look for careful storytellers." },
-  { id: "detective", name: "Detective Parch", cost: 260, image: "/parch-detective.png", description: "Magnifying glass in hand, built for details and clues." },
-  { id: "explorer", name: "Explorer Parch", cost: 400, image: "/parch-explorer.png", description: "Backpack, compass, and a sense that the story is out there somewhere." },
-  { id: "bard", name: "Bard Parch", cost: 650, image: "/parch-bard.png", description: "A performer’s version of Parch, with a lute and a little flair." },
-  { id: "sage", name: "Sage Parch", cost: 900, image: "/parch-sage.png", description: "Wise, warm, and holding a glowing staff." },
-  { id: "royal", name: "Royal Parch", cost: 1200, image: "/parch-royal.png", description: "Regal trim and a crown for a polished storyteller." },
-  { id: "master", name: "Master Storyteller", cost: 1600, image: "/parch-master.png", description: "Hood, feather, and book. Reserved for serious storytellers.", featured: "master" },
-  { id: "golden", name: "Golden Parch", cost: 2000, image: "/parch-golden.png", description: "The rarest Parch, glowing gold with a crown and staff.", featured: "gold" },
+  { id: "classic", name: "Classic Parch", cost: 0, image: "/parch-classic.png", description: "The original Parch." },
+  { id: "scholar", name: "Scholar Parch", cost: 125, image: "/parch-scholar.png", description: "Parch with round glasses and a book." },
+  { id: "detective", name: "Detective Parch", cost: 260, image: "/parch-detective.png", description: "Parch with a magnifying glass." },
+  { id: "explorer", name: "Explorer Parch", cost: 400, image: "/parch-explorer.png", description: "Parch with an explorer pack and compass." },
+  { id: "bard", name: "Bard Parch", cost: 650, image: "/parch-bard.png", description: "Parch with a lute." },
+  { id: "sage", name: "Sage Parch", cost: 900, image: "/parch-sage.png", description: "Parch with a staff." },
+  { id: "royal", name: "Royal Parch", cost: 1200, image: "/parch-royal.png", description: "Parch with a crown and royal trim." },
+  { id: "master", name: "Master Storyteller", cost: 1600, image: "/parch-master.png", description: "Parch with a hood, feather, and book.", featured: "master" },
+  { id: "golden", name: "Golden Parch", cost: 2000, image: "/parch-golden.png", description: "A gold Parch with a crown and staff.", featured: "gold" },
 ]
 
 export type CoachMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string }
@@ -419,9 +419,14 @@ function mergeCloudRecordingHistory(state: AppState, rows: CloudRecordingRow[]) 
     matched.add(row.id)
     recordings.push({
       ...recording,
-      title: row.title?.trim() || recording.title,
+      // Local draft text may contain edits made after transcription. Keep that
+      // user-edited snapshot authoritative instead of replacing it with the
+      // older raw cloud transcript when history refreshes.
+      title: recording.title?.trim() && recording.title !== "Untitled story"
+        ? recording.title
+        : (row.title?.trim() || recording.title),
       duration: row.duration_seconds || recording.duration,
-      transcript: row.transcript?.trim() || recording.transcript,
+      transcript: recording.transcript?.trim() || row.transcript?.trim() || "",
       mimeType: row.content_type || recording.mimeType,
       cloudStoragePath: row.storage_path,
       cloudRecordingId: row.id,
@@ -854,17 +859,28 @@ export function AppProvider({
   }, [])
 
   const saveDraftRecording = useCallback((recording: Recording) => {
-    setState((current) => ({
-      ...current,
-      recordings: [
-        recording,
-        ...current.recordings.filter((item) => {
-          if (item.id === recording.id) return false
-          if (recording.cloudRecordingId && item.cloudRecordingId === recording.cloudRecordingId) return false
-          return true
-        }),
-      ],
-    }))
+    setState((current) => {
+      const next = {
+        ...current,
+        recordings: [
+          recording,
+          ...current.recordings.filter((item) => {
+            if (item.id === recording.id) return false
+            if (recording.cloudRecordingId && item.cloudRecordingId === recording.cloudRecordingId) return false
+            return true
+          }),
+        ],
+      }
+
+      // Draft text is user-authored work. Persist this snapshot immediately,
+      // rather than waiting for the provider effect, so navigating away on the
+      // same keystroke cannot leave the previous transcript in Past drafts.
+      stateRef.current = next
+      try {
+        localStorage.setItem(storageKeyForUser(next.accountOwnerId), JSON.stringify(next))
+      } catch {}
+      return next
+    })
   }, [])
 
   const deleteRecording = useCallback(async (id: string) => {

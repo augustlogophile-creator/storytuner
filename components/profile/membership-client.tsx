@@ -77,7 +77,10 @@ export function MembershipClient({
   }
 
   if (!status.active) {
-    return <UpgradeScreen reason={reason} backHref={reason === "studio" ? "/studio" : reason === "lessons" ? "/activities" : reason === "planner" ? "/studio" : reason === "community" ? "/home" : "/profile"} />
+    return <UpgradeScreen
+      reason={reason}
+      backHref={reason === "community" ? undefined : reason === "studio" ? "/studio" : reason === "lessons" ? "/activities" : reason === "planner" ? "/studio" : "/profile"}
+    />
   }
 
   const renewalDate = status.currentPeriodEnd

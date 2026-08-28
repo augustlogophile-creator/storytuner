@@ -23,9 +23,7 @@ export default async function LegalHubPage({ searchParams }: { searchParams?: Le
       <div className="flex flex-col gap-5">
         <BackLink href="/profile" label="Profile" />
         <header>
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted-foreground">Account information</p>
-          <h1 className="mt-2 text-[1.65rem] font-semibold tracking-[-0.03em]">Legal and accessibility</h1>
-          <p className="mt-1.5 text-[0.78rem] leading-5 text-muted-foreground">Privacy, terms, accessibility, Community rules, and account deletion information.</p>
+          <h1 className="text-[1.65rem] font-semibold tracking-[-0.03em]">Legal and accessibility</h1>
         </header>
 
         <section className="story-card overflow-hidden rounded-[1.35rem] px-4">

@@ -78,7 +78,7 @@ export function CommunityClient({ membershipActive, currentUsername }: Community
 }
 
 function MembershipLock() {
-  return <UpgradeScreen reason="community" backHref="/home" />
+  return <UpgradeScreen reason="community" />
 }
 
 function MemberCommunity({ currentUsername }: { currentUsername: string }) {

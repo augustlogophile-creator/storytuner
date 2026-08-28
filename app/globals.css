@@ -3586,7 +3586,7 @@ body {
     padding-right: .85rem !important;
   }
 
-  .parch-archive [aria-label="Parch collection markers"] {
+  .parch-archive [aria-label="Parch style markers"] {
     gap: .15rem !important;
   }
 
@@ -16517,4 +16517,170 @@ html:not(.dark) .journal-capture-panel.is-video .journal-capture-save:not(:disab
   .book-nav-item .book-nav-label {
     transition: none !important;
   }
+}
+
+/* August 27 content pass: quieter Planner hierarchy, membership comparison,
+   and an inline Studio limit state that keeps the page browsable. */
+.planner-simple-hero {
+  min-height: 0 !important;
+  gap: 0 !important;
+  padding-bottom: 1.15rem !important;
+}
+.planner-hero-progress-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  margin-top: .95rem;
+}
+.planner-hero-progress-row .planner-simple-progress {
+  margin: 0 !important;
+}
+.planner-hero-progress-row > span {
+  color: #8f8375;
+  font-size: .7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.planner-past-plans-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+  margin-top: .72rem;
+  color: #756b60;
+  font-size: .68rem;
+  font-weight: 600;
+}
+.planner-past-plans-link svg {
+  width: .72rem;
+  height: .72rem;
+}
+.planner-simple-form {
+  padding-top: 0 !important;
+}
+.planner-simple-fields .planner-field-heading {
+  grid-template-columns: 2rem minmax(0,1fr) 1.2rem !important;
+  align-items: center !important;
+}
+
+.membership-comparison {
+  margin-top: 1.25rem;
+  overflow: hidden;
+  border: 1px solid #ded4c5;
+  border-radius: 1.15rem;
+  background: rgba(255,252,246,.64);
+}
+.membership-comparison-head,
+.membership-comparison-row {
+  display: grid;
+  grid-template-columns: minmax(0,1.45fr) minmax(4.2rem,.72fr) minmax(4.5rem,.82fr);
+  align-items: center;
+  column-gap: .42rem;
+}
+.membership-comparison-head {
+  padding: .72rem .82rem .58rem;
+  border-bottom: 1px solid #e6ddd0;
+}
+.membership-comparison-plan {
+  position: relative;
+  justify-self: center;
+  padding-bottom: .34rem;
+  color: #3d3832;
+  font-size: .72rem;
+  font-weight: 700;
+}
+.membership-comparison-plan::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+}
+.membership-comparison-plan.is-free::after { background: #d95c54; }
+.membership-comparison-plan.is-paid::after { background: #4c9c67; }
+.membership-comparison-row {
+  min-height: 3.15rem;
+  padding: .62rem .82rem;
+  border-bottom: 1px solid #ebe3d8;
+}
+.membership-comparison-row:last-child { border-bottom: 0; }
+.membership-comparison-feature {
+  min-width: 0;
+  color: #625a51;
+  font-size: .66rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.membership-comparison .membership-plan-value {
+  justify-self: center;
+  padding-bottom: .3rem;
+  font-size: .65rem;
+  line-height: 1.05rem;
+  white-space: nowrap;
+}
+.membership-comparison .membership-plan-value::after {
+  left: 12%;
+  right: 12%;
+}
+
+.studio-limit-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  border: 1px solid color-mix(in oklch, var(--brand) 20%, var(--border));
+  border-radius: 1.15rem;
+  background: color-mix(in oklch, var(--brand-soft) 50%, var(--card));
+  padding: .82rem .9rem;
+}
+.studio-limit-notice > div { min-width: 0; }
+.studio-limit-notice p {
+  font-size: .72rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.studio-limit-notice span {
+  display: block;
+  margin-top: .2rem;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+  line-height: 1.4;
+}
+.studio-limit-notice a {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--card);
+  padding: .55rem .7rem;
+  color: var(--foreground);
+  font-size: .62rem;
+  font-weight: 650;
+}
+.studio-primary-action:disabled {
+  cursor: not-allowed;
+  opacity: .52;
+  transform: none !important;
+}
+
+.dark .planner-hero-progress-row > span,
+.dark .planner-past-plans-link { color: #c6baa9 !important; }
+.dark .membership-comparison {
+  border-color: #51483d;
+  background: #28241f;
+}
+.dark .membership-comparison-head,
+.dark .membership-comparison-row { border-color: #463f36; }
+.dark .membership-comparison-plan { color: #eee6da; }
+.dark .membership-comparison-feature { color: #cbbfaf; }
+.dark .membership-comparison .membership-plan-value { color: #f3ede1; }
+
+@media (max-width: 360px) {
+  .membership-comparison-head,
+  .membership-comparison-row {
+    grid-template-columns: minmax(0,1.3fr) minmax(3.7rem,.68fr) minmax(4.1rem,.78fr);
+  }
+  .membership-comparison-feature,
+  .membership-comparison .membership-plan-value { font-size: .6rem; }
 }

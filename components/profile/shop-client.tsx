@@ -8,16 +8,16 @@ import { Weaver } from "@/components/weaver"
 import { CountUp } from "@/components/ui/count-up"
 import { useApp, weaverColors } from "@/lib/app-state"
 
-const parchLore: Record<string, { rarity: string; title: string; note: string }> = {
-  classic: { rarity: "Original", title: "The first page", note: "Paper & possibility" },
-  scholar: { rarity: "Uncommon", title: "Keeper of margins", note: "Ink & inquiry" },
-  detective: { rarity: "Uncommon", title: "Hunter of details", note: "Clue & consequence" },
-  explorer: { rarity: "Rare", title: "Collector of roads", note: "Maps & memory" },
-  bard: { rarity: "Rare", title: "Keeper of cadence", note: "Voice & rhythm" },
-  sage: { rarity: "Epic", title: "The old storykeeper", note: "Wisdom & weight" },
-  royal: { rarity: "Epic", title: "The crowned narrator", note: "Poise & presence" },
-  master: { rarity: "Legendary", title: "Master of the telling", note: "Craft & command" },
-  golden: { rarity: "Mythic", title: "The illuminated one", note: "Legacy & light" },
+const parchRarity: Record<string, string> = {
+  classic: "Original",
+  scholar: "Uncommon",
+  detective: "Uncommon",
+  explorer: "Rare",
+  bard: "Rare",
+  sage: "Epic",
+  royal: "Epic",
+  master: "Legendary",
+  golden: "Mythic",
 }
 
 export function ShopClient() {
@@ -43,7 +43,7 @@ export function ShopClient() {
   }, [])
 
   const selected = weaverColors[selectedIndex] ?? weaverColors[0]
-  const selectedLore = parchLore[selected.id] ?? parchLore.classic
+  const selectedRarity = parchRarity[selected.id] ?? parchRarity.classic
   const owned = state.ownedWeavers.includes(selected.id)
   const equipped = state.activeWeaver === selected.id
   const affordable = state.xpBalance >= selected.cost
@@ -125,11 +125,10 @@ export function ShopClient() {
       <header className="px-1">
         <div className="shop-heading-row flex items-end justify-between gap-4">
           <div>
-            <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-muted-foreground">Parch collection</p>
-            <h1 className="mt-1.5 text-[1.65rem] font-semibold leading-tight tracking-[-0.035em]">Choose your Parch.</h1>
+            <h1 className="text-[1.65rem] font-semibold leading-tight tracking-[-0.035em]">Choose your Parch.</h1>
             <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-muted-foreground">Unlock and equip new Parch forms with XP.</p>
           </div>
-          <div className="shrink-0 rounded-full border border-border bg-card px-3.5 py-2 text-right shadow-sm">
+          <div className="shrink-0 rounded-full border border-border bg-card px-3.5 py-2 text-center shadow-sm">
             <p className="text-sm font-semibold"><CountUp value={state.xpBalance} /> XP</p>
             <p className="text-[0.58rem] font-mono uppercase tracking-[0.12em] text-muted-foreground">available</p>
           </div>
@@ -154,8 +153,7 @@ export function ShopClient() {
         <span className="parch-star left-[17%] top-[28%] [animation-delay:1500ms]" aria-hidden="true">✧</span>
 
         <div className="relative flex h-full flex-col px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
-          <div className="flex h-5 shrink-0 items-center justify-between gap-4 font-mono text-[0.6rem] uppercase tracking-[0.17em] text-[#91887d]">
-            <span>{selectedLore.rarity}</span>
+          <div className="flex h-5 shrink-0 items-center justify-end gap-4 font-mono text-[0.6rem] uppercase tracking-[0.17em] text-[#91887d]">
             <span>Entry {String(selectedIndex + 1).padStart(2, "0")} / {String(weaverColors.length).padStart(2, "0")}</span>
           </div>
 
@@ -163,19 +161,13 @@ export function ShopClient() {
             <div key={selected.id} className="parch-reveal relative z-10 flex h-[9.2rem] w-[12rem] items-center justify-center sm:h-[9.8rem] sm:w-[12.7rem]">
               <Weaver size={156} colorId={selected.id} className="max-h-full max-w-full drop-shadow-[0_12px_14px_rgba(49,42,34,0.12)]" />
             </div>
-            <p className="relative z-10 mt-1 font-mono text-[0.56rem] uppercase tracking-[0.2em] text-[#aa7a35]">{selectedLore.rarity}</p>
+            <p className="relative z-10 mt-1 font-mono text-[0.56rem] uppercase tracking-[0.2em] text-[#aa7a35]">{selectedRarity}</p>
             <h2 className="relative z-10 mt-1 text-[1.42rem] font-semibold tracking-[-0.035em] text-[#27231f]">{selected.name}</h2>
           </div>
 
           <div className="relative mt-2 flex min-h-[18.65rem] shrink-0 flex-col rounded-[1.55rem] border border-[#ded9cf] bg-white/88 p-5 shadow-[0_8px_24px_rgba(39,35,31,0.045)] backdrop-blur-sm sm:min-h-[19.25rem] sm:p-6">
-            <div className="flex h-7 shrink-0 items-center justify-between gap-3">
-              <div className="inline-flex rounded-full border border-[#d7d0c5] bg-[#f6f3ed] px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.15em] text-[#746d64]">{selectedLore.rarity}</div>
-              <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-[#989187]">Archive {String(selectedIndex + 1).padStart(2, "0")}</span>
-            </div>
-
-            <div className="mt-3 h-[5.9rem] shrink-0 overflow-hidden">
-              <h3 className="text-[1.36rem] font-semibold leading-tight tracking-[-0.03em] text-[#27231f]">{selectedLore.title}</h3>
-              <p className="mt-2 line-clamp-2 max-w-[29rem] text-sm leading-relaxed text-[#716b64]">{selected.description}</p>
+            <div className="mt-1 h-[5.9rem] shrink-0 overflow-hidden">
+              <p className="line-clamp-3 max-w-[29rem] text-sm leading-relaxed text-[#716b64]">{selected.description}</p>
             </div>
 
             <div className="mt-3 flex h-11 shrink-0 items-center gap-3">
@@ -187,7 +179,7 @@ export function ShopClient() {
               </button>
               <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="text-[0.7rem] font-medium text-[#777069]">Browse the collection</p>
-                <div className="mt-1.5 grid w-full grid-cols-9 place-items-center gap-1" aria-label="Parch collection markers">
+                <div className="mt-1.5 grid w-full grid-cols-9 place-items-center gap-1" aria-label="Parch style markers">
                   {weaverColors.map((item, index) => (
                     <button
                       type="button"
@@ -254,7 +246,7 @@ export function ShopClient() {
         </div>
       )}
 
-      <NoticeDialog open={Boolean(notice)} title="Parch collection" onClose={() => setNotice("")}>
+      <NoticeDialog open={Boolean(notice)} title="Parch Shop" onClose={() => setNotice("")}>
         {notice}
       </NoticeDialog>
     </div>

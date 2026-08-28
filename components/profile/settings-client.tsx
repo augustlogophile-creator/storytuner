@@ -177,8 +177,7 @@ export function SettingsClient({ username }: { username: string }) {
     <div className="flex flex-col gap-6">
       <BackLink href="/profile" label="Profile" />
       <header>
-        <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted-foreground">Settings and privacy</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">Clear controls, no hidden defaults.</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Settings and privacy</h1>
       </header>
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
@@ -189,10 +188,10 @@ export function SettingsClient({ username }: { username: string }) {
       {notice && <p role="status" className={displayNameError ? "rounded-2xl border border-destructive/35 bg-destructive/10 px-4 py-3 text-sm leading-relaxed text-destructive" : "rounded-2xl border border-brand/20 bg-brand-soft/55 px-4 py-3 text-sm leading-relaxed text-foreground"}>{notice}</p>}
 
       <Section title="Profile">
-        <Row title="Username" detail="Your public Tellwise identity. This is what other members see.">
+        <Row title="Username" detail="Your public identity, what other members see if you post.">
           <span className="rounded-full bg-secondary px-3 py-2 text-xs font-semibold text-foreground">@{username}</span>
         </Row>
-        <Row title="Display name" detail="Used for personal greetings inside Tellwise. Your @username is your public identity.">
+        <Row title="Display name" detail="Used for personal greetings inside the app. Usually your name or nickname.">
           <div className="flex items-center gap-2">
             <input
               value={displayName}
@@ -217,7 +216,7 @@ export function SettingsClient({ username }: { username: string }) {
       </Section>
 
       <Section title="Appearance">
-        <Row title="Color theme" detail="Paper or dark reading mode.">
+        <Row title="Color theme">
           <CinematicThemeSwitcher />
         </Row>
       </Section>
@@ -236,7 +235,7 @@ export function SettingsClient({ username }: { username: string }) {
           </div>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
-        <Row title="Tone" detail="Reminder style.">
+        <Row title="Tone">
           <SelectControl
             value={state.settings.tone}
             onChange={(value) => updateSettings({ tone: value as "warm" | "minimal" })}
@@ -244,7 +243,7 @@ export function SettingsClient({ username }: { username: string }) {
             label="Notification tone"
           />
         </Row>
-        <Row title="Frequency" detail="Reminder schedule.">
+        <Row title="Frequency">
           <SelectControl
             value={state.settings.frequency}
             onChange={(value) => updateSettings({ frequency: value as "daily" | "weekdays" | "off" })}
@@ -278,23 +277,15 @@ export function SettingsClient({ username }: { username: string }) {
 
 
 
-      <Link href="/membership" className="flex items-center gap-3 rounded-3xl border border-border bg-card p-5">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">{state.premium ? "Tellwise Membership is active" : "Free plan"}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Review the $5.99/month and $60/year Membership plans.</p>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </Link>
-
-      <Section title="Account">
-        <Row title="Account email" detail="Used for secure login and never shown in Community.">
+      <Section title="Your account">
+        <Row title="Your email" detail="Used for secure login and never shown in Community.">
           <span className="max-w-40 truncate text-xs font-medium text-muted-foreground">{accountEmail || "Loading…"}</span>
         </Row>
-        <Row title="Log out" detail="Sign out securely on this device.">
-          <button type="button" onClick={() => setDialog("logout")} className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-destructive/90">
-            <LogOut className="h-3.5 w-3.5" /> Log out
+        <div className="pt-4">
+          <button type="button" onClick={() => setDialog("logout")} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/35 bg-destructive/5 px-4 py-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10">
+            <LogOut className="h-4 w-4" /> Log out
           </button>
-        </Row>
+        </div>
       </Section>
 
       {dialogContent && (
@@ -323,12 +314,12 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function Row({ title, detail, children }: { title: string; detail: string; children: ReactNode }) {
+function Row({ title, detail, children }: { title: string; detail?: string; children: ReactNode }) {
   return (
     <div className="relative flex items-center justify-between gap-4 py-4 first:pt-1 last:pb-1">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{title}</p>
-        <p className="mt-1 max-w-lg text-xs leading-relaxed text-muted-foreground">{detail}</p>
+        {detail ? <p className="mt-1 max-w-lg text-xs leading-relaxed text-muted-foreground">{detail}</p> : null}
       </div>
       <div className="shrink-0">{children}</div>
     </div>

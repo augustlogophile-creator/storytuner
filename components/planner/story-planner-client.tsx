@@ -36,7 +36,6 @@ type FieldProps = {
   number: number
   icon: typeof Target
   title: string
-  help: string
   value: string
   onChange: (value: string) => void
   placeholder: string
@@ -153,35 +152,27 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
         <div className="min-w-0">
           <Eyebrow>Story Planner</Eyebrow>
           <h1>Plan your story.</h1>
-          <p>Five prompts. Parch shapes the arc.</p>
+          <p>Answer five questions to get some direction before you start sharing.</p>
         </div>
+        <div className="planner-hero-progress-row" aria-label={`${answeredCount} of 5 questions answered`}>
+          <div className="planner-simple-progress">
+            {Array.from({ length: 5 }, (_, index) => <span key={index} className={index < answeredCount ? "is-done" : ""} />)}
+          </div>
+          <span>{answeredCount}/5</span>
+        </div>
+        <Link href="/planner/saved" className="planner-past-plans-link">
+          <span>Your past plans</span>
+          <ChevronDown className="-rotate-90" aria-hidden="true" />
+        </Link>
       </header>
-
-      <Link href="/planner/saved" className="planner-simple-saved">
-        <FileText aria-hidden="true" />
-        <span>Your saved plans</span>
-        <ChevronDown className="-rotate-90" aria-hidden="true" />
-      </Link>
 
       {!building && !plan && (
         <section className="planner-simple-form">
-          <div className="planner-simple-heading">
-            <div>
-              <Eyebrow>Your story</Eyebrow>
-              <h2>Give Parch the rough version.</h2>
-            </div>
-            <span>{answeredCount}/5</span>
-          </div>
-          <div className="planner-simple-progress" aria-label={`${answeredCount} of 5 prompts answered`}>
-            {Array.from({ length: 5 }, (_, index) => <span key={index} className={index < answeredCount ? "is-done" : ""} />)}
-          </div>
-
           <div className="planner-simple-fields">
             <PlannerField
               number={1}
               icon={MapPin}
-              title="Where will you tell this story?"
-              help="Audience or setting"
+              title="Where will you tell this story, and to whom?"
               value={form.audienceContext}
               onChange={(value) => update("audienceContext", value)}
               placeholder="Interview, class, speech, conversation..."
@@ -192,8 +183,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <PlannerField
               number={2}
               icon={Target}
-              title="What should the listener take away?"
-              help="What should land"
+              title="What should the listener take away from your story?"
               value={form.goal}
               onChange={(value) => update("goal", value)}
               placeholder="I want them to understand that..."
@@ -204,8 +194,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <PlannerField
               number={3}
               icon={ListChecks}
-              title="What happens?"
-              help="Rough beats are enough"
+              title="What roughly happens in this story?"
               value={form.roughPlan}
               onChange={(value) => update("roughPlan", value)}
               placeholder="First... then... finally..."
@@ -216,11 +205,10 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <PlannerField
               number={4}
               icon={FileText}
-              title="What must stay in?"
-              help="Anything essential"
+              title="What are the essential details that must be communicated?"
               value={form.mustInclude}
               onChange={(value) => update("mustInclude", value)}
-              placeholder="Write “None” if there is nothing essential."
+              placeholder="The critical pieces are…"
               maxLength={3000}
               rows={2}
               required
@@ -228,8 +216,7 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <PlannerField
               number={5}
               icon={ShieldQuestion}
-              title="What feels hard?"
-              help="What needs help"
+              title="What feels hard or scary right now?"
               value={form.nervousAbout}
               onChange={(value) => update("nervousAbout", value)}
               placeholder="Write “None” if you feel ready."
@@ -248,7 +235,6 @@ export function StoryPlannerClient({ fromStudio = false }: { fromStudio?: boolea
             <Sparkles className="h-4 w-4" />
             Build my story plan
           </button>
-          <p className="planner-build-hint">{ready ? "Ready to build." : `Answer ${5 - answeredCount} more ${5 - answeredCount === 1 ? "prompt" : "prompts"}.`}</p>
         </section>
       )}
 
@@ -373,14 +359,13 @@ function PlanReadySkeleton() {
   )
 }
 
-function PlannerField({ number, icon: Icon, title, help, value, onChange, placeholder, maxLength, rows = 3, required = false }: FieldProps) {
+function PlannerField({ number, icon: Icon, title, value, onChange, placeholder, maxLength, rows = 3, required = false }: FieldProps) {
   return (
     <label className="planner-field-card">
       <span className="planner-field-heading">
         <span className="planner-field-number">{number}</span>
         <span className="planner-field-heading-copy">
           <span className="planner-field-title">{title}{required ? <span className="ml-1 text-brand">*</span> : null}</span>
-          <span className="planner-field-help">{help}</span>
         </span>
         <Icon className="planner-field-icon" aria-hidden="true" />
       </span>

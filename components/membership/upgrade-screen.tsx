@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { BookOpenCheck, Check, Loader2, Lock, Map, Mic2, Sparkles, UsersRound } from "lucide-react"
+import { Check, Loader2, Lock } from "lucide-react"
 import { PricingInteraction, type MembershipPlanChoice } from "@/components/ui/pricing-interaction"
 
 export type UpgradeReason = "general" | "lessons" | "studio" | "community" | "planner"
@@ -10,7 +10,7 @@ export type UpgradeReason = "general" | "lessons" | "studio" | "community" | "pl
 const reasonCopy: Record<UpgradeReason, { eyebrow: string; title: string; description: string }> = {
   general: {
     eyebrow: "Tellwise Membership",
-    title: "Keep building your storytelling practice.",
+    title: "Continue to sharpen your storytelling.",
     description: "Unlock the full course and every practice tool.",
   },
   lessons: {
@@ -35,12 +35,12 @@ const reasonCopy: Record<UpgradeReason, { eyebrow: string; title: string; descri
   },
 }
 
-const benefits = [
-  { icon: BookOpenCheck, text: "All 15 storytelling lessons" },
-  { icon: Mic2, text: "Unlimited graded Studio story reviews" },
-  { icon: Sparkles, text: "Unlimited Parch craft coaching" },
-  { icon: UsersRound, text: "Full Community access" },
-  { icon: Map, text: "Unlimited AI Story Planner" },
+const comparison = [
+  { feature: "Lessons", free: "5", paid: "All 15" },
+  { feature: "Graded Studio stories", free: "2", paid: "Unlimited" },
+  { feature: "Parch coaching messages", free: "5", paid: "Unlimited" },
+  { feature: "Story plans", free: "1", paid: "Unlimited" },
+  { feature: "Community", free: "Locked", paid: "Full access" },
 ]
 
 export function UpgradeScreen({
@@ -101,11 +101,17 @@ export function UpgradeScreen({
         <p>{copy.description}</p>
       </header>
 
-      <section className="membership-benefits" aria-label="Membership includes">
-        {benefits.map(({ icon: Icon, text }) => (
-          <div key={text} className="membership-benefit-row">
-            <Icon aria-hidden="true" />
-            <span>{text}</span>
+      <section className="membership-comparison" aria-label="Free and paid plan comparison">
+        <div className="membership-comparison-head" aria-hidden="true">
+          <span />
+          <strong className="membership-comparison-plan is-free">Free</strong>
+          <strong className="membership-comparison-plan is-paid">Paid</strong>
+        </div>
+        {comparison.map((item) => (
+          <div key={item.feature} className="membership-comparison-row">
+            <span className="membership-comparison-feature">{item.feature}</span>
+            <span className="membership-plan-value membership-plan-value-free">{item.free}</span>
+            <span className="membership-plan-value membership-plan-value-member">{item.paid}</span>
           </div>
         ))}
       </section>

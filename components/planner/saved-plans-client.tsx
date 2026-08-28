@@ -67,7 +67,6 @@ export function SavedPlansClient({ initialPlans = [], initialError = "" }: { ini
       <div className="planner-library-heading">
         <Eyebrow>Saved privately</Eyebrow>
         <h1>Your story plans</h1>
-        <p>Every plan in one place. Open it, copy it, export it, or take it straight back into Studio.</p>
       </div>
 
       {loading ? (
@@ -93,7 +92,6 @@ export function SavedPlansClient({ initialPlans = [], initialError = "" }: { ini
               <article key={plan.id} className={expanded ? "planner-library-card is-expanded" : "planner-library-card"}>
                 <div className="planner-library-meta">
                   <span>{new Date(plan.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</span>
-                  <span>{plan.audienceContext}</span>
                 </div>
                 <h2>{plan.output.title}</h2>
                 <p className="planner-library-throughline">{secondPersonDirection(plan.output.throughline)}</p>

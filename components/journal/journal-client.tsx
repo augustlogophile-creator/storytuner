@@ -218,8 +218,8 @@ export function JournalClient() {
         ) : (
           <div className="journal-empty journal-empty-notes">
             <PenLine className="h-5 w-5" strokeWidth={1.5} />
-            <h2>{query ? "Nothing found" : "Your first note starts here"}</h2>
-            <p>{query ? "Try a different search." : "Write a thought, record your voice, or capture a short video before the idea disappears."}</p>
+            <h2>{query ? "Nothing found" : "Your first note starts here."}</h2>
+            <p>{query ? "Try a different search." : "Jot down a thought as it comes, record a voice note, or capture a short video before your story idea vanishes."}</p>
           </div>
         )}
       </section>

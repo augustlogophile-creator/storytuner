@@ -90,8 +90,8 @@ export function NotificationsClient() {
   return (
     <div className="flex min-w-0 flex-col gap-5 pb-6">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/profile" prefetch className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Profile
+        <Link href="/settings" prefetch className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+          <ArrowLeft className="h-4 w-4" /> Settings
         </Link>
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand"><Bell className="h-4 w-4" /></span>
       </div>

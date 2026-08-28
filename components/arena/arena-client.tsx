@@ -29,8 +29,8 @@ import { Eyebrow } from "@/components/eyebrow"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { ScoreRing } from "@/components/arena/score-ring"
 import { Celebration } from "@/components/ui/celebration"
-import { UpgradeScreen } from "@/components/membership/upgrade-screen"
 import { ShareRecordingDialog } from "@/components/community/share-recording-dialog"
+import { ScenarioIcon } from "@/components/ui/scenario-icon"
 import { ReportAiOutput } from "@/components/ai/report-ai-output"
 import { FREE_ARENA_LIMIT, freeArenaRemaining, useApp, type ArenaScores, type Recording } from "@/lib/app-state"
 import { saveMedia } from "@/lib/media-store"
@@ -1012,11 +1012,6 @@ export function ArenaClient() {
     }
   }
 
-  if (phase === "setup" && !canRecord) {
-    return <UpgradeScreen reason="studio" backHref="/home" />
-  }
-
-
   return (
     <div className="studio-page flex min-w-0 flex-col gap-6">
       <Celebration active={showCaptureCelebration} mobileOnly label="Story captured" onDone={() => setShowCaptureCelebration(false)} />
@@ -1045,7 +1040,7 @@ export function ArenaClient() {
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">No prompt, practice any story you've been working on.</p>
               </button>
               <button type="button" onClick={() => { setStoryMode("scenario"); setPromptOverride("") }} className={cn("studio-mode-card", storyMode === "scenario" ? "border-brand bg-brand-soft/70 shadow-[0_0_0_2px_rgba(57,104,158,0.10),0_10px_24px_rgba(31,27,23,0.05)]" : "border-border bg-background hover:border-foreground/25")}>
-                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><Video className="h-4 w-4" /></span>
+                <span className={cn("flex h-9 w-9 items-center justify-center rounded-xl", storyMode === "scenario" ? "bg-brand text-brand-foreground" : "bg-secondary text-foreground")}><ScenarioIcon className="h-4 w-4" /></span>
                 <p className="mt-3 text-sm font-semibold">Choose a scenario</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Practice a real-life storytelling situation.</p>
               </button>
@@ -1171,7 +1166,20 @@ export function ArenaClient() {
           ) : (
             <>
               {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-              <button type="button" onClick={enterRecordingRoom} className="studio-primary-action"><Video className="h-4 w-4" />Enter the recording room<ArrowRight className="h-4 w-4" /></button>
+              {!canRecord && (
+                <div className="studio-limit-notice">
+                  <div>
+                    <p>You’ve used both free graded stories.</p>
+                    <span>You can still browse Studio. Membership is required to record or submit another story.</span>
+                  </div>
+                  <Link href="/membership?from=studio">See Membership</Link>
+                </div>
+              )}
+              <button type="button" onClick={enterRecordingRoom} disabled={!canRecord} className="studio-primary-action">
+                {canRecord ? <Video className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+                {canRecord ? "Enter the recording room" : "Membership required to record"}
+                {canRecord ? <ArrowRight className="h-4 w-4" /> : null}
+              </button>
             </>
           )}
           <Link href="/studio/recordings" className="studio-secondary-action"><Play className="h-4 w-4" />Past recordings</Link>
@@ -1273,7 +1281,16 @@ export function ArenaClient() {
             </section>
           )}
           {error && transcriptionOutcome !== "no-speech" && <p className="rounded-2xl bg-destructive/5 p-4 text-sm leading-relaxed text-destructive">{error}</p>}
-          <button type="button" disabled={transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />Get graded<ArrowRight className="h-4 w-4" /></button>
+          {!canRecord && (
+            <div className="studio-limit-notice">
+              <div>
+                <p>Membership is required to submit another story.</p>
+                <span>Your existing take stays here, but it cannot be graded on the free plan.</span>
+              </div>
+              <Link href="/membership?from=studio">See Membership</Link>
+            </div>
+          )}
+          <button type="button" disabled={!canRecord || transcribing || transcriptWordCount < MIN_STORY_WORDS} onClick={() => void scoreTake()} className="flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"><Mic2 className="h-4 w-4" />{canRecord ? "Get graded" : "Membership required"}{canRecord ? <ArrowRight className="h-4 w-4" /> : null}</button>
           <button type="button" onClick={() => setConfirmAction("discard")} className="flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-muted-foreground"><RotateCcw className="h-4 w-4" />Discard and start again</button>
         </>
       )}

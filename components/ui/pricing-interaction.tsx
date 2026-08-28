@@ -17,7 +17,7 @@ const planCopy = {
     name: "Monthly",
     price: "$5.99",
     cadence: "/ month",
-    detail: "Flexible month-to-month access",
+    detail: "",
     badge: null,
   },
 } as const
@@ -52,7 +52,7 @@ export function PricingInteraction({
                 <strong>{copy.price}</strong>
                 <small>{copy.cadence}</small>
               </span>
-              <span className="membership-plan-detail">{copy.detail}</span>
+              {copy.detail ? <span className="membership-plan-detail">{copy.detail}</span> : null}
             </span>
             <span className="membership-plan-radio" aria-hidden="true">
               <span>{selected ? <Check /> : null}</span>

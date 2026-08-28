@@ -3,12 +3,13 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ArrowRight, Check, Flame, Mic2, Shuffle } from "lucide-react"
+import { ArrowRight, Check, Flame, Mic2 } from "lucide-react"
 import { Eyebrow } from "@/components/eyebrow"
 import { ProgressBar } from "@/components/progress-bar"
 import { AccountRestoredNotice } from "@/components/moderation/account-restored-notice"
 import { Celebration } from "@/components/ui/celebration"
 import { LibraryShelf } from "@/components/home/library-shelf"
+import { ScenarioIcon } from "@/components/ui/scenario-icon"
 import { activityStreaks, courseProgress, freeLessonLimitReached, nextCourseItem, useApp } from "@/lib/app-state"
 
 export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = null }: { accountNotice?: string | null; accountNoticeUpdatedAt?: string | null }) {
@@ -74,9 +75,6 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
             <span className="mt-1 font-mono text-[0.52rem] uppercase tracking-[0.12em] text-muted-foreground">{streaks.current === 1 ? "day" : "days"}</span>
           </div>
         </div>
-        <p className="book-home-subtitle mt-2 whitespace-nowrap text-[0.72rem] leading-[1.35] text-muted-foreground">
-          Learn the ideas, then apply them to stories of your own.
-        </p>
       </header>
 
       <section className="book-course-card mt-4 rounded-[1.8rem] bg-[#2b2823] px-4.5 py-4 text-[#f8f7f2] shadow-[0_10px_30px_rgba(31,27,23,0.08)]">
@@ -84,6 +82,9 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           <span>{progress.percent}% through the course</span>
           {next && <span>{next.type === "lesson" ? `Unit ${next.unit.index}` : `Test ${next.checkpoint.index}`}</span>}
         </div>
+        <p className="book-course-subtitle mt-1.5 whitespace-nowrap text-[0.66rem] leading-[1.3] text-[#c8c2ba]">
+          Learn the ideas, then apply them to stories of your own.
+        </p>
         <h2 className="book-course-title mt-3 text-[1.2rem] font-semibold leading-tight tracking-[-0.028em] text-balance">
           {courseTitle}
         </h2>
@@ -134,7 +135,7 @@ export function HomeDashboard({ accountNotice = null, accountNoticeUpdatedAt = n
           />
           <PracticeCard
             href="/studio?mode=scenario"
-            icon={<Shuffle className="h-4 w-4" strokeWidth={2} />}
+            icon={<ScenarioIcon className="h-4 w-4" />}
             title="Choose a scenario"
             description="Practice a real-life storytelling situation."
           />
